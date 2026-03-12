@@ -1,414 +1,648 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AnuncIA — Gerador de Anúncios Inteligente</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --bg: #0a0a0f;
-    --surface: #13131a;
-    --surface2: #1c1c28;
-    --border: #2a2a3d;
-    --accent: #6c63ff;
-    --accent2: #ff6584;
-    --accent3: #43e97b;
-    --text: #e8e8f0;
-    --muted: #6b6b8a;
-    --card: #16161f;
-  }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; overflow-x: hidden; }
-  body::before {
-    content: ''; position: fixed; top: -50%; left: -50%; width: 200%; height: 200%;
-    background: radial-gradient(ellipse at 20% 20%, rgba(108,99,255,0.08) 0%, transparent 50%),
-                radial-gradient(ellipse at 80% 80%, rgba(255,101,132,0.06) 0%, transparent 50%);
-    animation: bgShift 12s ease-in-out infinite alternate; pointer-events: none; z-index: 0;
-  }
-  @keyframes bgShift { 0% { transform: translate(0,0); } 100% { transform: translate(2%,2%); } }
-  .container { max-width: 900px; margin: 0 auto; padding: 0 24px 60px; position: relative; z-index: 1; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  
+  <!-- SEO Meta Tags -->
+  <title>AnuncIA — Gerador de Anúncios com IA</title>
+  <meta name="description" content="Gere anúncios profissionais para Marketplace, OLX e Mercado Livre usando inteligência artificial. 100% gratuito!">
+  <meta name="keywords" content="anúncios, IA, marketplace, olx, mercado livre, vender produto, gerador de anúncios">
+  <meta name="author" content="AnuncIA">
+  
+  <!-- Open Graph / Facebook / WhatsApp -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://seuusuario.github.io/anunc-ia/">
+  <meta property="og:title" content="AnuncIA — Gerador de Anúncios Inteligente">
+  <meta property="og:description" content="Crie anúncios perfeitos para suas vendas online com IA">
+  <meta property="og:image" content="https://via.placeholder.com/1200x630/6c63ff/ffffff?text=AnuncIA">
+  
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="https://seuusuario.github.io/anunc-ia/">
+  <meta property="twitter:title" content="AnuncIA — Gerador de Anúncios Inteligente">
+  <meta property="twitter:description" content="Crie anúncios perfeitos para suas vendas online com IA">
+  <meta property="twitter:image" content="https://via.placeholder.com/1200x630/6c63ff/ffffff?text=AnuncIA">
+  
+  <!-- Favicon (adicione seus próprios arquivos) -->
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+  
+  <style>
+    /* SEU CSS EXISTENTE AQUI (mantive igual, apenas adicionei algumas classes novas) */
+    :root {
+      --bg: #0a0a0f;
+      --surface: #13131a;
+      --surface2: #1c1c28;
+      --border: #2a2a3d;
+      --accent: #6c63ff;
+      --accent2: #ff6584;
+      --accent3: #43e97b;
+      --text: #e8e8f0;
+      --muted: #6b6b8a;
+      --card: #16161f;
+      --toast-bg: rgba(10, 10, 15, 0.95);
+    }
 
-  header { padding: 40px 0 32px; text-align: center; border-bottom: 1px solid var(--border); margin-bottom: 40px; }
-  .logo {
-    font-family: 'Syne', sans-serif; font-size: 2.8rem; font-weight: 800;
-    background: linear-gradient(135deg, #6c63ff, #ff6584, #43e97b);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-    letter-spacing: -1px; margin-bottom: 8px;
-  }
-  .tagline { color: var(--muted); font-size: 1rem; font-weight: 300; }
+    /* Suporte para tema claro do sistema */
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #f5f5f7;
+        --surface: #ffffff;
+        --surface2: #f0f0f5;
+        --border: #e0e0e8;
+        --text: #1a1a24;
+        --muted: #6b6b85;
+        --card: #ffffff;
+        --toast-bg: rgba(255, 255, 255, 0.95);
+      }
+    }
 
-  /* API Banner */
-  .api-banner {
-    background: rgba(108,99,255,0.08); border: 1px solid rgba(108,99,255,0.25);
-    border-radius: 14px; padding: 20px 24px; margin-bottom: 24px;
-    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
-  }
-  .api-banner-icon { font-size: 1.8rem; flex-shrink: 0; }
-  .api-banner-text { flex: 1; min-width: 200px; }
-  .api-banner-text strong { color: var(--accent); font-family: 'Syne', sans-serif; display: block; margin-bottom: 4px; }
-  .api-banner-text span { font-size: 0.82rem; color: var(--muted); }
-  .api-key-input-wrap { display: flex; gap: 8px; flex: 1; min-width: 260px; }
-  .api-key-input {
-    flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
-    color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.85rem;
-    padding: 10px 14px; outline: none; transition: border-color 0.3s;
-  }
-  .api-key-input:focus { border-color: var(--accent); }
-  .api-key-input::placeholder { color: var(--muted); }
-  .btn-save-key {
-    padding: 10px 18px; border-radius: 10px; border: none; background: var(--accent);
-    color: white; font-family: 'Syne', sans-serif; font-weight: 600; font-size: 0.82rem;
-    cursor: pointer; transition: all 0.2s; white-space: nowrap;
-  }
-  .btn-save-key:hover { background: #8b84ff; }
-  .key-saved { color: var(--accent3); font-size: 0.8rem; font-weight: 500; display: none; }
-  .key-saved.show { display: block; }
+    /* NOVAS CLASSES */
+    .char-counter {
+      text-align: right;
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+    
+    .char-counter.warning {
+      color: #ffa500;
+    }
+    
+    .char-counter.danger {
+      color: var(--accent2);
+    }
 
-  /* Section */
-  .section {
-    background: var(--card); border: 1px solid var(--border);
-    border-radius: 20px; padding: 32px; margin-bottom: 24px; transition: border-color 0.3s;
-  }
-  .section:hover { border-color: rgba(108,99,255,0.3); }
-  .section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
-  .section-number {
-    width: 32px; height: 32px; border-radius: 50%;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.9rem; flex-shrink: 0;
-  }
-  .section-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.15rem; }
-  .section-subtitle { font-size: 0.82rem; color: var(--muted); margin-top: 2px; }
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--toast-bg);
+      color: var(--text);
+      padding: 12px 24px;
+      border-radius: 50px;
+      border: 1px solid var(--border);
+      font-size: 0.9rem;
+      font-weight: 500;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      backdrop-filter: blur(10px);
+      z-index: 1000;
+      transition: transform 0.3s ease;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+    }
 
-  textarea {
-    width: 100%; background: var(--surface); border: 1px solid var(--border);
-    border-radius: 12px; color: var(--text); font-family: 'DM Sans', sans-serif;
-    font-size: 0.92rem; line-height: 1.6; padding: 16px; resize: vertical;
-    min-height: 160px; transition: border-color 0.3s; outline: none;
-  }
-  textarea:focus { border-color: var(--accent); }
-  textarea::placeholder { color: var(--muted); }
+    .action-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+    
+    .btn-secondary {
+      padding: 14px 24px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      flex: 1;
+      min-width: 140px;
+    }
+    
+    .btn-secondary:hover {
+      border-color: var(--accent);
+      background: var(--surface2);
+    }
 
-  /* Price row */
-  .price-row { display: flex; gap: 12px; align-items: flex-start; flex-wrap: wrap; }
-  .price-input-wrap { position: relative; flex: 1; min-width: 180px; }
-  .price-prefix { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--muted); font-weight: 500; }
-  input[type="number"] {
-    width: 100%; background: var(--surface); border: 1px solid var(--border);
-    border-radius: 12px; color: var(--text); font-family: 'DM Sans', sans-serif;
-    font-size: 1rem; padding: 14px 14px 14px 36px; outline: none; transition: border-color 0.3s;
-  }
-  input[type="number"]:focus { border-color: var(--accent); }
+    .export-btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--accent3);
+      background: transparent;
+      color: var(--accent3);
+      font-family: 'Syne', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-left: auto;
+    }
+    
+    .export-btn:hover {
+      background: var(--accent3);
+      color: var(--bg);
+    }
 
-  .btn-suggest-price {
-    padding: 14px 20px; border-radius: 12px; border: 1px solid var(--accent);
-    background: rgba(108,99,255,0.1); color: var(--accent); font-family: 'Syne', sans-serif;
-    font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: all 0.2s;
-    white-space: nowrap; display: flex; align-items: center; gap: 8px;
-  }
-  .btn-suggest-price:hover { background: var(--accent); color: white; }
-  .btn-suggest-price:disabled { opacity: 0.4; cursor: not-allowed; }
+    /* Restante do seu CSS existente aqui */
+    /* ... (todo o CSS que você já tinha) ... */
+    
+    /* Garantindo que o CSS antigo está aqui */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; overflow-x: hidden; }
+    body::before {
+      content: ''; position: fixed; top: -50%; left: -50%; width: 200%; height: 200%;
+      background: radial-gradient(ellipse at 20% 20%, rgba(108,99,255,0.08) 0%, transparent 50%),
+                  radial-gradient(ellipse at 80% 80%, rgba(255,101,132,0.06) 0%, transparent 50%);
+      animation: bgShift 12s ease-in-out infinite alternate; pointer-events: none; z-index: 0;
+    }
+    @keyframes bgShift { 0% { transform: translate(0,0); } 100% { transform: translate(2%,2%); } }
+    .container { max-width: 900px; margin: 0 auto; padding: 0 24px 60px; position: relative; z-index: 1; }
 
-  .price-suggestion {
-    margin-top: 10px; padding: 12px 16px; background: rgba(67,233,123,0.08);
-    border: 1px solid rgba(67,233,123,0.25); border-radius: 10px;
-    font-size: 0.84rem; color: #a8ffcc; display: none; width: 100%;
-  }
-  .price-suggestion.show { display: block; }
-  .price-suggestion strong { color: var(--accent3); }
+    header { padding: 40px 0 32px; text-align: center; border-bottom: 1px solid var(--border); margin-bottom: 40px; }
+    .logo {
+      font-family: 'Syne', sans-serif; font-size: 2.8rem; font-weight: 800;
+      background: linear-gradient(135deg, #6c63ff, #ff6584, #43e97b);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      letter-spacing: -1px; margin-bottom: 8px;
+    }
+    .tagline { color: var(--muted); font-size: 1rem; font-weight: 300; }
 
-  /* Platforms */
-  .platforms { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-  .platform-btn {
-    padding: 14px; border-radius: 12px; border: 2px solid var(--border);
-    background: var(--surface); color: var(--muted); font-family: 'Syne', sans-serif;
-    font-weight: 600; font-size: 0.88rem; cursor: pointer; transition: all 0.25s; text-align: center;
-  }
-  .platform-btn .platform-icon { font-size: 1.4rem; display: block; margin-bottom: 6px; }
-  .platform-btn.active { border-color: var(--accent); background: rgba(108,99,255,0.12); color: var(--text); }
-  .platform-btn:hover:not(.active) { border-color: rgba(108,99,255,0.4); color: var(--text); }
+    .api-banner {
+      background: rgba(108,99,255,0.08); border: 1px solid rgba(108,99,255,0.25);
+      border-radius: 14px; padding: 20px 24px; margin-bottom: 24px;
+      display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    }
+    .api-banner-icon { font-size: 1.8rem; flex-shrink: 0; }
+    .api-banner-text { flex: 1; min-width: 200px; }
+    .api-banner-text strong { color: var(--accent); font-family: 'Syne', sans-serif; display: block; margin-bottom: 4px; }
+    .api-banner-text span { font-size: 0.82rem; color: var(--muted); }
+    .api-key-input-wrap { display: flex; gap: 8px; flex: 1; min-width: 260px; }
+    .api-key-input {
+      flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+      color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.85rem;
+      padding: 10px 14px; outline: none; transition: border-color 0.3s;
+    }
+    .api-key-input:focus { border-color: var(--accent); }
+    .api-key-input::placeholder { color: var(--muted); }
+    .btn-save-key {
+      padding: 10px 18px; border-radius: 10px; border: none; background: var(--accent);
+      color: white; font-family: 'Syne', sans-serif; font-weight: 600; font-size: 0.82rem;
+      cursor: pointer; transition: all 0.2s; white-space: nowrap;
+    }
+    .btn-save-key:hover { background: #8b84ff; }
+    .key-saved { color: var(--accent3); font-size: 0.8rem; font-weight: 500; display: none; }
+    .key-saved.show { display: block; }
 
-  /* Generate */
-  .btn-generate {
-    width: 100%; padding: 18px; border-radius: 14px; border: none;
-    background: linear-gradient(135deg, var(--accent), #8b84ff); color: white;
-    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.05rem;
-    cursor: pointer; transition: all 0.3s; letter-spacing: 0.5px; margin-top: 8px;
-    position: relative; overflow: hidden;
-  }
-  .btn-generate::before {
-    content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
-    transition: left 0.5s;
-  }
-  .btn-generate:hover::before { left: 100%; }
-  .btn-generate:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(108,99,255,0.4); }
-  .btn-generate:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .section {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 20px; padding: 32px; margin-bottom: 24px; transition: border-color 0.3s;
+    }
+    .section:hover { border-color: rgba(108,99,255,0.3); }
+    .section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+    .section-number {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.9rem; flex-shrink: 0;
+    }
+    .section-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.15rem; }
+    .section-subtitle { font-size: 0.82rem; color: var(--muted); margin-top: 2px; }
 
-  /* Loading */
-  .loading { display: none; text-align: center; padding: 48px; }
-  .loading.active { display: block; }
-  .spinner {
-    width: 48px; height: 48px; border: 3px solid var(--border);
-    border-top-color: var(--accent); border-radius: 50%;
-    animation: spin 0.8s linear infinite; margin: 0 auto 16px;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .loading-text { color: var(--muted); font-size: 0.9rem; }
-  .loading-step { color: var(--accent); font-weight: 500; margin-top: 4px; font-size: 0.85rem; }
+    textarea {
+      width: 100%; background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; color: var(--text); font-family: 'DM Sans', sans-serif;
+      font-size: 0.92rem; line-height: 1.6; padding: 16px; resize: vertical;
+      min-height: 160px; transition: border-color 0.3s; outline: none;
+    }
+    textarea:focus { border-color: var(--accent); }
+    textarea::placeholder { color: var(--muted); }
 
-  /* Results */
-  .results { display: none; }
-  .results.active { display: block; }
-  .result-tab-bar { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
-  .result-tab {
-    padding: 8px 18px; border-radius: 8px; border: 1px solid var(--border);
-    background: var(--surface); color: var(--muted); font-family: 'Syne', sans-serif;
-    font-weight: 600; font-size: 0.82rem; cursor: pointer; transition: all 0.2s;
-  }
-  .result-tab.active { background: var(--accent); border-color: var(--accent); color: white; }
-  .result-panel { display: none; }
-  .result-panel.active { display: block; }
+    .price-row { display: flex; gap: 12px; align-items: flex-start; flex-wrap: wrap; }
+    .price-input-wrap { position: relative; flex: 1; min-width: 180px; }
+    .price-prefix { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--muted); font-weight: 500; }
+    input[type="number"] {
+      width: 100%; background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; color: var(--text); font-family: 'DM Sans', sans-serif;
+      font-size: 1rem; padding: 14px 14px 14px 36px; outline: none; transition: border-color 0.3s;
+    }
+    input[type="number"]:focus { border-color: var(--accent); }
 
-  .ad-output {
-    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
-    padding: 24px; font-size: 0.92rem; line-height: 1.8;
-    white-space: pre-wrap; word-break: break-word; min-height: 200px;
-  }
+    .btn-suggest-price {
+      padding: 14px 20px; border-radius: 12px; border: 1px solid var(--accent);
+      background: rgba(108,99,255,0.1); color: var(--accent); font-family: 'Syne', sans-serif;
+      font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: all 0.2s;
+      white-space: nowrap; display: flex; align-items: center; gap: 8px;
+    }
+    .btn-suggest-price:hover { background: var(--accent); color: white; }
+    .btn-suggest-price:disabled { opacity: 0.4; cursor: not-allowed; }
 
-  /* Action buttons */
-  .ad-actions { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
-  .copy-btn {
-    padding: 10px 24px; border-radius: 10px; border: 1px solid var(--accent);
-    background: transparent; color: var(--accent); font-family: 'Syne', sans-serif;
-    font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: all 0.2s;
-  }
-  .copy-btn:hover { background: var(--accent); color: white; }
-  .whatsapp-btn {
-    padding: 10px 24px; border-radius: 10px; border: 1px solid #25d366;
-    background: transparent; color: #25d366; font-family: 'Syne', sans-serif;
-    font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: all 0.2s;
-    display: flex; align-items: center; gap: 6px;
-  }
-  .whatsapp-btn:hover { background: #25d366; color: white; }
+    .price-suggestion {
+      margin-top: 10px; padding: 12px 16px; background: rgba(67,233,123,0.08);
+      border: 1px solid rgba(67,233,123,0.25); border-radius: 10px;
+      font-size: 0.84rem; color: #a8ffcc; display: none; width: 100%;
+    }
+    .price-suggestion.show { display: block; }
+    .price-suggestion strong { color: var(--accent3); }
 
-  .tip-box {
-    background: rgba(67,233,123,0.06); border: 1px solid rgba(67,233,123,0.2);
-    border-radius: 12px; padding: 14px 18px; font-size: 0.83rem;
-    color: #a8ffcc; line-height: 1.6; margin-bottom: 24px; display: none;
-  }
+    .platforms { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .platform-btn {
+      padding: 14px; border-radius: 12px; border: 2px solid var(--border);
+      background: var(--surface); color: var(--muted); font-family: 'Syne', sans-serif;
+      font-weight: 600; font-size: 0.88rem; cursor: pointer; transition: all 0.25s; text-align: center;
+    }
+    .platform-btn .platform-icon { font-size: 1.4rem; display: block; margin-bottom: 6px; }
+    .platform-btn.active { border-color: var(--accent); background: rgba(108,99,255,0.12); color: var(--text); }
+    .platform-btn:hover:not(.active) { border-color: rgba(108,99,255,0.4); color: var(--text); }
 
-  /* History */
-  .history-section { margin-top: 40px; }
-  .history-header {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 16px;
-  }
-  .history-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.1rem; }
-  .btn-clear-history {
-    padding: 6px 14px; border-radius: 8px; border: 1px solid var(--border);
-    background: transparent; color: var(--muted); font-family: 'Syne', sans-serif;
-    font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
-  }
-  .btn-clear-history:hover { border-color: var(--accent2); color: var(--accent2); }
+    .btn-generate {
+      width: 100%; padding: 18px; border-radius: 14px; border: none;
+      background: linear-gradient(135deg, var(--accent), #8b84ff); color: white;
+      font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.05rem;
+      cursor: pointer; transition: all 0.3s; letter-spacing: 0.5px; margin-top: 8px;
+      position: relative; overflow: hidden;
+    }
+    .btn-generate::before {
+      content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+      transition: left 0.5s;
+    }
+    .btn-generate:hover::before { left: 100%; }
+    .btn-generate:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(108,99,255,0.4); }
+    .btn-generate:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
-  .history-empty { color: var(--muted); font-size: 0.88rem; text-align: center; padding: 32px; }
+    .loading { display: none; text-align: center; padding: 48px; }
+    .loading.active { display: block; }
+    .spinner {
+      width: 48px; height: 48px; border: 3px solid var(--border);
+      border-top-color: var(--accent); border-radius: 50%;
+      animation: spin 0.8s linear infinite; margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { color: var(--muted); font-size: 0.9rem; }
+    .loading-step { color: var(--accent); font-weight: 500; margin-top: 4px; font-size: 0.85rem; }
 
-  .history-list { display: flex; flex-direction: column; gap: 12px; }
-  .history-card {
-    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
-    padding: 18px 20px; cursor: pointer; transition: all 0.2s;
-    display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  }
-  .history-card:hover { border-color: rgba(108,99,255,0.4); background: var(--surface2); }
-  .history-card-info { flex: 1; min-width: 0; }
-  .history-card-title {
-    font-family: 'Syne', sans-serif; font-weight: 600; font-size: 0.9rem;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px;
-  }
-  .history-card-meta { font-size: 0.76rem; color: var(--muted); }
-  .history-card-platforms { display: flex; gap: 4px; }
-  .history-platform-tag {
-    padding: 2px 8px; border-radius: 6px; font-size: 0.7rem;
-    background: rgba(108,99,255,0.15); color: #a8a3ff; font-weight: 500;
-  }
-  .history-card-arrow { color: var(--muted); font-size: 1rem; flex-shrink: 0; }
+    .results { display: none; }
+    .results.active { display: block; }
+    .result-tab-bar { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+    .result-tab {
+      padding: 8px 18px; border-radius: 8px; border: 1px solid var(--border);
+      background: var(--surface); color: var(--muted); font-family: 'Syne', sans-serif;
+      font-weight: 600; font-size: 0.82rem; cursor: pointer; transition: all 0.2s;
+    }
+    .result-tab.active { background: var(--accent); border-color: var(--accent); color: white; }
+    .result-panel { display: none; }
+    .result-panel.active { display: block; }
 
-  @media (max-width: 600px) {
-    .platforms { grid-template-columns: 1fr; }
-    .logo { font-size: 2rem; }
-    .api-banner { flex-direction: column; }
-    .price-row { flex-direction: column; }
-  }
-</style>
+    .ad-output {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+      padding: 24px; font-size: 0.92rem; line-height: 1.8;
+      white-space: pre-wrap; word-break: break-word; min-height: 200px;
+    }
+
+    .ad-actions { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+    .copy-btn {
+      padding: 10px 24px; border-radius: 10px; border: 1px solid var(--accent);
+      background: transparent; color: var(--accent); font-family: 'Syne', sans-serif;
+      font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: all 0.2s;
+    }
+    .copy-btn:hover { background: var(--accent); color: white; }
+    .whatsapp-btn {
+      padding: 10px 24px; border-radius: 10px; border: 1px solid #25d366;
+      background: transparent; color: #25d366; font-family: 'Syne', sans-serif;
+      font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: all 0.2s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .whatsapp-btn:hover { background: #25d366; color: white; }
+
+    .tip-box {
+      background: rgba(67,233,123,0.06); border: 1px solid rgba(67,233,123,0.2);
+      border-radius: 12px; padding: 14px 18px; font-size: 0.83rem;
+      color: #a8ffcc; line-height: 1.6; margin-bottom: 24px; display: none;
+    }
+
+    .history-section { margin-top: 40px; }
+    .history-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 16px; flex-wrap: wrap; gap: 10px;
+    }
+    .history-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.1rem; }
+    .btn-clear-history {
+      padding: 6px 14px; border-radius: 8px; border: 1px solid var(--border);
+      background: transparent; color: var(--muted); font-family: 'Syne', sans-serif;
+      font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
+    }
+    .btn-clear-history:hover { border-color: var(--accent2); color: var(--accent2); }
+
+    .history-empty { color: var(--muted); font-size: 0.88rem; text-align: center; padding: 32px; }
+
+    .history-list { display: flex; flex-direction: column; gap: 12px; }
+    .history-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+      padding: 18px 20px; cursor: pointer; transition: all 0.2s;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    }
+    .history-card:hover { border-color: rgba(108,99,255,0.4); background: var(--surface2); }
+    .history-card-info { flex: 1; min-width: 0; }
+    .history-card-title {
+      font-family: 'Syne', sans-serif; font-weight: 600; font-size: 0.9rem;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px;
+    }
+    .history-card-meta { font-size: 0.76rem; color: var(--muted); }
+    .history-card-platforms { display: flex; gap: 4px; }
+    .history-platform-tag {
+      padding: 2px 8px; border-radius: 6px; font-size: 0.7rem;
+      background: rgba(108,99,255,0.15); color: #a8a3ff; font-weight: 500;
+    }
+    .history-card-arrow { color: var(--muted); font-size: 1rem; flex-shrink: 0; }
+
+    @media (max-width: 600px) {
+      .platforms { grid-template-columns: 1fr; }
+      .logo { font-size: 2rem; }
+      .api-banner { flex-direction: column; }
+      .price-row { flex-direction: column; }
+      .action-buttons { flex-direction: column; }
+      .btn-secondary { width: 100%; }
+    }
+  </style>
 </head>
 <body>
-<div class="container">
-  <header>
-    <div class="logo">AnuncIA ✦</div>
-    <div class="tagline">Gere anúncios profissionais com inteligência artificial — 100% gratuito</div>
-  </header>
+  <div class="container">
+    <header>
+      <div class="logo">AnuncIA ✦</div>
+      <div class="tagline">Gere anúncios profissionais com inteligência artificial — 100% gratuito</div>
+    </header>
 
-  <!-- API Key -->
-  <div class="api-banner">
-    <div class="api-banner-icon">🔑</div>
-    <div class="api-banner-text">
-      <strong>Sua chave do Gemini (Google AI)</strong>
-      <span>Gratuita em aistudio.google.com — salva só no seu navegador</span>
-    </div>
-    <div class="api-key-input-wrap">
-      <input class="api-key-input" type="password" id="apiKeyInput" placeholder="Cole sua chave: AIzaSy...">
-      <button class="btn-save-key" onclick="saveKey()">Salvar</button>
-    </div>
-    <span class="key-saved" id="keySaved">✅ Chave salva!</span>
-  </div>
-
-  <!-- Step 1: Description -->
-  <div class="section">
-    <div class="section-header">
-      <div class="section-number">1</div>
-      <div>
-        <div class="section-title">Descrição do Produto</div>
-        <div class="section-subtitle">Descreva o produto com o máximo de detalhes possível</div>
+    <!-- API Key -->
+    <div class="api-banner">
+      <div class="api-banner-icon">🔑</div>
+      <div class="api-banner-text">
+        <strong>Sua chave do Gemini (Google AI)</strong>
+        <span>Gratuita em aistudio.google.com — salva só no seu navegador</span>
       </div>
-    </div>
-    <textarea id="productDescription" placeholder="Ex: Notebook Lenovo ThinkPad E14, Intel Core i7 10ª geração 2.3GHz, 16GB RAM Kingston, SSD NVMe 256GB, tela 14&quot;, Windows 11 formatado, Pacote Office incluso, leitor biométrico, fonte original, bateria com boa performance, seminovo em excelente estado..."></textarea>
-  </div>
-
-  <!-- Step 2: Price -->
-  <div class="section">
-    <div class="section-header">
-      <div class="section-number">2</div>
-      <div>
-        <div class="section-title">Preço</div>
-        <div class="section-subtitle">Digite o valor ou deixe a IA sugerir um preço competitivo</div>
+      <div class="api-key-input-wrap">
+        <input class="api-key-input" type="password" id="apiKeyInput" placeholder="Cole sua chave: AIzaSy...">
+        <button class="btn-save-key" onclick="saveKey()">Salvar</button>
       </div>
+      <span class="key-saved" id="keySaved">✅ Chave salva!</span>
     </div>
-    <div class="price-row">
-      <div class="price-input-wrap">
-        <span class="price-prefix">R$</span>
-        <input type="number" id="productPrice" placeholder="0,00" min="0" step="0.01">
-      </div>
-      <button class="btn-suggest-price" id="btnSuggestPrice" onclick="suggestPrice()">
-        ✨ Sugerir preço
-      </button>
-    </div>
-    <div class="price-suggestion" id="priceSuggestion"></div>
-  </div>
 
-  <!-- Step 3: Platforms -->
-  <div class="section">
-    <div class="section-header">
-      <div class="section-number">3</div>
-      <div>
-        <div class="section-title">Plataformas</div>
-        <div class="section-subtitle">Selecione onde vai anunciar (pode escolher mais de uma)</div>
-      </div>
-    </div>
-    <div class="platforms">
-      <button class="platform-btn active" data-platform="marketplace" onclick="togglePlatform(this)">
-        <span class="platform-icon">📘</span>Marketplace
-      </button>
-      <button class="platform-btn active" data-platform="olx" onclick="togglePlatform(this)">
-        <span class="platform-icon">🟠</span>OLX
-      </button>
-      <button class="platform-btn active" data-platform="mercadolivre" onclick="togglePlatform(this)">
-        <span class="platform-icon">🟡</span>Mercado Livre
-      </button>
-    </div>
-  </div>
-
-  <button class="btn-generate" id="generateBtn" onclick="generateAds()">
-    ✦ Gerar Anúncios com IA
-  </button>
-
-  <!-- Loading -->
-  <div class="loading" id="loading">
-    <div class="spinner"></div>
-    <div class="loading-text">Gerando seus anúncios...</div>
-    <div class="loading-step" id="loadingStep">Analisando descrição do produto</div>
-  </div>
-
-  <!-- Results -->
-  <div class="results" id="results">
+    <!-- Step 1: Description with character counter -->
     <div class="section">
-      <div class="tip-box" id="tipsBox"></div>
-      <div class="result-tab-bar" id="resultTabs"></div>
-      <div id="resultPanels"></div>
+      <div class="section-header">
+        <div class="section-number">1</div>
+        <div>
+          <div class="section-title">Descrição do Produto</div>
+          <div class="section-subtitle">Descreva o produto com o máximo de detalhes possível</div>
+        </div>
+      </div>
+      <textarea id="productDescription" placeholder="Ex: Notebook Lenovo ThinkPad E14, Intel Core i7 10ª geração 2.3GHz, 16GB RAM Kingston, SSD NVMe 256GB, tela 14&quot;, Windows 11 formatado, Pacote Office incluso, leitor biométrico, fonte original, bateria com boa performance, seminovo em excelente estado..." oninput="updateCharCounter()"></textarea>
+      <div class="char-counter" id="charCounter">0 caracteres</div>
+    </div>
+
+    <!-- Step 2: Price -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-number">2</div>
+        <div>
+          <div class="section-title">Preço</div>
+          <div class="section-subtitle">Digite o valor ou deixe a IA sugerir um preço competitivo</div>
+        </div>
+      </div>
+      <div class="price-row">
+        <div class="price-input-wrap">
+          <span class="price-prefix">R$</span>
+          <input type="number" id="productPrice" placeholder="0,00" min="0" step="0.01">
+        </div>
+        <button class="btn-suggest-price" id="btnSuggestPrice" onclick="suggestPrice()">
+          ✨ Sugerir preço
+        </button>
+      </div>
+      <div class="price-suggestion" id="priceSuggestion"></div>
+    </div>
+
+    <!-- Step 3: Platforms -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-number">3</div>
+        <div>
+          <div class="section-title">Plataformas</div>
+          <div class="section-subtitle">Selecione onde vai anunciar (pode escolher mais de uma)</div>
+        </div>
+      </div>
+      <div class="platforms">
+        <button class="platform-btn active" data-platform="marketplace" onclick="togglePlatform(this)">
+          <span class="platform-icon">📘</span>Marketplace
+        </button>
+        <button class="platform-btn active" data-platform="olx" onclick="togglePlatform(this)">
+          <span class="platform-icon">🟠</span>OLX
+        </button>
+        <button class="platform-btn active" data-platform="mercadolivre" onclick="togglePlatform(this)">
+          <span class="platform-icon">🟡</span>Mercado Livre
+        </button>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+      <button class="btn-secondary" onclick="clearForm()">
+        🧹 Limpar Campos
+      </button>
+      <button class="btn-generate" id="generateBtn" onclick="generateAds()">
+        ✦ Gerar Anúncios com IA
+      </button>
+    </div>
+
+    <!-- Loading -->
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <div class="loading-text">Gerando seus anúncios...</div>
+      <div class="loading-step" id="loadingStep">Analisando descrição do produto</div>
+    </div>
+
+    <!-- Results -->
+    <div class="results" id="results">
+      <div class="section">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+          <div class="section-header" style="margin-bottom: 0;">
+            <div class="section-number">✓</div>
+            <div>
+              <div class="section-title">Seus Anúncios</div>
+            </div>
+          </div>
+          <button class="export-btn" onclick="exportAllAds()" id="exportBtn" style="display: none;">
+            📥 Exportar PDF
+          </button>
+        </div>
+        <div class="tip-box" id="tipsBox"></div>
+        <div class="result-tab-bar" id="resultTabs"></div>
+        <div id="resultPanels"></div>
+      </div>
+    </div>
+
+    <!-- History -->
+    <div class="history-section section" id="historySection" style="display:none;">
+      <div class="history-header">
+        <div class="history-title">📋 Histórico de Anúncios</div>
+        <button class="btn-clear-history" onclick="clearHistory()">Limpar tudo</button>
+      </div>
+      <div id="historyList"></div>
     </div>
   </div>
 
-  <!-- History -->
-  <div class="history-section section" id="historySection" style="display:none;">
-    <div class="history-header">
-      <div class="history-title">📋 Histórico de Anúncios</div>
-      <button class="btn-clear-history" onclick="clearHistory()">Limpar tudo</button>
-    </div>
-    <div id="historyList"></div>
-  </div>
-</div>
+  <!-- Toast notification -->
+  <div class="toast" id="toast">Mensagem</div>
 
-<script>
-  let selectedPlatforms = new Set(['marketplace', 'olx', 'mercadolivre']);
-  let apiKey = localStorage.getItem('gemini_key') || '';
-  let currentAds = {};
+  <script>
+    // Configuração base para GitHub Pages
+    const BASE_URL = window.location.hostname.includes('github.io') ? '/anunc-ia' : '';
+    
+    let selectedPlatforms = new Set(['marketplace', 'olx', 'mercadolivre']);
+    let apiKey = localStorage.getItem('gemini_key') || '';
+    let currentAds = {};
 
-  if (apiKey) {
-    document.getElementById('apiKeyInput').value = apiKey;
-    document.getElementById('keySaved').classList.add('show');
-  }
+    // Initialize
+    if (apiKey) {
+      document.getElementById('apiKeyInput').value = apiKey;
+      document.getElementById('keySaved').classList.add('show');
+    }
 
-  renderHistory();
+    renderHistory();
+    updateCharCounter();
 
-  function saveKey() {
-    const val = document.getElementById('apiKeyInput').value.trim();
-    if (!val) { alert('Cole sua chave do Gemini primeiro!'); return; }
-    apiKey = val;
-    localStorage.setItem('gemini_key', val);
-    const saved = document.getElementById('keySaved');
-    saved.classList.add('show');
-    setTimeout(() => saved.classList.remove('show'), 3000);
-  }
+    // Utility Functions
+    function showToast(message, duration = 3000) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), duration);
+    }
 
-  function togglePlatform(btn) {
-    const p = btn.dataset.platform;
-    if (selectedPlatforms.has(p)) {
-      if (selectedPlatforms.size > 1) { selectedPlatforms.delete(p); btn.classList.remove('active'); }
-    } else { selectedPlatforms.add(p); btn.classList.add('active'); }
-  }
+    function updateCharCounter() {
+      const textarea = document.getElementById('productDescription');
+      const counter = document.getElementById('charCounter');
+      const length = textarea.value.length;
+      
+      counter.textContent = `${length} caracteres`;
+      
+      counter.classList.remove('warning', 'danger');
+      if (length > 500) counter.classList.add('warning');
+      if (length > 1000) counter.classList.add('danger');
+    }
 
-  async function callGemini(prompt) {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+    function clearForm() {
+      if (confirm('Limpar todos os campos?')) {
+        document.getElementById('productDescription').value = '';
+        document.getElementById('productPrice').value = '';
+        document.getElementById('priceSuggestion').classList.remove('show');
+        document.getElementById('results').classList.remove('active');
+        updateCharCounter();
+        showToast('🧹 Campos limpos com sucesso!');
       }
-    );
-    const data = await response.json();
-    if (data.error) throw new Error(data.error.message);
-    return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-  }
+    }
 
-  async function suggestPrice() {
-    const description = document.getElementById('productDescription').value.trim();
-    if (!description) { alert('Preencha a descrição do produto primeiro!'); return; }
-    if (!apiKey) { alert('Cole e salve sua chave do Gemini primeiro!'); return; }
+    function saveKey() {
+      const val = document.getElementById('apiKeyInput').value.trim();
+      if (!val) { 
+        showToast('❌ Cole sua chave do Gemini primeiro!'); 
+        return; 
+      }
+      
+      // Validação básica da chave do Gemini
+      if (!val.startsWith('AIza')) {
+        showToast('❌ Chave inválida! Deve começar com "AIza"');
+        return;
+      }
+      
+      apiKey = val;
+      localStorage.setItem('gemini_key', val);
+      
+      const saved = document.getElementById('keySaved');
+      saved.classList.add('show');
+      setTimeout(() => saved.classList.remove('show'), 3000);
+      showToast('✅ Chave salva com sucesso!');
+    }
 
-    const btn = document.getElementById('btnSuggestPrice');
-    btn.disabled = true;
-    btn.textContent = '⏳ Analisando...';
+    function togglePlatform(btn) {
+      const p = btn.dataset.platform;
+      if (selectedPlatforms.has(p)) {
+        if (selectedPlatforms.size > 1) { 
+          selectedPlatforms.delete(p); 
+          btn.classList.remove('active'); 
+        } else {
+          showToast('ℹ️ Selecione pelo menos uma plataforma');
+        }
+      } else { 
+        selectedPlatforms.add(p); 
+        btn.classList.add('active'); 
+      }
+    }
 
-    try {
-      const prompt = `Você é um especialista em precificação de produtos usados no Brasil para plataformas como OLX, Facebook Marketplace e Mercado Livre.
+    async function callGemini(prompt) {
+      try {
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              contents: [{ 
+                parts: [{ text: prompt }] 
+              }],
+              generationConfig: {
+                temperature: 0.7,
+                topK: 40,
+                topP: 0.95,
+                maxOutputTokens: 2048,
+              }
+            })
+          }
+        );
+        
+        const data = await response.json();
+        
+        if (data.error) {
+          throw new Error(data.error.message || 'Erro na API');
+        }
+        
+        if (!data.candidates || !data.candidates[0]) {
+          throw new Error('Resposta vazia da API');
+        }
+        
+        return data.candidates[0]?.content?.parts[0]?.text || '';
+      } catch (error) {
+        console.error('Erro na chamada Gemini:', error);
+        throw error;
+      }
+    }
 
-Com base na descrição abaixo, sugira um preço justo e competitivo para venda.
+    async function suggestPrice() {
+      const description = document.getElementById('productDescription').value.trim();
+      if (!description) { 
+        showToast('❌ Preencha a descrição do produto primeiro!'); 
+        return; 
+      }
+      if (!apiKey) { 
+        showToast('❌ Cole e salve sua chave do Gemini primeiro!'); 
+        return; 
+      }
+
+      const btn = document.getElementById('btnSuggestPrice');
+      btn.disabled = true;
+      btn.innerHTML = '⏳ Analisando...';
+
+      try {
+        const prompt = `Você é um especialista em precificação de produtos usados no Brasil para plataformas como OLX, Facebook Marketplace e Mercado Livre.
+
+Com base na descrição abaixo, sugira um preço justo e competitivo para venda RÁPIDA.
 
 Produto: ${description}
 
-RESPONDA APENAS com este JSON (sem markdown):
+IMPORTANTE: Responda APENAS com um JSON válido, sem markdown, sem texto adicional:
 {
   "preco_sugerido": 1500,
   "faixa_minima": 1300,
@@ -416,231 +650,15 @@ RESPONDA APENAS com este JSON (sem markdown):
   "justificativa": "Breve explicação do preço sugerido"
 }`;
 
-      const raw = await callGemini(prompt);
-      const match = raw.match(/\{[\s\S]*\}/);
-      if (!match) throw new Error('Resposta inválida');
-      const result = JSON.parse(match[0]);
+        const raw = await callGemini(prompt);
+        
+        // Extrair JSON da resposta
+        const match = raw.match(/\{[\s\S]*\}/);
+        if (!match) throw new Error('Resposta inválida da IA');
+        
+        const result = JSON.parse(match[0]);
 
-      const el = document.getElementById('priceSuggestion');
-      el.innerHTML = `
-        <strong>💡 Preço sugerido: R$ ${result.preco_sugerido.toLocaleString('pt-BR')}</strong><br>
-        Faixa competitiva: R$ ${result.faixa_minima.toLocaleString('pt-BR')} — R$ ${result.faixa_maxima.toLocaleString('pt-BR')}<br>
-        <span style="opacity:0.8">${result.justificativa}</span>
-        <br><button onclick="applyPrice(${result.preco_sugerido})" style="margin-top:8px;padding:5px 14px;border-radius:8px;border:1px solid #43e97b;background:transparent;color:#43e97b;font-size:0.8rem;cursor:pointer;font-family:'Syne',sans-serif;font-weight:600;">Usar este preço</button>
-      `;
-      el.classList.add('show');
-    } catch(e) {
-      alert('Erro ao sugerir preço: ' + e.message);
-    }
-
-    btn.disabled = false;
-    btn.innerHTML = '✨ Sugerir preço';
-  }
-
-  function applyPrice(price) {
-    document.getElementById('productPrice').value = price;
-  }
-
-  const loadingSteps = [
-    'Analisando descrição do produto...',
-    'Criando título chamativo...',
-    'Gerando anúncios para as plataformas...',
-    'Otimizando linguagem de vendas...',
-    'Finalizando...'
-  ];
-
-  async function generateAds() {
-    const description = document.getElementById('productDescription').value.trim();
-    const price = document.getElementById('productPrice').value;
-
-    if (!apiKey) { alert('Cole e salve sua chave do Gemini primeiro!'); return; }
-    if (!description) { alert('Por favor, preencha a descrição do produto.'); return; }
-
-    const btn = document.getElementById('generateBtn');
-    btn.disabled = true;
-    document.getElementById('loading').classList.add('active');
-    document.getElementById('results').classList.remove('active');
-
-    let stepIdx = 0;
-    const stepEl = document.getElementById('loadingStep');
-    const stepInterval = setInterval(() => { stepEl.textContent = loadingSteps[stepIdx++ % loadingSteps.length]; }, 1500);
-
-    try {
-      const platforms = Array.from(selectedPlatforms);
-      const priceText = price ? `R$ ${parseFloat(price).toLocaleString('pt-BR', {minimumFractionDigits: 2})}` : 'não informado';
-
-      const prompt = `Você é um especialista em marketing de vendas online no Brasil.
-
-Gere anúncios profissionais e atrativos para: ${platforms.join(', ')}.
-
-Produto: ${description}
-Preço: ${priceText}
-
-Regras:
-- Use emojis estrategicamente
-- Destaque os principais diferenciais
-- Marketplace: informal e direto com emojis
-- OLX: objetivo com detalhes técnicos
-- Mercado Livre: profissional com título otimizado para busca
-
-RESPONDA APENAS com este JSON (sem markdown):
-{
-  "tips": "Uma dica rápida para melhorar a venda",
-  "ads": {
-    "marketplace": "anúncio completo para Facebook Marketplace",
-    "olx": "anúncio completo para OLX",
-    "mercadolivre": "anúncio completo para Mercado Livre"
-  }
-}`;
-
-      const raw = await callGemini(prompt);
-      const match = raw.match(/\{[\s\S]*\}/);
-      if (!match) throw new Error('Resposta inválida. Tente novamente.');
-      const result = JSON.parse(match[0]);
-
-      currentAds = result.ads || {};
-
-      // Save to history
-      saveToHistory({
-        description: description.substring(0, 80) + (description.length > 80 ? '...' : ''),
-        price: priceText,
-        platforms,
-        ads: result.ads,
-        tips: result.tips,
-        date: new Date().toLocaleString('pt-BR')
-      });
-
-      clearInterval(stepInterval);
-      document.getElementById('loading').classList.remove('active');
-      renderResults(result, platforms);
-
-    } catch (err) {
-      clearInterval(stepInterval);
-      document.getElementById('loading').classList.remove('active');
-      alert('Erro: ' + err.message);
-    }
-    btn.disabled = false;
-  }
-
-  function platformLabel(p) {
-    if (p === 'marketplace') return '📘 Marketplace';
-    if (p === 'olx') return '🟠 OLX';
-    if (p === 'mercadolivre') return '🟡 Mercado Livre';
-    return p;
-  }
-
-  function renderResults(result, platforms) {
-    const tabBar = document.getElementById('resultTabs');
-    const panels = document.getElementById('resultPanels');
-    const tipsBox = document.getElementById('tipsBox');
-
-    if (result.tips) {
-      tipsBox.innerHTML = `💡 <strong>Dica:</strong> ${result.tips}`;
-      tipsBox.style.display = 'block';
-    } else { tipsBox.style.display = 'none'; }
-
-    tabBar.innerHTML = platforms.map((p, i) => `
-      <button class="result-tab ${i===0?'active':''}" onclick="switchTab(${i})">${platformLabel(p)}</button>
-    `).join('');
-
-    panels.innerHTML = platforms.map((p, i) => {
-      const adText = result.ads?.[p] || 'Anúncio não gerado.';
-      return `
-        <div class="result-panel ${i===0?'active':''}" id="panel-${i}">
-          <div class="ad-output" id="adtext-${p}">${escapeHtml(adText)}</div>
-          <div class="ad-actions">
-            <button class="copy-btn" onclick="copyAd('${p}')">📋 Copiar</button>
-            <button class="whatsapp-btn" onclick="shareWhatsApp('${p}')">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.118.553 4.107 1.523 5.83L.057 23.5l5.752-1.507A11.95 11.95 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.885 0-3.641-.52-5.137-1.424l-.369-.219-3.813 1 1.018-3.72-.242-.382A9.96 9.96 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
-              WhatsApp
-            </button>
-          </div>
-        </div>`;
-    }).join('');
-
-    document.getElementById('results').classList.add('active');
-    document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-
-  function switchTab(idx) {
-    document.querySelectorAll('.result-tab').forEach((t, i) => t.classList.toggle('active', i===idx));
-    document.querySelectorAll('.result-panel').forEach((p, i) => p.classList.toggle('active', i===idx));
-  }
-
-  function copyAd(platform) {
-    const el = document.getElementById('adtext-' + platform);
-    navigator.clipboard.writeText(el.innerText).then(() => {
-      const btn = el.nextElementSibling.querySelector('.copy-btn');
-      btn.textContent = '✅ Copiado!';
-      setTimeout(() => btn.textContent = '📋 Copiar', 2000);
-    });
-  }
-
-  function shareWhatsApp(platform) {
-    const el = document.getElementById('adtext-' + platform);
-    const text = encodeURIComponent(el.innerText);
-    window.open(`https://wa.me/?text=${text}`, '_blank');
-  }
-
-  function escapeHtml(str) {
-    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  }
-
-  // History
-  function saveToHistory(item) {
-    const history = getHistory();
-    history.unshift(item);
-    const trimmed = history.slice(0, 20); // max 20 items
-    localStorage.setItem('anuncIA_history', JSON.stringify(trimmed));
-    renderHistory();
-  }
-
-  function getHistory() {
-    try { return JSON.parse(localStorage.getItem('anuncIA_history') || '[]'); }
-    catch { return []; }
-  }
-
-  function clearHistory() {
-    if (confirm('Tem certeza que quer apagar todo o histórico?')) {
-      localStorage.removeItem('anuncIA_history');
-      renderHistory();
-    }
-  }
-
-  function renderHistory() {
-    const history = getHistory();
-    const section = document.getElementById('historySection');
-    const list = document.getElementById('historyList');
-
-    if (history.length === 0) {
-      section.style.display = 'none';
-      return;
-    }
-
-    section.style.display = 'block';
-    list.innerHTML = `<div class="history-list">` + history.map((item, i) => `
-      <div class="history-card" onclick="loadFromHistory(${i})">
-        <div class="history-card-info">
-          <div class="history-card-title">${escapeHtml(item.description)}</div>
-          <div class="history-card-meta">${item.price} · ${item.date}</div>
-          <div class="history-card-platforms" style="margin-top:6px">
-            ${item.platforms.map(p => `<span class="history-platform-tag">${p}</span>`).join('')}
-          </div>
-        </div>
-        <div class="history-card-arrow">→</div>
-      </div>
-    `).join('') + `</div>`;
-  }
-
-  function loadFromHistory(index) {
-    const history = getHistory();
-    const item = history[index];
-    if (!item) return;
-
-    const result = { ads: item.ads, tips: item.tips };
-    renderResults(result, item.platforms);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-</script>
-</body>
-</html>
+        const el = document.getElementById('priceSuggestion');
+        el.innerHTML = `
+          <strong>💡 Preço sugerido: R$ ${result.preco_sugerido.toLocaleString('pt-BR')}</strong><br>
+          Faixa competitiva: R$ ${result.faixa_minima.toLocaleString('pt-BR
