@@ -689,7 +689,11 @@
     try {
       const q = query(collection(db, 'products'), where('userId', '==', currentUser.uid), orderBy('createdAt', 'desc'));
       const snap = await getDocs(q);
-      allProducts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      // Atribui numero sequencial baseado na data de criação (mais antigo = #1)
+      const sorted = [...docs].sort((a,b) => (a.createdAt||'') > (b.createdAt||'') ? 1 : -1);
+      sorted.forEach((p, i) => { p.num = i + 1; });
+      allProducts = docs.map(p => sorted.find(s => s.id === p.id));
       renderProducts();
       updateStats();
       renderReport();
@@ -705,12 +709,14 @@
 
     if (!nome) { alert('Digite o nome do produto!'); return; }
 
+    const nextNum = allProducts.length > 0 ? Math.max(...allProducts.map(p => p.num||0)) + 1 : 1;
+
     try {
       const docRef = await addDoc(collection(db, 'products'), {
-        userId: currentUser.uid, nome, custo, venda, status, data,
+        userId: currentUser.uid, nome, custo, venda, status, data, num: nextNum,
         createdAt: new Date().toISOString()
       });
-      allProducts.unshift({ id: docRef.id, userId: currentUser.uid, nome, custo, venda, status, data, createdAt: new Date().toISOString() });
+      allProducts.unshift({ id: docRef.id, userId: currentUser.uid, nome, custo, venda, status, data, num: nextNum, createdAt: new Date().toISOString() });
       document.getElementById('prodNome').value = '';
       document.getElementById('prodCusto').value = '';
       document.getElementById('prodVenda').value = '';
@@ -804,6 +810,10 @@
         const statusCls = `status-${p.status}`;
         return `
           <div class="product-card" style="margin-bottom:8px; border-left: 3px solid ${c.border};">
+            <div style="min-width:36px; text-align:center;">
+              <div style="font-family:'Syne',sans-serif; font-weight:700; font-size:0.7rem; color:var(--muted); line-height:1;">#</div>
+              <div style="font-family:'Syne',sans-serif; font-weight:800; font-size:1rem; color:${c.text}; line-height:1.2;">${p.num||'?'}</div>
+            </div>
             <div class="product-info">
               <div class="product-name">${escHtml(p.nome)}</div>
               <div class="product-meta">${p.data ? new Date(p.data).toLocaleDateString('pt-BR',{month:'short',year:'numeric'}) : ''}</div>
