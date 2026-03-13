@@ -1,593 +1,611 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Business JX</title>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
-:root {
-  --bg: #f9f8f6;
-  --white: #ffffff;
-  --border: #e8e5df;
-  --border2: #d6d2c8;
-  --text: #1c1917;
-  --muted: #78716c;
-  --light: #a8a29e;
-  --green: #15803d;
-  --green-bg: #f0fdf4;
-  --green-border: #bbf7d0;
-  --amber: #b45309;
-  --amber-bg: #fffbeb;
-  --amber-border: #fde68a;
-  --red: #b91c1c;
-  --red-bg: #fef2f2;
-  --blue: #1d4ed8;
-  --blue-bg: #eff6ff;
-  --blue-border: #bfdbfe;
-  --radius: 10px;
-  --shadow: 0 1px 2px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
-  --shadow-md: 0 4px 16px rgba(0,0,0,0.07), 0 1px 4px rgba(0,0,0,0.04);
-}
+:root{--bg:#f9f8f6;--w:#fff;--b:#e8e5df;--b2:#d6d2c8;--tx:#1c1917;--mu:#78716c;--li:#a8a29e;
+  --gr:#15803d;--gbg:#f0fdf4;--gbd:#bbf7d0;--am:#b45309;--abg:#fffbeb;--abd:#fde68a;
+  --re:#b91c1c;--rbg:#fef2f2;--bl:#1d4ed8;--bbg:#eff6ff;--bbd:#bfdbfe;
+  --rad:10px;--sh:0 1px 2px rgba(0,0,0,.06),0 1px 3px rgba(0,0,0,.04);--shm:0 4px 16px rgba(0,0,0,.07),0 1px 4px rgba(0,0,0,.04);}
 *{margin:0;padding:0;box-sizing:border-box;}
-html{font-size:16px;}
-body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-weight:400;line-height:1.5;min-height:100vh;}
-::-webkit-scrollbar{width:5px;}
-::-webkit-scrollbar-track{background:var(--bg);}
-::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;line-height:1.5;min-height:100vh;}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:var(--b2);border-radius:3px}
 
 /* ── AUTH ── */
-.auth-screen{position:fixed;inset:0;background:var(--bg);z-index:200;display:flex;align-items:center;justify-content:center;padding:24px;}
-.auth-screen.hidden{display:none;}
-.auth-card{background:var(--white);border:1px solid var(--border);border-radius:16px;padding:44px 40px;width:100%;max-width:390px;box-shadow:var(--shadow-md);}
-.auth-logo-wrap{text-align:center;margin-bottom:32px;}
-.auth-logo-main{font-family:'Instrument Serif',serif;font-size:2rem;color:var(--text);letter-spacing:-0.01em;display:block;line-height:1;}
-.auth-logo-tag{font-size:0.72rem;color:var(--light);letter-spacing:0.18em;text-transform:uppercase;font-weight:500;margin-top:6px;display:block;}
+.as{position:fixed;inset:0;background:var(--bg);z-index:200;display:flex;align-items:center;justify-content:center;padding:24px}
+.as.h{display:none}
+.ac{background:var(--w);border:1px solid var(--b);border-radius:16px;padding:44px 40px;width:100%;max-width:390px;box-shadow:var(--shm)}
+.alo{text-align:center;margin-bottom:32px}
+.aln{font-family:'Instrument Serif',serif;font-size:2rem;color:var(--tx);letter-spacing:-.01em;display:block;line-height:1}
+.alt{font-size:.72rem;color:var(--li);letter-spacing:.18em;text-transform:uppercase;font-weight:500;margin-top:6px;display:block}
+.ats{display:flex;border-bottom:1px solid var(--b);margin-bottom:26px}
+.at{flex:1;padding:9px;background:none;border:none;color:var(--li);font-family:'DM Sans',sans-serif;font-size:.84rem;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .18s}
+.at.on{color:var(--tx);border-bottom-color:var(--tx)}
+.fi{margin-bottom:12px}
+.fl{display:block;font-size:.7rem;font-weight:600;color:var(--mu);letter-spacing:.07em;text-transform:uppercase;margin-bottom:5px}
+.inp{width:100%;padding:10px 13px;background:var(--bg);border:1px solid var(--b);border-radius:8px;color:var(--tx);font-family:'DM Sans',sans-serif;font-size:.9rem;outline:none;transition:border-color .15s,box-shadow .15s}
+.inp:focus{border-color:var(--tx);box-shadow:0 0 0 3px rgba(28,25,23,.07);background:var(--w)}
+.inp::placeholder{color:var(--li)}
+select.inp{cursor:pointer;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath fill='%2378716c' d='M5 6L0 0h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 11px center;padding-right:28px}
+.bp{width:100%;padding:11px;background:var(--tx);color:#fff;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;transition:opacity .15s;margin-top:4px}
+.bp:hover{opacity:.85}
+.ae{font-size:.78rem;color:var(--re);margin-top:10px;text-align:center;min-height:18px}
 
-.auth-tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:26px;}
-.auth-tab{flex:1;padding:9px;background:none;border:none;color:var(--light);font-family:'DM Sans',sans-serif;font-size:0.84rem;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .18s;}
-.auth-tab.active{color:var(--text);border-bottom-color:var(--text);}
+/* ── NAV ── */
+.app{display:none}.app.v{display:block}
+nav{position:sticky;top:0;z-index:50;background:rgba(249,248,246,.93);backdrop-filter:blur(14px);border-bottom:1px solid var(--b)}
+.ni{max-width:1120px;margin:0 auto;padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:56px;gap:16px}
+.nl{display:flex;align-items:baseline;gap:9px;flex-shrink:0}
+.nln{font-family:'Instrument Serif',serif;font-size:1.25rem;color:var(--tx);letter-spacing:-.01em}
+.nlb{font-size:.65rem;font-weight:600;color:var(--mu);letter-spacing:.12em;text-transform:uppercase;border:1px solid var(--b2);padding:2px 7px;border-radius:20px}
+.nts{display:flex;gap:2px}
+.nt{padding:6px 14px;border-radius:7px;border:none;background:transparent;color:var(--mu);font-family:'DM Sans',sans-serif;font-weight:500;font-size:.82rem;cursor:pointer;transition:all .15s}
+.nt:hover{background:var(--b);color:var(--tx)}.nt.on{background:var(--tx);color:#fff}
+.nr{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.nu{font-size:.78rem;color:var(--mu);font-weight:500}
+.blo{padding:5px 11px;border-radius:7px;border:1px solid var(--b2);background:transparent;color:var(--mu);font-family:'DM Sans',sans-serif;font-size:.75rem;font-weight:500;cursor:pointer;transition:all .15s}
+.blo:hover{border-color:var(--tx);color:var(--tx)}
 
-.field{margin-bottom:12px;}
-.field-lbl{display:block;font-size:0.7rem;font-weight:600;color:var(--muted);letter-spacing:0.07em;text-transform:uppercase;margin-bottom:5px;}
-.field-inp{width:100%;padding:10px 13px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.9rem;outline:none;transition:border-color .15s,box-shadow .15s;}
-.field-inp:focus{border-color:var(--text);box-shadow:0 0 0 3px rgba(28,25,23,.07);background:var(--white);}
-.field-inp::placeholder{color:var(--light);}
-select.field-inp{cursor:pointer;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%2378716c' d='M5 6L0 0h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 11px center;padding-right:28px;}
+/* ── PAGES ── */
+.pg{display:none}.pg.on{display:block}
+.wr{max-width:1120px;margin:0 auto;padding:32px 24px 80px}
+.ph{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:24px;padding-bottom:18px;border-bottom:1px solid var(--b)}
+.pht{font-family:'Instrument Serif',serif;font-size:1.6rem;color:var(--tx);letter-spacing:-.02em;line-height:1}
+.phs{font-size:.8rem;color:var(--mu);margin-top:3px}
 
-.btn-primary{width:100%;padding:11px;background:var(--text);color:#fff;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.88rem;font-weight:600;cursor:pointer;transition:opacity .15s;margin-top:4px;letter-spacing:.01em;}
-.btn-primary:hover{opacity:.85;}
-.btn-primary:disabled{opacity:.4;cursor:not-allowed;}
-.auth-err{font-size:0.78rem;color:var(--red);margin-top:10px;text-align:center;min-height:18px;}
-
-/* ── APP / NAV ── */
-.app{display:none;}
-.app.visible{display:block;}
-nav{position:sticky;top:0;z-index:50;background:rgba(249,248,246,.93);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);}
-.nav-inner{max-width:1080px;margin:0 auto;padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:56px;gap:16px;}
-.nav-logo{display:flex;align-items:baseline;gap:9px;flex-shrink:0;}
-.nav-logo-name{font-family:'Instrument Serif',serif;font-size:1.25rem;color:var(--text);letter-spacing:-.01em;}
-.nav-logo-badge{font-size:0.65rem;font-weight:600;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;border:1px solid var(--border2);padding:2px 7px;border-radius:20px;}
-.nav-tabs{display:flex;gap:2px;}
-.nav-tab{padding:6px 14px;border-radius:7px;border:none;background:transparent;color:var(--muted);font-family:'DM Sans',sans-serif;font-weight:500;font-size:0.82rem;cursor:pointer;transition:all .15s;}
-.nav-tab:hover{background:var(--border);color:var(--text);}
-.nav-tab.active{background:var(--text);color:#fff;}
-.nav-right{display:flex;align-items:center;gap:10px;flex-shrink:0;}
-.nav-user{font-size:0.78rem;color:var(--muted);font-weight:500;}
-.btn-logout{padding:5px 11px;border-radius:7px;border:1px solid var(--border2);background:transparent;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:0.75rem;font-weight:500;cursor:pointer;transition:all .15s;}
-.btn-logout:hover{border-color:var(--text);color:var(--text);}
-
-/* ── LAYOUT ── */
-.page{display:none;}
-.page.active{display:block;}
-.wrap{max-width:1080px;margin:0 auto;padding:32px 24px 80px;}
-
-.ph{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:24px;padding-bottom:18px;border-bottom:1px solid var(--border);}
-.ph-title{font-family:'Instrument Serif',serif;font-size:1.6rem;color:var(--text);letter-spacing:-.02em;line-height:1;}
-.ph-sub{font-size:0.8rem;color:var(--muted);margin-top:3px;}
-
-/* ── STAT BOXES ── */
-.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:20px;}
-.sbox{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow);}
-.sbox-lbl{font-size:0.68rem;font-weight:600;color:var(--light);text-transform:uppercase;letter-spacing:.09em;margin-bottom:5px;}
-.sbox-val{font-family:'Instrument Serif',serif;font-size:1.45rem;color:var(--text);line-height:1;letter-spacing:-.01em;}
-.sbox-val.g{color:var(--green);}
-.sbox-val.b{color:var(--blue);}
-.sbox-val.a{color:var(--amber);}
-.sbox-sub{font-size:0.71rem;color:var(--light);margin-top:4px;}
+/* ── STATS ── */
+.sr{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:20px}
+.sb{background:var(--w);border:1px solid var(--b);border-radius:var(--rad);padding:16px 18px;box-shadow:var(--sh)}
+.sbl{font-size:.68rem;font-weight:600;color:var(--li);text-transform:uppercase;letter-spacing:.09em;margin-bottom:5px}
+.sbv{font-family:'Instrument Serif',serif;font-size:1.45rem;color:var(--tx);line-height:1;letter-spacing:-.01em}
+.sbv.g{color:var(--gr)}.sbv.b{color:var(--bl)}.sbv.a{color:var(--am)}
+.sbs{font-size:.71rem;color:var(--li);margin-top:4px}
 
 /* ── CARD ── */
-.card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:12px;overflow:hidden;}
-.card-hd{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
-.card-hd-title{font-size:0.84rem;font-weight:600;color:var(--text);}
-.card-body{padding:18px 20px;}
+.cd{background:var(--w);border:1px solid var(--b);border-radius:var(--rad);box-shadow:var(--sh);margin-bottom:12px;overflow:hidden}
+.cdh{padding:14px 20px;border-bottom:1px solid var(--b);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.cdht{font-size:.84rem;font-weight:600;color:var(--tx)}
+.cdb{padding:18px 20px}
 
-/* ── ADD FORM ── */
-.form-row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr auto;gap:8px;align-items:end;}
-.form-row .fc{display:flex;flex-direction:column;gap:4px;}
-.form-lbl{font-size:0.67rem;font-weight:600;color:var(--light);text-transform:uppercase;letter-spacing:.07em;}
-.btn-add{height:38px;padding:0 18px;background:var(--text);color:#fff;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.82rem;font-weight:600;cursor:pointer;white-space:nowrap;transition:opacity .15s;}
-.btn-add:hover{opacity:.85;}
+/* ── FORM ADD ── */
+.fr{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr 1fr auto;gap:8px;align-items:end}
+.fc{display:flex;flex-direction:column;gap:4px}
+.fla{font-size:.67rem;font-weight:600;color:var(--li);text-transform:uppercase;letter-spacing:.07em}
+.ba{height:38px;padding:0 18px;background:var(--tx);color:#fff;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;white-space:nowrap;transition:opacity .15s}
+.ba:hover{opacity:.85}
 
 /* ── FILTERS ── */
-.filter-row{display:flex;gap:6px;flex-wrap:wrap;}
-.fchip{padding:4px 13px;border-radius:20px;border:1px solid var(--border2);background:transparent;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:0.75rem;font-weight:500;cursor:pointer;transition:all .15s;}
-.fchip:hover{border-color:var(--text);color:var(--text);}
-.fchip.active{background:var(--text);border-color:var(--text);color:#fff;}
+.frow{display:flex;gap:6px;flex-wrap:wrap}
+.fc2{padding:4px 13px;border-radius:20px;border:1px solid var(--b2);background:transparent;color:var(--mu);font-family:'DM Sans',sans-serif;font-size:.75rem;font-weight:500;cursor:pointer;transition:all .15s}
+.fc2.on{background:var(--tx);border-color:var(--tx);color:#fff}
 
-/* ── BRAND GROUP ── */
-.brand-group{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:6px;}
-.brand-hd{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--bg);cursor:pointer;transition:background .12s;gap:12px;}
-.brand-hd:hover{background:var(--border);}
-.brand-hd-l{display:flex;align-items:center;gap:10px;}
-.brand-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
-.brand-nm{font-size:0.82rem;font-weight:600;color:var(--text);}
-.brand-ct{font-size:0.72rem;color:var(--muted);}
-.brand-hd-r{display:flex;align-items:center;gap:20px;}
-.brand-stat .bsl{font-size:0.65rem;color:var(--light);text-transform:uppercase;letter-spacing:.06em;}
-.brand-stat .bsv{font-size:0.82rem;font-weight:600;color:var(--text);}
-.brand-arr{font-size:0.65rem;color:var(--muted);transition:transform .2s;}
-.brand-arr.open{transform:rotate(180deg);}
+/* ── BRAND GROUPS ── */
+.bg{border:1px solid var(--b);border-radius:var(--rad);overflow:hidden;margin-bottom:6px}
+.bgh{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--bg);cursor:pointer;transition:background .12s;gap:12px}
+.bgh:hover{background:var(--b)}
+.bghl{display:flex;align-items:center;gap:10px}
+.bdo{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.bnm{font-size:.82rem;font-weight:600;color:var(--tx)}
+.bct{font-size:.72rem;color:var(--mu)}
+.bghr{display:flex;align-items:center;gap:20px}
+.bst .bsl{font-size:.65rem;color:var(--li);text-transform:uppercase;letter-spacing:.06em}
+.bst .bsv{font-size:.82rem;font-weight:600;color:var(--tx)}
+.barr{font-size:.65rem;color:var(--mu);transition:transform .2s}
 
 /* ── TABLE ── */
-.ptable{width:100%;border-collapse:collapse;font-size:0.8rem;}
-.ptable th{text-align:left;padding:7px 12px;font-size:0.67rem;font-weight:600;color:var(--light);text-transform:uppercase;letter-spacing:.08em;background:var(--bg);border-bottom:1px solid var(--border);}
-.ptable td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:middle;color:var(--text);}
-.ptable tr:last-child td{border-bottom:none;}
-.ptable tbody tr:hover td{background:#faf9f7;}
-.nbadge{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:5px;background:var(--bg);border:1px solid var(--border);font-size:0.68rem;font-weight:600;color:var(--light);}
-.pname{font-weight:500;line-height:1.3;}
-.pdate{font-size:0.69rem;color:var(--light);margin-top:1px;}
-.pcost{color:var(--muted);}
-.psell{font-weight:600;}
-.pprofit{font-weight:600;}
-.pprofit.pos{color:var(--green);}
-.pprofit.neg{color:var(--red);}
+.tb{width:100%;border-collapse:collapse;font-size:.8rem}
+.tb th{text-align:left;padding:7px 12px;font-size:.67rem;font-weight:600;color:var(--li);text-transform:uppercase;letter-spacing:.08em;background:var(--bg);border-bottom:1px solid var(--b)}
+.tb td{padding:9px 12px;border-bottom:1px solid var(--b);vertical-align:middle}
+.tb tr:last-child td{border-bottom:none}
+.tb tbody tr:hover td{background:#faf9f7}
+.nb{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:5px;background:var(--bg);border:1px solid var(--b);font-size:.68rem;font-weight:600;color:var(--li)}
+.pn{font-weight:500;line-height:1.3}
+.pd{font-size:.69rem;color:var(--li);margin-top:1px}
+.ps{font-weight:600}
+.pp.pos{color:var(--gr)}.pp.neg{color:var(--re)}
+.bv{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:.69rem;font-weight:600;white-space:nowrap}
+.sv{background:var(--gbg);color:var(--gr);border:1px solid var(--gbd)}
+.se{background:#ecfdf5;color:#065f46;border:1px solid #6ee7b7}
+.sel{padding:3px 7px;font-size:.72rem;border:1px solid var(--b2);border-radius:6px;background:var(--w);color:var(--tx);cursor:pointer;outline:none;font-family:'DM Sans',sans-serif}
+.bed{width:26px;height:26px;border-radius:5px;border:1px solid var(--b);background:transparent;color:var(--li);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.8rem;transition:all .15s}
+.bed:hover{border-color:var(--bl);color:var(--bl);background:var(--bbg)}
+.bdl{width:26px;height:26px;border-radius:5px;border:1px solid var(--b);background:transparent;color:var(--li);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.75rem;transition:all .15s}
+.bdl:hover{border-color:var(--re);color:var(--re);background:var(--rbg)}
+.est{background:#ecfdf5;color:#065f46}
+.banner{background:var(--gbg);border:1px solid var(--gbd);border-radius:var(--rad);padding:12px 18px;display:flex;align-items:center;gap:10px;margin-bottom:16px;font-size:.8rem;color:var(--gr);font-weight:500}
 
-.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:0.69rem;font-weight:600;white-space:nowrap;}
-.bv{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border);}
-.ba{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-border);}
-.bp{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-border);}
+/* ── EDIT MODAL ── */
+.mo{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:24px}
+.mo.h{display:none}
+.moo{position:absolute;inset:0;background:rgba(0,0,0,.4);backdrop-filter:blur(4px)}
+.mc{position:relative;background:var(--w);border-radius:16px;width:100%;max-width:520px;box-shadow:var(--shm);overflow:hidden}
+.mch{padding:20px 24px 16px;border-bottom:1px solid var(--b);display:flex;align-items:center;justify-content:space-between}
+.mct{font-family:'Instrument Serif',serif;font-size:1.2rem;color:var(--tx)}
+.mcl{width:30px;height:30px;border-radius:7px;border:1px solid var(--b);background:transparent;color:var(--mu);cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.mcl:hover{background:var(--b);color:var(--tx)}
+.mcb{padding:20px 24px 24px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.mcb .full{grid-column:1/-1}
+.mca{padding:0 24px 20px;display:flex;justify-content:flex-end;gap:8px;border-top:1px solid var(--b)}
+.bcan{padding:9px 18px;border:1px solid var(--b2);border-radius:8px;background:transparent;color:var(--mu);font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;transition:all .15s}
+.bcan:hover{border-color:var(--tx);color:var(--tx)}
+.bsav{padding:9px 22px;background:var(--tx);color:#fff;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;transition:opacity .15s}
+.bsav:hover{opacity:.85}
 
-.ssel{padding:3px 7px;font-size:0.72rem;border:1px solid var(--border2);border-radius:6px;background:var(--white);color:var(--text);cursor:pointer;outline:none;font-family:'DM Sans',sans-serif;}
-.ssel:focus{border-color:var(--text);}
-.bdel{width:26px;height:26px;border-radius:5px;border:1px solid var(--border);background:transparent;color:var(--light);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.75rem;transition:all .15s;}
-.bdel:hover{border-color:var(--red);color:var(--red);background:var(--red-bg);}
+/* ── INSIGHTS ── */
+.ig{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:12px}
+.ib{background:var(--w);border:1px solid var(--b);border-radius:var(--rad);padding:16px 18px;box-shadow:var(--sh);display:flex;align-items:flex-start;gap:12px}
+.ii{font-size:1.4rem;flex-shrink:0;margin-top:2px}
+.il{font-size:.7rem;font-weight:600;color:var(--li);text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px}
+.iv{font-family:'Instrument Serif',serif;font-size:1.3rem;color:var(--tx);line-height:1}
+.in{font-size:.72rem;color:var(--mu);margin-top:3px}
+.cg{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.cc{background:var(--w);border:1px solid var(--b);border-radius:var(--rad);box-shadow:var(--sh);overflow:hidden}
+.cc.full{grid-column:1/-1}
+.ch{padding:16px 20px 0}
+.ct{font-size:.84rem;font-weight:600;color:var(--tx)}
+.cs{font-size:.72rem;color:var(--li);margin-top:2px}
+.cw{padding:14px 16px 18px;position:relative;height:260px}
+.cw.tall{height:310px}
 
-.empty-state{text-align:center;padding:48px;color:var(--light);}
-.empty-state .ei{font-size:1.8rem;opacity:.4;margin-bottom:8px;}
-.empty-state .et{font-size:0.84rem;}
+/* ── ADS ── */
+.aps{background:var(--w);border:1px solid var(--b);border-radius:var(--rad);padding:12px 18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px;box-shadow:var(--sh)}
+.api{flex:1;min-width:180px;padding:7px 11px;border:1px solid var(--b2);border-radius:7px;font-family:'DM Sans',sans-serif;font-size:.8rem;outline:none;background:var(--bg);color:var(--tx);transition:border-color .15s}
+.api:focus{border-color:var(--tx);background:var(--w)}
+.api::placeholder{color:var(--li)}
+.bsm{padding:7px 14px;background:var(--tx);color:#fff;border:none;border-radius:7px;font-size:.78rem;font-weight:600;cursor:pointer;white-space:nowrap;transition:opacity .15s}
+.bsm:hover{opacity:.85}
+.ksl{font-size:.73rem;color:var(--gr);font-weight:600;display:none}
+.ksl.on{display:inline}
+.sec{background:var(--w);border:1px solid var(--b);border-radius:var(--rad);padding:20px;margin-bottom:10px;box-shadow:var(--sh)}
+.secl{font-size:.67rem;font-weight:600;color:var(--li);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.secl::after{content:'';flex:1;height:1px;background:var(--b)}
+textarea.inp{resize:vertical;min-height:120px;line-height:1.65;font-size:.86rem}
+.pw{display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap}
+.pr{position:relative;flex:1;min-width:140px}
+.pp2{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--mu);font-size:.85rem;pointer-events:none}
+input[type=number].inp{padding-left:32px}
+.bsg{padding:10px 16px;border:1px solid var(--b2);background:var(--bg);color:var(--tx);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .15s;height:38px}
+.bsg:hover{background:var(--tx);color:#fff;border-color:var(--tx)}
+.bsg:disabled{opacity:.4;cursor:not-allowed}
+.ph2{margin-top:8px;padding:9px 13px;background:var(--gbg);border:1px solid var(--gbd);border-radius:7px;font-size:.79rem;color:var(--gr);display:none}
+.ph2.on{display:block}
+.plg{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.plb{padding:11px;border:1px solid var(--b2);border-radius:8px;background:var(--bg);color:var(--mu);font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:500;cursor:pointer;text-align:center;transition:all .15s}
+.plb.on{border-color:var(--tx);background:var(--tx);color:#fff}
+.bge{width:100%;padding:13px;background:var(--tx);color:#fff;border:none;border-radius:var(--rad);font-family:'DM Sans',sans-serif;font-size:.9rem;font-weight:600;cursor:pointer;transition:opacity .15s}
+.bge:hover{opacity:.86}.bge:disabled{opacity:.4;cursor:not-allowed}
+.lw{display:none;text-align:center;padding:40px}.lw.on{display:block}
+.sp{width:32px;height:32px;border:2px solid var(--b);border-top-color:var(--tx);border-radius:50%;animation:sp .7s linear infinite;margin:0 auto 12px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.lm2{font-size:.82rem;color:var(--mu)}.ls{font-size:.78rem;color:var(--tx);font-weight:500;margin-top:3px}
+.res{display:none;margin-top:12px}.res.on{display:block}
+.tipb{background:var(--abg);border:1px solid var(--abd);border-radius:8px;padding:9px 13px;font-size:.78rem;color:var(--am);margin-bottom:12px;display:none}
+.rtb{display:flex;gap:5px;margin-bottom:10px;flex-wrap:wrap}
+.rt{padding:5px 14px;border-radius:20px;border:1px solid var(--b2);background:transparent;color:var(--mu);font-family:'DM Sans',sans-serif;font-size:.76rem;font-weight:500;cursor:pointer;transition:all .15s}
+.rt.on{background:var(--tx);border-color:var(--tx);color:#fff}
+.rp{display:none}.rp.on{display:block}
+.ao{background:var(--bg);border:1px solid var(--b);border-radius:8px;padding:18px;font-size:.86rem;line-height:1.8;white-space:pre-wrap;word-break:break-word}
+.rac{display:flex;gap:7px;margin-top:10px;flex-wrap:wrap}
+.bcp{padding:7px 16px;border:1px solid var(--b2);background:var(--w);color:var(--tx);border-radius:7px;font-size:.77rem;font-weight:600;cursor:pointer;transition:all .15s}
+.bcp:hover{background:var(--tx);color:#fff;border-color:var(--tx)}
+.bwa{padding:7px 16px;border:1px solid var(--gbd);background:var(--gbg);color:var(--gr);border-radius:7px;font-size:.77rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .15s}
+.bwa:hover{background:var(--gr);color:#fff;border-color:var(--gr)}
 
-/* ── ADS PAGE ── */
-.api-strip{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:12px 18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px;box-shadow:var(--shadow);}
-.api-lbl{font-size:0.78rem;font-weight:600;color:var(--text);flex-shrink:0;}
-.api-inp{flex:1;min-width:180px;padding:7px 11px;border:1px solid var(--border2);border-radius:7px;font-family:'DM Sans',sans-serif;font-size:0.8rem;outline:none;background:var(--bg);color:var(--text);transition:border-color .15s;}
-.api-inp:focus{border-color:var(--text);background:var(--white);}
-.api-inp::placeholder{color:var(--light);}
-.btn-sm{padding:7px 14px;background:var(--text);color:#fff;border:none;border-radius:7px;font-size:0.78rem;font-weight:600;cursor:pointer;white-space:nowrap;transition:opacity .15s;}
-.btn-sm:hover{opacity:.85;}
-.saved-lbl{font-size:0.73rem;color:var(--green);font-weight:600;display:none;}
-.saved-lbl.on{display:inline;}
-
-.sec{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:10px;box-shadow:var(--shadow);}
-.sec-lbl{font-size:0.67rem;font-weight:600;color:var(--light);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
-.sec-lbl::after{content:'';flex:1;height:1px;background:var(--border);}
-textarea.field-inp{resize:vertical;min-height:120px;line-height:1.65;font-size:0.86rem;}
-
-.price-wrap{display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap;}
-.price-rel{position:relative;flex:1;min-width:140px;}
-.price-pre{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:0.85rem;pointer-events:none;}
-input[type="number"].field-inp{padding-left:32px;}
-.btn-suggest{padding:10px 16px;border:1px solid var(--border2);background:var(--bg);color:var(--text);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.8rem;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .15s;height:38px;}
-.btn-suggest:hover{background:var(--text);color:#fff;border-color:var(--text);}
-.btn-suggest:disabled{opacity:.4;cursor:not-allowed;}
-.price-hint{margin-top:8px;padding:9px 13px;background:var(--green-bg);border:1px solid var(--green-border);border-radius:7px;font-size:0.79rem;color:var(--green);display:none;}
-.price-hint.on{display:block;}
-
-.plat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;}
-.plat-btn{padding:11px;border:1px solid var(--border2);border-radius:8px;background:var(--bg);color:var(--muted);font-family:'DM Sans',sans-serif;font-size:0.8rem;font-weight:500;cursor:pointer;text-align:center;transition:all .15s;}
-.plat-btn:hover{border-color:var(--text);color:var(--text);}
-.plat-btn.active{border-color:var(--text);background:var(--text);color:#fff;}
-
-.btn-gen{width:100%;padding:13px;background:var(--text);color:#fff;border:none;border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:0.9rem;font-weight:600;cursor:pointer;transition:opacity .15s;letter-spacing:.01em;}
-.btn-gen:hover{opacity:.86;}
-.btn-gen:disabled{opacity:.4;cursor:not-allowed;}
-
-.loader-wrap{display:none;text-align:center;padding:40px;}
-.loader-wrap.on{display:block;}
-.spin{width:32px;height:32px;border:2px solid var(--border);border-top-color:var(--text);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 12px;}
-@keyframes spin{to{transform:rotate(360deg);}}
-.load-msg{font-size:0.82rem;color:var(--muted);}
-.load-step{font-size:0.78rem;color:var(--text);font-weight:500;margin-top:3px;}
-
-.results{display:none;margin-top:12px;}
-.results.on{display:block;}
-.tip-box{background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:8px;padding:9px 13px;font-size:0.78rem;color:var(--amber);margin-bottom:12px;display:none;}
-.rtabs{display:flex;gap:5px;margin-bottom:10px;flex-wrap:wrap;}
-.rtab{padding:5px 14px;border-radius:20px;border:1px solid var(--border2);background:transparent;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:0.76rem;font-weight:500;cursor:pointer;transition:all .15s;}
-.rtab.active{background:var(--text);border-color:var(--text);color:#fff;}
-.rpanel{display:none;}
-.rpanel.active{display:block;}
-.ad-out{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:18px;font-size:0.86rem;line-height:1.8;white-space:pre-wrap;word-break:break-word;}
-.ad-acts{display:flex;gap:7px;margin-top:10px;flex-wrap:wrap;}
-.btn-copy{padding:7px 16px;border:1px solid var(--border2);background:var(--white);color:var(--text);border-radius:7px;font-size:0.77rem;font-weight:600;cursor:pointer;transition:all .15s;}
-.btn-copy:hover{background:var(--text);color:#fff;border-color:var(--text);}
-.btn-wa{padding:7px 16px;border:1px solid var(--green-border);background:var(--green-bg);color:var(--green);border-radius:7px;font-size:0.77rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .15s;}
-.btn-wa:hover{background:var(--green);color:#fff;border-color:var(--green);}
-
-@media(max-width:680px){
-  .form-row{grid-template-columns:1fr 1fr;}
-  .form-row .fc:first-child{grid-column:1/-1;}
-  .nav-tabs{display:none;}
-  .stats-row{grid-template-columns:1fr 1fr;}
-  .ptable th:nth-child(3),.ptable td:nth-child(3){display:none;}
+@media(max-width:700px){
+  .fr{grid-template-columns:1fr 1fr}
+  .fr .fc:first-child{grid-column:1/-1}
+  .nts{display:none}
+  .sr{grid-template-columns:1fr 1fr}
+  .cg{grid-template-columns:1fr}
+  .mcb{grid-template-columns:1fr}
 }
 </style>
 </head>
 <body>
 
 <!-- AUTH -->
-<div class="auth-screen" id="authScreen">
-  <div class="auth-card">
-    <div class="auth-logo-wrap">
-      <span class="auth-logo-main">Business JX</span>
-      <span class="auth-logo-tag">Gestão de Notebooks</span>
+<div class="as" id="AS">
+  <div class="ac">
+    <div class="alo"><span class="aln">Business JX</span><span class="alt">Gestão de Notebooks</span></div>
+    <div class="ats">
+      <button class="at on" onclick="swAt('login')">Entrar</button>
+      <button class="at" onclick="swAt('reg')">Cadastrar</button>
     </div>
-    <div class="auth-tabs">
-      <button class="auth-tab active" onclick="switchAuthTab('login')">Entrar</button>
-      <button class="auth-tab" onclick="switchAuthTab('register')">Cadastrar</button>
+    <div id="fLogin">
+      <div class="fi"><label class="fl">E-mail</label><input class="inp" type="email" id="lE" placeholder="seu@email.com"></div>
+      <div class="fi"><label class="fl">Senha</label><input class="inp" type="password" id="lP" placeholder="••••••••"></div>
+      <button class="bp" onclick="doLogin()">Entrar</button>
     </div>
-    <div id="formLogin">
-      <div class="field"><label class="field-lbl">E-mail</label><input class="field-inp" type="email" id="loginEmail" placeholder="seu@email.com"></div>
-      <div class="field"><label class="field-lbl">Senha</label><input class="field-inp" type="password" id="loginPassword" placeholder="••••••••"></div>
-      <button class="btn-primary" onclick="doLogin()">Entrar</button>
+    <div id="fReg" style="display:none">
+      <div class="fi"><label class="fl">Nome</label><input class="inp" type="text" id="rN" placeholder="Seu nome"></div>
+      <div class="fi"><label class="fl">E-mail</label><input class="inp" type="email" id="rE" placeholder="seu@email.com"></div>
+      <div class="fi"><label class="fl">Senha</label><input class="inp" type="password" id="rP" placeholder="Mínimo 6 caracteres"></div>
+      <button class="bp" onclick="doReg()">Criar conta</button>
     </div>
-    <div id="formReg" style="display:none">
-      <div class="field"><label class="field-lbl">Nome</label><input class="field-inp" type="text" id="regName" placeholder="Seu nome"></div>
-      <div class="field"><label class="field-lbl">E-mail</label><input class="field-inp" type="email" id="regEmail" placeholder="seu@email.com"></div>
-      <div class="field"><label class="field-lbl">Senha</label><input class="field-inp" type="password" id="regPassword" placeholder="Mínimo 6 caracteres"></div>
-      <button class="btn-primary" onclick="doRegister()">Criar conta</button>
-    </div>
-    <div class="auth-err" id="authErr"></div>
+    <div class="ae" id="AE"></div>
   </div>
 </div>
 
 <!-- APP -->
-<div class="app" id="mainApp">
+<div class="app" id="APP">
   <nav>
-    <div class="nav-inner">
-      <div class="nav-logo">
-        <span class="nav-logo-name">Business JX</span>
-        <span class="nav-logo-badge">Notebooks</span>
+    <div class="ni">
+      <div class="nl"><span class="nln">Business JX</span><span class="nlb">Notebooks</span></div>
+      <div class="nts">
+        <button class="nt on" onclick="sp2('vendas')">Vendas</button>
+        <button class="nt" onclick="sp2('insights')">Insights</button>
+        <button class="nt" onclick="sp2('anuncios')">Anúncios IA</button>
       </div>
-      <div class="nav-tabs">
-        <button class="nav-tab active" onclick="showPage('vendas')">Vendas</button>
-        <button class="nav-tab" onclick="showPage('anuncios')">Anúncios IA</button>
-      </div>
-      <div class="nav-right">
-        <span class="nav-user" id="navUser"></span>
-        <button class="btn-logout" onclick="doLogout()">Sair</button>
-      </div>
+      <div class="nr"><span class="nu" id="NU"></span><button class="blo" onclick="doLogout()">Sair</button></div>
     </div>
   </nav>
 
   <!-- VENDAS -->
-  <div class="page active" id="page-vendas">
-    <div class="wrap">
+  <div class="pg on" id="pg-vendas">
+    <div class="wr">
       <div class="ph">
-        <div>
-          <div class="ph-title">Minhas Vendas</div>
-          <div class="ph-sub">Estoque e resultados em tempo real</div>
-        </div>
-        <div class="filter-row">
-          <button class="fchip active" onclick="setFilter('todos',this)">Todos</button>
-          <button class="fchip" onclick="setFilter('Anunciado',this)">Anunciados</button>
-          <button class="fchip" onclick="setFilter('Vendido',this)">Vendidos</button>
-          <button class="fchip" onclick="setFilter('Pausado',this)">Pausados</button>
+        <div><div class="pht">Minhas Vendas</div><div class="phs">Estoque e resultados em tempo real</div></div>
+        <div class="frow">
+          <button class="fc2 on" onclick="setF('todos',this)">Todos</button>
+          <button class="fc2" onclick="setF('Estoque',this)">Em estoque</button>
+          <button class="fc2" onclick="setF('Vendido',this)">Vendidos</button>
         </div>
       </div>
-
-      <div class="stats-row">
-        <div class="sbox"><div class="sbox-lbl">Receita</div><div class="sbox-val g" id="sReceita">R$ 0</div><div class="sbox-sub" id="sReceitaSub">0 vendas</div></div>
-        <div class="sbox"><div class="sbox-lbl">Lucro total</div><div class="sbox-val" id="sLucro">R$ 0</div><div class="sbox-sub" id="sMargem">—</div></div>
-        <div class="sbox"><div class="sbox-lbl">Em estoque</div><div class="sbox-val b" id="sEstoque">0</div><div class="sbox-sub" id="sEstoqueVal">R$ 0 potencial</div></div>
-        <div class="sbox"><div class="sbox-lbl">Pausados</div><div class="sbox-val a" id="sPausados">0</div><div class="sbox-sub">para revisão</div></div>
+      <div class="banner">📊 <strong>228 produtos</strong> importados da planilha — 201 vendidos · 27 em estoque</div>
+      <div class="sr">
+        <div class="sb"><div class="sbl">Receita total</div><div class="sbv g" id="sRec">—</div><div class="sbs" id="sRecS">—</div></div>
+        <div class="sb"><div class="sbl">Lucro total</div><div class="sbv" id="sLuc">—</div><div class="sbs" id="sMgm">—</div></div>
+        <div class="sb"><div class="sbl">Em estoque</div><div class="sbv b" id="sEst">—</div><div class="sbs" id="sEstV">—</div></div>
+        <div class="sb"><div class="sbl">Potencial</div><div class="sbv a" id="sPot">—</div><div class="sbs">se vender tudo</div></div>
       </div>
-
-      <div class="card">
-        <div class="card-hd"><span class="card-hd-title">Adicionar produto</span></div>
-        <div class="card-body">
-          <div class="form-row">
-            <div class="fc" style="grid-column:1/-1">
-              <input class="field-inp" type="text" id="pNome" placeholder="Dell Latitude i5 10ª | SSD 256GB | 8GB RAM | Windows 11">
-            </div>
-            <div class="fc"><span class="form-lbl">Custo R$</span><input class="field-inp" type="number" id="pCusto" placeholder="0" min="0"></div>
-            <div class="fc"><span class="form-lbl">Venda R$</span><input class="field-inp" type="number" id="pVenda" placeholder="0" min="0"></div>
-            <div class="fc"><span class="form-lbl">Status</span>
-              <select class="field-inp" id="pStatus">
-                <option value="Anunciado">Anunciado</option>
-                <option value="Vendido">Vendido</option>
-                <option value="Pausado">Pausado</option>
-              </select>
-            </div>
-            <div class="fc"><span class="form-lbl">Data</span><input class="field-inp" type="date" id="pData"></div>
-            <div class="fc"><span class="form-lbl" style="opacity:0">.</span><button class="btn-add" onclick="addProduct()">+ Adicionar</button></div>
+      <div class="cd">
+        <div class="cdh"><span class="cdht">Adicionar produto</span></div>
+        <div class="cdb">
+          <div class="fr">
+            <div class="fc" style="grid-column:1/-1"><input class="inp" type="text" id="pN" placeholder="Dell Latitude i5 10ª · SSD 256GB · 8GB RAM"></div>
+            <div class="fc"><span class="fla">Custo R$</span><input class="inp" type="number" id="pC" placeholder="0" min="0"></div>
+            <div class="fc"><span class="fla">Venda R$</span><input class="inp" type="number" id="pV" placeholder="0" min="0"></div>
+            <div class="fc"><span class="fla">Status</span><select class="inp" id="pS"><option value="Estoque">Estoque</option><option value="Vendido">Vendido</option></select></div>
+            <div class="fc"><span class="fla">Compra</span><input class="inp" type="month" id="pDC"></div>
+            <div class="fc"><span class="fla">Venda</span><input class="inp" type="month" id="pDV"></div>
+            <div class="fc"><span class="fla" style="opacity:0">.</span><button class="ba" onclick="addProd()">+ Adicionar</button></div>
           </div>
         </div>
       </div>
+      <div class="cd">
+        <div class="cdh"><span class="cdht">Produtos por marca</span><span style="font-size:.76rem;color:var(--li)" id="plbl">—</span></div>
+        <div id="PL"><div style="text-align:center;padding:48px;color:var(--li)">Carregando...</div></div>
+      </div>
+    </div>
+  </div>
 
-      <div class="card">
-        <div class="card-hd">
-          <span class="card-hd-title">Produtos por marca</span>
-          <span style="font-size:.76rem;color:var(--light);" id="prodCountLbl">—</span>
-        </div>
-        <div id="prodList"><div class="empty-state"><div class="ei">📦</div><div class="et">Nenhum produto cadastrado</div></div></div>
+  <!-- INSIGHTS -->
+  <div class="pg" id="pg-insights">
+    <div class="wr">
+      <div class="ph"><div><div class="pht">Insights</div><div class="phs">Análise real da operação — dados direto da planilha</div></div></div>
+      <div class="ig">
+        <div class="ib"><div class="ii">📈</div><div><div class="il">Melhor mês</div><div class="iv" id="iBM">—</div><div class="in" id="iBMN">—</div></div></div>
+        <div class="ib"><div class="ii">💰</div><div><div class="il">Lucro total</div><div class="iv" id="iLT">—</div><div class="in" id="iLTN">—</div></div></div>
+        <div class="ib"><div class="ii">📊</div><div><div class="il">Margem média</div><div class="iv" id="iMG">—</div><div class="in">sobre receita total</div></div></div>
+        <div class="ib"><div class="ii">🏆</div><div><div class="il">Marca líder</div><div class="iv" id="iMarca">—</div><div class="in" id="iMarcaN">—</div></div></div>
+        <div class="ib"><div class="ii">🎯</div><div><div class="il">Ticket médio</div><div class="iv" id="iTk">—</div><div class="in">por notebook vendido</div></div></div>
+        <div class="ib"><div class="ii">📦</div><div><div class="il">Em estoque</div><div class="iv b" id="iEst">—</div><div class="in" id="iEstN">—</div></div></div>
+      </div>
+      <div class="cg">
+        <div class="cc full"><div class="ch"><div class="ct">Receita vs Lucro por mês (R$)</div><div class="cs">Evolução financeira mensal — sem salários</div></div><div class="cw tall"><canvas id="cRL"></canvas></div></div>
+        <div class="cc"><div class="ch"><div class="ct">Unidades vendidas por mês</div><div class="cs">Volume de notebooks</div></div><div class="cw"><canvas id="cQ"></canvas></div></div>
+        <div class="cc"><div class="ch"><div class="ct">Lucro médio por marca (R$)</div><div class="cs">Qual marca rende mais por venda</div></div><div class="cw"><canvas id="cLM"></canvas></div></div>
+        <div class="cc full"><div class="ch"><div class="ct">Distribuição do estoque por marca</div><div class="cs">Total histórico de produtos</div></div><div class="cw"><canvas id="cMarca"></canvas></div></div>
       </div>
     </div>
   </div>
 
   <!-- ANÚNCIOS -->
-  <div class="page" id="page-anuncios">
-    <div class="wrap">
-      <div class="ph">
-        <div><div class="ph-title">Gerar Anúncio</div><div class="ph-sub">IA cria o texto ideal para cada plataforma</div></div>
+  <div class="pg" id="pg-anuncios">
+    <div class="wr">
+      <div class="ph"><div><div class="pht">Gerar Anúncio</div><div class="phs">IA cria o texto ideal para cada plataforma</div></div></div>
+      <div class="aps">
+        <span style="font-size:.78rem;font-weight:600;color:var(--tx)">🔑 Chave Gemini</span>
+        <input class="api inp" type="password" id="KI" placeholder="AIzaSy...">
+        <button class="bsm" onclick="saveKey()">Salvar</button>
+        <span class="ksl" id="KS">✓ Salva</span>
+        <span style="font-size:.7rem;color:var(--li)">Grátis em aistudio.google.com</span>
       </div>
-
-      <div class="api-strip">
-        <span class="api-lbl">🔑 Chave Gemini</span>
-        <input class="api-inp" type="password" id="apiKeyInp" placeholder="AIzaSy...">
-        <button class="btn-sm" onclick="saveKey()">Salvar</button>
-        <span class="saved-lbl" id="keySaved">✓ Salva</span>
-        <span style="font-size:.7rem;color:var(--light);">Grátis em aistudio.google.com</span>
-      </div>
-
+      <div class="sec"><div class="secl">1 · Descrição do produto</div><textarea class="inp" id="aDesc" placeholder="Dell Latitude i5 10ª geração, 8GB RAM, SSD 256GB, Windows 11..."></textarea></div>
       <div class="sec">
-        <div class="sec-lbl">1 · Descrição do produto</div>
-        <textarea class="field-inp" id="prodDesc" placeholder="Dell Latitude i5 10ª geração, 8GB RAM, SSD 256GB, Windows 11, seminovo, carregador original incluso..."></textarea>
+        <div class="secl">2 · Preço de venda</div>
+        <div class="pw"><div class="pr"><span class="pp2">R$</span><input type="number" class="inp" id="aPreco" placeholder="0" min="0"></div>
+        <button class="bsg" id="bSug" onclick="sugPrice()">✦ Sugerir com IA</button></div>
+        <div class="ph2" id="PH"></div>
       </div>
-
-      <div class="sec">
-        <div class="sec-lbl">2 · Preço de venda</div>
-        <div class="price-wrap">
-          <div class="price-rel"><span class="price-pre">R$</span><input type="number" class="field-inp" id="prodPreco" placeholder="0" min="0"></div>
-          <button class="btn-suggest" id="btnSuggest" onclick="suggestPrice()">✦ Sugerir com IA</button>
-        </div>
-        <div class="price-hint" id="priceHint"></div>
-      </div>
-
-      <div class="sec">
-        <div class="sec-lbl">3 · Plataformas</div>
-        <div class="plat-grid">
-          <button class="plat-btn active" data-p="marketplace" onclick="togPlat(this)">📘 Marketplace</button>
-          <button class="plat-btn active" data-p="olx" onclick="togPlat(this)">🟠 OLX</button>
-          <button class="plat-btn active" data-p="mercadolivre" onclick="togPlat(this)">🟡 Mercado Livre</button>
+      <div class="sec"><div class="secl">3 · Plataformas</div>
+        <div class="plg">
+          <button class="plb on" data-p="marketplace" onclick="togP(this)">📘 Marketplace</button>
+          <button class="plb on" data-p="olx" onclick="togP(this)">🟠 OLX</button>
+          <button class="plb on" data-p="mercadolivre" onclick="togP(this)">🟡 Mercado Livre</button>
         </div>
       </div>
-
-      <button class="btn-gen" id="btnGen" onclick="generateAds()">✦ Gerar anúncios com IA</button>
-
-      <div class="loader-wrap" id="loaderWrap">
-        <div class="spin"></div>
-        <div class="load-msg">Criando seus anúncios...</div>
-        <div class="load-step" id="loadStep"></div>
-      </div>
-
-      <div class="results" id="resultsArea">
-        <div class="tip-box" id="tipBox"></div>
-        <div class="sec" style="padding:0;overflow:hidden;">
-          <div style="padding:14px 16px 0;"><div class="rtabs" id="rtabs"></div></div>
-          <div id="rpanels" style="padding:0 16px 16px;"></div>
+      <button class="bge" id="bGen" onclick="genAds()">✦ Gerar anúncios com IA</button>
+      <div class="lw" id="LW"><div class="sp"></div><div class="lm2">Criando seus anúncios...</div><div class="ls" id="LS"></div></div>
+      <div class="res" id="RA">
+        <div class="tipb" id="TB"></div>
+        <div class="sec" style="padding:0;overflow:hidden">
+          <div style="padding:14px 16px 0"><div class="rtb" id="RTB"></div></div>
+          <div id="RPS" style="padding:0 16px 16px"></div>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="mo h" id="MO">
+  <div class="moo" onclick="closeModal()"></div>
+  <div class="mc">
+    <div class="mch">
+      <span class="mct">Editar produto</span>
+      <button class="mcl" onclick="closeModal()">✕</button>
+    </div>
+    <div class="mcb">
+      <div class="fc full"><label class="fl">Nome do produto</label><input class="inp" id="eN" type="text"></div>
+      <div class="fc"><label class="fl">Custo R$</label><input class="inp" id="eC" type="number" min="0"></div>
+      <div class="fc"><label class="fl">Preço de venda R$</label><input class="inp" id="eV" type="number" min="0"></div>
+      <div class="fc"><label class="fl">Status</label>
+        <select class="inp" id="eS">
+          <option value="Estoque">Estoque</option>
+          <option value="Vendido">Vendido</option>
+        </select>
+      </div>
+      <div class="fc"><label class="fl">Mês de compra</label><input class="inp" id="eDC" type="month"></div>
+      <div class="fc"><label class="fl">Mês de venda</label><input class="inp" id="eDV" type="month"></div>
+    </div>
+    <div class="mca">
+      <button class="bcan" onclick="closeModal()">Cancelar</button>
+      <button class="bsav" onclick="saveEdit()">Salvar alterações</button>
     </div>
   </div>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc, query, where, orderBy } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,onAuthStateChanged,updateProfile } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+import { getFirestore,collection,addDoc,getDocs,doc,deleteDoc,updateDoc,query,where,orderBy } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
-const app = initializeApp({
-  apiKey:"AIzaSyDmC5BxL2_qf7YT9Yq9gUIhpRBn0RoRa2A",authDomain:"anuncia-70b88.firebaseapp.com",
-  projectId:"anuncia-70b88",storageBucket:"anuncia-70b88.firebasestorage.app",
-  messagingSenderId:"325014740359",appId:"1:325014740359:web:eff4e874f9f18a2ba54722",
-  measurementId:"G-R8XGJDZGZV"
-});
-const auth = getAuth(app);
-const db = getFirestore(app);
+const app=initializeApp({apiKey:"AIzaSyDmC5BxL2_qf7YT9Yq9gUIhpRBn0RoRa2A",authDomain:"anuncia-70b88.firebaseapp.com",projectId:"anuncia-70b88",storageBucket:"anuncia-70b88.firebasestorage.app",messagingSenderId:"325014740359",appId:"1:325014740359:web:eff4e874f9f18a2ba54722"});
+const auth=getAuth(app), db=getFirestore(app);
 
-let user = null, prods = [], filter = 'todos';
+const XLSX=[{"nome":"Acer Aspire 3 i5 7th","custo":250.0,"venda":950.0,"lucro":700.0,"status":"Vendido","data_compra":"2025-01","data_venda":"2025-01","data":"2025-01","num":1},{"nome":"HP x360 Celeron","custo":100.0,"venda":350.0,"lucro":250.0,"status":"Vendido","data_compra":"2025-01","data_venda":"2025-02","data":"2025-02","num":2},{"nome":"Samsung RV415","custo":0.0,"venda":150.0,"lucro":150.0,"status":"Vendido","data_compra":"2025-01","data_venda":"2025-03","data":"2025-03","num":3},{"nome":"Samsung NP370","custo":280.0,"venda":520.0,"lucro":240.0,"status":"Vendido","data_compra":"2025-01","data_venda":"2025-02","data":"2025-02","num":4},{"nome":"Acer Aspire E1 532 Celeron","custo":150.0,"venda":500.0,"lucro":350.0,"status":"Vendido","data_compra":"2025-01","data_venda":"2025-01","data":"2025-01","num":5},{"nome":"Acer Aspire E1 572 i5 4th","custo":280.0,"venda":350.0,"lucro":70.0,"status":"Vendido","data_compra":"2025-01","data_venda":"2025-02","data":"2025-02","num":6},{"nome":"Dell Inspiron 3400 i5 8th","custo":330.0,"venda":750.0,"lucro":420.0,"status":"Vendido","data_compra":"2025-01","data_venda":"2025-01","data":"2025-01","num":7},{"nome":"Samsung NP370E4E (Bruno)","custo":87.5,"venda":250.0,"lucro":162.5,"status":"Vendido","data_compra":"2025-01","data_venda":"2025-03","data":"2025-03","num":8},{"nome":"HP G42 (Bruno)","custo":87.5,"venda":225.0,"lucro":137.5,"status":"Vendido","data_compra":"2025-01","data_venda":"2025-01","data":"2025-01","num":9},{"nome":"Samsung NP270E4E ssd","custo":250.0,"venda":550.0,"lucro":300.0,"status":"Vendido","data_compra":"2025-01","data_venda":"2025-02","data":"2025-02","num":10},{"nome":"Acer 14\" Celeron","custo":130.0,"venda":500.0,"lucro":370.0,"status":"Vendido","data_compra":"2025-01","data_venda":"2025-02","data":"2025-02","num":11},{"nome":"Lote 6 Notebooks","custo":0.0,"venda":200.0,"lucro":200.0,"status":"Vendido","data_compra":"2025-02","data_venda":"2025-02","data":"2025-02","num":12},{"nome":"LNV L1135","custo":0.0,"venda":250.0,"lucro":250.0,"status":"Vendido","data_compra":"2025-02","data_venda":"2025-02","data":"2025-02","num":13},{"nome":"Itautec AMD+RYZEN","custo":75.0,"venda":280.0,"lucro":205.0,"status":"Vendido","data_compra":"2025-02","data_venda":"2025-03","data":"2025-03","num":14},{"nome":"Compaq Presario CQ23","custo":75.0,"venda":120.0,"lucro":45.0,"status":"Vendido","data_compra":"2025-02","data_venda":"2025-03","data":"2025-03","num":15},{"nome":"Samsung NP270E5K i3","custo":150.0,"venda":700.0,"lucro":550.0,"status":"Vendido","data_compra":"2025-02","data_venda":"2025-03","data":"2025-03","num":16},{"nome":"Lenovo IdeaPad s145 i3","custo":350.0,"venda":950.0,"lucro":600.0,"status":"Vendido","data_compra":"2025-03","data_venda":"2025-03","data":"2025-03","num":17},{"nome":"Monitor TV Samsung","custo":0.0,"venda":110.0,"lucro":110.0,"status":"Vendido","data_compra":"2025-03","data_venda":"2025-03","data":"2025-03","num":18},{"nome":"Dell Vostro 5470 i5 4th","custo":240.0,"venda":600.0,"lucro":360.0,"status":"Vendido","data_compra":"2025-03","data_venda":"2025-03","data":"2025-03","num":19},{"nome":"Samsung NP270E5K i5 5th branco","custo":208.0,"venda":800.0,"lucro":592.0,"status":"Vendido","data_compra":"2025-03","data_venda":"2025-03","data":"2025-03","num":20},{"nome":"Dell Latitude 15\" 8GB i5 8th","custo":200.0,"venda":900.0,"lucro":700.0,"status":"Vendido","data_compra":"2025-03","data_venda":"2025-04","data":"2025-04","num":21},{"nome":"HP G42 i3","custo":20.0,"venda":400.0,"lucro":380.0,"status":"Vendido","data_compra":"2025-03","data_venda":"2025-04","data":"2025-04","num":22},{"nome":"Acer Aspire E1-571 i5","custo":30.0,"venda":500.0,"lucro":470.0,"status":"Vendido","data_compra":"2025-03","data_venda":"2025-03","data":"2025-03","num":23},{"nome":"Aspire E1-471 i3 2nd","custo":100.0,"venda":380.0,"lucro":280.0,"status":"Vendido","data_compra":"2025-03","data_venda":"2025-03","data":"2025-03","num":24},{"nome":"Samsung NP270E5J","custo":343.0,"venda":750.0,"lucro":407.0,"status":"Vendido","data_compra":"2025-03","data_venda":"2025-04","data":"2025-04","num":25},{"nome":"Lenovo IdeaPad 3i i3 12th (tela)","custo":150.0,"venda":200.0,"lucro":50.0,"status":"Vendido","data_compra":"2025-04","data_venda":"2025-04","data":"2025-04","num":26},{"nome":"Dell Latitude 3450 i7 Geforce","custo":300.0,"venda":850.0,"lucro":550.0,"status":"Vendido","data_compra":"2025-04","data_venda":"2025-04","data":"2025-04","num":27},{"nome":"Carcaça Acer Aspire 3","custo":0.0,"venda":450.0,"lucro":450.0,"status":"Vendido","data_compra":"2025-04","data_venda":"2025-04","data":"2025-04","num":28},{"nome":"hp 14 i5 nvidia","custo":25.0,"venda":50.0,"lucro":25.0,"status":"Estoque","data_compra":"2025-04","data_venda":"","data":"2025-04","num":29},{"nome":"Samsung NP370E4K (João)","custo":125.0,"venda":300.0,"lucro":175.0,"status":"Vendido","data_compra":"2025-04","data_venda":"2025-04","data":"2025-04","num":30},{"nome":"Samsung NP370E4K branco (João)","custo":125.0,"venda":325.0,"lucro":200.0,"status":"Vendido","data_compra":"2025-04","data_venda":"2025-04","data":"2025-04","num":31},{"nome":"Samsung NP270E5G (João)","custo":0.0,"venda":100.0,"lucro":100.0,"status":"Vendido","data_compra":"2025-04","data_venda":"2025-04","data":"2025-04","num":32},{"nome":"Acer e1-571 i5 SSD (joão)","custo":85.0,"venda":300.0,"lucro":215.0,"status":"Vendido","data_compra":"2025-04","data_venda":"2025-05","data":"2025-05","num":33},{"nome":"Dell i3 6th SSD (joao)","custo":200.0,"venda":300.0,"lucro":100.0,"status":"Vendido","data_compra":"2025-04","data_venda":"2025-05","data":"2025-05","num":34},{"nome":"Hp i3 3th (joao)","custo":75.0,"venda":200.0,"lucro":125.0,"status":"Vendido","data_compra":"2025-05","data_venda":"2025-05","data":"2025-05","num":35},{"nome":"Dell i3 6th (João)","custo":135.0,"venda":325.0,"lucro":190.0,"status":"Vendido","data_compra":"2025-05","data_venda":"2025-06","data":"2025-06","num":36},{"nome":"Acer e1-571 i5 3 geração (João)","custo":50.0,"venda":300.0,"lucro":250.0,"status":"Vendido","data_compra":"2025-05","data_venda":"2025-05","data":"2025-05","num":37},{"nome":"Dell i5 6th (João)","custo":175.0,"venda":380.0,"lucro":205.0,"status":"Vendido","data_compra":"2025-05","data_venda":"2025-05","data":"2025-05","num":38},{"nome":"Samsung np270e5k i3 SSD","custo":150.0,"venda":150.0,"lucro":0.0,"status":"Vendido","data_compra":"2025-05","data_venda":"2026-01","data":"2026-01","num":39},{"nome":"Dell Latitude i3 4th","custo":62.5,"venda":62.5,"lucro":0.0,"status":"Vendido","data_compra":"2025-05","data_venda":"2025-11","data":"2025-11","num":40},{"nome":"Dell Latitude i3 4th","custo":117.5,"venda":300.0,"lucro":182.5,"status":"Vendido","data_compra":"2025-05","data_venda":"2025-06","data":"2025-06","num":41},{"nome":"Dell Latitude i5 4th Nvidia","custo":62.5,"venda":310.0,"lucro":247.5,"status":"Vendido","data_compra":"2025-05","data_venda":"2025-05","data":"2025-05","num":42},{"nome":"Lenovo i3 3rd","custo":67.0,"venda":67.0,"lucro":0.0,"status":"Estoque","data_compra":"2025-05","data_venda":"","data":"2025-05","num":43},{"nome":"Lenovo ideaPad i5 6th nVidia","custo":67.0,"venda":340.0,"lucro":273.0,"status":"Vendido","data_compra":"2025-05","data_venda":"2025-05","data":"2025-05","num":44},{"nome":"Acer Aspire 5 Ryzen 3","custo":67.0,"venda":200.0,"lucro":133.0,"status":"Vendido","data_compra":"2025-05","data_venda":"2025-07","data":"2025-07","num":45},{"nome":"Dell i5 5th","custo":400.0,"venda":800.0,"lucro":400.0,"status":"Vendido","data_compra":"2025-05","data_venda":"2025-05","data":"2025-05","num":46},{"nome":"Dell Latitude E6330","custo":125.0,"venda":295.0,"lucro":170.0,"status":"Vendido","data_compra":"2025-05","data_venda":"2025-05","data":"2025-05","num":47},{"nome":"Samsung NP370 Branco (joão)","custo":150.0,"venda":275.0,"lucro":125.0,"status":"Vendido","data_compra":"2025-05","data_venda":"2025-05","data":"2025-05","num":48},{"nome":"Acer Aspire 3 i3 6th","custo":0.0,"venda":450.0,"lucro":450.0,"status":"Vendido","data_compra":"2025-05","data_venda":"2025-05","data":"2025-05","num":49},{"nome":"Dell Latitude E7240 i5 4th","custo":0.0,"venda":400.0,"lucro":400.0,"status":"Vendido","data_compra":"2025-03","data_venda":"2025-05","data":"2025-05","num":50},{"nome":"Dell Latitude E5270 i5 6th 8GB","custo":20.0,"venda":430.0,"lucro":410.0,"status":"Vendido","data_compra":"2025-03","data_venda":"2025-05","data":"2025-05","num":51},{"nome":"Asus S400c","custo":0.0,"venda":250.0,"lucro":250.0,"status":"Vendido","data_compra":"2025-03","data_venda":"2025-10","data":"2025-10","num":52},{"nome":"HP G42 Azul i3*","custo":50.0,"venda":150.0,"lucro":100.0,"status":"Vendido","data_compra":"2025-04","data_venda":"2025-10","data":"2025-10","num":53},{"nome":"Lenovo ideaPad 110","custo":70.0,"venda":300.0,"lucro":230.0,"status":"Vendido","data_compra":"2025-05","data_venda":"2025-05","data":"2025-05","num":54},{"nome":"Lenovo ideaPad S145 Celeron","custo":125.0,"venda":350.0,"lucro":225.0,"status":"Vendido","data_compra":"2025-05","data_venda":"2025-07","data":"2025-07","num":55},{"nome":"Dell i5 12th","custo":440.0,"venda":972.0,"lucro":532.0,"status":"Vendido","data_compra":"2025-05","data_venda":"2025-07","data":"2025-07","num":56},{"nome":"Dell p69g i3 7th ssd","custo":225.0,"venda":400.0,"lucro":175.0,"status":"Vendido","data_compra":"2025-06","data_venda":"2025-06","data":"2025-06","num":57},{"nome":"Dell p69g i3 7th ssd","custo":225.0,"venda":450.0,"lucro":225.0,"status":"Vendido","data_compra":"2025-06","data_venda":"2025-06","data":"2025-06","num":58},{"nome":"Asus S400c i3","custo":100.0,"venda":300.0,"lucro":200.0,"status":"Vendido","data_compra":"2025-06","data_venda":"2025-06","data":"2025-06","num":59},{"nome":"Dell i5 7th + Radeon","custo":275.0,"venda":500.0,"lucro":225.0,"status":"Vendido","data_compra":"2025-06","data_venda":"2025-06","data":"2025-06","num":60},{"nome":"Dell G7 i7 8th*","custo":200.0,"venda":500.0,"lucro":300.0,"status":"Vendido","data_compra":"2025-06","data_venda":"2025-08","data":"2025-08","num":61},{"nome":"Samsung NP370 Branco (joão)","custo":125.0,"venda":275.0,"lucro":150.0,"status":"Vendido","data_compra":"2025-06","data_venda":"2025-09","data":"2025-09","num":62},{"nome":"Samsung NP300 i5 7th (João)","custo":300.0,"venda":650.0,"lucro":350.0,"status":"Vendido","data_compra":"2025-06","data_venda":"2025-07","data":"2025-07","num":63},{"nome":"Acer A315 AMD Ryzen 5 (carcaça)","custo":0.0,"venda":125.0,"lucro":125.0,"status":"Vendido","data_compra":"2025-06","data_venda":"2025-11","data":"2025-11","num":64},{"nome":"Acer Aspire 3 i3 7th","custo":175.0,"venda":375.0,"lucro":200.0,"status":"Vendido","data_compra":"2025-07","data_venda":"2025-07","data":"2025-07","num":65},{"nome":"Samsung NP300 Celeron","custo":130.0,"venda":300.0,"lucro":170.0,"status":"Vendido","data_compra":"2025-07","data_venda":"2025-07","data":"2025-07","num":66},{"nome":"Dell i3 6th 15\"","custo":175.0,"venda":450.0,"lucro":275.0,"status":"Vendido","data_compra":"2025-07","data_venda":"2025-07","data":"2025-07","num":67},{"nome":"Acer aspire 5 AMD A12","custo":225.0,"venda":400.0,"lucro":175.0,"status":"Vendido","data_compra":"2025-07","data_venda":"2025-07","data":"2025-07","num":68},{"nome":"Lenovo s145 Celeron","custo":175.0,"venda":425.0,"lucro":250.0,"status":"Vendido","data_compra":"2025-07","data_venda":"2025-07","data":"2025-07","num":69},{"nome":"Dell i5 4th SSD","custo":225.0,"venda":400.0,"lucro":175.0,"status":"Vendido","data_compra":"2025-07","data_venda":"2025-07","data":"2025-07","num":70},{"nome":"hp 240 i3","custo":150.0,"venda":200.0,"lucro":50.0,"status":"Vendido","data_compra":"2025-06","data_venda":"2025-07","data":"2025-07","num":71},{"nome":"Samsung np270e4K(joão)","custo":90.0,"venda":250.0,"lucro":160.0,"status":"Vendido","data_compra":"2025-07","data_venda":"2025-08","data":"2025-08","num":72},{"nome":"Dell i3 7th 250 SSD","custo":200.0,"venda":450.0,"lucro":250.0,"status":"Vendido","data_compra":"2025-07","data_venda":"2025-07","data":"2025-07","num":73},{"nome":"Dell Inspiron 15 Pentium","custo":175.0,"venda":175.0,"lucro":0.0,"status":"Vendido","data_compra":"2025-07","data_venda":"2026-01","data":"2026-01","num":74},{"nome":"Dell Inspiron 15\" i3 6th*","custo":190.0,"venda":375.0,"lucro":185.0,"status":"Vendido","data_compra":"2025-07","data_venda":"2025-09","data":"2025-09","num":75},{"nome":"Acer Aspire E1-471 i3 *","custo":100.0,"venda":275.0,"lucro":175.0,"status":"Vendido","data_compra":"2025-07","data_venda":"2025-10","data":"2025-10","num":76},{"nome":"Acer Aspire E1-571 *","custo":90.0,"venda":250.0,"lucro":160.0,"status":"Vendido","data_compra":"2025-07","data_venda":"2025-08","data":"2025-08","num":77},{"nome":"Dell Inspiron i5 7th Touch","custo":250.0,"venda":500.0,"lucro":250.0,"status":"Vendido","data_compra":"2025-07","data_venda":"2025-07","data":"2025-07","num":78},{"nome":"Dell Inspiron i5 8th","custo":150.0,"venda":300.0,"lucro":150.0,"status":"Vendido","data_compra":"2025-07","data_venda":"2025-07","data":"2025-07","num":79},{"nome":"Dell Inspiron i5 6h sem teclado*","custo":500.0,"venda":575.0,"lucro":75.0,"status":"Vendido","data_compra":"2025-07","data_venda":"2025-11","data":"2025-11","num":80},{"nome":"Acer Aspire i3 7th","custo":200.0,"venda":425.0,"lucro":225.0,"status":"Vendido","data_compra":"2025-08","data_venda":"2025-08","data":"2025-08","num":81},{"nome":"Acer Aspire E1-572 i5*","custo":100.0,"venda":375.0,"lucro":275.0,"status":"Vendido","data_compra":"2025-08","data_venda":"2025-08","data":"2025-08","num":82},{"nome":"Dell 3442 i5 4th*","custo":125.0,"venda":400.0,"lucro":275.0,"status":"Vendido","data_compra":"2025-08","data_venda":"2025-08","data":"2025-08","num":83},{"nome":"Acer Aspire i3 4th *","custo":125.0,"venda":375.0,"lucro":250.0,"status":"Vendido","data_compra":"2025-08","data_venda":"2025-08","data":"2025-08","num":84},{"nome":"Acer Aspire 3 i5 10th*","custo":350.0,"venda":650.0,"lucro":300.0,"status":"Vendido","data_compra":"2025-08","data_venda":"2025-08","data":"2025-08","num":85},{"nome":"Lenovo T470 i7 7th*","custo":216.0,"venda":700.0,"lucro":484.0,"status":"Vendido","data_compra":"2025-08","data_venda":"2025-08","data":"2025-08","num":86},{"nome":"Lenovo T440 i5 4th*","custo":216.0,"venda":450.0,"lucro":234.0,"status":"Vendido","data_compra":"2025-08","data_venda":"2025-08","data":"2025-08","num":87},{"nome":"Lenovo T470 i7 7th*","custo":216.0,"venda":600.0,"lucro":384.0,"status":"Vendido","data_compra":"2025-08","data_venda":"2025-08","data":"2025-08","num":88},{"nome":"Acer E1-572 i5 4th *","custo":236.0,"venda":400.0,"lucro":164.0,"status":"Vendido","data_compra":"2025-08","data_venda":"2026-01","data":"2026-01","num":89},{"nome":"Lenovo T470 i5 7th*","custo":290.0,"venda":600.0,"lucro":310.0,"status":"Vendido","data_compra":"2025-08","data_venda":"2025-08","data":"2025-08","num":90},{"nome":"Dell P28f celeron","custo":115.0,"venda":275.0,"lucro":160.0,"status":"Vendido","data_compra":"2025-08","data_venda":"2025-10","data":"2025-10","num":91},{"nome":"Lenovo s145 Celeron *","custo":285.0,"venda":410.0,"lucro":125.0,"status":"Vendido","data_compra":"2025-08","data_venda":"2025-09","data":"2025-09","num":92},{"nome":"Samsung NP300 i3 5th*","custo":175.0,"venda":425.0,"lucro":250.0,"status":"Vendido","data_compra":"2025-08","data_venda":"2025-10","data":"2025-10","num":93},{"nome":"Acer Aspire E1-531 Celeron","custo":60.0,"venda":250.0,"lucro":190.0,"status":"Vendido","data_compra":"2025-08","data_venda":"2026-01","data":"2026-01","num":94},{"nome":"Acer E5-572(Everton)*","custo":100.0,"venda":375.0,"lucro":275.0,"status":"Vendido","data_compra":"2025-08","data_venda":"","data":"2025-08","num":95},{"nome":"Lenovo E480 i7 8th*","custo":15.0,"venda":750.0,"lucro":735.0,"status":"Vendido","data_compra":"2025-09","data_venda":"2025-09","data":"2025-09","num":96},{"nome":"Dell i5 5th Nvidia *","custo":325.0,"venda":500.0,"lucro":175.0,"status":"Vendido","data_compra":"2025-09","data_venda":"2025-09","data":"2025-09","num":97},{"nome":"Lenovo T480 i5*","custo":300.0,"venda":725.0,"lucro":425.0,"status":"Vendido","data_compra":"2025-09","data_venda":"2025-09","data":"2025-09","num":98},{"nome":"Lenovo T480 i5*","custo":340.0,"venda":600.0,"lucro":260.0,"status":"Vendido","data_compra":"2025-09","data_venda":"2025-09","data":"2025-09","num":99},{"nome":"Dell Inspiron E5480 i5 7th*","custo":160.0,"venda":500.0,"lucro":340.0,"status":"Vendido","data_compra":"2025-09","data_venda":"2025-09","data":"2025-09","num":100},{"nome":"Lenovo T480 i5*","custo":340.0,"venda":600.0,"lucro":260.0,"status":"Vendido","data_compra":"2025-09","data_venda":"2025-09","data":"2025-09","num":101},{"nome":"Lenovo T480 i5*","custo":340.0,"venda":600.0,"lucro":260.0,"status":"Vendido","data_compra":"2025-09","data_venda":"2025-09","data":"2025-09","num":102},{"nome":"Lenovo T480 i5 8th","custo":375.0,"venda":600.0,"lucro":225.0,"status":"Vendido","data_compra":"2025-09","data_venda":"2025-09","data":"2025-09","num":103},{"nome":"Lenovo T480 i5 8th","custo":65.0,"venda":600.0,"lucro":535.0,"status":"Vendido","data_compra":"2025-09","data_venda":"2025-09","data":"2025-09","num":104},{"nome":"Lenovo T480 i5 8th*","custo":510.0,"venda":850.0,"lucro":340.0,"status":"Vendido","data_compra":"2025-09","data_venda":"2025-10","data":"2025-10","num":105},{"nome":"Lenovo T480 i5 8th","custo":250.0,"venda":600.0,"lucro":350.0,"status":"Estoque","data_compra":"2025-09","data_venda":"","data":"2025-09","num":106},{"nome":"HP EliteBook 840 G3","custo":100.0,"venda":500.0,"lucro":400.0,"status":"Vendido","data_compra":"2025-09","data_venda":"2025-10","data":"2025-10","num":107},{"nome":"Lenovo AMD Ryzen 5","custo":425.0,"venda":550.0,"lucro":125.0,"status":"Vendido","data_compra":"2025-09","data_venda":"2025-11","data":"2025-11","num":108},{"nome":"Acer Aspire 3 AMD A10*","custo":200.0,"venda":500.0,"lucro":300.0,"status":"Vendido","data_compra":"2025-09","data_venda":"2025-09","data":"2025-09","num":109},{"nome":"Lenovo IdeaPad 320 defeito*","custo":100.0,"venda":200.0,"lucro":100.0,"status":"Vendido","data_compra":"2025-09","data_venda":"2025-09","data":"2025-09","num":110},{"nome":"Lenovo T480 i5 8th*","custo":440.0,"venda":650.0,"lucro":310.0,"status":"Vendido","data_compra":"2025-09","data_venda":"2025-10","data":"2025-10","num":111},{"nome":"Acer Aspire 3 i3 10th*","custo":200.0,"venda":525.0,"lucro":325.0,"status":"Vendido","data_compra":"2025-09","data_venda":"2025-09","data":"2025-09","num":112},{"nome":"Samsung NP270 Branco*","custo":100.0,"venda":120.0,"lucro":20.0,"status":"Vendido","data_compra":"2025-09","data_venda":"2025-10","data":"2025-10","num":113},{"nome":"Dell Inspiron i3 6th OLX","custo":0.0,"venda":140.0,"lucro":140.0,"status":"Vendido","data_compra":"2025-09","data_venda":"2026-01","data":"2026-01","num":114},{"nome":"Dell Latitude 3480 i5 6th*","custo":250.0,"venda":525.0,"lucro":275.0,"status":"Vendido","data_compra":"2025-09","data_venda":"2025-10","data":"2025-10","num":115},{"nome":"Carcaça Lenovo T490","custo":0.0,"venda":125.0,"lucro":125.0,"status":"Vendido","data_compra":"2025-09","data_venda":"2025-10","data":"2025-10","num":116},{"nome":"Dell Inspiron 15 i3 10th*","custo":325.0,"venda":625.0,"lucro":300.0,"status":"Vendido","data_compra":"2025-10","data_venda":"2025-10","data":"2025-10","num":117},{"nome":"Acer Aspire A315-58 defeito*","custo":50.0,"venda":100.0,"lucro":50.0,"status":"Vendido","data_compra":"2025-10","data_venda":"2025-10","data":"2025-10","num":118},{"nome":"Lenovo T480 i5 8th*","custo":275.0,"venda":700.0,"lucro":425.0,"status":"Vendido","data_compra":"2025-10","data_venda":"2025-11","data":"2025-11","num":119},{"nome":"Lenovo T480 i5 8th* (jonathan)","custo":300.0,"venda":600.0,"lucro":300.0,"status":"Vendido","data_compra":"2025-10","data_venda":"2026-01","data":"2026-01","num":120},{"nome":"Lenovo AMD Pro 12*","custo":300.0,"venda":300.0,"lucro":0.0,"status":"Vendido","data_compra":"2025-10","data_venda":"","data":"2025-10","num":121},{"nome":"Positivo Unique","custo":0.0,"venda":200.0,"lucro":200.0,"status":"Vendido","data_compra":"2025-10","data_venda":"2025-10","data":"2025-10","num":122},{"nome":"Dell P88F i5 10th defeito","custo":190.0,"venda":300.0,"lucro":110.0,"status":"Vendido","data_compra":"2025-10","data_venda":"2025-10","data":"2025-10","num":123},{"nome":"Dell i7 8th SSD*","custo":375.0,"venda":665.0,"lucro":290.0,"status":"Vendido","data_compra":"2025-10","data_venda":"2025-10","data":"2025-10","num":124},{"nome":"HP EliteBook 840 G3*","custo":300.0,"venda":500.0,"lucro":200.0,"status":"Vendido","data_compra":"2025-10","data_venda":"2025-12","data":"2025-12","num":125},{"nome":"Dell i5 7th*","custo":275.0,"venda":550.0,"lucro":275.0,"status":"Vendido","data_compra":"2025-10","data_venda":"2026-01","data":"2026-01","num":126},{"nome":"Dell i3 5th Hortolandia*","custo":100.0,"venda":350.0,"lucro":250.0,"status":"Vendido","data_compra":"2025-10","data_venda":"2025-11","data":"2025-11","num":127},{"nome":"Dell i3 4th Americana*","custo":100.0,"venda":250.0,"lucro":150.0,"status":"Vendido","data_compra":"2025-10","data_venda":"","data":"2025-10","num":128},{"nome":"Samsung NP270 i3 5th*","custo":90.0,"venda":350.0,"lucro":260.0,"status":"Vendido","data_compra":"2025-10","data_venda":"2025-11","data":"2025-11","num":129},{"nome":"Lenovo E470 i5 7th*","custo":200.0,"venda":700.0,"lucro":500.0,"status":"Vendido","data_compra":"2025-10","data_venda":"2025-10","data":"2025-10","num":130},{"nome":"Lenovo T440 i5 4th*","custo":175.0,"venda":365.0,"lucro":190.0,"status":"Vendido","data_compra":"2025-10","data_venda":"2025-11","data":"2025-11","num":131},{"nome":"Lenovo T490 i5 8th*","custo":300.0,"venda":600.0,"lucro":300.0,"status":"Vendido","data_compra":"2025-11","data_venda":"2025-11","data":"2025-11","num":132},{"nome":"Acer Aspire 3 i7 7th*","custo":300.0,"venda":750.0,"lucro":450.0,"status":"Vendido","data_compra":"2025-11","data_venda":"2025-11","data":"2025-11","num":133},{"nome":"HP i3 10th vinhedo*","custo":250.0,"venda":475.0,"lucro":225.0,"status":"Vendido","data_compra":"2025-11","data_venda":"2025-11","data":"2025-11","num":134},{"nome":"Acer Aspire A315-52 i5 8th*","custo":175.0,"venda":700.0,"lucro":525.0,"status":"Vendido","data_compra":"2025-11","data_venda":"2025-11","data":"2025-11","num":135},{"nome":"Dell p75f i3 8TH*","custo":200.0,"venda":450.0,"lucro":250.0,"status":"Vendido","data_compra":"2025-11","data_venda":"2025-11","data":"2025-11","num":136},{"nome":"Acer Aspire A515-52G Defeito*","custo":135.0,"venda":135.0,"lucro":0.0,"status":"Vendido","data_compra":"2025-11","data_venda":"2025-11","data":"2025-11","num":137},{"nome":"Lenovo ideaPad 3i i5 10th*","custo":500.0,"venda":850.0,"lucro":350.0,"status":"Vendido","data_compra":"2025-11","data_venda":"2025-11","data":"2025-11","num":138},{"nome":"Dell i5 3th nvidia Indaiatuba*","custo":150.0,"venda":325.0,"lucro":175.0,"status":"Vendido","data_compra":"2025-11","data_venda":"","data":"2025-11","num":139},{"nome":"Lenovo E14 i5 10th*","custo":400.0,"venda":860.0,"lucro":460.0,"status":"Vendido","data_compra":"2025-11","data_venda":"2026-01","data":"2026-01","num":140},{"nome":"Samsung NP350x i3 7th 480 SSD","custo":100.0,"venda":150.0,"lucro":50.0,"status":"Vendido","data_compra":"2025-11","data_venda":"2026-01","data":"2026-01","num":141},{"nome":"Lenovo E14 Ryzen 3","custo":350.0,"venda":650.0,"lucro":300.0,"status":"Vendido","data_compra":"2025-11","data_venda":"2025-12","data":"2025-12","num":142},{"nome":"Dell Latitude i5 5th 120 SSD 4 GB","custo":150.0,"venda":350.0,"lucro":200.0,"status":"Vendido","data_compra":"2025-11","data_venda":"2025-12","data":"2025-12","num":143},{"nome":"Dell Latitude i5 5th 240 SSD 4 GB","custo":150.0,"venda":400.0,"lucro":250.0,"status":"Vendido","data_compra":"2025-11","data_venda":"2025-12","data":"2025-12","num":144},{"nome":"Dell Latitude i5 5th 1 TB HD 4 GB","custo":50.0,"venda":325.0,"lucro":275.0,"status":"Vendido","data_compra":"2025-11","data_venda":"2025-12","data":"2025-12","num":145},{"nome":"HP i5 10th 16GB*","custo":535.0,"venda":1000.0,"lucro":465.0,"status":"Vendido","data_compra":"2025-11","data_venda":"2026-02","data":"2026-02","num":146},{"nome":"Dell i5 6th Touchscreen 4GB 256GB","custo":200.0,"venda":362.5,"lucro":162.5,"status":"Vendido","data_compra":"2025-11","data_venda":"2026-01","data":"2026-01","num":147},{"nome":"Dell i5 6th Touchscreen","custo":220.0,"venda":650.0,"lucro":430.0,"status":"Vendido","data_compra":"2025-11","data_venda":"2026-03","data":"2026-03","num":148},{"nome":"Dell i5 6th Touchscreen","custo":200.0,"venda":450.0,"lucro":250.0,"status":"Vendido","data_compra":"2025-11","data_venda":"","data":"2025-11","num":149},{"nome":"Dell i5 6th Touchscreen","custo":200.0,"venda":450.0,"lucro":250.0,"status":"Vendido","data_compra":"2025-11","data_venda":"","data":"2025-11","num":150},{"nome":"Dell i5 10th SSD 8GB","custo":570.0,"venda":900.0,"lucro":330.0,"status":"Vendido","data_compra":"2025-11","data_venda":"","data":"2025-11","num":151},{"nome":"Dell i7 7th touchscreen","custo":220.0,"venda":600.0,"lucro":380.0,"status":"Vendido","data_compra":"2025-11","data_venda":"","data":"2025-11","num":152},{"nome":"Dell i5 8th sem bateria","custo":350.0,"venda":450.0,"lucro":100.0,"status":"Vendido","data_compra":"2025-11","data_venda":"2026-01","data":"2026-01","num":153},{"nome":"Dell i5 8th sem bateria","custo":250.0,"venda":500.0,"lucro":250.0,"status":"Estoque","data_compra":"2025-11","data_venda":"","data":"2025-11","num":154},{"nome":"Dell i5 8th sem bateria","custo":150.0,"venda":500.0,"lucro":350.0,"status":"Estoque","data_compra":"2025-11","data_venda":"","data":"2025-11","num":155},{"nome":"Lenovo IdeaPad 320 (Liedson)","custo":250.0,"venda":300.0,"lucro":50.0,"status":"Vendido","data_compra":"2025-11","data_venda":"2025-12","data":"2025-12","num":156},{"nome":"Lenovo E490 i5 8th 8 GB*","custo":350.0,"venda":700.0,"lucro":350.0,"status":"Vendido","data_compra":"2025-12","data_venda":"2026-02","data":"2026-02","num":157},{"nome":"Dell 3480 i7 8th 8GB*","custo":300.0,"venda":500.0,"lucro":200.0,"status":"Vendido","data_compra":"2025-12","data_venda":"2025-12","data":"2025-12","num":158},{"nome":"Dell Latitude i5 5th E5450","custo":200.0,"venda":350.0,"lucro":150.0,"status":"Vendido","data_compra":"2025-11","data_venda":"","data":"2025-11","num":159},{"nome":"Dell Latitude i5 5th E5450","custo":200.0,"venda":350.0,"lucro":150.0,"status":"Vendido","data_compra":"2025-11","data_venda":"","data":"2025-11","num":160},{"nome":"Dell Inspiron P75F i5 8th","custo":250.0,"venda":500.0,"lucro":250.0,"status":"Vendido","data_compra":"2026-01","data_venda":"2026-01","data":"2026-01","num":161},{"nome":"Lenovo ThinkPad E14 i5 10th","custo":275.0,"venda":600.0,"lucro":325.0,"status":"Vendido","data_compra":"2026-01","data_venda":"2026-01","data":"2026-01","num":162},{"nome":"Acer Aspire E1 AMD","custo":225.0,"venda":225.0,"lucro":0.0,"status":"Vendido","data_compra":"2026-01","data_venda":"2026-01","data":"2026-01","num":163},{"nome":"PC Gamer Básico","custo":25.0,"venda":250.0,"lucro":225.0,"status":"Vendido","data_compra":"2026-01","data_venda":"2026-01","data":"2026-01","num":164},{"nome":"Amplificador","custo":0.0,"venda":125.0,"lucro":125.0,"status":"Vendido","data_compra":"2026-01","data_venda":"","data":"2026-01","num":165},{"nome":"Acer Aspire E15 amd branco","custo":175.0,"venda":425.0,"lucro":250.0,"status":"Vendido","data_compra":"2026-01","data_venda":"2026-02","data":"2026-02","num":166},{"nome":"Dell Inspiron E5470 i5 4GB 128GB","custo":200.0,"venda":362.5,"lucro":162.5,"status":"Vendido","data_compra":"2025-11","data_venda":"2026-01","data":"2026-01","num":167},{"nome":"Dell Inspiron E5470 i5 4GB 256GB","custo":200.0,"venda":400.0,"lucro":200.0,"status":"Estoque","data_compra":"2025-11","data_venda":"","data":"2025-11","num":168},{"nome":"Dell i7 16GB","custo":375.0,"venda":750.0,"lucro":375.0,"status":"Vendido","data_compra":"2026-01","data_venda":"2026-01","data":"2026-01","num":169},{"nome":"Dell i7 16 GB gamer","custo":185.0,"venda":1200.0,"lucro":1015.0,"status":"Vendido","data_compra":"2026-01","data_venda":"2026-01","data":"2026-01","num":170},{"nome":"Dell i7 8 GB gamer","custo":250.0,"venda":900.0,"lucro":650.0,"status":"Vendido","data_compra":"2026-01","data_venda":"","data":"2026-01","num":171},{"nome":"Lenovo ThinkPad E14 Ryzen 5","custo":350.0,"venda":700.0,"lucro":350.0,"status":"Vendido","data_compra":"2026-01","data_venda":"2026-01","data":"2026-01","num":172},{"nome":"Dell i7 6th Radeon","custo":40.0,"venda":822.0,"lucro":782.0,"status":"Vendido","data_compra":"2026-01","data_venda":"2026-02","data":"2026-02","num":173},{"nome":"Dell i7 6th Radeon","custo":235.0,"venda":750.0,"lucro":515.0,"status":"Vendido","data_compra":"2026-01","data_venda":"2026-02","data":"2026-02","num":174},{"nome":"Dell Vostro i3 3rd","custo":0.0,"venda":225.0,"lucro":225.0,"status":"Vendido","data_compra":"2026-01","data_venda":"2026-02","data":"2026-02","num":175},{"nome":"Lenovo ThinkPad T440p","custo":300.0,"venda":400.0,"lucro":100.0,"status":"Vendido","data_compra":"2026-01","data_venda":"2026-01","data":"2026-01","num":176},{"nome":"Dell Latitude i5 5th E5450","custo":175.0,"venda":350.0,"lucro":175.0,"status":"Vendido","data_compra":"2025-11","data_venda":"","data":"2025-11","num":177},{"nome":"Dell Vostro 5470 i5 5th Nvidea","custo":150.0,"venda":400.0,"lucro":250.0,"status":"Estoque","data_compra":"2026-01","data_venda":"","data":"2026-01","num":178},{"nome":"Dell 6450 i5 5th 8GB","custo":0.0,"venda":70.0,"lucro":70.0,"status":"Vendido","data_compra":"2026-01","data_venda":"","data":"2026-01","num":179},{"nome":"HP Probook i5 4th 8GB","custo":150.0,"venda":300.0,"lucro":150.0,"status":"Vendido","data_compra":"2026-01","data_venda":"2026-01","data":"2026-01","num":180},{"nome":"HP Probook i5 8 GB","custo":100.0,"venda":325.0,"lucro":225.0,"status":"Vendido","data_compra":"2026-01","data_venda":"2026-02","data":"2026-02","num":181},{"nome":"Dell i5 10th SSD 16GB","custo":325.0,"venda":615.0,"lucro":290.0,"status":"Vendido","data_compra":"2026-01","data_venda":"2026-01","data":"2026-01","num":182},{"nome":"HP Probook i7 840 G7","custo":450.0,"venda":1000.0,"lucro":550.0,"status":"Vendido","data_compra":"2026-01","data_venda":"2026-02","data":"2026-02","num":183},{"nome":"Dell Inspiron 15 i3 10th*","custo":335.0,"venda":550.0,"lucro":215.0,"status":"Vendido","data_compra":"2026-01","data_venda":"2026-01","data":"2026-01","num":184},{"nome":"ThinkPad E14 i7 10th","custo":600.0,"venda":1100.0,"lucro":500.0,"status":"Vendido","data_compra":"2026-01","data_venda":"","data":"2026-01","num":185},{"nome":"Lenovo IdeaPad 320 i5 7th","custo":200.0,"venda":375.0,"lucro":175.0,"status":"Estoque","data_compra":"2025-11","data_venda":"","data":"2025-11","num":186},{"nome":"Dell Latitude E5270 i5 6th cheiro queimado","custo":150.0,"venda":350.0,"lucro":200.0,"status":"Estoque","data_compra":"2025-11","data_venda":"","data":"2025-11","num":187},{"nome":"Dell Latitude 5280 i5 7th tela ruim","custo":270.0,"venda":600.0,"lucro":330.0,"status":"Vendido","data_compra":"2025-11","data_venda":"","data":"2025-11","num":188},{"nome":"Dell Latitude E5440 i5 4th sem tampa","custo":150.0,"venda":300.0,"lucro":150.0,"status":"Estoque","data_compra":"2025-11","data_venda":"","data":"2025-11","num":189},{"nome":"IdeaPad 320 i5 7th","custo":125.0,"venda":125.0,"lucro":0.0,"status":"Vendido","data_compra":"2025-11","data_venda":"2026-02","data":"2026-02","num":190},{"nome":"IdeaPad 320 i5 7th","custo":50.0,"venda":100.0,"lucro":50.0,"status":"Estoque","data_compra":"2025-11","data_venda":"","data":"2025-11","num":191},{"nome":"IdeaPad 320 i5 7th","custo":50.0,"venda":100.0,"lucro":50.0,"status":"Estoque","data_compra":"2025-11","data_venda":"","data":"2025-11","num":192},{"nome":"Dell E7470 i5 touch","custo":150.0,"venda":150.0,"lucro":0.0,"status":"Estoque","data_compra":"2025-11","data_venda":"","data":"2025-11","num":193},{"nome":"Dell E7470 i5 Sem touch","custo":150.0,"venda":150.0,"lucro":0.0,"status":"Estoque","data_compra":"2025-11","data_venda":"","data":"2025-11","num":194},{"nome":"Dell Latitude E5450 i5 5th","custo":50.0,"venda":100.0,"lucro":50.0,"status":"Estoque","data_compra":"2025-11","data_venda":"","data":"2025-11","num":195},{"nome":"Dell Latitude E5450 i5 5th","custo":50.0,"venda":100.0,"lucro":50.0,"status":"Estoque","data_compra":"2025-11","data_venda":"","data":"2025-11","num":196},{"nome":"Dell Latitude E5450 i5 5th","custo":50.0,"venda":100.0,"lucro":50.0,"status":"Estoque","data_compra":"2025-11","data_venda":"","data":"2025-11","num":197},{"nome":"Dell Latitude E5450 i5 5th","custo":50.0,"venda":100.0,"lucro":50.0,"status":"Estoque","data_compra":"2025-11","data_venda":"","data":"2025-11","num":198},{"nome":"Dell Latitude E5450 i5 5th","custo":50.0,"venda":100.0,"lucro":50.0,"status":"Estoque","data_compra":"2025-11","data_venda":"","data":"2025-11","num":199},{"nome":"Dell Inspiron E5470 i5","custo":50.0,"venda":100.0,"lucro":50.0,"status":"Estoque","data_compra":"2025-11","data_venda":"","data":"2025-11","num":200},{"nome":"Dell Inspiron E5470 i5","custo":50.0,"venda":100.0,"lucro":50.0,"status":"Estoque","data_compra":"2025-11","data_venda":"","data":"2025-11","num":201},{"nome":"Dell Inspiron E5470 i5","custo":50.0,"venda":100.0,"lucro":50.0,"status":"Estoque","data_compra":"2025-11","data_venda":"","data":"2025-11","num":202},{"nome":"Dell i5 4th placa ruim","custo":50.0,"venda":70.0,"lucro":20.0,"status":"Estoque","data_compra":"2025-11","data_venda":"","data":"2025-11","num":203},{"nome":"Dell i5 placa ruim","custo":100.0,"venda":100.0,"lucro":0.0,"status":"Vendido","data_compra":"2025-11","data_venda":"2026-02","data":"2026-02","num":204},{"nome":"Dell i5 8th placa ruim","custo":50.0,"venda":120.0,"lucro":70.0,"status":"Estoque","data_compra":"2025-11","data_venda":"","data":"2025-11","num":205},{"nome":"Lenovo Ideapad 3 i5 11th","custo":550.0,"venda":1000.0,"lucro":450.0,"status":"Vendido","data_compra":"2026-01","data_venda":"","data":"2026-01","num":206},{"nome":"Acer Aspire A514 i5 10th","custo":450.0,"venda":1000.0,"lucro":550.0,"status":"Vendido","data_compra":"2026-01","data_venda":"","data":"2026-01","num":207},{"nome":"Dell Vostro i7 3th","custo":250.0,"venda":250.0,"lucro":0.0,"status":"Vendido","data_compra":"2026-02","data_venda":"2026-02","data":"2026-02","num":208},{"nome":"Dell Vostro i7 3th","custo":50.0,"venda":250.0,"lucro":200.0,"status":"Vendido","data_compra":"2026-02","data_venda":"2026-02","data":"2026-02","num":209},{"nome":"Lenovo LNV i3 4th","custo":25.0,"venda":225.0,"lucro":200.0,"status":"Vendido","data_compra":"2026-02","data_venda":"2026-02","data":"2026-02","num":210},{"nome":"Lenovo IdeaPad Ryzen 5","custo":500.0,"venda":765.0,"lucro":265.0,"status":"Vendido","data_compra":"2026-02","data_venda":"2026-02","data":"2026-02","num":211},{"nome":"Dell Latitude E7390 i7 8th","custo":325.0,"venda":700.0,"lucro":375.0,"status":"Vendido","data_compra":"2026-02","data_venda":"2026-02","data":"2026-02","num":212},{"nome":"Lote Carcaças Antigas","custo":0.0,"venda":145.0,"lucro":145.0,"status":"Vendido","data_compra":"2026-02","data_venda":"2026-02","data":"2026-02","num":213},{"nome":"JBL Partybox essentials 2","custo":300.0,"venda":590.0,"lucro":290.0,"status":"Vendido","data_compra":"2026-02","data_venda":"2026-02","data":"2026-02","num":214},{"nome":"Acer i5 12th 8GB","custo":1000.0,"venda":1400.0,"lucro":400.0,"status":"Vendido","data_compra":"2026-02","data_venda":"","data":"2026-02","num":215},{"nome":"Dell Latitude 3450 i5","custo":195.0,"venda":460.0,"lucro":265.0,"status":"Vendido","data_compra":"2026-02","data_venda":"2026-02","data":"2026-02","num":216},{"nome":"Dell Latitude 3410 i5 10th","custo":600.0,"venda":1000.0,"lucro":400.0,"status":"Vendido","data_compra":"2026-02","data_venda":"2026-02","data":"2026-02","num":217},{"nome":"Samsung i3 5th","custo":225.0,"venda":425.0,"lucro":200.0,"status":"Vendido","data_compra":"2026-02","data_venda":"2026-03","data":"2026-03","num":218},{"nome":"Samsung NP370 i3 5th","custo":100.0,"venda":300.0,"lucro":200.0,"status":"Vendido","data_compra":"2026-02","data_venda":"2026-02","data":"2026-02","num":219},{"nome":"Dell i5 11th","custo":675.0,"venda":1175.0,"lucro":500.0,"status":"Vendido","data_compra":"2026-02","data_venda":"2026-02","data":"2026-02","num":220},{"nome":"Dell Inspiron i7 7th","custo":270.0,"venda":500.0,"lucro":230.0,"status":"Vendido","data_compra":"2025-02","data_venda":"","data":"2025-02","num":221},{"nome":"Dell Inspiron i7 7th pequeno","custo":250.0,"venda":700.0,"lucro":450.0,"status":"Vendido","data_compra":"2025-02","data_venda":"","data":"2025-02","num":222},{"nome":"Dell E5470 i5 6th","custo":420.0,"venda":600.0,"lucro":180.0,"status":"Vendido","data_compra":"2025-02","data_venda":"2026-02","data":"2026-02","num":223},{"nome":"Acer Aspire ES1","custo":150.0,"venda":250.0,"lucro":100.0,"status":"Vendido","data_compra":"2025-02","data_venda":"","data":"2025-02","num":224},{"nome":"Lenovo Ideapad 3 i5 11th","custo":500.0,"venda":750.0,"lucro":250.0,"status":"Vendido","data_compra":"2026-03","data_venda":"","data":"2026-03","num":225},{"nome":"Lenovo ideaPad 3 i5 10th não liga","custo":275.0,"venda":650.0,"lucro":375.0,"status":"Estoque","data_compra":"2026-03","data_venda":"","data":"2026-03","num":226},{"nome":"Dell","custo":137.5,"venda":425.0,"lucro":287.5,"status":"Estoque","data_compra":"2026-03","data_venda":"","data":"2026-03","num":227},{"nome":"Dell","custo":157.5,"venda":250.0,"lucro":92.5,"status":"Estoque","data_compra":"2026-03","data_venda":"2025-03","data":"2025-03","num":228}];
+const CRL={labels:['Jan/25', 'Fev/25', 'Mar/25', 'Abr/25', 'Mai/25', 'Jun/25', 'Jul/25', 'Ago/25', 'Set/25', 'Out/25', 'Nov/25', 'Dez/25', 'Jan/26', 'Fev/26', 'Mar/26'],rec:[2425, 4170, 4840, 4275, 5080, 2275, 5972, 5950, 7760, 7285, 11412, 3025, 14735, 13332, 1825],luc:[1607, 2460, 3524, 3012, 3600, 1197, 3185, 3632, 4400, 4005, 5740, 1475, 7644, 6782, 880]};
+const CQ={labels:['Jan/25', 'Fev/25', 'Mar/25', 'Abr/25', 'Mai/25', 'Jun/25', 'Jul/25', 'Ago/25', 'Set/25', 'Out/25', 'Nov/25', 'Dez/25', 'Jan/26', 'Fev/26', 'Mar/26'],values:[4, 10, 11, 9, 14, 6, 14, 13, 15, 19, 24, 7, 29, 23, 3]};
+const CLM={labels:['Dell', 'Lenovo', 'Acer', 'Samsung', 'HP', 'Asus', 'Outros'],luc:[274, 293, 270, 213, 250, 225, 205],tic:[495, 566, 448, 357, 432, 275, 313]};
+const CMarca={labels:['Dell', 'Lenovo', 'Acer', 'Samsung', 'HP', 'Asus', 'Outros'],values:[97, 45, 33, 23, 14, 2, 14]};
 
-onAuthStateChanged(auth, u => {
-  user = u;
-  if (u) {
-    document.getElementById('authScreen').classList.add('hidden');
-    document.getElementById('mainApp').classList.add('visible');
-    document.getElementById('navUser').textContent = u.displayName || u.email.split('@')[0];
-    loadProds();
-  } else {
-    document.getElementById('authScreen').classList.remove('hidden');
-    document.getElementById('mainApp').classList.remove('visible');
-  }
+let user=null,prods=[],filt='todos',editId=null,chartsOk=false;
+
+onAuthStateChanged(auth,u=>{
+  user=u;
+  if(u){document.getElementById('AS').classList.add('h');document.getElementById('APP').classList.add('v');document.getElementById('NU').textContent=u.displayName||u.email.split('@')[0];loadProds();}
+  else{document.getElementById('AS').classList.remove('h');document.getElementById('APP').classList.remove('v');}
 });
 
-window.switchAuthTab = t => {
-  document.querySelectorAll('.auth-tab').forEach((b,i)=>b.classList.toggle('active',(i===0&&t==='login')||(i===1&&t==='register')));
-  document.getElementById('formLogin').style.display = t==='login'?'block':'none';
-  document.getElementById('formReg').style.display = t==='register'?'block':'none';
-  document.getElementById('authErr').textContent='';
-};
+window.swAt=t=>{document.querySelectorAll('.at').forEach((b,i)=>b.classList.toggle('on',(i===0&&t==='login')||(i===1&&t==='reg')));document.getElementById('fLogin').style.display=t==='login'?'block':'none';document.getElementById('fReg').style.display=t==='reg'?'block':'none';document.getElementById('AE').textContent='';};
+window.doLogin=async()=>{try{await signInWithEmailAndPassword(auth,g('lE'),g('lP'));}catch(e){document.getElementById('AE').textContent=em(e.code);}};
+window.doReg=async()=>{const n=g('rN');if(!n){document.getElementById('AE').textContent='Digite seu nome.';return;}try{const c=await createUserWithEmailAndPassword(auth,g('rE'),g('rP'));await updateProfile(c.user,{displayName:n});document.getElementById('NU').textContent=n;}catch(e){document.getElementById('AE').textContent=em(e.code);}};
+window.doLogout=()=>signOut(auth);
+function g(id){return document.getElementById(id).value.trim();}
+function em(c){return({'auth/invalid-credential':'E-mail ou senha incorretos.','auth/email-already-in-use':'E-mail já cadastrado.','auth/weak-password':'Senha muito fraca.','auth/invalid-email':'E-mail inválido.'}[c])||'Erro ao autenticar.';}
 
-window.doLogin = async () => {
-  try { await signInWithEmailAndPassword(auth, v('loginEmail'), v('loginPassword')); }
-  catch(e){ document.getElementById('authErr').textContent=errMsg(e.code); }
-};
-window.doRegister = async () => {
-  const name = v('regName');
-  if(!name){document.getElementById('authErr').textContent='Digite seu nome.';return;}
-  try {
-    const c = await createUserWithEmailAndPassword(auth,v('regEmail'),v('regPassword'));
-    await updateProfile(c.user,{displayName:name});
-    document.getElementById('navUser').textContent=name;
-  } catch(e){document.getElementById('authErr').textContent=errMsg(e.code);}
-};
-window.doLogout = ()=>signOut(auth);
-
-function v(id){return document.getElementById(id).value.trim();}
-function errMsg(c){return({'auth/invalid-credential':'E-mail ou senha incorretos.','auth/email-already-in-use':'E-mail já cadastrado.','auth/weak-password':'Senha muito fraca.','auth/invalid-email':'E-mail inválido.'}[c])||'Erro ao autenticar.';}
-
-// ── PRODUCTS ──
-async function loadProds() {
+async function loadProds(){
   if(!user)return;
-  try {
-    const q = query(collection(db,'products'),where('userId','==',user.uid),orderBy('createdAt','asc'));
-    const snap = await getDocs(q);
-    prods = snap.docs.map(d=>({id:d.id,...d.data()}));
-    prods.forEach((p,i)=>{ if(!p.num) p.num=i+1; });
-    render(); stats();
-  } catch(e){console.error(e);}
+  try{
+    const q=query(collection(db,'products'),where('userId','==',user.uid));
+    const snap=await getDocs(q);
+    const fp=snap.docs.map(d=>{return{id:d.id,...d.data()}});
+    prods=fp.length>0?fp:XLSX.map((p,i)=>{return{...p,userId:user.uid,id:'x'+(i+1)}});
+  }catch(e){prods=XLSX.map((p,i)=>{return{...p,userId:'local',id:'x'+(i+1)}});}
+  prods.forEach((p,i)=>{if(!p.num)p.num=i+1;});
+  render();calcStats();
 }
 
-window.addProduct = async () => {
-  const nome=v('pNome'), custo=parseFloat(document.getElementById('pCusto').value)||0,
-    venda=parseFloat(document.getElementById('pVenda').value)||0,
-    status=document.getElementById('pStatus').value,
-    data=document.getElementById('pData').value||new Date().toISOString().split('T')[0];
+window.addProd=async()=>{
+  const nome=g('pN'),custo=parseFloat(document.getElementById('pC').value)||0,venda=parseFloat(document.getElementById('pV').value)||0,status=document.getElementById('pS').value,dc=document.getElementById('pDC').value,dv=document.getElementById('pDV').value;
   if(!nome){alert('Digite o nome!');return;}
-  const num = prods.length>0?Math.max(...prods.map(p=>p.num||0))+1:1;
-  const ref = await addDoc(collection(db,'products'),{userId:user.uid,nome,custo,venda,lucro:venda-custo,status,data,num,createdAt:new Date().toISOString()});
-  prods.push({id:ref.id,userId:user.uid,nome,custo,venda,lucro:venda-custo,status,data,num,createdAt:new Date().toISOString()});
-  document.getElementById('pNome').value=''; document.getElementById('pCusto').value=''; document.getElementById('pVenda').value='';
-  render(); stats();
+  const num=prods.length>0?Math.max(...prods.map(p=>p.num||0))+1:1;
+  const obj={userId:user.uid,nome,custo,venda,lucro:venda-custo,status,data_compra:dc,data_venda:dv,data:dv||dc,num,createdAt:new Date().toISOString()};
+  try{const r=await addDoc(collection(db,'products'),obj);prods.push({...obj,id:r.id});}catch(e){prods.push({...obj,id:'l'+Date.now()});}
+  document.getElementById('pN').value='';document.getElementById('pC').value='';document.getElementById('pV').value='';document.getElementById('pDC').value='';document.getElementById('pDV').value='';
+  render();calcStats();
 };
 
-window.delProd = async id => {
+window.delProd=async id=>{
   if(!confirm('Excluir este produto?'))return;
-  await deleteDoc(doc(db,'products',id));
-  prods = prods.filter(p=>p.id!==id);
-  render(); stats();
+  if(!id.startsWith('x')&&!id.startsWith('l')){try{await deleteDoc(doc(db,'products',id));}catch(e){}}
+  prods=prods.filter(p=>p.id!==id);render();calcStats();
 };
 
-window.updStatus = async (id,val) => {
-  await updateDoc(doc(db,'products',id),{status:val});
-  const p=prods.find(p=>p.id===id); if(p) p.status=val;
-  render(); stats();
+window.updStatus=async(id,val)=>{
+  if(!id.startsWith('x')&&!id.startsWith('l')){try{await updateDoc(doc(db,'products',id),{status:val});}catch(e){}}
+  const p=prods.find(p=>p.id===id);if(p)p.status=val;render();calcStats();
 };
 
-window.setFilter = (f,btn) => {
-  filter=f;
-  document.querySelectorAll('.fchip').forEach(c=>c.classList.remove('active'));
-  btn.classList.add('active'); render();
+// EDIT MODAL
+window.openEdit=id=>{
+  const p=prods.find(p=>p.id===id);if(!p)return;
+  editId=id;
+  document.getElementById('eN').value=p.nome||'';
+  document.getElementById('eC').value=p.custo||'';
+  document.getElementById('eV').value=p.venda||'';
+  document.getElementById('eS').value=p.status||'Estoque';
+  document.getElementById('eDC').value=p.data_compra||'';
+  document.getElementById('eDV').value=p.data_venda||'';
+  document.getElementById('MO').classList.remove('h');
+};
+window.closeModal=()=>{document.getElementById('MO').classList.add('h');editId=null;};
+window.saveEdit=async()=>{
+  if(!editId)return;
+  const nome=g('eN'),custo=parseFloat(document.getElementById('eC').value)||0,venda=parseFloat(document.getElementById('eV').value)||0,status=document.getElementById('eS').value,dc=document.getElementById('eDC').value,dv=document.getElementById('eDV').value;
+  const upd={nome,custo,venda,lucro:venda-custo,status,data_compra:dc,data_venda:dv,data:dv||dc};
+  if(!editId.startsWith('x')&&!editId.startsWith('l')){try{await updateDoc(doc(db,'products',editId),upd);}catch(e){}}
+  const p=prods.find(p=>p.id===editId);if(p)Object.assign(p,upd);
+  closeModal();render();calcStats();
 };
 
-const BRANDS = {Dell:'#2563eb',Lenovo:'#dc2626',Acer:'#16a34a',HP:'#0891b2',Samsung:'#7c3aed',Asus:'#0284c7',Positivo:'#d97706',Outros:'#9ca3af'};
-function brand(n){for(const b of Object.keys(BRANDS).slice(0,-1)){if((n||'').toLowerCase().includes(b.toLowerCase()))return b;}return'Outros';}
-function fmt(v){return'R$\u00a0'+Math.round(v||0).toLocaleString('pt-BR');}
-function fdate(d){try{return new Date(d+'T12:00:00').toLocaleDateString('pt-BR',{month:'short',year:'2-digit'});}catch{return d||'—';}}
+window.setF=(f,btn)=>{filt=f;document.querySelectorAll('.fc2').forEach(c=>c.classList.remove('on'));btn.classList.add('on');render();};
+
+const BC={Dell:'#2563eb',Lenovo:'#dc2626',Acer:'#16a34a',HP:'#0891b2',Samsung:'#7c3aed',Asus:'#0284c7',Outros:'#9ca3af'};
+function brand(n){for(const b of Object.keys(BC)){if((n||'').toLowerCase().includes(b.toLowerCase()))return b;}return'Outros';}
+function fmt(v){return'R$ '+Math.round(v||0).toLocaleString('pt-BR');}
+function fdt(d){if(!d)return'—';const[y,m]=d.split('-');if(!y||!m)return'—';const ms=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];return(ms[parseInt(m)-1]||m)+'/'+y.slice(2);}
 function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
 function render(){
-  const list=document.getElementById('prodList');
-  const filtered=filter==='todos'?prods:prods.filter(p=>p.status===filter);
-  document.getElementById('prodCountLbl').textContent=filtered.length+' produto'+(filtered.length!==1?'s':'');
-  if(!filtered.length){list.innerHTML='<div class="empty-state"><div class="ei">📦</div><div class="et">Nenhum produto encontrado</div></div>';return;}
-
-  const groups={};
-  filtered.forEach(p=>{const b=brand(p.nome);if(!groups[b])groups[b]=[];groups[b].push(p);});
-
-  list.innerHTML=Object.keys(groups)
-    .sort((a,b)=>groups[b].length-groups[a].length)
-    .map(br=>{
-      const g=groups[br], color=BRANDS[br]||BRANDS.Outros;
-      const lucroVend=g.filter(p=>p.status==='Vendido').reduce((s,p)=>s+(p.venda-p.custo),0);
-      const vend=g.filter(p=>p.status==='Vendido').length, anun=g.filter(p=>p.status==='Anunciado').length, paus=g.filter(p=>p.status==='Pausado').length;
-      const ct=[vend?`${vend} vendidos`:'',anun?`${anun} anunciados`:'',paus?`${paus} pausados`:''].filter(Boolean).join(' · ');
-      const rows=g.map(p=>{
-        const lp=p.venda-p.custo, bmap={Vendido:'<span class="badge bv">Vendido</span>',Anunciado:'<span class="badge ba">Anunciado</span>',Pausado:'<span class="badge bp">Pausado</span>'};
-        return`<tr><td><span class="nbadge">${p.num||'?'}</span></td><td><div class="pname">${esc(p.nome)}</div><div class="pdate">${fdate(p.data)}</div></td><td class="pcost">${fmt(p.custo)}</td><td class="psell">${fmt(p.venda)}</td><td class="pprofit ${lp>=0?'pos':'neg'}">${fmt(lp)}</td><td>${bmap[p.status]||p.status}</td><td><select class="ssel" onchange="updStatus('${p.id}',this.value)"><option ${p.status==='Anunciado'?'selected':''}>Anunciado</option><option ${p.status==='Vendido'?'selected':''}>Vendido</option><option ${p.status==='Pausado'?'selected':''}>Pausado</option></select></td><td><button class="bdel" onclick="delProd('${p.id}')">✕</button></td></tr>`;
-      }).join('');
-      return`<div class="brand-group"><div class="brand-hd" onclick="togBrand('bg_${br}','arr_${br}')"><div class="brand-hd-l"><span class="brand-dot" style="background:${color}"></span><span class="brand-nm">${br}</span><span class="brand-ct">${ct}</span></div><div class="brand-hd-r"><div class="brand-stat"><div class="bsl">Lucro</div><div class="bsv">${fmt(lucroVend)}</div></div><span class="brand-arr" id="arr_${br}">▾</span></div></div><div id="bg_${br}"><table class="ptable"><thead><tr><th style="width:38px">#</th><th>Produto</th><th>Custo</th><th>Venda</th><th>Lucro</th><th>Status</th><th>Alterar</th><th style="width:34px"></th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+  const list=document.getElementById('PL');
+  const filtered=filt==='todos'?prods:prods.filter(p=>p.status===filt);
+  document.getElementById('plbl').textContent=filtered.length+' produto'+(filtered.length!==1?'s':'');
+  if(!filtered.length){list.innerHTML='<div style="text-align:center;padding:48px;color:var(--li)">📦 Nenhum produto encontrado</div>';return;}
+  const groups={};filtered.forEach(p=>{const b=brand(p.nome);if(!groups[b])groups[b]=[];groups[b].push(p);});
+  list.innerHTML=Object.keys(groups).sort((a,b)=>groups[b].length-groups[a].length).map(br=>{
+    const g2=groups[br],col=BC[br]||BC.Outros;
+    const lv=g2.filter(p=>p.status==='Vendido').reduce((s,p)=>s+(p.venda-p.custo),0);
+    const nv=g2.filter(p=>p.status==='Vendido').length,ne=g2.filter(p=>p.status==='Estoque').length;
+    const ct=[nv?nv+' vendidos':'',ne?ne+' em estoque':''].filter(Boolean).join(' · ');
+    const rows=g2.map(p=>{
+      const lp=p.lucro!==undefined?p.lucro:(p.venda-p.custo);
+      const sb=p.status==='Vendido'?'<span class="bv sv">Vendido</span>':'<span class="bv se">Estoque</span>';
+      return`<tr>
+        <td><span class="nb">${p.num||'?'}</span></td>
+        <td><div class="pn">${esc(p.nome)}</div></td>
+        <td style="color:var(--li);font-size:.75rem">${fdt(p.data_compra)}</td>
+        <td style="color:var(--li);font-size:.75rem">${fdt(p.data_venda)}</td>
+        <td style="color:var(--mu)">${fmt(p.custo)}</td>
+        <td class="ps">${fmt(p.venda)}</td>
+        <td class="pp ${lp>=0?'pos':'neg'}">${fmt(lp)}</td>
+        <td>${sb}</td>
+        <td><select class="sel" onchange="updStatus('${p.id}',this.value)"><option ${p.status==='Estoque'?'selected':''}>Estoque</option><option ${p.status==='Vendido'?'selected':''}>Vendido</option></select></td>
+        <td><button class="bed" onclick="openEdit('${p.id}')" title="Editar">✎</button></td>
+        <td><button class="bdl" onclick="delProd('${p.id}')" title="Excluir">✕</button></td>
+      </tr>`;
     }).join('');
+    return`<div class="bg"><div class="bgh" onclick="togBG('bg_${br}','arr_${br}')">
+      <div class="bghl"><span class="bdo" style="background:${col}"></span><span class="bnm">${br}</span><span class="bct">${ct}</span></div>
+      <div class="bghr"><div class="bst"><div class="bsl">Lucro</div><div class="bsv">${fmt(lv)}</div></div><span class="barr" id="arr_${br}">▾</span></div>
+    </div>
+    <div id="bg_${br}"><table class="tb"><thead><tr>
+      <th style="width:36px">#</th><th>Produto</th><th>Compra</th><th>Venda</th>
+      <th>Custo</th><th>Preço</th><th>Lucro</th><th>Status</th><th>Alterar</th><th style="width:30px"></th><th style="width:30px"></th>
+    </tr></thead><tbody>${rows}</tbody></table></div></div>`;
+  }).join('');
+}
+window.togBG=(id,aid)=>{const el=document.getElementById(id),arr=document.getElementById(aid),o=el.style.display!=='none';el.style.display=o?'none':'block';if(arr)arr.textContent=o?'▸':'▾';};
+
+function calcStats(){
+  const v=prods.filter(p=>p.status==='Vendido'),e=prods.filter(p=>p.status==='Estoque');
+  const rec=v.reduce((s,p)=>s+(p.venda||0),0),luc=v.reduce((s,p)=>s+(p.lucro!==undefined?p.lucro:p.venda-p.custo),0);
+  const mg=rec>0?Math.round(luc/rec*100):0,pot=e.reduce((s,p)=>s+(p.venda||0),0),potl=e.reduce((s,p)=>s+(p.lucro!==undefined?p.lucro:p.venda-p.custo),0);
+  document.getElementById('sRec').textContent=fmt(rec);document.getElementById('sRecS').textContent=v.length+' vendas';
+  document.getElementById('sLuc').textContent=fmt(luc);document.getElementById('sMgm').textContent='margem '+mg+'%';
+  document.getElementById('sEst').textContent=e.length;document.getElementById('sEstV').textContent=fmt(pot)+' valor';
+  document.getElementById('sPot').textContent=fmt(potl);
 }
 
-window.togBrand=(id,aid)=>{const el=document.getElementById(id),arr=document.getElementById(aid),open=el.style.display!=='none';el.style.display=open?'none':'block';if(arr){arr.textContent=open?'▸':'▾';arr.classList.toggle('open',!open);}};
+function buildCharts(){
+  if(chartsOk)return;chartsOk=true;
+  const font={family:"'DM Sans',sans-serif",size:11},tc='#78716c',gc='rgba(0,0,0,0.05)';
 
-function stats(){
-  const vend=prods.filter(p=>p.status==='Vendido'), an=prods.filter(p=>p.status==='Anunciado'), pa=prods.filter(p=>p.status==='Pausado');
-  const rec=vend.reduce((s,p)=>s+(p.venda||0),0), cost=vend.reduce((s,p)=>s+(p.custo||0),0), luc=rec-cost;
-  const mg=rec>0?Math.round(luc/rec*100):0, potencial=an.reduce((s,p)=>s+(p.venda-p.custo),0);
-  document.getElementById('sReceita').textContent=fmt(rec);
-  document.getElementById('sReceitaSub').textContent=vend.length+' venda'+(vend.length!==1?'s':'');
-  document.getElementById('sLucro').textContent=fmt(luc);
-  document.getElementById('sMargem').textContent='margem '+mg+'%';
-  document.getElementById('sEstoque').textContent=an.length;
-  document.getElementById('sEstoqueVal').textContent=fmt(potencial)+' potencial';
-  document.getElementById('sPausados').textContent=pa.length;
+  // Caixas insight
+  const maxIdx=CRL.rec.indexOf(Math.max(...CRL.rec));
+  document.getElementById('iBM').textContent=CRL.labels[maxIdx];
+  document.getElementById('iBMN').textContent=fmt(CRL.rec[maxIdx]);
+  const tRec=CRL.rec.reduce((a,b)=>a+b,0),tLuc=CRL.luc.reduce((a,b)=>a+b,0);
+  const tQtd=CQ.values.reduce((a,b)=>a+b,0);
+  document.getElementById('iLT').textContent=fmt(tLuc);
+  document.getElementById('iLTN').textContent='de '+fmt(tRec)+' em receita';
+  document.getElementById('iMG').textContent=Math.round(tLuc/tRec*100)+'%';
+  const topMarca=CMarca.labels[CMarca.values.indexOf(Math.max(...CMarca.values))];
+  document.getElementById('iMarca').textContent=topMarca;
+  document.getElementById('iMarcaN').textContent=CMarca.values[CMarca.labels.indexOf(topMarca)]+' unidades';
+  document.getElementById('iTk').textContent=fmt(Math.round(tRec/tQtd));
+  const ne=27,potE=6357;
+  document.getElementById('iEst').textContent=ne;
+  document.getElementById('iEstN').textContent=fmt(potE)+' potencial';
+
+  // Chart Receita vs Lucro
+  new Chart(document.getElementById('cRL'),{type:'bar',data:{labels:CRL.labels,datasets:[
+    {label:'Receita',data:CRL.rec,backgroundColor:CRL.rec.map((v,i)=>i===maxIdx?'#1c1917':'#d6d2c8'),borderRadius:5,borderSkipped:false,order:2},
+    {label:'Lucro',data:CRL.luc,backgroundColor:CRL.luc.map((_,i)=>i===maxIdx?'#15803d':'#86efac'),borderRadius:5,borderSkipped:false,order:1}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:tc,font,boxWidth:10}},tooltip:{callbacks:{label:ctx=>' '+fmt(ctx.raw)},bodyFont:font,titleFont:font}},scales:{x:{grid:{display:false},ticks:{color:tc,font}},y:{grid:{color:gc},ticks:{color:tc,font,callback:v=>'R$'+(v/1000).toFixed(0)+'k'},border:{display:false}}}}});
+
+  // Chart Qtd
+  new Chart(document.getElementById('cQ'),{type:'line',data:{labels:CQ.labels,datasets:[{label:'Unidades',data:CQ.values,borderColor:'#1c1917',backgroundColor:'rgba(28,25,23,.06)',borderWidth:2,pointBackgroundColor:'#1c1917',pointRadius:4,fill:true,tension:0.3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{bodyFont:font,titleFont:font}},scales:{x:{grid:{display:false},ticks:{color:tc,font}},y:{grid:{color:gc},ticks:{color:tc,font,stepSize:5},border:{display:false},beginAtZero:true}}}});
+
+  // Chart Lucro médio/marca
+  const bColors=['#2563eb','#dc2626','#16a34a','#7c3aed','#0891b2','#0284c7','#9ca3af'];
+  new Chart(document.getElementById('cLM'),{type:'bar',data:{labels:CLM.labels,datasets:[{label:'Lucro médio',data:CLM.luc,backgroundColor:bColors.slice(0,CLM.labels.length),borderRadius:6,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+fmt(ctx.raw)},bodyFont:font,titleFont:font}},scales:{x:{grid:{color:gc},ticks:{color:tc,font,callback:v=>'R$'+v},border:{display:false}},y:{grid:{display:false},ticks:{color:tc,font}}}}});
+
+  // Chart Marcas doughnut
+  new Chart(document.getElementById('cMarca'),{type:'doughnut',data:{labels:CMarca.labels,datasets:[{data:CMarca.values,backgroundColor:bColors.slice(0,CMarca.labels.length),borderWidth:0,hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'right',labels:{color:tc,font,boxWidth:10,padding:12}},tooltip:{bodyFont:font,titleFont:font}}}});
 }
 
-// ── NAV ──
-window.showPage = p => {
-  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
-  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
-  document.getElementById('page-'+p).classList.add('active');
-  document.querySelectorAll('.nav-tab').forEach(t=>{if((p==='vendas'&&t.textContent.includes('Vendas'))||(p==='anuncios'&&t.textContent.includes('Anúncios')))t.classList.add('active');});
+window.sp2=p=>{
+  document.querySelectorAll('.pg').forEach(x=>x.classList.remove('on'));
+  document.querySelectorAll('.nt').forEach(t=>t.classList.remove('on'));
+  document.getElementById('pg-'+p).classList.add('on');
+  document.querySelectorAll('.nt').forEach(t=>{if((p==='vendas'&&t.textContent.includes('Vend'))||(p==='insights'&&t.textContent.includes('Insight'))||(p==='anuncios'&&t.textContent.includes('Anún')))t.classList.add('on');});
+  if(p==='insights')buildCharts();
 };
 
-// ── ADS ──
-let selPlats=new Set(['marketplace','olx','mercadolivre']);
-let apiKey=localStorage.getItem('gemini_key')||'';
-if(apiKey){document.getElementById('apiKeyInp').value=apiKey;document.getElementById('keySaved').classList.add('on');}
-
-window.saveKey=()=>{const k=v('apiKeyInp');if(!k){alert('Cole sua chave!');return;}apiKey=k;localStorage.setItem('gemini_key',k);const s=document.getElementById('keySaved');s.classList.add('on');setTimeout(()=>s.classList.remove('on'),3000);};
-window.togPlat=btn=>{const p=btn.dataset.p;if(selPlats.has(p)){if(selPlats.size>1){selPlats.delete(p);btn.classList.remove('active');}}else{selPlats.add(p);btn.classList.add('active');}};
-
+// ADS
+let selP=new Set(['marketplace','olx','mercadolivre']);
+let apiKey=localStorage.getItem('gk')||'';
+if(apiKey){document.getElementById('KI').value=apiKey;document.getElementById('KS').classList.add('on');}
+window.saveKey=()=>{const k=g('KI');if(!k){alert('Cole sua chave!');return;}apiKey=k;localStorage.setItem('gk',k);const s=document.getElementById('KS');s.classList.add('on');setTimeout(()=>s.classList.remove('on'),3000);};
+window.togP=btn=>{const p=btn.dataset.p;if(selP.has(p)){if(selP.size>1){selP.delete(p);btn.classList.remove('on');}}else{selP.add(p);btn.classList.add('on');}};
 async function gemini(prompt){
   const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:prompt}]}]})});
-  const d=await r.json(); if(d.error)throw new Error(d.error.message);
+  const d=await r.json();if(d.error)throw new Error(d.error.message);
   return d.candidates?.[0]?.content?.parts?.[0]?.text||'';
 }
-
-window.suggestPrice=async()=>{
-  const desc=v('prodDesc'); if(!desc){alert('Preencha a descrição!');return;} if(!apiKey){alert('Salve sua chave!');return;}
-  const btn=document.getElementById('btnSuggest'); btn.disabled=true; btn.textContent='Analisando...';
+window.sugPrice=async()=>{
+  const desc=g('aDesc');if(!desc){alert('Preencha a descrição!');return;}if(!apiKey){alert('Salve sua chave!');return;}
+  const btn=document.getElementById('bSug');btn.disabled=true;btn.textContent='Analisando...';
   try{
-    const raw=await gemini(`Especialista em precificação de notebooks usados no Brasil. Produto: ${desc}. Responda SOMENTE JSON sem markdown: {"preco_sugerido":1500,"faixa_minima":1300,"faixa_maxima":1700,"justificativa":"breve motivo"}`);
-    const r=JSON.parse(raw.match(/\{[\s\S]*\}/)[0]);
-    const h=document.getElementById('priceHint');
-    h.innerHTML=`<strong>Sugerido: ${fmt(r.preco_sugerido)}</strong> &nbsp;·&nbsp; Faixa: ${fmt(r.faixa_minima)} – ${fmt(r.faixa_maxima)}<br><span style="opacity:.8">${r.justificativa}</span> <button onclick="document.getElementById('prodPreco').value=${r.preco_sugerido}" style="margin-top:6px;padding:3px 11px;border-radius:5px;border:1px solid var(--green-border);background:transparent;color:var(--green);font-size:.73rem;cursor:pointer;font-weight:600;">Usar este →</button>`;
+    const raw=await gemini(`Especialista em precificação de notebooks usados no Brasil. Produto: ${desc}. Responda SOMENTE JSON sem markdown: {"preco_sugerido":1500,"faixa_minima":1300,"faixa_maxima":1700,"justificativa":"motivo"}`);
+    const r=JSON.parse(raw.match(/\{[\s\S]*?\}/)[0]);
+    const h=document.getElementById('PH');
+    h.innerHTML=`<strong>Sugerido: ${fmt(r.preco_sugerido)}</strong> &nbsp;·&nbsp; Faixa: ${fmt(r.faixa_minima)} – ${fmt(r.faixa_maxima)}<br><span style="opacity:.8">${r.justificativa}</span> <button onclick="document.getElementById('aPreco').value=${r.preco_sugerido}" style="margin-top:6px;padding:3px 11px;border-radius:5px;border:1px solid var(--gbd);background:transparent;color:var(--gr);font-size:.73rem;cursor:pointer;font-weight:600">Usar este →</button>`;
     h.classList.add('on');
   }catch(e){alert('Erro: '+e.message);}
-  btn.disabled=false; btn.textContent='✦ Sugerir com IA';
+  btn.disabled=false;btn.textContent='✦ Sugerir com IA';
 };
-
-const steps=['Analisando produto...','Criando título...','Redigindo anúncios...','Otimizando para cada plataforma...','Finalizando...'];
-window.generateAds=async()=>{
-  const desc=v('prodDesc'), preco=document.getElementById('prodPreco').value;
-  if(!apiKey){alert('Salve sua chave Gemini!');return;} if(!desc){alert('Preencha a descrição!');return;}
-  const btn=document.getElementById('btnGen'); btn.disabled=true;
-  document.getElementById('loaderWrap').classList.add('on');
-  document.getElementById('resultsArea').classList.remove('on');
-  let si=0; const iv=setInterval(()=>{document.getElementById('loadStep').textContent=steps[si++%steps.length];},1400);
+const steps=['Analisando produto...','Criando título...','Redigindo anúncios...','Otimizando plataformas...','Finalizando...'];
+window.genAds=async()=>{
+  const desc=g('aDesc'),preco=document.getElementById('aPreco').value;
+  if(!apiKey){alert('Salve sua chave Gemini!');return;}if(!desc){alert('Preencha a descrição!');return;}
+  const btn=document.getElementById('bGen');btn.disabled=true;
+  document.getElementById('LW').classList.add('on');document.getElementById('RA').classList.remove('on');
+  let si=0;const iv=setInterval(()=>{document.getElementById('LS').textContent=steps[si++%steps.length];},1400);
   try{
-    const plats=Array.from(selPlats), precoTxt=preco?`R$ ${parseFloat(preco).toLocaleString('pt-BR',{minimumFractionDigits:0})}`:'não informado';
-    const raw=await gemini(`Você é especialista em vendas online no Brasil. Crie anúncios para: ${plats.join(', ')}.\nProduto: ${desc}\nPreço: ${precoTxt}\nMarketplace: texto com emojis, descontraído, chamativo. OLX: direto ao ponto, técnico, sem enrolação. Mercado Livre: otimizado para SEO, profissional, com palavras-chave no título.\nResponda SOMENTE JSON sem markdown: {"tips":"uma dica rápida de venda","ads":{"marketplace":"...","olx":"...","mercadolivre":"..."}}`);
-    const result=JSON.parse(raw.match(/\{[\s\S]*\}/)[0]);
-    clearInterval(iv); document.getElementById('loaderWrap').classList.remove('on');
-    const tb=document.getElementById('rtabs'), rp=document.getElementById('rpanels'), tip=document.getElementById('tipBox');
-    const platLabel={marketplace:'Marketplace',olx:'OLX',mercadolivre:'Mercado Livre'};
-    if(result.tips){tip.textContent='💡 '+result.tips;tip.style.display='block';}else tip.style.display='none';
-    tb.innerHTML=plats.map((p,i)=>`<button class="rtab ${i===0?'active':''}" onclick="swTab(${i})">${platLabel[p]}</button>`).join('');
-    rp.innerHTML=plats.map((p,i)=>`<div class="rpanel ${i===0?'active':''}" id="rp${i}"><div class="ad-out" id="ado_${p}">${esc(result.ads?.[p]||'Não gerado.')}</div><div class="ad-acts"><button class="btn-copy" onclick="cpAd('${p}')">Copiar texto</button><button class="btn-wa" onclick="waAd('${p}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.118.553 4.107 1.523 5.83L.057 23.5l5.752-1.507A11.95 11.95 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.885 0-3.641-.52-5.137-1.424l-.369-.219-3.813 1 1.018-3.72-.242-.382A9.96 9.96 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg> WhatsApp</button></div></div>`).join('');
-    document.getElementById('resultsArea').classList.add('on');
-  }catch(e){clearInterval(iv);document.getElementById('loaderWrap').classList.remove('on');alert('Erro: '+e.message);}
+    const plats=Array.from(selP),pTxt=preco?`R$ ${parseFloat(preco).toLocaleString('pt-BR')}`:'não informado';
+    const raw=await gemini(`Especialista em vendas online no Brasil. Crie anúncios para: ${plats.join(', ')}. Produto: ${desc}. Preço: ${pTxt}. Marketplace: emojis, descontraído. OLX: direto, técnico. Mercado Livre: SEO, profissional. Responda SOMENTE JSON sem markdown: {"tips":"dica","ads":{"marketplace":"...","olx":"...","mercadolivre":"..."}}`);
+    const res=JSON.parse(raw.match(/\{[\s\S]*\}/)[0]);
+    clearInterval(iv);document.getElementById('LW').classList.remove('on');
+    const tb=document.getElementById('RTB'),rp=document.getElementById('RPS'),tip=document.getElementById('TB');
+    const pl={marketplace:'Marketplace',olx:'OLX',mercadolivre:'Mercado Livre'};
+    if(res.tips){tip.textContent='💡 '+res.tips;tip.style.display='block';}else tip.style.display='none';
+    tb.innerHTML=plats.map((p,i)=>`<button class="rt ${i===0?'on':''}" onclick="swT(${i})">${pl[p]}</button>`).join('');
+    rp.innerHTML=plats.map((p,i)=>`<div class="rp ${i===0?'on':''}" id="rp${i}"><div class="ao" id="ao_${p}">${esc(res.ads?.[p]||'Não gerado.')}</div><div class="rac"><button class="bcp" onclick="cpA('${p}')">Copiar</button><button class="bwa" onclick="waA('${p}')">WhatsApp</button></div></div>`).join('');
+    document.getElementById('RA').classList.add('on');
+  }catch(e){clearInterval(iv);document.getElementById('LW').classList.remove('on');alert('Erro: '+e.message);}
   btn.disabled=false;
 };
-window.swTab=i=>{document.querySelectorAll('.rtab').forEach((t,j)=>t.classList.toggle('active',i===j));document.querySelectorAll('.rpanel').forEach((p,j)=>p.classList.toggle('active',i===j));};
-window.cpAd=p=>{const el=document.getElementById('ado_'+p);navigator.clipboard.writeText(el.innerText).then(()=>{const b=el.closest('.rpanel').querySelector('.btn-copy');b.textContent='✓ Copiado';setTimeout(()=>b.textContent='Copiar texto',2000);});};
-window.waAd=p=>window.open(`https://wa.me/?text=${encodeURIComponent(document.getElementById('ado_'+p).innerText)}`,'_blank');
+window.swT=i=>{document.querySelectorAll('.rt').forEach((t,j)=>t.classList.toggle('on',i===j));document.querySelectorAll('.rp').forEach((p,j)=>p.classList.toggle('on',i===j));};
+window.cpA=p=>{navigator.clipboard.writeText(document.getElementById('ao_'+p).innerText).then(()=>{const all=document.querySelectorAll('.rp');all.forEach(el=>{const btn=el.querySelector('.bcp');if(btn&&el.querySelector('#ao_'+p)){btn.textContent='✓ Copiado';setTimeout(()=>btn.textContent='Copiar',2000);}});});};
+window.waA=p=>window.open('https://wa.me/?text='+encodeURIComponent(document.getElementById('ao_'+p).innerText),'_blank');
 
-document.getElementById('pData').value=new Date().toISOString().split('T')[0];
+document.getElementById('pDC').value=new Date().toISOString().slice(0,7);
 </script>
 </body>
 </html>
