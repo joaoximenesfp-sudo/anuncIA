@@ -108,6 +108,8 @@ nav{position:sticky;top:0;z-index:50;background:rgba(249,248,246,.93);backdrop-f
 .pp.pos{color:var(--gr)}.pp.neg{color:var(--re)}
 .bv{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:.69rem;font-weight:600;white-space:nowrap}
 .sv{background:var(--gbg);color:var(--gr);border:1px solid var(--gbd)}
+.san{background:var(--bbg);color:var(--bl);border:1px solid var(--bbd)}
+.san{background:var(--bbg);color:var(--bl);border:1px solid var(--bbd)}
 .se{background:#ecfdf5;color:#065f46;border:1px solid #6ee7b7}
 .sel{padding:3px 7px;font-size:.72rem;border:1px solid var(--b2);border-radius:6px;background:var(--w);color:var(--tx);cursor:pointer;outline:none;font-family:'DM Sans',sans-serif}
 .bed{width:26px;height:26px;border-radius:5px;border:1px solid var(--b);background:transparent;color:var(--li);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.8rem;transition:all .15s}
@@ -133,6 +135,24 @@ nav{position:sticky;top:0;z-index:50;background:rgba(249,248,246,.93);backdrop-f
 .bcan:hover{border-color:var(--tx);color:var(--tx)}
 .bsav{padding:9px 22px;background:var(--tx);color:#fff;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;transition:opacity .15s}
 .bsav:hover{opacity:.85}
+
+/* ── SELL MODAL ── */
+.smo{position:fixed;inset:0;z-index:150;display:flex;align-items:center;justify-content:center;padding:24px}
+.smo.h{display:none}
+.smoo{position:absolute;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(5px)}
+.smc{position:relative;background:var(--w);border-radius:16px;width:100%;max-width:460px;box-shadow:var(--shm);overflow:hidden}
+.smch{padding:20px 24px 14px;border-bottom:1px solid var(--b);display:flex;align-items:center;justify-content:space-between}
+.smct{font-family:'Instrument Serif',serif;font-size:1.15rem;color:var(--tx)}
+.smcl{width:30px;height:30px;border-radius:7px;border:1px solid var(--b);background:transparent;color:var(--mu);cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.smcl:hover{background:var(--b)}
+.smcp{padding:12px 24px 4px;background:var(--bg);border-bottom:1px solid var(--b);font-size:.83rem;font-weight:500;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.smcb{padding:18px 24px 20px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.smcb .full{grid-column:1/-1}
+.dias-hint{font-size:.73rem;font-weight:600;margin-top:3px;min-height:16px}
+.dias-hint.verde{color:var(--gr)}.dias-hint.am{color:var(--am)}.dias-hint.re{color:var(--re)}
+.smca{padding:0 24px 20px;display:flex;justify-content:flex-end;gap:8px}
+.bvnd{padding:10px 22px;background:var(--gr);color:#fff;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.84rem;font-weight:600;cursor:pointer;transition:opacity .15s}
+.bvnd:hover{opacity:.85}
 
 /* ── INSIGHTS ── */
 .ig{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:12px}
@@ -194,6 +214,85 @@ input[type=number].inp{padding-left:32px}
 .bwa{padding:7px 16px;border:1px solid var(--gbd);background:var(--gbg);color:var(--gr);border-radius:7px;font-size:.77rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .15s}
 .bwa:hover{background:var(--gr);color:#fff;border-color:var(--gr)}
 
+
+/* ── SELL MODAL ── */
+.smo{position:fixed;inset:0;z-index:150;display:flex;align-items:center;justify-content:center;padding:24px}
+.smo.h{display:none}
+.smoo{position:absolute;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(5px)}
+.smc{position:relative;background:var(--w);border-radius:16px;width:100%;max-width:460px;box-shadow:var(--shm);overflow:hidden}
+.smch{padding:20px 24px 14px;border-bottom:1px solid var(--b);display:flex;align-items:center;justify-content:space-between}
+.smct{font-family:'Instrument Serif',serif;font-size:1.15rem;color:var(--tx)}
+.smcl{width:30px;height:30px;border-radius:7px;border:1px solid var(--b);background:transparent;color:var(--mu);cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.smcl:hover{background:var(--b)}
+.smcp{padding:10px 24px 10px;background:var(--bg);border-bottom:1px solid var(--b);font-size:.83rem;font-weight:500;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.smcb{padding:18px 24px 20px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.smcb .full{grid-column:1/-1}
+.dias-hint{font-size:.73rem;font-weight:600;margin-top:3px;min-height:16px}
+.dias-hint.verde{color:var(--gr)}.dias-hint.am{color:var(--am)}.dias-hint.re{color:var(--re)}
+.smca{padding:0 24px 20px;display:flex;justify-content:flex-end;gap:8px}
+.bvnd{padding:10px 22px;background:var(--gr);color:#fff;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.84rem;font-weight:600;cursor:pointer;transition:opacity .15s}
+.bvnd:hover{opacity:.85}
+
+
+/* ── ALERTAS ── */
+.al-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.al{display:flex;align-items:flex-start;gap:10px;background:var(--w);border:1px solid var(--b);border-radius:var(--rad);padding:11px 14px;flex:1;min-width:200px;box-shadow:var(--sh)}
+.al.warn{border-left:3px solid var(--am);background:var(--abg)}
+.al.good{border-left:3px solid var(--gr);background:var(--gbg)}
+.al.info{border-left:3px solid var(--bl);background:var(--bbg)}
+.al-ic{font-size:1.1rem;flex-shrink:0;margin-top:1px}
+.al-tx{font-size:.76rem;color:var(--tx);line-height:1.4}
+.al-tx strong{font-weight:700}
+
+/* ── META MENSAL ── */
+.meta-bar-wrap{background:var(--w);border:1px solid var(--b);border-radius:var(--rad);padding:14px 18px;margin-bottom:12px;box-shadow:var(--sh)}
+.meta-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:10px;flex-wrap:wrap}
+.meta-lbl{font-size:.7rem;font-weight:600;color:var(--li);text-transform:uppercase;letter-spacing:.08em}
+.meta-vals{display:flex;align-items:baseline;gap:6px}
+.meta-cur{font-family:'Instrument Serif',serif;font-size:1.2rem;color:var(--tx)}
+.meta-of{font-size:.78rem;color:var(--li)}
+.meta-pct{font-size:.75rem;font-weight:700;padding:2px 7px;border-radius:20px;background:var(--gbg);color:var(--gr)}
+.meta-pct.warn{background:var(--abg);color:var(--am)}
+.meta-pct.re{background:var(--rbg);color:var(--re)}
+.meta-bar{height:7px;background:var(--b);border-radius:4px;overflow:hidden}
+.meta-fill{height:100%;background:var(--gr);border-radius:4px;transition:width .5s ease}
+.meta-fill.warn{background:var(--am)}.meta-fill.re{background:var(--re)}
+.meta-edit{display:flex;align-items:center;gap:6px;margin-top:8px}
+.meta-inp{width:110px;padding:4px 8px;border:1px solid var(--b2);border-radius:6px;font-size:.78rem;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);outline:none}
+.meta-inp:focus{border-color:var(--tx)}
+.meta-btn{padding:4px 11px;border-radius:6px;border:1px solid var(--b2);background:transparent;font-size:.73rem;font-weight:600;color:var(--mu);cursor:pointer;transition:all .15s}
+.meta-btn:hover{border-color:var(--tx);color:var(--tx)}
+
+/* ── RANKING / TABELA INSIGHTS ── */
+.rk-wrap{background:var(--w);border:1px solid var(--b);border-radius:var(--rad);box-shadow:var(--sh);overflow:hidden;margin-bottom:12px}
+.rk-head{padding:14px 18px 0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.rk-title{font-size:.84rem;font-weight:600;color:var(--tx)}
+.rk-tabs{display:flex;gap:4px}
+.rk-tab{padding:4px 11px;border-radius:6px;border:1px solid var(--b2);background:transparent;font-size:.73rem;font-weight:600;color:var(--mu);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
+.rk-tab.on{background:var(--tx);border-color:var(--tx);color:#fff}
+.rk-body{padding:8px 0 4px}
+.rk-row{display:flex;align-items:center;gap:10px;padding:7px 18px;transition:background .1s}
+.rk-row:hover{background:var(--bg)}
+.rk-pos{width:22px;font-size:.7rem;font-weight:700;color:var(--li);flex-shrink:0;text-align:center}
+.rk-pos.gold{color:#b45309}.rk-pos.silver{color:#64748b}.rk-pos.bronze{color:#92400e}
+.rk-nm{flex:1;font-size:.78rem;font-weight:500;color:var(--tx);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rk-sub{font-size:.67rem;color:var(--li);margin-top:1px}
+.rk-val{font-size:.8rem;font-weight:700;text-align:right;flex-shrink:0}
+.rk-val.g{color:var(--gr)}.rk-val.re{color:var(--re)}.rk-val.am{color:var(--am)}
+.rk-bar{width:60px;height:4px;background:var(--b);border-radius:2px;flex-shrink:0}
+.rk-bar-fill{height:100%;border-radius:2px;background:var(--gr)}
+.rk-bar-fill.re{background:var(--re)}.rk-bar-fill.am{background:var(--am)}
+
+/* ── GIRO POR MARCA ── */
+.giro-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin-bottom:12px}
+.giro-card{background:var(--w);border:1px solid var(--b);border-radius:var(--rad);padding:12px 14px;box-shadow:var(--sh)}
+.giro-brand{display:flex;align-items:center;gap:7px;margin-bottom:6px}
+.giro-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.giro-nm{font-size:.78rem;font-weight:600;color:var(--tx)}
+.giro-dias{font-family:'Instrument Serif',serif;font-size:1.3rem;line-height:1;letter-spacing:-.01em}
+.giro-dias.g{color:var(--gr)}.giro-dias.am{color:var(--am)}.giro-dias.re{color:var(--re)}
+.giro-sub{font-size:.68rem;color:var(--li);margin-top:3px}
+
 @media(max-width:700px){
   .fr{grid-template-columns:1fr 1fr}
   .fr .fc:first-child{grid-column:1/-1}
@@ -201,6 +300,7 @@ input[type=number].inp{padding-left:32px}
   .sr{grid-template-columns:1fr 1fr}
   .cg{grid-template-columns:1fr}
   .mcb{grid-template-columns:1fr}
+  .smcb{grid-template-columns:1fr}
 }
 </style>
 </head>
@@ -250,15 +350,36 @@ input[type=number].inp{padding-left:32px}
         <div><div class="pht">Minhas Vendas</div><div class="phs">Estoque e resultados em tempo real</div></div>
         <div class="frow">
           <button class="fc2 on" onclick="setF('todos',this)">Todos</button>
+          <button class="fc2" onclick="setF('Anunciado',this)">Anunciados</button>
           <button class="fc2" onclick="setF('Estoque',this)">Em estoque</button>
           <button class="fc2" onclick="setF('Vendido',this)">Vendidos</button>
         </div>
       </div>
       <div class="banner">📊 <strong>228 produtos</strong> importados da planilha — 201 vendidos · 27 em estoque</div>
+      <!-- META MENSAL -->
+      <div class="meta-bar-wrap" id="metaWrap">
+        <div class="meta-top">
+          <span class="meta-lbl">Meta mensal de lucro</span>
+          <div class="meta-vals">
+            <span class="meta-cur" id="metaCur">—</span>
+            <span class="meta-of" id="metaOf">/ —</span>
+            <span class="meta-pct" id="metaPct">—</span>
+          </div>
+        </div>
+        <div class="meta-bar"><div class="meta-fill" id="metaFill" style="width:0%"></div></div>
+        <div class="meta-edit">
+          <input class="meta-inp" type="number" id="metaInp" placeholder="Meta R$" min="0">
+          <button class="meta-btn" onclick="saveMeta()">Definir meta</button>
+          <span style="font-size:.7rem;color:var(--li)" id="metaMsg"></span>
+        </div>
+      </div>
+      <!-- ALERTAS -->
+      <div class="al-row" id="alertsRow"></div>
       <div class="sr">
         <div class="sb"><div class="sbl">Receita total</div><div class="sbv g" id="sRec">—</div><div class="sbs" id="sRecS">—</div></div>
         <div class="sb"><div class="sbl">Lucro total</div><div class="sbv" id="sLuc">—</div><div class="sbs" id="sMgm">—</div></div>
-        <div class="sb"><div class="sbl">Em estoque</div><div class="sbv b" id="sEst">—</div><div class="sbs" id="sEstV">—</div></div>
+        <div class="sb"><div class="sbl">Anunciados</div><div class="sbv b" id="sAnu">—</div><div class="sbs" id="sAnuV">—</div></div>
+        <div class="sb"><div class="sbl">Em estoque</div><div class="sbv" id="sEst">—</div><div class="sbs" id="sEstV">—</div></div>
         <div class="sb"><div class="sbl">Potencial</div><div class="sbv a" id="sPot">—</div><div class="sbs">se vender tudo</div></div>
       </div>
       <div class="cd">
@@ -268,7 +389,13 @@ input[type=number].inp{padding-left:32px}
             <div class="fc" style="grid-column:1/-1"><input class="inp" type="text" id="pN" placeholder="Dell Latitude i5 10ª · SSD 256GB · 8GB RAM"></div>
             <div class="fc"><span class="fla">Custo R$</span><input class="inp" type="number" id="pC" placeholder="0" min="0"></div>
             <div class="fc"><span class="fla">Venda R$</span><input class="inp" type="number" id="pV" placeholder="0" min="0"></div>
-            <div class="fc"><span class="fla">Status</span><select class="inp" id="pS"><option value="Estoque">Estoque</option><option value="Vendido">Vendido</option></select></div>
+            <div class="fc"><span class="fla">Status</span>
+              <select class="inp" id="pS">
+                <option value="Anunciado">Anunciado</option>
+                <option value="Estoque">Estoque</option>
+                <option value="Vendido">Vendido</option>
+              </select>
+            </div>
             <div class="fc"><span class="fla">Compra</span><input class="inp" type="month" id="pDC"></div>
             <div class="fc"><span class="fla">Venda</span><input class="inp" type="month" id="pDV"></div>
             <div class="fc"><span class="fla" style="opacity:0">.</span><button class="ba" onclick="addProd()">+ Adicionar</button></div>
@@ -300,6 +427,26 @@ input[type=number].inp{padding-left:32px}
         <div class="cc"><div class="ch"><div class="ct">Lucro médio por marca (R$)</div><div class="cs">Qual marca rende mais por venda</div></div><div class="cw"><canvas id="cLM"></canvas></div></div>
         <div class="cc full"><div class="ch"><div class="ct">Distribuição do estoque por marca</div><div class="cs">Total histórico de produtos</div></div><div class="cw"><canvas id="cMarca"></canvas></div></div>
       </div>
+
+      <!-- GIRO POR MARCA -->
+      <div>
+        <div style="font-size:.84rem;font-weight:600;color:var(--tx);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--b)">Velocidade de giro por marca <span style="font-size:.72rem;font-weight:400;color:var(--li)">— dias médios para vender</span></div>
+        <div class="giro-grid" id="giroGrid"></div>
+      </div>
+
+      <!-- RANKING -->
+      <div class="rk-wrap">
+        <div class="rk-head">
+          <span class="rk-title">Ranking de produtos</span>
+          <div class="rk-tabs">
+            <button class="rk-tab on" onclick="swRk('lucro',this)">Maior lucro</button>
+            <button class="rk-tab" onclick="swRk('giro',this)">Giro rápido</button>
+            <button class="rk-tab" onclick="swRk('parado',this)">Mais parados</button>
+          </div>
+        </div>
+        <div class="rk-body" id="rkBody"></div>
+      </div>
+
     </div>
   </div>
 
@@ -355,6 +502,7 @@ input[type=number].inp{padding-left:32px}
       <div class="fc"><label class="fl">Preço de venda R$</label><input class="inp" id="eV" type="number" min="0"></div>
       <div class="fc"><label class="fl">Status</label>
         <select class="inp" id="eS">
+          <option value="Anunciado">Anunciado</option>
           <option value="Estoque">Estoque</option>
           <option value="Vendido">Vendido</option>
         </select>
@@ -369,6 +517,90 @@ input[type=number].inp{padding-left:32px}
   </div>
 </div>
 
+<!-- SELL MODAL -->
+<div class="smo h" id="SMO">
+  <div class="smoo" onclick="cancelSell()"></div>
+  <div class="smc">
+    <div class="smch">
+      <span class="smct">🎉 Registrar venda</span>
+      <button class="smcl" onclick="cancelSell()">✕</button>
+    </div>
+    <div class="smcp" id="smProdNome">—</div>
+    <div class="smcb">
+      <div class="fc full">
+        <label class="fl">Onde vendeu?</label>
+        <select class="inp" id="smPlat">
+          <option value="">— Selecione a plataforma —</option>
+          <option value="Marketplace">📘 Marketplace</option>
+          <option value="OLX">🟠 OLX</option>
+          <option value="Mercado Livre">🟡 Mercado Livre</option>
+          <option value="WhatsApp">💬 WhatsApp</option>
+          <option value="Instagram">📸 Instagram</option>
+          <option value="Indicação">🤝 Indicação</option>
+          <option value="Outro">Outro</option>
+        </select>
+      </div>
+      <div class="fc">
+        <label class="fl">Preço de venda R$</label>
+        <input class="inp" type="number" id="smPreco" placeholder="0" min="0" oninput="updDias()">
+      </div>
+      <div class="fc">
+        <label class="fl">Data da venda</label>
+        <input class="inp" type="date" id="smData" onchange="updDias()">
+      </div>
+      <div class="fc full">
+        <div class="dias-hint" id="smDiasHint"></div>
+      </div>
+    </div>
+    <div class="smca">
+      <button class="bcan" onclick="cancelSell()">Cancelar</button>
+      <button class="bvnd" onclick="confirmSell()">✓ Confirmar venda</button>
+    </div>
+  </div>
+</div>
+
+<!-- SELL MODAL -->
+<div class="smo h" id="SMO">
+  <div class="smoo" onclick="cancelSell()"></div>
+  <div class="smc">
+    <div class="smch">
+      <span class="smct">🎉 Registrar venda</span>
+      <button class="smcl" onclick="cancelSell()">✕</button>
+    </div>
+    <div class="smcp" id="smProdNome">—</div>
+    <div class="smcb">
+      <div class="fc full">
+        <label class="fl">Onde vendeu?</label>
+        <select class="inp" id="smPlat">
+          <option value="">— Selecione a plataforma —</option>
+          <option value="Marketplace">📘 Marketplace</option>
+          <option value="OLX">🟠 OLX</option>
+          <option value="Mercado Livre">🟡 Mercado Livre</option>
+          <option value="WhatsApp">💬 WhatsApp</option>
+          <option value="Instagram">📸 Instagram</option>
+          <option value="Indicação">🤝 Indicação</option>
+          <option value="Outro">Outro</option>
+        </select>
+      </div>
+      <div class="fc">
+        <label class="fl">Preço de venda R$</label>
+        <input class="inp" type="number" id="smPreco" placeholder="0" min="0" oninput="updDias()">
+      </div>
+      <div class="fc">
+        <label class="fl">Data da venda</label>
+        <input class="inp" type="date" id="smData" onchange="updDias()">
+      </div>
+      <div class="fc full">
+        <div class="dias-hint" id="smDiasHint"></div>
+      </div>
+    </div>
+    <div class="smca">
+      <button class="bcan" onclick="cancelSell()">Cancelar</button>
+      <button class="bvnd" onclick="confirmSell()">✓ Confirmar venda</button>
+    </div>
+  </div>
+</div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
 import { getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,onAuthStateChanged,updateProfile } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
@@ -378,12 +610,12 @@ const app=initializeApp({apiKey:"AIzaSyDmC5BxL2_qf7YT9Yq9gUIhpRBn0RoRa2A",authDo
 const auth=getAuth(app), db=getFirestore(app);
 
 const XLSX=[{"nome":"Acer Aspire 3 i5 7th","custo":250.0,"venda":950.0,"lucro":700.0,"status":"Vendido","data_compra":"2025-01","data_venda":"2025-01","data":"2025-01","num":1},{"nome":"HP x360 Celeron","custo":100.0,"venda":350.0,"lucro":250.0,"status":"Vendido","data_compra":"2025-01","data_venda":"2025-02","data":"2025-02","num":2},{"nome":"Samsung RV415","custo":0.0,"venda":150.0,"lucro":150.0,"status":"Vendido","data_compra":"2025-01","data_venda":"2025-03","data":"2025-03","num":3},{"nome":"Samsung NP370","custo":280.0,"venda":520.0,"lucro":240.0,"status":"Vendido","data_compra":"2025-01","data_venda":"2025-02","data":"2025-02","num":4},{"nome":"Acer Aspire E1 532 Celeron","custo":150.0,"venda":500.0,"lucro":350.0,"status":"Vendido","data_compra":"2025-01","data_venda":"2025-01","data":"2025-01","num":5},{"nome":"Acer Aspire E1 572 i5 4th","custo":280.0,"venda":350.0,"lucro":70.0,"status":"Vendido","data_compra":"2025-01","data_venda":"2025-02","data":"2025-02","num":6},{"nome":"Dell Inspiron 3400 i5 8th","custo":330.0,"venda":750.0,"lucro":420.0,"status":"Vendido","data_compra":"2025-01","data_venda":"2025-01","data":"2025-01","num":7},{"nome":"Samsung NP370E4E (Bruno)","custo":87.5,"venda":250.0,"lucro":162.5,"status":"Vendido","data_compra":"2025-01","data_venda":"2025-03","data":"2025-03","num":8},{"nome":"HP G42 (Bruno)","custo":87.5,"venda":225.0,"lucro":137.5,"status":"Vendido","data_compra":"2025-01","data_venda":"2025-01","data":"2025-01","num":9},{"nome":"Samsung NP270E4E ssd","custo":250.0,"venda":550.0,"lucro":300.0,"status":"Vendido","data_compra":"2025-01","data_venda":"2025-02","data":"2025-02","num":10},{"nome":"Acer 14\" Celeron","custo":130.0,"venda":500.0,"lucro":370.0,"status":"Vendido","data_compra":"2025-01","data_venda":"2025-02","data":"2025-02","num":11},{"nome":"Lote 6 Notebooks","custo":0.0,"venda":200.0,"lucro":200.0,"status":"Vendido","data_compra":"2025-02","data_venda":"2025-02","data":"2025-02","num":12},{"nome":"LNV L1135","custo":0.0,"venda":250.0,"lucro":250.0,"status":"Vendido","data_compra":"2025-02","data_venda":"2025-02","data":"2025-02","num":13},{"nome":"Itautec AMD+RYZEN","custo":75.0,"venda":280.0,"lucro":205.0,"status":"Vendido","data_compra":"2025-02","data_venda":"2025-03","data":"2025-03","num":14},{"nome":"Compaq Presario CQ23","custo":75.0,"venda":120.0,"lucro":45.0,"status":"Vendido","data_compra":"2025-02","data_venda":"2025-03","data":"2025-03","num":15},{"nome":"Samsung NP270E5K i3","custo":150.0,"venda":700.0,"lucro":550.0,"status":"Vendido","data_compra":"2025-02","data_venda":"2025-03","data":"2025-03","num":16},{"nome":"Lenovo IdeaPad s145 i3","custo":350.0,"venda":950.0,"lucro":600.0,"status":"Vendido","data_compra":"2025-03","data_venda":"2025-03","data":"2025-03","num":17},{"nome":"Monitor TV Samsung","custo":0.0,"venda":110.0,"lucro":110.0,"status":"Vendido","data_compra":"2025-03","data_venda":"2025-03","data":"2025-03","num":18},{"nome":"Dell Vostro 5470 i5 4th","custo":240.0,"venda":600.0,"lucro":360.0,"status":"Vendido","data_compra":"2025-03","data_venda":"2025-03","data":"2025-03","num":19},{"nome":"Samsung NP270E5K i5 5th branco","custo":208.0,"venda":800.0,"lucro":592.0,"status":"Vendido","data_compra":"2025-03","data_venda":"2025-03","data":"2025-03","num":20},{"nome":"Dell Latitude 15\" 8GB i5 8th","custo":200.0,"venda":900.0,"lucro":700.0,"status":"Vendido","data_compra":"2025-03","data_venda":"2025-04","data":"2025-04","num":21},{"nome":"HP G42 i3","custo":20.0,"venda":400.0,"lucro":380.0,"status":"Vendido","data_compra":"2025-03","data_venda":"2025-04","data":"2025-04","num":22},{"nome":"Acer Aspire E1-571 i5","custo":30.0,"venda":500.0,"lucro":470.0,"status":"Vendido","data_compra":"2025-03","data_venda":"2025-03","data":"2025-03","num":23},{"nome":"Aspire E1-471 i3 2nd","custo":100.0,"venda":380.0,"lucro":280.0,"status":"Vendido","data_compra":"2025-03","data_venda":"2025-03","data":"2025-03","num":24},{"nome":"Samsung NP270E5J","custo":343.0,"venda":750.0,"lucro":407.0,"status":"Vendido","data_compra":"2025-03","data_venda":"2025-04","data":"2025-04","num":25},{"nome":"Lenovo IdeaPad 3i i3 12th (tela)","custo":150.0,"venda":200.0,"lucro":50.0,"status":"Vendido","data_compra":"2025-04","data_venda":"2025-04","data":"2025-04","num":26},{"nome":"Dell Latitude 3450 i7 Geforce","custo":300.0,"venda":850.0,"lucro":550.0,"status":"Vendido","data_compra":"2025-04","data_venda":"2025-04","data":"2025-04","num":27},{"nome":"Carcaça Acer Aspire 3","custo":0.0,"venda":450.0,"lucro":450.0,"status":"Vendido","data_compra":"2025-04","data_venda":"2025-04","data":"2025-04","num":28},{"nome":"hp 14 i5 nvidia","custo":25.0,"venda":50.0,"lucro":25.0,"status":"Estoque","data_compra":"2025-04","data_venda":"","data":"2025-04","num":29},{"nome":"Samsung NP370E4K (João)","custo":125.0,"venda":300.0,"lucro":175.0,"status":"Vendido","data_compra":"2025-04","data_venda":"2025-04","data":"2025-04","num":30},{"nome":"Samsung NP370E4K branco (João)","custo":125.0,"venda":325.0,"lucro":200.0,"status":"Vendido","data_compra":"2025-04","data_venda":"2025-04","data":"2025-04","num":31},{"nome":"Samsung NP270E5G (João)","custo":0.0,"venda":100.0,"lucro":100.0,"status":"Vendido","data_compra":"2025-04","data_venda":"2025-04","data":"2025-04","num":32},{"nome":"Acer e1-571 i5 SSD (joão)","custo":85.0,"venda":300.0,"lucro":215.0,"status":"Vendido","data_compra":"2025-04","data_venda":"2025-05","data":"2025-05","num":33},{"nome":"Dell i3 6th SSD (joao)","custo":200.0,"venda":300.0,"lucro":100.0,"status":"Vendido","data_compra":"2025-04","data_venda":"2025-05","data":"2025-05","num":34},{"nome":"Hp i3 3th (joao)","custo":75.0,"venda":200.0,"lucro":125.0,"status":"Vendido","data_compra":"2025-05","data_venda":"2025-05","data":"2025-05","num":35},{"nome":"Dell i3 6th (João)","custo":135.0,"venda":325.0,"lucro":190.0,"status":"Vendido","data_compra":"2025-05","data_venda":"2025-06","data":"2025-06","num":36},{"nome":"Acer e1-571 i5 3 geração (João)","custo":50.0,"venda":300.0,"lucro":250.0,"status":"Vendido","data_compra":"2025-05","data_venda":"2025-05","data":"2025-05","num":37},{"nome":"Dell i5 6th (João)","custo":175.0,"venda":380.0,"lucro":205.0,"status":"Vendido","data_compra":"2025-05","data_venda":"2025-05","data":"2025-05","num":38},{"nome":"Samsung np270e5k i3 SSD","custo":150.0,"venda":150.0,"lucro":0.0,"status":"Vendido","data_compra":"2025-05","data_venda":"2026-01","data":"2026-01","num":39},{"nome":"Dell Latitude i3 4th","custo":62.5,"venda":62.5,"lucro":0.0,"status":"Vendido","data_compra":"2025-05","data_venda":"2025-11","data":"2025-11","num":40},{"nome":"Dell Latitude i3 4th","custo":117.5,"venda":300.0,"lucro":182.5,"status":"Vendido","data_compra":"2025-05","data_venda":"2025-06","data":"2025-06","num":41},{"nome":"Dell Latitude i5 4th Nvidia","custo":62.5,"venda":310.0,"lucro":247.5,"status":"Vendido","data_compra":"2025-05","data_venda":"2025-05","data":"2025-05","num":42},{"nome":"Lenovo i3 3rd","custo":67.0,"venda":67.0,"lucro":0.0,"status":"Estoque","data_compra":"2025-05","data_venda":"","data":"2025-05","num":43},{"nome":"Lenovo ideaPad i5 6th nVidia","custo":67.0,"venda":340.0,"lucro":273.0,"status":"Vendido","data_compra":"2025-05","data_venda":"2025-05","data":"2025-05","num":44},{"nome":"Acer Aspire 5 Ryzen 3","custo":67.0,"venda":200.0,"lucro":133.0,"status":"Vendido","data_compra":"2025-05","data_venda":"2025-07","data":"2025-07","num":45},{"nome":"Dell i5 5th","custo":400.0,"venda":800.0,"lucro":400.0,"status":"Vendido","data_compra":"2025-05","data_venda":"2025-05","data":"2025-05","num":46},{"nome":"Dell Latitude E6330","custo":125.0,"venda":295.0,"lucro":170.0,"status":"Vendido","data_compra":"2025-05","data_venda":"2025-05","data":"2025-05","num":47},{"nome":"Samsung NP370 Branco (joão)","custo":150.0,"venda":275.0,"lucro":125.0,"status":"Vendido","data_compra":"2025-05","data_venda":"2025-05","data":"2025-05","num":48},{"nome":"Acer Aspire 3 i3 6th","custo":0.0,"venda":450.0,"lucro":450.0,"status":"Vendido","data_compra":"2025-05","data_venda":"2025-05","data":"2025-05","num":49},{"nome":"Dell Latitude E7240 i5 4th","custo":0.0,"venda":400.0,"lucro":400.0,"status":"Vendido","data_compra":"2025-03","data_venda":"2025-05","data":"2025-05","num":50},{"nome":"Dell Latitude E5270 i5 6th 8GB","custo":20.0,"venda":430.0,"lucro":410.0,"status":"Vendido","data_compra":"2025-03","data_venda":"2025-05","data":"2025-05","num":51},{"nome":"Asus S400c","custo":0.0,"venda":250.0,"lucro":250.0,"status":"Vendido","data_compra":"2025-03","data_venda":"2025-10","data":"2025-10","num":52},{"nome":"HP G42 Azul i3*","custo":50.0,"venda":150.0,"lucro":100.0,"status":"Vendido","data_compra":"2025-04","data_venda":"2025-10","data":"2025-10","num":53},{"nome":"Lenovo ideaPad 110","custo":70.0,"venda":300.0,"lucro":230.0,"status":"Vendido","data_compra":"2025-05","data_venda":"2025-05","data":"2025-05","num":54},{"nome":"Lenovo ideaPad S145 Celeron","custo":125.0,"venda":350.0,"lucro":225.0,"status":"Vendido","data_compra":"2025-05","data_venda":"2025-07","data":"2025-07","num":55},{"nome":"Dell i5 12th","custo":440.0,"venda":972.0,"lucro":532.0,"status":"Vendido","data_compra":"2025-05","data_venda":"2025-07","data":"2025-07","num":56},{"nome":"Dell p69g i3 7th ssd","custo":225.0,"venda":400.0,"lucro":175.0,"status":"Vendido","data_compra":"2025-06","data_venda":"2025-06","data":"2025-06","num":57},{"nome":"Dell p69g i3 7th ssd","custo":225.0,"venda":450.0,"lucro":225.0,"status":"Vendido","data_compra":"2025-06","data_venda":"2025-06","data":"2025-06","num":58},{"nome":"Asus S400c i3","custo":100.0,"venda":300.0,"lucro":200.0,"status":"Vendido","data_compra":"2025-06","data_venda":"2025-06","data":"2025-06","num":59},{"nome":"Dell i5 7th + Radeon","custo":275.0,"venda":500.0,"lucro":225.0,"status":"Vendido","data_compra":"2025-06","data_venda":"2025-06","data":"2025-06","num":60},{"nome":"Dell G7 i7 8th*","custo":200.0,"venda":500.0,"lucro":300.0,"status":"Vendido","data_compra":"2025-06","data_venda":"2025-08","data":"2025-08","num":61},{"nome":"Samsung NP370 Branco (joão)","custo":125.0,"venda":275.0,"lucro":150.0,"status":"Vendido","data_compra":"2025-06","data_venda":"2025-09","data":"2025-09","num":62},{"nome":"Samsung NP300 i5 7th (João)","custo":300.0,"venda":650.0,"lucro":350.0,"status":"Vendido","data_compra":"2025-06","data_venda":"2025-07","data":"2025-07","num":63},{"nome":"Acer A315 AMD Ryzen 5 (carcaça)","custo":0.0,"venda":125.0,"lucro":125.0,"status":"Vendido","data_compra":"2025-06","data_venda":"2025-11","data":"2025-11","num":64},{"nome":"Acer Aspire 3 i3 7th","custo":175.0,"venda":375.0,"lucro":200.0,"status":"Vendido","data_compra":"2025-07","data_venda":"2025-07","data":"2025-07","num":65},{"nome":"Samsung NP300 Celeron","custo":130.0,"venda":300.0,"lucro":170.0,"status":"Vendido","data_compra":"2025-07","data_venda":"2025-07","data":"2025-07","num":66},{"nome":"Dell i3 6th 15\"","custo":175.0,"venda":450.0,"lucro":275.0,"status":"Vendido","data_compra":"2025-07","data_venda":"2025-07","data":"2025-07","num":67},{"nome":"Acer aspire 5 AMD A12","custo":225.0,"venda":400.0,"lucro":175.0,"status":"Vendido","data_compra":"2025-07","data_venda":"2025-07","data":"2025-07","num":68},{"nome":"Lenovo s145 Celeron","custo":175.0,"venda":425.0,"lucro":250.0,"status":"Vendido","data_compra":"2025-07","data_venda":"2025-07","data":"2025-07","num":69},{"nome":"Dell i5 4th SSD","custo":225.0,"venda":400.0,"lucro":175.0,"status":"Vendido","data_compra":"2025-07","data_venda":"2025-07","data":"2025-07","num":70},{"nome":"hp 240 i3","custo":150.0,"venda":200.0,"lucro":50.0,"status":"Vendido","data_compra":"2025-06","data_venda":"2025-07","data":"2025-07","num":71},{"nome":"Samsung np270e4K(joão)","custo":90.0,"venda":250.0,"lucro":160.0,"status":"Vendido","data_compra":"2025-07","data_venda":"2025-08","data":"2025-08","num":72},{"nome":"Dell i3 7th 250 SSD","custo":200.0,"venda":450.0,"lucro":250.0,"status":"Vendido","data_compra":"2025-07","data_venda":"2025-07","data":"2025-07","num":73},{"nome":"Dell Inspiron 15 Pentium","custo":175.0,"venda":175.0,"lucro":0.0,"status":"Vendido","data_compra":"2025-07","data_venda":"2026-01","data":"2026-01","num":74},{"nome":"Dell Inspiron 15\" i3 6th*","custo":190.0,"venda":375.0,"lucro":185.0,"status":"Vendido","data_compra":"2025-07","data_venda":"2025-09","data":"2025-09","num":75},{"nome":"Acer Aspire E1-471 i3 *","custo":100.0,"venda":275.0,"lucro":175.0,"status":"Vendido","data_compra":"2025-07","data_venda":"2025-10","data":"2025-10","num":76},{"nome":"Acer Aspire E1-571 *","custo":90.0,"venda":250.0,"lucro":160.0,"status":"Vendido","data_compra":"2025-07","data_venda":"2025-08","data":"2025-08","num":77},{"nome":"Dell Inspiron i5 7th Touch","custo":250.0,"venda":500.0,"lucro":250.0,"status":"Vendido","data_compra":"2025-07","data_venda":"2025-07","data":"2025-07","num":78},{"nome":"Dell Inspiron i5 8th","custo":150.0,"venda":300.0,"lucro":150.0,"status":"Vendido","data_compra":"2025-07","data_venda":"2025-07","data":"2025-07","num":79},{"nome":"Dell Inspiron i5 6h sem teclado*","custo":500.0,"venda":575.0,"lucro":75.0,"status":"Vendido","data_compra":"2025-07","data_venda":"2025-11","data":"2025-11","num":80},{"nome":"Acer Aspire i3 7th","custo":200.0,"venda":425.0,"lucro":225.0,"status":"Vendido","data_compra":"2025-08","data_venda":"2025-08","data":"2025-08","num":81},{"nome":"Acer Aspire E1-572 i5*","custo":100.0,"venda":375.0,"lucro":275.0,"status":"Vendido","data_compra":"2025-08","data_venda":"2025-08","data":"2025-08","num":82},{"nome":"Dell 3442 i5 4th*","custo":125.0,"venda":400.0,"lucro":275.0,"status":"Vendido","data_compra":"2025-08","data_venda":"2025-08","data":"2025-08","num":83},{"nome":"Acer Aspire i3 4th *","custo":125.0,"venda":375.0,"lucro":250.0,"status":"Vendido","data_compra":"2025-08","data_venda":"2025-08","data":"2025-08","num":84},{"nome":"Acer Aspire 3 i5 10th*","custo":350.0,"venda":650.0,"lucro":300.0,"status":"Vendido","data_compra":"2025-08","data_venda":"2025-08","data":"2025-08","num":85},{"nome":"Lenovo T470 i7 7th*","custo":216.0,"venda":700.0,"lucro":484.0,"status":"Vendido","data_compra":"2025-08","data_venda":"2025-08","data":"2025-08","num":86},{"nome":"Lenovo T440 i5 4th*","custo":216.0,"venda":450.0,"lucro":234.0,"status":"Vendido","data_compra":"2025-08","data_venda":"2025-08","data":"2025-08","num":87},{"nome":"Lenovo T470 i7 7th*","custo":216.0,"venda":600.0,"lucro":384.0,"status":"Vendido","data_compra":"2025-08","data_venda":"2025-08","data":"2025-08","num":88},{"nome":"Acer E1-572 i5 4th *","custo":236.0,"venda":400.0,"lucro":164.0,"status":"Vendido","data_compra":"2025-08","data_venda":"2026-01","data":"2026-01","num":89},{"nome":"Lenovo T470 i5 7th*","custo":290.0,"venda":600.0,"lucro":310.0,"status":"Vendido","data_compra":"2025-08","data_venda":"2025-08","data":"2025-08","num":90},{"nome":"Dell P28f celeron","custo":115.0,"venda":275.0,"lucro":160.0,"status":"Vendido","data_compra":"2025-08","data_venda":"2025-10","data":"2025-10","num":91},{"nome":"Lenovo s145 Celeron *","custo":285.0,"venda":410.0,"lucro":125.0,"status":"Vendido","data_compra":"2025-08","data_venda":"2025-09","data":"2025-09","num":92},{"nome":"Samsung NP300 i3 5th*","custo":175.0,"venda":425.0,"lucro":250.0,"status":"Vendido","data_compra":"2025-08","data_venda":"2025-10","data":"2025-10","num":93},{"nome":"Acer Aspire E1-531 Celeron","custo":60.0,"venda":250.0,"lucro":190.0,"status":"Vendido","data_compra":"2025-08","data_venda":"2026-01","data":"2026-01","num":94},{"nome":"Acer E5-572(Everton)*","custo":100.0,"venda":375.0,"lucro":275.0,"status":"Vendido","data_compra":"2025-08","data_venda":"","data":"2025-08","num":95},{"nome":"Lenovo E480 i7 8th*","custo":15.0,"venda":750.0,"lucro":735.0,"status":"Vendido","data_compra":"2025-09","data_venda":"2025-09","data":"2025-09","num":96},{"nome":"Dell i5 5th Nvidia *","custo":325.0,"venda":500.0,"lucro":175.0,"status":"Vendido","data_compra":"2025-09","data_venda":"2025-09","data":"2025-09","num":97},{"nome":"Lenovo T480 i5*","custo":300.0,"venda":725.0,"lucro":425.0,"status":"Vendido","data_compra":"2025-09","data_venda":"2025-09","data":"2025-09","num":98},{"nome":"Lenovo T480 i5*","custo":340.0,"venda":600.0,"lucro":260.0,"status":"Vendido","data_compra":"2025-09","data_venda":"2025-09","data":"2025-09","num":99},{"nome":"Dell Inspiron E5480 i5 7th*","custo":160.0,"venda":500.0,"lucro":340.0,"status":"Vendido","data_compra":"2025-09","data_venda":"2025-09","data":"2025-09","num":100},{"nome":"Lenovo T480 i5*","custo":340.0,"venda":600.0,"lucro":260.0,"status":"Vendido","data_compra":"2025-09","data_venda":"2025-09","data":"2025-09","num":101},{"nome":"Lenovo T480 i5*","custo":340.0,"venda":600.0,"lucro":260.0,"status":"Vendido","data_compra":"2025-09","data_venda":"2025-09","data":"2025-09","num":102},{"nome":"Lenovo T480 i5 8th","custo":375.0,"venda":600.0,"lucro":225.0,"status":"Vendido","data_compra":"2025-09","data_venda":"2025-09","data":"2025-09","num":103},{"nome":"Lenovo T480 i5 8th","custo":65.0,"venda":600.0,"lucro":535.0,"status":"Vendido","data_compra":"2025-09","data_venda":"2025-09","data":"2025-09","num":104},{"nome":"Lenovo T480 i5 8th*","custo":510.0,"venda":850.0,"lucro":340.0,"status":"Vendido","data_compra":"2025-09","data_venda":"2025-10","data":"2025-10","num":105},{"nome":"Lenovo T480 i5 8th","custo":250.0,"venda":600.0,"lucro":350.0,"status":"Estoque","data_compra":"2025-09","data_venda":"","data":"2025-09","num":106},{"nome":"HP EliteBook 840 G3","custo":100.0,"venda":500.0,"lucro":400.0,"status":"Vendido","data_compra":"2025-09","data_venda":"2025-10","data":"2025-10","num":107},{"nome":"Lenovo AMD Ryzen 5","custo":425.0,"venda":550.0,"lucro":125.0,"status":"Vendido","data_compra":"2025-09","data_venda":"2025-11","data":"2025-11","num":108},{"nome":"Acer Aspire 3 AMD A10*","custo":200.0,"venda":500.0,"lucro":300.0,"status":"Vendido","data_compra":"2025-09","data_venda":"2025-09","data":"2025-09","num":109},{"nome":"Lenovo IdeaPad 320 defeito*","custo":100.0,"venda":200.0,"lucro":100.0,"status":"Vendido","data_compra":"2025-09","data_venda":"2025-09","data":"2025-09","num":110},{"nome":"Lenovo T480 i5 8th*","custo":440.0,"venda":650.0,"lucro":310.0,"status":"Vendido","data_compra":"2025-09","data_venda":"2025-10","data":"2025-10","num":111},{"nome":"Acer Aspire 3 i3 10th*","custo":200.0,"venda":525.0,"lucro":325.0,"status":"Vendido","data_compra":"2025-09","data_venda":"2025-09","data":"2025-09","num":112},{"nome":"Samsung NP270 Branco*","custo":100.0,"venda":120.0,"lucro":20.0,"status":"Vendido","data_compra":"2025-09","data_venda":"2025-10","data":"2025-10","num":113},{"nome":"Dell Inspiron i3 6th OLX","custo":0.0,"venda":140.0,"lucro":140.0,"status":"Vendido","data_compra":"2025-09","data_venda":"2026-01","data":"2026-01","num":114},{"nome":"Dell Latitude 3480 i5 6th*","custo":250.0,"venda":525.0,"lucro":275.0,"status":"Vendido","data_compra":"2025-09","data_venda":"2025-10","data":"2025-10","num":115},{"nome":"Carcaça Lenovo T490","custo":0.0,"venda":125.0,"lucro":125.0,"status":"Vendido","data_compra":"2025-09","data_venda":"2025-10","data":"2025-10","num":116},{"nome":"Dell Inspiron 15 i3 10th*","custo":325.0,"venda":625.0,"lucro":300.0,"status":"Vendido","data_compra":"2025-10","data_venda":"2025-10","data":"2025-10","num":117},{"nome":"Acer Aspire A315-58 defeito*","custo":50.0,"venda":100.0,"lucro":50.0,"status":"Vendido","data_compra":"2025-10","data_venda":"2025-10","data":"2025-10","num":118},{"nome":"Lenovo T480 i5 8th*","custo":275.0,"venda":700.0,"lucro":425.0,"status":"Vendido","data_compra":"2025-10","data_venda":"2025-11","data":"2025-11","num":119},{"nome":"Lenovo T480 i5 8th* (jonathan)","custo":300.0,"venda":600.0,"lucro":300.0,"status":"Vendido","data_compra":"2025-10","data_venda":"2026-01","data":"2026-01","num":120},{"nome":"Lenovo AMD Pro 12*","custo":300.0,"venda":300.0,"lucro":0.0,"status":"Vendido","data_compra":"2025-10","data_venda":"","data":"2025-10","num":121},{"nome":"Positivo Unique","custo":0.0,"venda":200.0,"lucro":200.0,"status":"Vendido","data_compra":"2025-10","data_venda":"2025-10","data":"2025-10","num":122},{"nome":"Dell P88F i5 10th defeito","custo":190.0,"venda":300.0,"lucro":110.0,"status":"Vendido","data_compra":"2025-10","data_venda":"2025-10","data":"2025-10","num":123},{"nome":"Dell i7 8th SSD*","custo":375.0,"venda":665.0,"lucro":290.0,"status":"Vendido","data_compra":"2025-10","data_venda":"2025-10","data":"2025-10","num":124},{"nome":"HP EliteBook 840 G3*","custo":300.0,"venda":500.0,"lucro":200.0,"status":"Vendido","data_compra":"2025-10","data_venda":"2025-12","data":"2025-12","num":125},{"nome":"Dell i5 7th*","custo":275.0,"venda":550.0,"lucro":275.0,"status":"Vendido","data_compra":"2025-10","data_venda":"2026-01","data":"2026-01","num":126},{"nome":"Dell i3 5th Hortolandia*","custo":100.0,"venda":350.0,"lucro":250.0,"status":"Vendido","data_compra":"2025-10","data_venda":"2025-11","data":"2025-11","num":127},{"nome":"Dell i3 4th Americana*","custo":100.0,"venda":250.0,"lucro":150.0,"status":"Vendido","data_compra":"2025-10","data_venda":"","data":"2025-10","num":128},{"nome":"Samsung NP270 i3 5th*","custo":90.0,"venda":350.0,"lucro":260.0,"status":"Vendido","data_compra":"2025-10","data_venda":"2025-11","data":"2025-11","num":129},{"nome":"Lenovo E470 i5 7th*","custo":200.0,"venda":700.0,"lucro":500.0,"status":"Vendido","data_compra":"2025-10","data_venda":"2025-10","data":"2025-10","num":130},{"nome":"Lenovo T440 i5 4th*","custo":175.0,"venda":365.0,"lucro":190.0,"status":"Vendido","data_compra":"2025-10","data_venda":"2025-11","data":"2025-11","num":131},{"nome":"Lenovo T490 i5 8th*","custo":300.0,"venda":600.0,"lucro":300.0,"status":"Vendido","data_compra":"2025-11","data_venda":"2025-11","data":"2025-11","num":132},{"nome":"Acer Aspire 3 i7 7th*","custo":300.0,"venda":750.0,"lucro":450.0,"status":"Vendido","data_compra":"2025-11","data_venda":"2025-11","data":"2025-11","num":133},{"nome":"HP i3 10th vinhedo*","custo":250.0,"venda":475.0,"lucro":225.0,"status":"Vendido","data_compra":"2025-11","data_venda":"2025-11","data":"2025-11","num":134},{"nome":"Acer Aspire A315-52 i5 8th*","custo":175.0,"venda":700.0,"lucro":525.0,"status":"Vendido","data_compra":"2025-11","data_venda":"2025-11","data":"2025-11","num":135},{"nome":"Dell p75f i3 8TH*","custo":200.0,"venda":450.0,"lucro":250.0,"status":"Vendido","data_compra":"2025-11","data_venda":"2025-11","data":"2025-11","num":136},{"nome":"Acer Aspire A515-52G Defeito*","custo":135.0,"venda":135.0,"lucro":0.0,"status":"Vendido","data_compra":"2025-11","data_venda":"2025-11","data":"2025-11","num":137},{"nome":"Lenovo ideaPad 3i i5 10th*","custo":500.0,"venda":850.0,"lucro":350.0,"status":"Vendido","data_compra":"2025-11","data_venda":"2025-11","data":"2025-11","num":138},{"nome":"Dell i5 3th nvidia Indaiatuba*","custo":150.0,"venda":325.0,"lucro":175.0,"status":"Vendido","data_compra":"2025-11","data_venda":"","data":"2025-11","num":139},{"nome":"Lenovo E14 i5 10th*","custo":400.0,"venda":860.0,"lucro":460.0,"status":"Vendido","data_compra":"2025-11","data_venda":"2026-01","data":"2026-01","num":140},{"nome":"Samsung NP350x i3 7th 480 SSD","custo":100.0,"venda":150.0,"lucro":50.0,"status":"Vendido","data_compra":"2025-11","data_venda":"2026-01","data":"2026-01","num":141},{"nome":"Lenovo E14 Ryzen 3","custo":350.0,"venda":650.0,"lucro":300.0,"status":"Vendido","data_compra":"2025-11","data_venda":"2025-12","data":"2025-12","num":142},{"nome":"Dell Latitude i5 5th 120 SSD 4 GB","custo":150.0,"venda":350.0,"lucro":200.0,"status":"Vendido","data_compra":"2025-11","data_venda":"2025-12","data":"2025-12","num":143},{"nome":"Dell Latitude i5 5th 240 SSD 4 GB","custo":150.0,"venda":400.0,"lucro":250.0,"status":"Vendido","data_compra":"2025-11","data_venda":"2025-12","data":"2025-12","num":144},{"nome":"Dell Latitude i5 5th 1 TB HD 4 GB","custo":50.0,"venda":325.0,"lucro":275.0,"status":"Vendido","data_compra":"2025-11","data_venda":"2025-12","data":"2025-12","num":145},{"nome":"HP i5 10th 16GB*","custo":535.0,"venda":1000.0,"lucro":465.0,"status":"Vendido","data_compra":"2025-11","data_venda":"2026-02","data":"2026-02","num":146},{"nome":"Dell i5 6th Touchscreen 4GB 256GB","custo":200.0,"venda":362.5,"lucro":162.5,"status":"Vendido","data_compra":"2025-11","data_venda":"2026-01","data":"2026-01","num":147},{"nome":"Dell i5 6th Touchscreen","custo":220.0,"venda":650.0,"lucro":430.0,"status":"Vendido","data_compra":"2025-11","data_venda":"2026-03","data":"2026-03","num":148},{"nome":"Dell i5 6th Touchscreen","custo":200.0,"venda":450.0,"lucro":250.0,"status":"Vendido","data_compra":"2025-11","data_venda":"","data":"2025-11","num":149},{"nome":"Dell i5 6th Touchscreen","custo":200.0,"venda":450.0,"lucro":250.0,"status":"Vendido","data_compra":"2025-11","data_venda":"","data":"2025-11","num":150},{"nome":"Dell i5 10th SSD 8GB","custo":570.0,"venda":900.0,"lucro":330.0,"status":"Vendido","data_compra":"2025-11","data_venda":"","data":"2025-11","num":151},{"nome":"Dell i7 7th touchscreen","custo":220.0,"venda":600.0,"lucro":380.0,"status":"Vendido","data_compra":"2025-11","data_venda":"","data":"2025-11","num":152},{"nome":"Dell i5 8th sem bateria","custo":350.0,"venda":450.0,"lucro":100.0,"status":"Vendido","data_compra":"2025-11","data_venda":"2026-01","data":"2026-01","num":153},{"nome":"Dell i5 8th sem bateria","custo":250.0,"venda":500.0,"lucro":250.0,"status":"Estoque","data_compra":"2025-11","data_venda":"","data":"2025-11","num":154},{"nome":"Dell i5 8th sem bateria","custo":150.0,"venda":500.0,"lucro":350.0,"status":"Estoque","data_compra":"2025-11","data_venda":"","data":"2025-11","num":155},{"nome":"Lenovo IdeaPad 320 (Liedson)","custo":250.0,"venda":300.0,"lucro":50.0,"status":"Vendido","data_compra":"2025-11","data_venda":"2025-12","data":"2025-12","num":156},{"nome":"Lenovo E490 i5 8th 8 GB*","custo":350.0,"venda":700.0,"lucro":350.0,"status":"Vendido","data_compra":"2025-12","data_venda":"2026-02","data":"2026-02","num":157},{"nome":"Dell 3480 i7 8th 8GB*","custo":300.0,"venda":500.0,"lucro":200.0,"status":"Vendido","data_compra":"2025-12","data_venda":"2025-12","data":"2025-12","num":158},{"nome":"Dell Latitude i5 5th E5450","custo":200.0,"venda":350.0,"lucro":150.0,"status":"Vendido","data_compra":"2025-11","data_venda":"","data":"2025-11","num":159},{"nome":"Dell Latitude i5 5th E5450","custo":200.0,"venda":350.0,"lucro":150.0,"status":"Vendido","data_compra":"2025-11","data_venda":"","data":"2025-11","num":160},{"nome":"Dell Inspiron P75F i5 8th","custo":250.0,"venda":500.0,"lucro":250.0,"status":"Vendido","data_compra":"2026-01","data_venda":"2026-01","data":"2026-01","num":161},{"nome":"Lenovo ThinkPad E14 i5 10th","custo":275.0,"venda":600.0,"lucro":325.0,"status":"Vendido","data_compra":"2026-01","data_venda":"2026-01","data":"2026-01","num":162},{"nome":"Acer Aspire E1 AMD","custo":225.0,"venda":225.0,"lucro":0.0,"status":"Vendido","data_compra":"2026-01","data_venda":"2026-01","data":"2026-01","num":163},{"nome":"PC Gamer Básico","custo":25.0,"venda":250.0,"lucro":225.0,"status":"Vendido","data_compra":"2026-01","data_venda":"2026-01","data":"2026-01","num":164},{"nome":"Amplificador","custo":0.0,"venda":125.0,"lucro":125.0,"status":"Vendido","data_compra":"2026-01","data_venda":"","data":"2026-01","num":165},{"nome":"Acer Aspire E15 amd branco","custo":175.0,"venda":425.0,"lucro":250.0,"status":"Vendido","data_compra":"2026-01","data_venda":"2026-02","data":"2026-02","num":166},{"nome":"Dell Inspiron E5470 i5 4GB 128GB","custo":200.0,"venda":362.5,"lucro":162.5,"status":"Vendido","data_compra":"2025-11","data_venda":"2026-01","data":"2026-01","num":167},{"nome":"Dell Inspiron E5470 i5 4GB 256GB","custo":200.0,"venda":400.0,"lucro":200.0,"status":"Estoque","data_compra":"2025-11","data_venda":"","data":"2025-11","num":168},{"nome":"Dell i7 16GB","custo":375.0,"venda":750.0,"lucro":375.0,"status":"Vendido","data_compra":"2026-01","data_venda":"2026-01","data":"2026-01","num":169},{"nome":"Dell i7 16 GB gamer","custo":185.0,"venda":1200.0,"lucro":1015.0,"status":"Vendido","data_compra":"2026-01","data_venda":"2026-01","data":"2026-01","num":170},{"nome":"Dell i7 8 GB gamer","custo":250.0,"venda":900.0,"lucro":650.0,"status":"Vendido","data_compra":"2026-01","data_venda":"","data":"2026-01","num":171},{"nome":"Lenovo ThinkPad E14 Ryzen 5","custo":350.0,"venda":700.0,"lucro":350.0,"status":"Vendido","data_compra":"2026-01","data_venda":"2026-01","data":"2026-01","num":172},{"nome":"Dell i7 6th Radeon","custo":40.0,"venda":822.0,"lucro":782.0,"status":"Vendido","data_compra":"2026-01","data_venda":"2026-02","data":"2026-02","num":173},{"nome":"Dell i7 6th Radeon","custo":235.0,"venda":750.0,"lucro":515.0,"status":"Vendido","data_compra":"2026-01","data_venda":"2026-02","data":"2026-02","num":174},{"nome":"Dell Vostro i3 3rd","custo":0.0,"venda":225.0,"lucro":225.0,"status":"Vendido","data_compra":"2026-01","data_venda":"2026-02","data":"2026-02","num":175},{"nome":"Lenovo ThinkPad T440p","custo":300.0,"venda":400.0,"lucro":100.0,"status":"Vendido","data_compra":"2026-01","data_venda":"2026-01","data":"2026-01","num":176},{"nome":"Dell Latitude i5 5th E5450","custo":175.0,"venda":350.0,"lucro":175.0,"status":"Vendido","data_compra":"2025-11","data_venda":"","data":"2025-11","num":177},{"nome":"Dell Vostro 5470 i5 5th Nvidea","custo":150.0,"venda":400.0,"lucro":250.0,"status":"Estoque","data_compra":"2026-01","data_venda":"","data":"2026-01","num":178},{"nome":"Dell 6450 i5 5th 8GB","custo":0.0,"venda":70.0,"lucro":70.0,"status":"Vendido","data_compra":"2026-01","data_venda":"","data":"2026-01","num":179},{"nome":"HP Probook i5 4th 8GB","custo":150.0,"venda":300.0,"lucro":150.0,"status":"Vendido","data_compra":"2026-01","data_venda":"2026-01","data":"2026-01","num":180},{"nome":"HP Probook i5 8 GB","custo":100.0,"venda":325.0,"lucro":225.0,"status":"Vendido","data_compra":"2026-01","data_venda":"2026-02","data":"2026-02","num":181},{"nome":"Dell i5 10th SSD 16GB","custo":325.0,"venda":615.0,"lucro":290.0,"status":"Vendido","data_compra":"2026-01","data_venda":"2026-01","data":"2026-01","num":182},{"nome":"HP Probook i7 840 G7","custo":450.0,"venda":1000.0,"lucro":550.0,"status":"Vendido","data_compra":"2026-01","data_venda":"2026-02","data":"2026-02","num":183},{"nome":"Dell Inspiron 15 i3 10th*","custo":335.0,"venda":550.0,"lucro":215.0,"status":"Vendido","data_compra":"2026-01","data_venda":"2026-01","data":"2026-01","num":184},{"nome":"ThinkPad E14 i7 10th","custo":600.0,"venda":1100.0,"lucro":500.0,"status":"Vendido","data_compra":"2026-01","data_venda":"","data":"2026-01","num":185},{"nome":"Lenovo IdeaPad 320 i5 7th","custo":200.0,"venda":375.0,"lucro":175.0,"status":"Estoque","data_compra":"2025-11","data_venda":"","data":"2025-11","num":186},{"nome":"Dell Latitude E5270 i5 6th cheiro queimado","custo":150.0,"venda":350.0,"lucro":200.0,"status":"Estoque","data_compra":"2025-11","data_venda":"","data":"2025-11","num":187},{"nome":"Dell Latitude 5280 i5 7th tela ruim","custo":270.0,"venda":600.0,"lucro":330.0,"status":"Vendido","data_compra":"2025-11","data_venda":"","data":"2025-11","num":188},{"nome":"Dell Latitude E5440 i5 4th sem tampa","custo":150.0,"venda":300.0,"lucro":150.0,"status":"Estoque","data_compra":"2025-11","data_venda":"","data":"2025-11","num":189},{"nome":"IdeaPad 320 i5 7th","custo":125.0,"venda":125.0,"lucro":0.0,"status":"Vendido","data_compra":"2025-11","data_venda":"2026-02","data":"2026-02","num":190},{"nome":"IdeaPad 320 i5 7th","custo":50.0,"venda":100.0,"lucro":50.0,"status":"Estoque","data_compra":"2025-11","data_venda":"","data":"2025-11","num":191},{"nome":"IdeaPad 320 i5 7th","custo":50.0,"venda":100.0,"lucro":50.0,"status":"Estoque","data_compra":"2025-11","data_venda":"","data":"2025-11","num":192},{"nome":"Dell E7470 i5 touch","custo":150.0,"venda":150.0,"lucro":0.0,"status":"Estoque","data_compra":"2025-11","data_venda":"","data":"2025-11","num":193},{"nome":"Dell E7470 i5 Sem touch","custo":150.0,"venda":150.0,"lucro":0.0,"status":"Estoque","data_compra":"2025-11","data_venda":"","data":"2025-11","num":194},{"nome":"Dell Latitude E5450 i5 5th","custo":50.0,"venda":100.0,"lucro":50.0,"status":"Estoque","data_compra":"2025-11","data_venda":"","data":"2025-11","num":195},{"nome":"Dell Latitude E5450 i5 5th","custo":50.0,"venda":100.0,"lucro":50.0,"status":"Estoque","data_compra":"2025-11","data_venda":"","data":"2025-11","num":196},{"nome":"Dell Latitude E5450 i5 5th","custo":50.0,"venda":100.0,"lucro":50.0,"status":"Estoque","data_compra":"2025-11","data_venda":"","data":"2025-11","num":197},{"nome":"Dell Latitude E5450 i5 5th","custo":50.0,"venda":100.0,"lucro":50.0,"status":"Estoque","data_compra":"2025-11","data_venda":"","data":"2025-11","num":198},{"nome":"Dell Latitude E5450 i5 5th","custo":50.0,"venda":100.0,"lucro":50.0,"status":"Estoque","data_compra":"2025-11","data_venda":"","data":"2025-11","num":199},{"nome":"Dell Inspiron E5470 i5","custo":50.0,"venda":100.0,"lucro":50.0,"status":"Estoque","data_compra":"2025-11","data_venda":"","data":"2025-11","num":200},{"nome":"Dell Inspiron E5470 i5","custo":50.0,"venda":100.0,"lucro":50.0,"status":"Estoque","data_compra":"2025-11","data_venda":"","data":"2025-11","num":201},{"nome":"Dell Inspiron E5470 i5","custo":50.0,"venda":100.0,"lucro":50.0,"status":"Estoque","data_compra":"2025-11","data_venda":"","data":"2025-11","num":202},{"nome":"Dell i5 4th placa ruim","custo":50.0,"venda":70.0,"lucro":20.0,"status":"Estoque","data_compra":"2025-11","data_venda":"","data":"2025-11","num":203},{"nome":"Dell i5 placa ruim","custo":100.0,"venda":100.0,"lucro":0.0,"status":"Vendido","data_compra":"2025-11","data_venda":"2026-02","data":"2026-02","num":204},{"nome":"Dell i5 8th placa ruim","custo":50.0,"venda":120.0,"lucro":70.0,"status":"Estoque","data_compra":"2025-11","data_venda":"","data":"2025-11","num":205},{"nome":"Lenovo Ideapad 3 i5 11th","custo":550.0,"venda":1000.0,"lucro":450.0,"status":"Vendido","data_compra":"2026-01","data_venda":"","data":"2026-01","num":206},{"nome":"Acer Aspire A514 i5 10th","custo":450.0,"venda":1000.0,"lucro":550.0,"status":"Vendido","data_compra":"2026-01","data_venda":"","data":"2026-01","num":207},{"nome":"Dell Vostro i7 3th","custo":250.0,"venda":250.0,"lucro":0.0,"status":"Vendido","data_compra":"2026-02","data_venda":"2026-02","data":"2026-02","num":208},{"nome":"Dell Vostro i7 3th","custo":50.0,"venda":250.0,"lucro":200.0,"status":"Vendido","data_compra":"2026-02","data_venda":"2026-02","data":"2026-02","num":209},{"nome":"Lenovo LNV i3 4th","custo":25.0,"venda":225.0,"lucro":200.0,"status":"Vendido","data_compra":"2026-02","data_venda":"2026-02","data":"2026-02","num":210},{"nome":"Lenovo IdeaPad Ryzen 5","custo":500.0,"venda":765.0,"lucro":265.0,"status":"Vendido","data_compra":"2026-02","data_venda":"2026-02","data":"2026-02","num":211},{"nome":"Dell Latitude E7390 i7 8th","custo":325.0,"venda":700.0,"lucro":375.0,"status":"Vendido","data_compra":"2026-02","data_venda":"2026-02","data":"2026-02","num":212},{"nome":"Lote Carcaças Antigas","custo":0.0,"venda":145.0,"lucro":145.0,"status":"Vendido","data_compra":"2026-02","data_venda":"2026-02","data":"2026-02","num":213},{"nome":"JBL Partybox essentials 2","custo":300.0,"venda":590.0,"lucro":290.0,"status":"Vendido","data_compra":"2026-02","data_venda":"2026-02","data":"2026-02","num":214},{"nome":"Acer i5 12th 8GB","custo":1000.0,"venda":1400.0,"lucro":400.0,"status":"Vendido","data_compra":"2026-02","data_venda":"","data":"2026-02","num":215},{"nome":"Dell Latitude 3450 i5","custo":195.0,"venda":460.0,"lucro":265.0,"status":"Vendido","data_compra":"2026-02","data_venda":"2026-02","data":"2026-02","num":216},{"nome":"Dell Latitude 3410 i5 10th","custo":600.0,"venda":1000.0,"lucro":400.0,"status":"Vendido","data_compra":"2026-02","data_venda":"2026-02","data":"2026-02","num":217},{"nome":"Samsung i3 5th","custo":225.0,"venda":425.0,"lucro":200.0,"status":"Vendido","data_compra":"2026-02","data_venda":"2026-03","data":"2026-03","num":218},{"nome":"Samsung NP370 i3 5th","custo":100.0,"venda":300.0,"lucro":200.0,"status":"Vendido","data_compra":"2026-02","data_venda":"2026-02","data":"2026-02","num":219},{"nome":"Dell i5 11th","custo":675.0,"venda":1175.0,"lucro":500.0,"status":"Vendido","data_compra":"2026-02","data_venda":"2026-02","data":"2026-02","num":220},{"nome":"Dell Inspiron i7 7th","custo":270.0,"venda":500.0,"lucro":230.0,"status":"Vendido","data_compra":"2025-02","data_venda":"","data":"2025-02","num":221},{"nome":"Dell Inspiron i7 7th pequeno","custo":250.0,"venda":700.0,"lucro":450.0,"status":"Vendido","data_compra":"2025-02","data_venda":"","data":"2025-02","num":222},{"nome":"Dell E5470 i5 6th","custo":420.0,"venda":600.0,"lucro":180.0,"status":"Vendido","data_compra":"2025-02","data_venda":"2026-02","data":"2026-02","num":223},{"nome":"Acer Aspire ES1","custo":150.0,"venda":250.0,"lucro":100.0,"status":"Vendido","data_compra":"2025-02","data_venda":"","data":"2025-02","num":224},{"nome":"Lenovo Ideapad 3 i5 11th","custo":500.0,"venda":750.0,"lucro":250.0,"status":"Vendido","data_compra":"2026-03","data_venda":"","data":"2026-03","num":225},{"nome":"Lenovo ideaPad 3 i5 10th não liga","custo":275.0,"venda":650.0,"lucro":375.0,"status":"Estoque","data_compra":"2026-03","data_venda":"","data":"2026-03","num":226},{"nome":"Dell","custo":137.5,"venda":425.0,"lucro":287.5,"status":"Estoque","data_compra":"2026-03","data_venda":"","data":"2026-03","num":227},{"nome":"Dell","custo":157.5,"venda":250.0,"lucro":92.5,"status":"Estoque","data_compra":"2026-03","data_venda":"2025-03","data":"2025-03","num":228}];
-const CRL={labels:['Jan/25', 'Fev/25', 'Mar/25', 'Abr/25', 'Mai/25', 'Jun/25', 'Jul/25', 'Ago/25', 'Set/25', 'Out/25', 'Nov/25', 'Dez/25', 'Jan/26', 'Fev/26', 'Mar/26'],rec:[2425, 4170, 4840, 4275, 5080, 2275, 5972, 5950, 7760, 7285, 11412, 3025, 14735, 13332, 1825],luc:[1607, 2460, 3524, 3012, 3600, 1197, 3185, 3632, 4400, 4005, 5740, 1475, 7644, 6782, 880]};
-const CQ={labels:['Jan/25', 'Fev/25', 'Mar/25', 'Abr/25', 'Mai/25', 'Jun/25', 'Jul/25', 'Ago/25', 'Set/25', 'Out/25', 'Nov/25', 'Dez/25', 'Jan/26', 'Fev/26', 'Mar/26'],values:[4, 10, 11, 9, 14, 6, 14, 13, 15, 19, 24, 7, 29, 23, 3]};
-const CLM={labels:['Dell', 'Lenovo', 'Acer', 'Samsung', 'HP', 'Asus', 'Outros'],luc:[274, 293, 270, 213, 250, 225, 205],tic:[495, 566, 448, 357, 432, 275, 313]};
-const CMarca={labels:['Dell', 'Lenovo', 'Acer', 'Samsung', 'HP', 'Asus', 'Outros'],values:[97, 45, 33, 23, 14, 2, 14]};
+const CRL={labels:['Jan/25','Fev/25','Mar/25','Abr/25','Mai/25','Jun/25','Jul/25','Ago/25','Set/25','Out/25','Nov/25','Dez/25','Jan/26','Fev/26','Mar/26'],rec:[2425,4170,4840,4275,5080,2275,5972,5950,7760,7285,11412,3025,14735,13332,1825],luc:[1607,2460,3524,3012,3600,1197,3185,3632,4400,4005,5740,1475,7644,6782,880]};
+const CQ={labels:['Jan/25','Fev/25','Mar/25','Abr/25','Mai/25','Jun/25','Jul/25','Ago/25','Set/25','Out/25','Nov/25','Dez/25','Jan/26','Fev/26','Mar/26'],values:[4,10,11,9,14,6,14,13,15,19,24,7,29,23,3]};
+const CLM={labels:['Dell','Lenovo','Acer','Samsung','HP','Asus','Outros'],luc:[274,293,270,213,250,225,205],tic:[495,566,448,357,432,275,313]};
+const CMarca={labels:['Dell','Lenovo','Acer','Samsung','HP','Asus','Outros'],values:[97,45,33,23,14,2,14]};
 
-let user=null,prods=[],filt='todos',editId=null,chartsOk=false;
+let user=null,prods=[],filt='todos',editId=null,chartsOk=false,sellId=null;
 
 onAuthStateChanged(auth,u=>{
   user=u;
@@ -403,11 +635,11 @@ async function loadProds(){
   try{
     const q=query(collection(db,'products'),where('userId','==',user.uid));
     const snap=await getDocs(q);
-    const fp=snap.docs.map(d=>{return{id:d.id,...d.data()}});
-    prods=fp.length>0?fp:XLSX.map((p,i)=>{return{...p,userId:user.uid,id:'x'+(i+1)}});
-  }catch(e){prods=XLSX.map((p,i)=>{return{...p,userId:'local',id:'x'+(i+1)}});}
+    const fp=snap.docs.map(d=>({id:d.id,...d.data()}));
+    prods=fp.length>0?fp:XLSX.map((p,i)=>({...p,userId:user.uid,id:'x'+(i+1)}));
+  }catch(e){prods=XLSX.map((p,i)=>({...p,userId:'local',id:'x'+(i+1)}));}
   prods.forEach((p,i)=>{if(!p.num)p.num=i+1;});
-  render();calcStats();
+  render();calcStats();renderAlertas();renderMeta();renderAlertas();renderMeta();
 }
 
 window.addProd=async()=>{
@@ -426,10 +658,70 @@ window.delProd=async id=>{
   prods=prods.filter(p=>p.id!==id);render();calcStats();
 };
 
-window.updStatus=async(id,val)=>{
-  if(!id.startsWith('x')&&!id.startsWith('l')){try{await updateDoc(doc(db,'products',id),{status:val});}catch(e){}}
-  const p=prods.find(p=>p.id===id);if(p)p.status=val;render();calcStats();
+// ── SELL MODAL ──
+window.updStatus=(id,newVal)=>{
+  const p=prods.find(x=>x.id===id);
+  if(!p)return;
+  if(newVal==='Vendido'){
+    // Abre modal de venda
+    sellId=id;
+    document.getElementById('smProdNome').textContent=p.nome||'Produto';
+    document.getElementById('smPreco').value=p.venda||'';
+    document.getElementById('smPlat').value=p.plataforma||'';
+    document.getElementById('smData').value=new Date().toISOString().split('T')[0];
+    document.getElementById('smDiasHint').textContent='';
+    document.getElementById('smDiasHint').className='dias-hint';
+    document.getElementById('SMO').classList.remove('h');
+    updDias();
+    // Reverte visualmente o select até confirmar
+    document.querySelectorAll('.sel').forEach(s=>{
+      if(s.getAttribute('data-id')===id) s.value=p.status;
+    });
+  } else {
+    doSaveStatus(id,{status:newVal});
+  }
 };
+
+window.updDias=()=>{
+  if(!sellId)return;
+  const p=prods.find(x=>x.id===sellId);
+  const dataVenda=document.getElementById('smData').value;
+  const hint=document.getElementById('smDiasHint');
+  if(!p||!p.data||!dataVenda){hint.textContent='';return;}
+  // data de compra pode ser YYYY-MM ou YYYY-MM-DD
+  const dc=p.data.length===7?p.data+'-01':p.data;
+  const dias=Math.round((new Date(dataVenda)-new Date(dc))/(86400000));
+  if(dias<0){hint.textContent='⚠️ Data anterior à compra';hint.className='dias-hint re';return;}
+  const txt=dias===0?'Vendido no mesmo dia! 🚀':dias===1?'Vendido em 1 dia! 🚀':dias<=7?`Vendido em ${dias} dias — giro rápido 🚀`:dias<=30?`Vendido em ${dias} dias`:`Ficou ${dias} dias parado`;
+  hint.textContent=txt;
+  hint.className='dias-hint '+(dias<=7?'verde':dias<=30?'am':'re');
+};
+
+window.cancelSell=()=>{
+  document.getElementById('SMO').classList.add('h');
+  sellId=null;
+  render(); // restaura o select
+};
+
+window.confirmSell=async()=>{
+  if(!sellId)return;
+  const p=prods.find(x=>x.id===sellId);
+  const plat=document.getElementById('smPlat').value;
+  const preco=parseFloat(document.getElementById('smPreco').value)||p?.venda||0;
+  const dataVenda=document.getElementById('smData').value||null;
+  const dc=p?.data?(p.data.length===7?p.data+'-01':p.data):null;
+  const dias=dataVenda&&dc?Math.round((new Date(dataVenda)-new Date(dc))/(86400000)):null;
+  const upd={status:'Vendido',plataforma:plat,venda:preco,lucro:preco-(p?.custo||0),data_venda:dataVenda||'',diasParado:dias>=0?dias:null};
+  await doSaveStatus(sellId,upd);
+  document.getElementById('SMO').classList.add('h');
+  sellId=null;
+};
+
+async function doSaveStatus(id,upd){
+  if(!id.startsWith('x')&&!id.startsWith('l')){try{await updateDoc(doc(db,'products',id),upd);}catch(e){}}
+  const p=prods.find(x=>x.id===id);if(p)Object.assign(p,upd);
+  render();calcStats();
+}
 
 // EDIT MODAL
 window.openEdit=id=>{
@@ -438,7 +730,7 @@ window.openEdit=id=>{
   document.getElementById('eN').value=p.nome||'';
   document.getElementById('eC').value=p.custo||'';
   document.getElementById('eV').value=p.venda||'';
-  document.getElementById('eS').value=p.status||'Estoque';
+  document.getElementById('eS').value=p.status||'Anunciado';
   document.getElementById('eDC').value=p.data_compra||'';
   document.getElementById('eDV').value=p.data_venda||'';
   document.getElementById('MO').classList.remove('h');
@@ -457,7 +749,7 @@ window.setF=(f,btn)=>{filt=f;document.querySelectorAll('.fc2').forEach(c=>c.clas
 
 const BC={Dell:'#2563eb',Lenovo:'#dc2626',Acer:'#16a34a',HP:'#0891b2',Samsung:'#7c3aed',Asus:'#0284c7',Outros:'#9ca3af'};
 function brand(n){for(const b of Object.keys(BC)){if((n||'').toLowerCase().includes(b.toLowerCase()))return b;}return'Outros';}
-function fmt(v){return'R$ '+Math.round(v||0).toLocaleString('pt-BR');}
+function fmt(v){return'R$ '+Math.round(v||0).toLocaleString('pt-BR');}
 function fdt(d){if(!d)return'—';const[y,m]=d.split('-');if(!y||!m)return'—';const ms=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];return(ms[parseInt(m)-1]||m)+'/'+y.slice(2);}
 function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
@@ -470,11 +762,15 @@ function render(){
   list.innerHTML=Object.keys(groups).sort((a,b)=>groups[b].length-groups[a].length).map(br=>{
     const g2=groups[br],col=BC[br]||BC.Outros;
     const lv=g2.filter(p=>p.status==='Vendido').reduce((s,p)=>s+(p.venda-p.custo),0);
-    const nv=g2.filter(p=>p.status==='Vendido').length,ne=g2.filter(p=>p.status==='Estoque').length;
-    const ct=[nv?nv+' vendidos':'',ne?ne+' em estoque':''].filter(Boolean).join(' · ');
+    const nv=g2.filter(p=>p.status==='Vendido').length;
+    const nan=g2.filter(p=>p.status==='Anunciado').length;
+    const ne=g2.filter(p=>p.status==='Estoque').length;
+    const ct=[nv?nv+' vendidos':'',nan?nan+' anunciados':'',ne?ne+' em estoque':''].filter(Boolean).join(' · ');
     const rows=g2.map(p=>{
       const lp=p.lucro!==undefined?p.lucro:(p.venda-p.custo);
-      const sb=p.status==='Vendido'?'<span class="bv sv">Vendido</span>':'<span class="bv se">Estoque</span>';
+      const sb=p.status==='Vendido'?'<span class="bv sv">Vendido</span>':p.status==='Anunciado'?'<span class="bv san">Anunciado</span>':'<span class="bv se">Estoque</span>';
+      const platInfo=p.status==='Vendido'&&p.plataforma?`<span style="font-size:.68rem;color:var(--mu);margin-left:4px">· ${esc(p.plataforma)}</span>`:'';
+      const diasInfo=p.diasParado!=null?`<span style="font-size:.68rem;color:${p.diasParado<=7?'var(--gr)':p.diasParado<=30?'var(--am)':'var(--re)'};margin-left:4px">${p.diasParado}d</span>`:'';
       return`<tr>
         <td><span class="nb">${p.num||'?'}</span></td>
         <td><div class="pn">${esc(p.nome)}</div></td>
@@ -482,9 +778,13 @@ function render(){
         <td style="color:var(--li);font-size:.75rem">${fdt(p.data_venda)}</td>
         <td style="color:var(--mu)">${fmt(p.custo)}</td>
         <td class="ps">${fmt(p.venda)}</td>
-        <td class="pp ${lp>=0?'pos':'neg'}">${fmt(lp)}</td>
-        <td>${sb}</td>
-        <td><select class="sel" onchange="updStatus('${p.id}',this.value)"><option ${p.status==='Estoque'?'selected':''}>Estoque</option><option ${p.status==='Vendido'?'selected':''}>Vendido</option></select></td>
+        <td class="pp ${lp>=0?'pos':'neg'}">${fmt(lp)}${diasInfo}</td>
+        <td>${sb}${platInfo}</td>
+        <td><select class="sel" data-id="${p.id}" onchange="updStatus('${p.id}',this.value)">
+          <option ${p.status==='Anunciado'?'selected':''} value="Anunciado">Anunciado</option>
+          <option ${p.status==='Estoque'?'selected':''} value="Estoque">Estoque</option>
+          <option ${p.status==='Vendido'?'selected':''} value="Vendido">Vendido</option>
+        </select></td>
         <td><button class="bed" onclick="openEdit('${p.id}')" title="Editar">✎</button></td>
         <td><button class="bdl" onclick="delProd('${p.id}')" title="Excluir">✕</button></td>
       </tr>`;
@@ -502,20 +802,25 @@ function render(){
 window.togBG=(id,aid)=>{const el=document.getElementById(id),arr=document.getElementById(aid),o=el.style.display!=='none';el.style.display=o?'none':'block';if(arr)arr.textContent=o?'▸':'▾';};
 
 function calcStats(){
-  const v=prods.filter(p=>p.status==='Vendido'),e=prods.filter(p=>p.status==='Estoque');
+  const v=prods.filter(p=>p.status==='Vendido');
+  const an=prods.filter(p=>p.status==='Anunciado');
+  const es=prods.filter(p=>p.status==='Estoque');
   const rec=v.reduce((s,p)=>s+(p.venda||0),0),luc=v.reduce((s,p)=>s+(p.lucro!==undefined?p.lucro:p.venda-p.custo),0);
-  const mg=rec>0?Math.round(luc/rec*100):0,pot=e.reduce((s,p)=>s+(p.venda||0),0),potl=e.reduce((s,p)=>s+(p.lucro!==undefined?p.lucro:p.venda-p.custo),0);
+  const mg=rec>0?Math.round(luc/rec*100):0;
+  const potAn=an.reduce((s,p)=>s+(p.lucro!==undefined?p.lucro:p.venda-p.custo),0);
+  const potEs=es.reduce((s,p)=>s+(p.lucro!==undefined?p.lucro:p.venda-p.custo),0);
   document.getElementById('sRec').textContent=fmt(rec);document.getElementById('sRecS').textContent=v.length+' vendas';
   document.getElementById('sLuc').textContent=fmt(luc);document.getElementById('sMgm').textContent='margem '+mg+'%';
-  document.getElementById('sEst').textContent=e.length;document.getElementById('sEstV').textContent=fmt(pot)+' valor';
-  document.getElementById('sPot').textContent=fmt(potl);
+  document.getElementById('sAnu').textContent=an.length;document.getElementById('sAnuV').textContent=fmt(potAn)+' potencial';
+  document.getElementById('sEst').textContent=es.length;document.getElementById('sEstV').textContent=fmt(potEs)+' potencial';
+  document.getElementById('sPot').textContent=fmt(potAn+potEs);
 }
 
 function buildCharts(){
   if(chartsOk)return;chartsOk=true;
+  renderRanking();
+  renderGiro();
   const font={family:"'DM Sans',sans-serif",size:11},tc='#78716c',gc='rgba(0,0,0,0.05)';
-
-  // Caixas insight
   const maxIdx=CRL.rec.indexOf(Math.max(...CRL.rec));
   document.getElementById('iBM').textContent=CRL.labels[maxIdx];
   document.getElementById('iBMN').textContent=fmt(CRL.rec[maxIdx]);
@@ -531,21 +836,13 @@ function buildCharts(){
   const ne=27,potE=6357;
   document.getElementById('iEst').textContent=ne;
   document.getElementById('iEstN').textContent=fmt(potE)+' potencial';
-
-  // Chart Receita vs Lucro
   new Chart(document.getElementById('cRL'),{type:'bar',data:{labels:CRL.labels,datasets:[
-    {label:'Receita',data:CRL.rec,backgroundColor:CRL.rec.map((v,i)=>i===maxIdx?'#1c1917':'#d6d2c8'),borderRadius:5,borderSkipped:false,order:2},
+    {label:'Receita',data:CRL.rec,backgroundColor:CRL.rec.map((_,i)=>i===maxIdx?'#1c1917':'#d6d2c8'),borderRadius:5,borderSkipped:false,order:2},
     {label:'Lucro',data:CRL.luc,backgroundColor:CRL.luc.map((_,i)=>i===maxIdx?'#15803d':'#86efac'),borderRadius:5,borderSkipped:false,order:1}
   ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:tc,font,boxWidth:10}},tooltip:{callbacks:{label:ctx=>' '+fmt(ctx.raw)},bodyFont:font,titleFont:font}},scales:{x:{grid:{display:false},ticks:{color:tc,font}},y:{grid:{color:gc},ticks:{color:tc,font,callback:v=>'R$'+(v/1000).toFixed(0)+'k'},border:{display:false}}}}});
-
-  // Chart Qtd
   new Chart(document.getElementById('cQ'),{type:'line',data:{labels:CQ.labels,datasets:[{label:'Unidades',data:CQ.values,borderColor:'#1c1917',backgroundColor:'rgba(28,25,23,.06)',borderWidth:2,pointBackgroundColor:'#1c1917',pointRadius:4,fill:true,tension:0.3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{bodyFont:font,titleFont:font}},scales:{x:{grid:{display:false},ticks:{color:tc,font}},y:{grid:{color:gc},ticks:{color:tc,font,stepSize:5},border:{display:false},beginAtZero:true}}}});
-
-  // Chart Lucro médio/marca
   const bColors=['#2563eb','#dc2626','#16a34a','#7c3aed','#0891b2','#0284c7','#9ca3af'];
   new Chart(document.getElementById('cLM'),{type:'bar',data:{labels:CLM.labels,datasets:[{label:'Lucro médio',data:CLM.luc,backgroundColor:bColors.slice(0,CLM.labels.length),borderRadius:6,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+fmt(ctx.raw)},bodyFont:font,titleFont:font}},scales:{x:{grid:{color:gc},ticks:{color:tc,font,callback:v=>'R$'+v},border:{display:false}},y:{grid:{display:false},ticks:{color:tc,font}}}}});
-
-  // Chart Marcas doughnut
   new Chart(document.getElementById('cMarca'),{type:'doughnut',data:{labels:CMarca.labels,datasets:[{data:CMarca.values,backgroundColor:bColors.slice(0,CMarca.labels.length),borderWidth:0,hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'right',labels:{color:tc,font,boxWidth:10,padding:12}},tooltip:{bodyFont:font,titleFont:font}}}});
 }
 
@@ -563,16 +860,11 @@ let apiKey=localStorage.getItem('gk')||'';
 if(apiKey){document.getElementById('KI').value=apiKey;document.getElementById('KS').classList.add('on');}
 window.saveKey=()=>{const k=g('KI');if(!k){alert('Cole sua chave!');return;}apiKey=k;localStorage.setItem('gk',k);const s=document.getElementById('KS');s.classList.add('on');setTimeout(()=>s.classList.remove('on'),3000);};
 window.togP=btn=>{const p=btn.dataset.p;if(selP.has(p)){if(selP.size>1){selP.delete(p);btn.classList.remove('on');}}else{selP.add(p);btn.classList.add('on');}};
-async function gemini(prompt){
-  const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:prompt}]}]})});
-  const d=await r.json();if(d.error)throw new Error(d.error.message);
-  return d.candidates?.[0]?.content?.parts?.[0]?.text||'';
-}
+async function gemini(prompt){const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:prompt}]}]})});const d=await r.json();if(d.error)throw new Error(d.error.message);return d.candidates?.[0]?.content?.parts?.[0]?.text||'';}
 window.sugPrice=async()=>{
   const desc=g('aDesc');if(!desc){alert('Preencha a descrição!');return;}if(!apiKey){alert('Salve sua chave!');return;}
   const btn=document.getElementById('bSug');btn.disabled=true;btn.textContent='Analisando...';
-  try{
-    const raw=await gemini(`Especialista em precificação de notebooks usados no Brasil. Produto: ${desc}. Responda SOMENTE JSON sem markdown: {"preco_sugerido":1500,"faixa_minima":1300,"faixa_maxima":1700,"justificativa":"motivo"}`);
+  try{const raw=await gemini(`Especialista em precificação de notebooks usados no Brasil. Produto: ${desc}. Responda SOMENTE JSON sem markdown: {"preco_sugerido":1500,"faixa_minima":1300,"faixa_maxima":1700,"justificativa":"motivo"}`);
     const r=JSON.parse(raw.match(/\{[\s\S]*?\}/)[0]);
     const h=document.getElementById('PH');
     h.innerHTML=`<strong>Sugerido: ${fmt(r.preco_sugerido)}</strong> &nbsp;·&nbsp; Faixa: ${fmt(r.faixa_minima)} – ${fmt(r.faixa_maxima)}<br><span style="opacity:.8">${r.justificativa}</span> <button onclick="document.getElementById('aPreco').value=${r.preco_sugerido}" style="margin-top:6px;padding:3px 11px;border-radius:5px;border:1px solid var(--gbd);background:transparent;color:var(--gr);font-size:.73rem;cursor:pointer;font-weight:600">Usar este →</button>`;
@@ -604,6 +896,165 @@ window.genAds=async()=>{
 window.swT=i=>{document.querySelectorAll('.rt').forEach((t,j)=>t.classList.toggle('on',i===j));document.querySelectorAll('.rp').forEach((p,j)=>p.classList.toggle('on',i===j));};
 window.cpA=p=>{navigator.clipboard.writeText(document.getElementById('ao_'+p).innerText).then(()=>{const all=document.querySelectorAll('.rp');all.forEach(el=>{const btn=el.querySelector('.bcp');if(btn&&el.querySelector('#ao_'+p)){btn.textContent='✓ Copiado';setTimeout(()=>btn.textContent='Copiar',2000);}});});};
 window.waA=p=>window.open('https://wa.me/?text='+encodeURIComponent(document.getElementById('ao_'+p).innerText),'_blank');
+
+
+// ── META MENSAL ──
+let metaValor = parseFloat(localStorage.getItem('bj_meta'))||0;
+function renderMeta(){
+  const mes = new Date().toISOString().slice(0,7);
+  const lucMes = prods.filter(p=>p.status==='Vendido'&&(p.data_venda||'').startsWith(mes))
+    .reduce((s,p)=>s+(p.lucro!==undefined?p.lucro:p.venda-p.custo),0);
+  const meta = metaValor;
+  const pct = meta>0?Math.min(Math.round(lucMes/meta*100),100):0;
+  const over = meta>0&&lucMes>meta;
+  document.getElementById('metaCur').textContent=fmt(lucMes);
+  document.getElementById('metaOf').textContent=meta>0?'/ '+fmt(meta):'/ (sem meta)';
+  const pctEl=document.getElementById('metaPct');
+  pctEl.textContent=meta>0?pct+'%':'—';
+  pctEl.className='meta-pct'+(pct<50?' re':pct<80?' warn':'');
+  if(over)pctEl.className='meta-pct';
+  const fill=document.getElementById('metaFill');
+  fill.style.width=pct+'%';
+  fill.className='meta-fill'+(pct<50?' re':pct<80?' warn':'');
+  if(metaValor>0) document.getElementById('metaInp').value=metaValor;
+}
+window.saveMeta=()=>{
+  const v=parseFloat(document.getElementById('metaInp').value);
+  if(!v||v<=0){alert('Digite um valor válido!');return;}
+  metaValor=v;localStorage.setItem('bj_meta',v);
+  renderMeta();
+  const m=document.getElementById('metaMsg');m.textContent='✓ Salvo';setTimeout(()=>m.textContent='',2000);
+};
+
+// ── ALERTAS INTELIGENTES ──
+function renderAlertas(){
+  const row=document.getElementById('alertsRow');
+  if(!row)return;
+  const alertas=[];
+  const hoje=new Date();
+  const mesAtual=hoje.toISOString().slice(0,7);
+  const mesAnterior=new Date(hoje.getFullYear(),hoje.getMonth()-1,1).toISOString().slice(0,7);
+
+  // Produtos parados há muito tempo (status Anunciado ou Estoque com data_compra antiga)
+  const parados=prods.filter(p=>p.status!=='Vendido'&&p.data_compra).map(p=>{
+    const dc=p.data_compra.length===7?p.data_compra+'-01':p.data_compra;
+    const dias=Math.round((hoje-new Date(dc))/(86400000));
+    return{...p,dias};
+  }).filter(p=>p.dias>60).sort((a,b)=>b.dias-a.dias);
+  if(parados.length>0){
+    alertas.push({tipo:'warn',ic:'⏰',txt:`<strong>${parados.length} produto${parados.length>1?'s':''} parado${parados.length>1?'s':''} há +60 dias</strong> — o mais antigo é "${parados[0].nome.split(' ').slice(0,4).join(' ')}" (${parados[0].dias}d). Considere baixar o preço.`});
+  }
+
+  // Margem do mês atual vs anterior
+  const vendMes=prods.filter(p=>p.status==='Vendido'&&(p.data_venda||'').startsWith(mesAtual));
+  const vendAnt=prods.filter(p=>p.status==='Vendido'&&(p.data_venda||'').startsWith(mesAnterior));
+  if(vendMes.length>=3&&vendAnt.length>=3){
+    const recMes=vendMes.reduce((s,p)=>s+(p.venda||0),0);
+    const lucMes=vendMes.reduce((s,p)=>s+(p.lucro!==undefined?p.lucro:p.venda-p.custo),0);
+    const recAnt=vendAnt.reduce((s,p)=>s+(p.venda||0),0);
+    const lucAnt=vendAnt.reduce((s,p)=>s+(p.lucro!==undefined?p.lucro:p.venda-p.custo),0);
+    const mgMes=recMes>0?Math.round(lucMes/recMes*100):0;
+    const mgAnt=recAnt>0?Math.round(lucAnt/recAnt*100):0;
+    const diff=mgMes-mgAnt;
+    if(Math.abs(diff)>=5){
+      alertas.push({tipo:diff>0?'good':'warn',ic:diff>0?'📈':'📉',txt:`<strong>Margem ${diff>0?'subiu':'caiu'} ${Math.abs(diff)}% este mês</strong> — ${mgMes}% atual vs ${mgAnt}% no mês anterior.`});
+    }
+  }
+
+  // Marca com melhor giro este mês
+  const BC2={Dell:'#2563eb',Lenovo:'#dc2626',Acer:'#16a34a',HP:'#0891b2',Samsung:'#7c3aed',Asus:'#0284c7',Outros:'#9ca3af'};
+  const giros={};
+  prods.filter(p=>p.status==='Vendido'&&p.data_compra&&p.data_venda).forEach(p=>{
+    const b=brand(p.nome);
+    const dc=p.data_compra.length===7?p.data_compra+'-01':p.data_compra;
+    const dv=p.data_venda.length===7?p.data_venda+'-01':p.data_venda;
+    const dias=Math.round((new Date(dv)-new Date(dc))/(86400000));
+    if(dias>=0){if(!giros[b])giros[b]=[];giros[b].push(dias);}
+  });
+  const medGiros=Object.entries(giros).filter(([,v])=>v.length>=3).map(([b,v])=>({b,med:Math.round(v.reduce((a,c)=>a+c,0)/v.length)})).sort((a,b)=>a.med-b.med);
+  if(medGiros.length>=2){
+    const melhor=medGiros[0],pior=medGiros[medGiros.length-1];
+    alertas.push({tipo:'info',ic:'🏎️',txt:`<strong>${melhor.b}</strong> é sua marca mais rápida (${melhor.med}d em média). <strong>${pior.b}</strong> é a mais lenta (${pior.med}d). Priorize comprar ${melhor.b}.`});
+  }
+
+  // Potencial dos anunciados
+  const anunciados=prods.filter(p=>p.status==='Anunciado');
+  if(anunciados.length>0){
+    const potLuc=anunciados.reduce((s,p)=>s+(p.lucro!==undefined?p.lucro:p.venda-p.custo),0);
+    alertas.push({tipo:'good',ic:'🎯',txt:`<strong>${anunciados.length} produto${anunciados.length>1?'s':''} anunciado${anunciados.length>1?'s':''}</strong> com potencial de ${fmt(potLuc)} em lucro se vender tudo.`});
+  }
+
+  row.innerHTML=alertas.slice(0,4).map(a=>`<div class="al ${a.tipo}"><span class="al-ic">${a.ic}</span><div class="al-tx">${a.txt}</div></div>`).join('');
+}
+
+// ── RANKING ──
+let rkMode='lucro';
+window.swRk=(mode,btn)=>{rkMode=mode;document.querySelectorAll('.rk-tab').forEach(t=>t.classList.remove('on'));btn.classList.add('on');renderRanking();};
+function renderRanking(){
+  const body=document.getElementById('rkBody');
+  if(!body)return;
+  let lista=[];
+  if(rkMode==='lucro'){
+    lista=prods.filter(p=>p.status==='Vendido').map(p=>({
+      nome:p.nome,sub:fdt(p.data_venda),val:p.lucro!==undefined?p.lucro:p.venda-p.custo,cls:'g'
+    })).sort((a,b)=>b.val-a.val).slice(0,10);
+  } else if(rkMode==='giro'){
+    lista=prods.filter(p=>p.status==='Vendido'&&p.data_compra&&p.data_venda).map(p=>{
+      const dc=p.data_compra.length===7?p.data_compra+'-01':p.data_compra;
+      const dv=p.data_venda.length===7?p.data_venda+'-01':p.data_venda;
+      const dias=Math.round((new Date(dv)-new Date(dc))/(86400000));
+      return{nome:p.nome,sub:dias+'d parado',val:dias,cls:dias<=7?'g':dias<=30?'am':'re',inv:true};
+    }).filter(p=>p.val>=0).sort((a,b)=>a.val-b.val).slice(0,10);
+  } else {
+    lista=prods.filter(p=>p.status!=='Vendido'&&p.data_compra).map(p=>{
+      const dc=p.data_compra.length===7?p.data_compra+'-01':p.data_compra;
+      const dias=Math.round((new Date()-new Date(dc))/(86400000));
+      return{nome:p.nome,sub:p.status+' · comprado em '+fdt(p.data_compra),val:dias,cls:dias<=30?'am':'re',inv:false,raw:true};
+    }).sort((a,b)=>b.val-a.val).slice(0,10);
+  }
+  const maxVal=lista.length?Math.max(...lista.map(x=>x.val)):1;
+  body.innerHTML=lista.map((x,i)=>{
+    const pos=i===0?'gold':i===1?'silver':i===2?'bronze':'';
+    const label=rkMode==='lucro'?fmt(x.val):(x.val+'d');
+    const barPct=Math.round(x.val/maxVal*100);
+    return`<div class="rk-row">
+      <span class="rk-pos ${pos}">${i+1}</span>
+      <div style="flex:1;overflow:hidden">
+        <div class="rk-nm">${esc(x.nome)}</div>
+        <div class="rk-sub">${x.sub}</div>
+      </div>
+      <div class="rk-bar"><div class="rk-bar-fill ${x.cls}" style="width:${barPct}%"></div></div>
+      <span class="rk-val ${x.cls}">${label}</span>
+    </div>`;
+  }).join('');
+}
+
+// ── GIRO POR MARCA ──
+function renderGiro(){
+  const grid=document.getElementById('giroGrid');
+  if(!grid)return;
+  const BC2={Dell:'#2563eb',Lenovo:'#dc2626',Acer:'#16a34a',HP:'#0891b2',Samsung:'#7c3aed',Asus:'#0284c7',Outros:'#9ca3af'};
+  const giros={};
+  prods.filter(p=>p.status==='Vendido'&&p.data_compra&&p.data_venda).forEach(p=>{
+    const b=brand(p.nome);
+    const dc=p.data_compra.length===7?p.data_compra+'-01':p.data_compra;
+    const dv=p.data_venda.length===7?p.data_venda+'-01':p.data_venda;
+    const dias=Math.round((new Date(dv)-new Date(dc))/(86400000));
+    if(dias>=0){if(!giros[b])giros[b]=[];giros[b].push(dias);}
+  });
+  const itens=Object.entries(giros).filter(([,v])=>v.length>=2).map(([b,v])=>({
+    b,med:Math.round(v.reduce((a,c)=>a+c,0)/v.length),cnt:v.length
+  })).sort((a,b)=>a.med-b.med);
+  grid.innerHTML=itens.map(x=>{
+    const cls=x.med<=15?'g':x.med<=35?'am':'re';
+    const sub=x.med<=15?'Giro rápido 🚀':x.med<=35?'Giro médio':'Giro lento ⚠️';
+    return`<div class="giro-card">
+      <div class="giro-brand"><span class="giro-dot" style="background:${BC2[x.b]||'#9ca3af'}"></span><span class="giro-nm">${x.b}</span></div>
+      <div class="giro-dias ${cls}">${x.med}d</div>
+      <div class="giro-sub">${sub} · ${x.cnt} vendas</div>
+    </div>`;
+  }).join('');
+}
 
 document.getElementById('pDC').value=new Date().toISOString().slice(0,7);
 </script>
