@@ -1832,11 +1832,10 @@ function renderFinancas() {
   if(varsDoMes.length===0){
     varList.innerHTML='<div class="fin-empty">Nenhum gasto variável em '+mesNome+'</div>';
   } else {
-    varList.innerHTML = [...varsDoMes].sort((a,b)=>b.valor-a.valor).map(x=>`
-      const vParcBadge = x.parcelas>0
-        ? `<span class="parc-badge ${x.parcelaAtual>=x.parcelas?'done':''}">${x.parcelaAtual||1}/${x.parcelas}x</span>`
-        : '';
-      return`<div class="fin-item">
+    varList.innerHTML = [...varsDoMes].sort((a,b)=>b.valor-a.valor).map(x=>{
+      const vParcDone = x.parcelaAtual>=x.parcelas ? 'done' : '';
+      const vParcBadge = x.parcelas>0 ? '<span class="parc-badge '+vParcDone+'">'+(x.parcelaAtual||1)+'/'+x.parcelas+'x</span>' : '';
+      return `<div class="fin-item">
         <span class="fin-cat-dot" style="background:${CAT_CORES[x.categoria]||'#9ca3af'}"></span>
         <div class="fin-item-info">
           <div class="fin-item-nm">${esc(x.nome)} ${vParcBadge}</div>
@@ -1849,7 +1848,8 @@ function renderFinancas() {
             ?`<button class="pagar-btn" onclick="openPayModal('${x.id}','var',${Math.round(x.valor/x.parcelas)})">Pagar parcela</button>`
             :`<button class="pagar-btn" onclick="openPayModal('${x.id}','var',${x.valor})">Pagar</button>`}
         <button class="fin-del" onclick="delVar('${x.id}')">✕</button>
-      </div>`; }).join('');
+      </div>`;
+    }).join('');
   }
 }
 
