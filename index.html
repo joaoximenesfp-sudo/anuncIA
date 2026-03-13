@@ -427,6 +427,23 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
 .tab-btn.on{color:var(--tx);border-bottom-color:var(--tx);font-weight:600}
 .tab-pg{display:none}.tab-pg.on{display:block}
 
+
+/* ── AJUSTE SALDO CARTEIRA ── */
+.wal-adj{display:flex;align-items:center;gap:6px;margin-top:8px;flex-wrap:wrap}
+.wal-adj-inp{width:90px;height:28px;padding:0 8px;border:1px solid var(--b2);border-radius:6px;font-size:.78rem;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);outline:none}
+.wal-adj-inp:focus{border-color:var(--tx)}
+.wal-adj-btn{height:28px;padding:0 10px;border-radius:6px;border:none;font-size:.72rem;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;white-space:nowrap}
+.wal-adj-btn.add{background:var(--gbg);color:var(--gr);border:1px solid var(--gbd)}
+.wal-adj-btn.add:hover{background:var(--gr);color:#fff}
+.wal-adj-btn.sub{background:var(--rbg);color:var(--re);border:1px solid #fca5a5}
+.wal-adj-btn.sub:hover{background:var(--re);color:#fff}
+.wal-adj-lbl{font-size:.67rem;color:var(--li);font-weight:500}
+
+/* ── PARCELAS ── */
+.parc-badge{font-size:.67rem;font-weight:700;padding:2px 7px;border-radius:10px;background:var(--bbg);color:var(--bl);border:1px solid var(--bbd);white-space:nowrap}
+.parc-badge.done{background:var(--gbg);color:var(--gr);border-color:var(--gbd)}
+.parc-prog{font-size:.67rem;color:var(--mu);margin-top:1px}
+
 @media(max-width:700px){
   .fr{grid-template-columns:1fr 1fr}
   .fr .fc:first-child{grid-column:1/-1}
@@ -709,11 +726,21 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
           <div class="wal-name">🟠 C6 Bank</div>
           <div class="wal-saldo" id="walC6">R$ 0</div>
           <div class="wal-sub" id="walC6Sub">saldo acumulado</div>
+          <div class="wal-adj">
+            <input class="wal-adj-inp" type="number" id="adjC6" placeholder="R$ valor" min="0">
+            <button class="wal-adj-btn add" onclick="adjWal('c6','add')">+ Entrada</button>
+            <button class="wal-adj-btn sub" onclick="adjWal('c6','sub')">− Saída</button>
+          </div>
         </div>
         <div class="wal-card mp">
           <div class="wal-name">🔵 Mercado Pago</div>
           <div class="wal-saldo" id="walMP">R$ 0</div>
           <div class="wal-sub" id="walMPSub">saldo acumulado</div>
+          <div class="wal-adj">
+            <input class="wal-adj-inp" type="number" id="adjMP" placeholder="R$ valor" min="0">
+            <button class="wal-adj-btn add" onclick="adjWal('mp','add')">+ Entrada</button>
+            <button class="wal-adj-btn sub" onclick="adjWal('mp','sub')">− Saída</button>
+          </div>
         </div>
       </div>
 
@@ -791,6 +818,18 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
               <option value="Assinatura">📱 Assinatura</option>
               <option value="Outro">📦 Outro</option>
             </select>
+            <select class="fin-inp" id="fxParc" title="Parcelas" style="width:90px;flex:unset">
+              <option value="0">Sem parc.</option>
+              <option value="2">2x</option>
+              <option value="3">3x</option>
+              <option value="4">4x</option>
+              <option value="6">6x</option>
+              <option value="10">10x</option>
+              <option value="12">12x</option>
+              <option value="18">18x</option>
+              <option value="24">24x</option>
+              <option value="36">36x</option>
+            </select>
             <button class="fin-add-btn" onclick="addFixa()">+ Add</button>
           </div>
           <div class="fin-list" id="finFixasList">
@@ -815,6 +854,15 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
               <option value="Vestuário">👕 Vestuário</option>
               <option value="Casa">🏠 Casa</option>
               <option value="Outro">📦 Outro</option>
+            </select>
+            <select class="fin-inp" id="vParc" title="Parcelas" style="width:90px;flex:unset">
+              <option value="0">Sem parc.</option>
+              <option value="2">2x</option>
+              <option value="3">3x</option>
+              <option value="4">4x</option>
+              <option value="6">6x</option>
+              <option value="10">10x</option>
+              <option value="12">12x</option>
             </select>
             <button class="fin-add-btn" onclick="addVar()">+ Add</button>
           </div>
@@ -919,61 +967,6 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
   </div>
 </div>
 
-<!-- SELL MODAL -->
-<div class="smo h" id="SMO">
-  <div class="smoo" onclick="cancelSell()"></div>
-  <div class="smc">
-    <div class="smch">
-      <span class="smct">🎉 Registrar venda</span>
-      <button class="smcl" onclick="cancelSell()">✕</button>
-    </div>
-    <div class="smcp" id="smProdNome">—</div>
-    <div class="smcb">
-      <div class="fc full">
-        <label class="fl">Onde vendeu?</label>
-        <select class="inp" id="smPlat">
-          <option value="">— Selecione a plataforma —</option>
-          <option value="Marketplace">📘 Marketplace</option>
-          <option value="OLX">🟠 OLX</option>
-          <option value="Mercado Livre">🟡 Mercado Livre</option>
-          <option value="WhatsApp">💬 WhatsApp</option>
-          <option value="Instagram">📸 Instagram</option>
-          <option value="Indicação">🤝 Indicação</option>
-          <option value="Outro">Outro</option>
-        </select>
-      </div>
-      <div class="fc">
-        <label class="fl">Preço de venda R$</label>
-        <input class="inp" type="number" id="smPreco" placeholder="0" min="0" oninput="updDias();updSplitVenda()">
-      </div>
-      <div class="fc">
-        <label class="fl">Data da venda</label>
-        <input class="inp" type="date" id="smData" onchange="updDias()">
-      </div>
-      <div class="fc full">
-        <div class="dias-hint" id="smDiasHint"></div>
-      </div>
-      <div class="fc full" style="border-top:1px solid var(--b);padding-top:12px;margin-top:2px">
-        <label class="fl">💰 Distribuir nas carteiras</label>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px">
-          <div>
-            <div style="font-size:.69rem;color:#f97316;font-weight:700;margin-bottom:3px">🟠 C6 Bank</div>
-            <input class="inp" type="number" id="smC6" placeholder="R$ 0" min="0" oninput="updSplitVenda()" style="font-size:.82rem">
-          </div>
-          <div>
-            <div style="font-size:.69rem;color:#009ee3;font-weight:700;margin-bottom:3px">🔵 Mercado Pago</div>
-            <input class="inp" type="number" id="smMP" placeholder="R$ 0" min="0" oninput="updSplitVenda()" style="font-size:.82rem">
-          </div>
-        </div>
-        <div style="font-size:.71rem;color:var(--li);margin-top:5px" id="smSplitHint"></div>
-      </div>
-    </div>
-    <div class="smca">
-      <button class="bcan" onclick="cancelSell()">Cancelar</button>
-      <button class="bvnd" onclick="confirmSell()">✓ Confirmar venda</button>
-    </div>
-  </div>
-</div>
 
 
 <!-- MODAL PAGAR CONTA -->
@@ -1332,6 +1325,23 @@ window.cpA=p=>{navigator.clipboard.writeText(document.getElementById('ao_'+p).in
 window.waA=p=>window.open('https://wa.me/?text='+encodeURIComponent(document.getElementById('ao_'+p).innerText),'_blank');
 
 
+
+// ── AVANÇAR PARCELA ──
+window.avancarParcela = async (id, tipo) => {
+  const lista = tipo==='fixa' ? fixas : variaveis;
+  const col = tipo==='fixa' ? 'financas_fixas' : 'financas_var';
+  const item = lista.find(x=>x.id===id);
+  if(!item) return;
+  const prox = (item.parcelaAtual||1) + 1;
+  const terminado = prox > item.parcelas;
+  const upd = terminado
+    ? {parcelaAtual: item.parcelas, pago: true, pagoEm: new Date().toISOString().split('T')[0]}
+    : {parcelaAtual: prox};
+  if(!id.startsWith('l')){ try{ await updateDoc(doc(db,col,id), upd); }catch(e){} }
+  Object.assign(item, upd);
+  renderFinancas();
+};
+
 // ── META MENSAL ──
 let metaValor = parseFloat(localStorage.getItem('bj_meta'))||0;
 function renderMeta(){
@@ -1491,6 +1501,26 @@ function renderGiro(){
 }
 
 
+
+// ── AJUSTE MANUAL DE SALDO ──
+window.adjWal = async (wal, tipo) => {
+  const inputId = wal==='c6' ? 'adjC6' : 'adjMP';
+  const valor = parseFloat(document.getElementById(inputId).value)||0;
+  if(!valor || valor<=0){ alert('Digite um valor válido!'); return; }
+  const desc = tipo==='add' ? 'Entrada manual' : 'Saída manual';
+  await addExtrato({
+    tipo: tipo==='add' ? 'entrada' : 'saida',
+    descricao: desc,
+    valor,
+    carteira: wal,
+    data: new Date().toISOString().split('T')[0],
+    categoria: 'Ajuste'
+  });
+  document.getElementById(inputId).value = '';
+  renderCarteiras();
+  renderExtrato();
+};
+
 // ════════════════════════════════════════
 // CARTEIRAS + EXTRATO
 // ════════════════════════════════════════
@@ -1587,8 +1617,16 @@ window.confirmPay=async()=>{
   const updPago={pago:true,pagoEm:new Date().toISOString().split('T')[0],pagoCarteira:selPayCarteira};
   if(!payContaId.startsWith('l')){try{await updateDoc(doc(db,col,payContaId),updPago);}catch(e){}}
   Object.assign(item,updPago);
+  // Avançar parcela se parcelado
+  if(item.parcelas>0){
+    const nextParc = Math.min((item.parcelaAtual||1)+1, item.parcelas);
+    const updParc = {parcelaAtual:nextParc};
+    if(!payContaId.startsWith('l')){try{await updateDoc(doc(db,col,payContaId),updParc);}catch(e){}}
+    Object.assign(item,updParc);
+  }
   // Registrar saída no extrato
-  await addExtrato({tipo:'saida',descricao:item.nome,valor:payContaValor,carteira:selPayCarteira,data:new Date().toISOString().split('T')[0],categoria:item.categoria});
+  const descParc = item.parcelas>0 ? item.nome+' (parc '+(item.parcelaAtual||1)+'/'+item.parcelas+'x)' : item.nome;
+  await addExtrato({tipo:'saida',descricao:descParc,valor:payContaValor,carteira:selPayCarteira,data:new Date().toISOString().split('T')[0],categoria:item.categoria});
   closePayModal();
   renderFinancas();
 };
@@ -1638,8 +1676,9 @@ window.addFixa = async () => {
   const val = parseFloat(document.getElementById('fxVal').value)||0;
   const cat = document.getElementById('fxCat').value;
   const venc = document.getElementById('fxVenc').value;
+  const parcelas = parseInt(document.getElementById('fxParc').value)||0;
   if(!nome||!val){alert('Preencha nome e valor!');return;}
-  const obj = {userId:user.uid, nome, valor:val, categoria:cat, vencimento:venc, pago:false, criadoEm:new Date().toISOString()};
+  const obj = {userId:user.uid, nome, valor:val, categoria:cat, vencimento:venc, parcelas, parcelaAtual:parcelas>0?1:0, pago:false, criadoEm:new Date().toISOString()};
   try {
     const r = await addDoc(collection(db,'financas_fixas'), obj);
     fixas.push({...obj, id:r.id});
@@ -1647,6 +1686,7 @@ window.addFixa = async () => {
   document.getElementById('fxNome').value='';
   document.getElementById('fxVal').value='';
   document.getElementById('fxVenc').value='';
+  document.getElementById('fxParc').value='0';
   renderFinancas();
 };
 
@@ -1661,14 +1701,16 @@ window.addVar = async () => {
   const nome = document.getElementById('vNome').value.trim();
   const val = parseFloat(document.getElementById('vVal').value)||0;
   const cat = document.getElementById('vCat').value;
+  const parcelas = parseInt(document.getElementById('vParc').value)||0;
   if(!nome||!val){alert('Preencha nome e valor!');return;}
-  const obj = {userId:user.uid, nome, valor:val, categoria:cat, mes:finMes, criadoEm:new Date().toISOString()};
+  const obj = {userId:user.uid, nome, valor:val, categoria:cat, mes:finMes, parcelas, parcelaAtual:parcelas>0?1:0, criadoEm:new Date().toISOString()};
   try {
     const r = await addDoc(collection(db,'financas_var'), obj);
     variaveis.push({...obj, id:r.id});
   } catch(e) { variaveis.push({...obj, id:'l'+Date.now()}); }
   document.getElementById('vNome').value='';
   document.getElementById('vVal').value='';
+  document.getElementById('vParc').value='0';
   renderFinancas();
 };
 
@@ -1763,16 +1805,21 @@ function renderFinancas() {
       const vencStr=x.vencimento?new Date(x.vencimento+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short'}):'—';
       const atrasado=x.vencimento&&!x.pago&&x.vencimento<hoje2;
       const pagoHoje=x.pago&&x.pagoEm===hoje2;
+      const parcBadge = x.parcelas>0
+        ? `<span class="parc-badge ${x.parcelaAtual>=x.parcelas?'done':''}">${x.parcelaAtual||1}/${x.parcelas}x</span>`
+        : '';
       return`<div class="fin-item">
         <span class="fin-cat-dot" style="background:${CAT_CORES[x.categoria]||'#9ca3af'}"></span>
         <div class="fin-item-info">
-          <div class="fin-item-nm">${esc(x.nome)}</div>
-          <div class="fin-item-sub">${x.categoria} · vence ${vencStr}${atrasado?' ⚠️ Atrasado':''}</div>
+          <div class="fin-item-nm">${esc(x.nome)} ${parcBadge}</div>
+          <div class="fin-item-sub">${x.categoria} · vence ${vencStr}${atrasado?' ⚠️ Atrasado':''}${x.parcelas>0?' · '+fmt(x.valor/x.parcelas)+'/parc':''}</div>
         </div>
         <span class="fin-item-val" style="${atrasado?'color:var(--re)':''}">${fmt(x.valor)}</span>
         ${x.pago
           ?`<span class="pagar-btn pago">✓ Pago</span>`
-          :`<button class="pagar-btn" onclick="openPayModal('${x.id}','fixa',${x.valor})">Pagar</button>`}
+          :x.parcelas>0
+            ?`<button class="pagar-btn" onclick="openPayModal('${x.id}','fixa',${Math.round(x.valor/x.parcelas)})">Pagar parcela</button>`
+            :`<button class="pagar-btn" onclick="openPayModal('${x.id}','fixa',${x.valor})">Pagar</button>`}
         <button class="fin-del" onclick="delFixa('${x.id}')">✕</button>
       </div>`;
     }).join('');
@@ -1786,18 +1833,23 @@ function renderFinancas() {
     varList.innerHTML='<div class="fin-empty">Nenhum gasto variável em '+mesNome+'</div>';
   } else {
     varList.innerHTML = [...varsDoMes].sort((a,b)=>b.valor-a.valor).map(x=>`
-      <div class="fin-item">
+      const vParcBadge = x.parcelas>0
+        ? `<span class="parc-badge ${x.parcelaAtual>=x.parcelas?'done':''}">${x.parcelaAtual||1}/${x.parcelas}x</span>`
+        : '';
+      return`<div class="fin-item">
         <span class="fin-cat-dot" style="background:${CAT_CORES[x.categoria]||'#9ca3af'}"></span>
         <div class="fin-item-info">
-          <div class="fin-item-nm">${esc(x.nome)}</div>
-          <div class="fin-item-sub">${x.categoria}</div>
+          <div class="fin-item-nm">${esc(x.nome)} ${vParcBadge}</div>
+          <div class="fin-item-sub">${x.categoria}${x.parcelas>0?' · '+fmt(x.valor/x.parcelas)+'/parc':''}</div>
         </div>
         <span class="fin-item-val">${fmt(x.valor)}</span>
         ${x.pago
           ?`<span class="pagar-btn pago">✓ Pago</span>`
-          :`<button class="pagar-btn" onclick="openPayModal('${x.id}','var',${x.valor})">Pagar</button>`}
+          :x.parcelas>0
+            ?`<button class="pagar-btn" onclick="openPayModal('${x.id}','var',${Math.round(x.valor/x.parcelas)})">Pagar parcela</button>`
+            :`<button class="pagar-btn" onclick="openPayModal('${x.id}','var',${x.valor})">Pagar</button>`}
         <button class="fin-del" onclick="delVar('${x.id}')">✕</button>
-      </div>`).join('');
+      </div>`; }).join('');
   }
 }
 
