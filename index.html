@@ -419,6 +419,14 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
 .wm-confirm{padding:9px 20px;background:var(--gr);color:#fff;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;transition:opacity .15s}
 .wm-confirm:hover{opacity:.85}
 
+
+/* ── PEÇAS ── */
+.tab-row{display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid var(--b);padding-bottom:0}
+.tab-btn{padding:8px 16px;border:none;background:transparent;color:var(--mu);font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s}
+.tab-btn:hover{color:var(--tx)}
+.tab-btn.on{color:var(--tx);border-bottom-color:var(--tx);font-weight:600}
+.tab-pg{display:none}.tab-pg.on{display:block}
+
 @media(max-width:700px){
   .fr{grid-template-columns:1fr 1fr}
   .fr .fc:first-child{grid-column:1/-1}
@@ -476,13 +484,19 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
     <div class="wr">
       <div class="ph">
         <div><div class="pht">Minhas Vendas</div><div class="phs">Estoque e resultados em tempo real</div></div>
-        <div class="frow">
+        <div class="frow" id="filtRow">
           <button class="fc2 on" onclick="setF('todos',this)">Todos</button>
           <button class="fc2" onclick="setF('Anunciado',this)">Anunciados</button>
           <button class="fc2" onclick="setF('Estoque',this)">Em estoque</button>
           <button class="fc2" onclick="setF('Vendido',this)">Vendidos</button>
         </div>
       </div>
+      <!-- TABS NOTEBOOKS / PEÇAS -->
+      <div class="tab-row">
+        <button class="tab-btn on" onclick="swTab('notebooks',this)">💻 Notebooks</button>
+        <button class="tab-btn" onclick="swTab('pecas',this)">🔧 Peças</button>
+      </div>
+      <div class="tab-pg on" id="tab-notebooks">
       <div class="banner">📊 <strong>228 produtos</strong> importados da planilha — 201 vendidos · 27 em estoque</div>
       <!-- META MENSAL -->
       <div class="meta-bar-wrap" id="metaWrap">
@@ -541,8 +555,61 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
         <div class="cdh"><span class="cdht">Produtos por marca</span><span style="font-size:.76rem;color:var(--li)" id="plbl">—</span></div>
         <div id="PL"><div style="text-align:center;padding:48px;color:var(--li)">Carregando...</div></div>
       </div>
-    </div>
-  </div>
+    </div><!-- /tab-notebooks -->
+
+      <!-- ABA PEÇAS -->
+      <div class="tab-pg" id="tab-pecas">
+        <div class="sr" id="pecasStats">
+          <div class="sb"><div class="sbl">Total peças</div><div class="sbv b" id="psTot">—</div><div class="sbs" id="psTotS">—</div></div>
+          <div class="sb"><div class="sbl">Valor total</div><div class="sbv g" id="psVal">—</div><div class="sbs">em estoque</div></div>
+          <div class="sb"><div class="sbl">Vendidas</div><div class="sbv" id="psVend">—</div><div class="sbs" id="psVendS">—</div></div>
+        </div>
+        <div class="cd">
+          <div class="cdh"><span class="cdht">Adicionar peça</span></div>
+          <div class="cdb">
+            <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr auto;gap:8px;align-items:end">
+              <div class="fc" style="grid-column:1/-1"><input class="inp" type="text" id="pcNome" placeholder="Ex: Tela Dell 15.6 · Full HD · 30 pinos"></div>
+              <div class="fc"><span class="fla">Tipo</span>
+                <select class="inp" id="pcTipo">
+                  <option value="Tela">🖥️ Tela</option>
+                  <option value="Bateria">🔋 Bateria</option>
+                  <option value="Teclado">⌨️ Teclado</option>
+                  <option value="HD/SSD">💾 HD/SSD</option>
+                  <option value="RAM">🧠 RAM</option>
+                  <option value="Placa-mãe">🔌 Placa-mãe</option>
+                  <option value="Carregador">⚡ Carregador</option>
+                  <option value="Carcaça">📦 Carcaça</option>
+                  <option value="Outro">🔧 Outro</option>
+                </select>
+              </div>
+              <div class="fc"><span class="fla">Custo R$</span><input class="inp" type="number" id="pcCusto" placeholder="0" min="0"></div>
+              <div class="fc"><span class="fla">Venda R$</span><input class="inp" type="number" id="pcVenda" placeholder="0" min="0"></div>
+              <div class="fc"><span class="fla">Status</span>
+                <select class="inp" id="pcStatus">
+                  <option value="Estoque">Estoque</option>
+                  <option value="Vendido">Vendido</option>
+                  <option value="Usado">Usado em reparo</option>
+                </select>
+              </div>
+              <div class="fc"><span class="fla" style="opacity:0">.</span><button class="ba" onclick="addPeca()">+ Add</button></div>
+            </div>
+          </div>
+        </div>
+        <div class="cd">
+          <div class="cdh">
+            <span class="cdht">Estoque de peças</span>
+            <div style="display:flex;gap:6px">
+              <button class="fc2 on" onclick="setPF('todos',this)">Todos</button>
+              <button class="fc2" onclick="setPF('Estoque',this)">Em estoque</button>
+              <button class="fc2" onclick="setPF('Vendido',this)">Vendidos</button>
+              <button class="fc2" onclick="setPF('Usado',this)">Usados</button>
+            </div>
+          </div>
+          <div id="pecasList"><div style="text-align:center;padding:48px;color:var(--li)">Nenhuma peça cadastrada</div></div>
+        </div>
+      </div><!-- /tab-pecas -->
+    </div><!-- /wr -->
+  </div><!-- /pg-vendas -->
 
   <!-- INSIGHTS -->
   <div class="pg" id="pg-insights">
@@ -961,7 +1028,7 @@ let user=null,prods=[],filt='todos',editId=null,chartsOk=false,sellId=null;
 
 onAuthStateChanged(auth,u=>{
   user=u;
-  if(u){document.getElementById('AS').classList.add('h');document.getElementById('APP').classList.add('v');document.getElementById('NU').textContent=u.displayName||u.email.split('@')[0];loadProds();loadFinancas();}
+  if(u){document.getElementById('AS').classList.add('h');document.getElementById('APP').classList.add('v');document.getElementById('NU').textContent=u.displayName||u.email.split('@')[0];loadProds();loadFinancas();loadPecas();}
   else{document.getElementById('AS').classList.remove('h');document.getElementById('APP').classList.remove('v');}
 });
 
@@ -1135,6 +1202,8 @@ function render(){
       const sb=p.status==='Vendido'?'<span class="bv sv">Vendido</span>':p.status==='Anunciado'?'<span class="bv san">Anunciado</span>':'<span class="bv se">Estoque</span>';
       const platInfo=p.status==='Vendido'&&p.plataforma?`<span style="font-size:.68rem;color:var(--mu);margin-left:4px">· ${esc(p.plataforma)}</span>`:'';
       const diasInfo=p.diasParado!=null?`<span style="font-size:.68rem;color:${p.diasParado<=7?'var(--gr)':p.diasParado<=30?'var(--am)':'var(--re)'};margin-left:4px">${p.diasParado}d</span>`:'';
+      const invBadge=p.investidor?`<span class="socio-${p.investidor==='João'?'jo':p.investidor==='Igor'?'ig':'ext'}">${p.investidor}</span>`:'';
+      const splitLucro=lp>0?`<div class="lucro-split"><span class="split-pill split-jo">João ${fmt(lp/2)}</span><span class="split-pill split-ig">Igor ${fmt(lp/2)}</span></div>`:'';
       return`<tr>
         <td><span class="nb">${p.num||'?'}</span></td>
         <td><div class="pn">${esc(p.nome)}</div></td>
@@ -1730,6 +1799,126 @@ function renderFinancas() {
         <button class="fin-del" onclick="delVar('${x.id}')">✕</button>
       </div>`).join('');
   }
+}
+
+
+// ════════════════════════════════════
+// PEÇAS
+// ════════════════════════════════════
+let pecas = [], filtPecas = 'todos', tabAtual = 'notebooks';
+
+window.swTab = (tab, btn) => {
+  tabAtual = tab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('tab-notebooks').classList.toggle('on', tab==='notebooks');
+  document.getElementById('tab-pecas').classList.toggle('on', tab==='pecas');
+  document.getElementById('filtRow').style.display = tab==='notebooks' ? 'flex' : 'none';
+  if(tab==='pecas') renderPecas();
+};
+
+window.setPF = (f, btn) => {
+  filtPecas = f;
+  document.querySelectorAll('#tab-pecas .fc2').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  renderPecas();
+};
+
+const TIPO_CORES = {
+  'Tela':'#2563eb','Bateria':'#16a34a','Teclado':'#7c3aed','HD/SSD':'#0891b2',
+  'RAM':'#f59e0b','Placa-mãe':'#dc2626','Carregador':'#f97316','Carcaça':'#9ca3af','Outro':'#78716c'
+};
+
+async function loadPecas() {
+  if(!user) return;
+  try {
+    const q = query(collection(db,'pecas'), where('userId','==',user.uid));
+    const snap = await getDocs(q);
+    pecas = snap.docs.map(d => ({id:d.id,...d.data()}));
+  } catch(e) { pecas = []; }
+  renderPecas();
+}
+
+window.addPeca = async () => {
+  const nome = document.getElementById('pcNome').value.trim();
+  const tipo = document.getElementById('pcTipo').value;
+  const custo = parseFloat(document.getElementById('pcCusto').value)||0;
+  const venda = parseFloat(document.getElementById('pcVenda').value)||0;
+  const status = document.getElementById('pcStatus').value;
+  if(!nome){alert('Digite o nome da peça!');return;}
+  const obj = {userId:user.uid,nome,tipo,custo,venda,lucro:venda-custo,status,criadoEm:new Date().toISOString()};
+  try{const r=await addDoc(collection(db,'pecas'),obj);pecas.push({...obj,id:r.id});}
+  catch(e){pecas.push({...obj,id:'l'+Date.now()});}
+  document.getElementById('pcNome').value='';
+  document.getElementById('pcCusto').value='';
+  document.getElementById('pcVenda').value='';
+  renderPecas();
+};
+
+window.delPeca = async (id) => {
+  if(!confirm('Excluir esta peça?'))return;
+  if(!id.startsWith('l')){try{await deleteDoc(doc(db,'pecas',id));}catch(e){}}
+  pecas = pecas.filter(x=>x.id!==id);
+  renderPecas();
+};
+
+window.updPecaStatus = async (id, val) => {
+  if(!id.startsWith('l')){try{await updateDoc(doc(db,'pecas',id),{status:val});}catch(e){}}
+  const p=pecas.find(x=>x.id===id);if(p)p.status=val;
+  renderPecas();
+};
+
+function renderPecas(){
+  // Stats
+  const total = pecas.length;
+  const emEstoque = pecas.filter(p=>p.status==='Estoque');
+  const vendidas = pecas.filter(p=>p.status==='Vendido');
+  const valorEst = emEstoque.reduce((s,p)=>s+(p.venda||0),0);
+  const lucroVend = vendidas.reduce((s,p)=>s+(p.lucro||0),0);
+  const sTot=document.getElementById('psTot'),sVal=document.getElementById('psVal'),
+        sVend=document.getElementById('psVend'),sTotS=document.getElementById('psTotS'),
+        sVendS=document.getElementById('psVendS');
+  if(sTot){sTot.textContent=emEstoque.length;sTotS.textContent=total+' cadastradas';}
+  if(sVal) sVal.textContent=fmt(valorEst);
+  if(sVend){sVend.textContent=vendidas.length;sVendS.textContent=fmt(lucroVend)+' lucro';}
+
+  // Lista
+  const list = document.getElementById('pecasList');
+  if(!list) return;
+  const filtered = filtPecas==='todos'?pecas:pecas.filter(p=>p.status===filtPecas);
+  if(!filtered.length){
+    list.innerHTML='<div style="text-align:center;padding:48px;color:var(--li)">📦 Nenhuma peça encontrada</div>';
+    return;
+  }
+  // Agrupar por tipo
+  const grupos = {};
+  filtered.forEach(p=>{if(!grupos[p.tipo])grupos[p.tipo]=[];grupos[p.tipo].push(p);});
+  list.innerHTML = Object.keys(grupos).sort().map(tipo=>{
+    const g = grupos[tipo];
+    const cor = TIPO_CORES[tipo]||'#9ca3af';
+    const rows = g.map(p=>`
+      <tr>
+        <td><div class="pn">${esc(p.nome)}</div></td>
+        <td style="color:var(--mu)">${fmt(p.custo)}</td>
+        <td class="ps">${fmt(p.venda)}</td>
+        <td class="pp ${(p.lucro||0)>=0?'pos':'neg'}">${fmt(p.lucro||0)}</td>
+        <td><select class="sel" onchange="updPecaStatus('${p.id}',this.value)">
+          <option ${p.status==='Estoque'?'selected':''} value="Estoque">Estoque</option>
+          <option ${p.status==='Vendido'?'selected':''} value="Vendido">Vendido</option>
+          <option ${p.status==='Usado'?'selected':''} value="Usado">Usado</option>
+        </select></td>
+        <td><button class="bdl" onclick="delPeca('${p.id}')">✕</button></td>
+      </tr>`).join('');
+    return`<div class="bg" style="margin:0 0 6px">
+      <div class="bgh">
+        <div class="bghl"><span class="bdo" style="background:${cor}"></span><span class="bnm">${tipo}</span><span class="bct">${g.length} peça${g.length!==1?'s':''}</span></div>
+        <div class="bghr"><div class="bst"><div class="bsl">Valor</div><div class="bsv">${fmt(g.reduce((s,p)=>s+(p.venda||0),0))}</div></div></div>
+      </div>
+      <table class="tb"><thead><tr>
+        <th>Peça</th><th>Custo</th><th>Venda</th><th>Lucro</th><th>Status</th><th style="width:30px"></th>
+      </tr></thead><tbody>${rows}</tbody></table>
+    </div>`;
+  }).join('');
 }
 
 document.getElementById('pDC').value=new Date().toISOString().slice(0,7);
