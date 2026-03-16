@@ -593,7 +593,11 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
         <button class="nt" onclick="sp2('anuncios')">Anúncios IA</button>
         <button class="nt" id="nav-fin" onclick="sp2('financas')">Finanças</button>
       </div>
-      <div class="nr"><span class="nu" id="NU"></span><button class="blo" onclick="doLogout()">Sair</button></div>
+      <div class="nr">
+        <span class="nu" id="NU"></span>
+        <button class="blo" id="btnAdmin" onclick="sp2('admin')" style="display:none;border-color:#b45309;color:#b45309" title="Administração">⚙</button>
+        <button class="blo" onclick="doLogout()">Sair</button>
+      </div>
     </div>
   </nav>
 
@@ -625,7 +629,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
         <button class="tab-btn" onclick="swTab('pecas',this)">🔧 Peças</button>
       </div>
       <div class="tab-pg on" id="tab-notebooks">
-      <div class="banner">📊 <strong>229 produtos</strong> importados da planilha — 180 vendidos · 40 em estoque · 9 anunciados</div>
+      <div class="banner">📊 <strong>229 produtos</strong> importados da planilha — 180 vendidos · 40 em estoque · 9 anunciados · <span style="color:#1d4ed8">🔄 estoque compartilhado entre sócios</span></div>
       <!-- META MENSAL -->
       <div class="meta-bar-wrap" id="metaWrap">
         <div class="meta-top">
@@ -1178,6 +1182,76 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
     </div>
   </div>
 
+  <!-- ADMIN -->
+  <div class="pg" id="pg-admin">
+    <div class="wr">
+      <div class="ph">
+        <div><div class="pht">⚙️ Administração</div><div class="phs">Ferramentas exclusivas do dono — migrações e manutenção</div></div>
+      </div>
+
+      <!-- MIGRAÇÃO DE DADOS -->
+      <div class="cd" style="border-left:3px solid #b45309">
+        <div class="cdh">
+          <span class="cdht">🔄 Migrar produtos para estoque compartilhado</span>
+          <span style="font-size:.72rem;background:var(--abg);color:var(--am);border:1px solid var(--abd);padding:2px 8px;border-radius:10px;font-weight:600">Necessário uma vez</span>
+        </div>
+        <div class="cdb">
+          <p style="font-size:.82rem;color:var(--mu);line-height:1.7;margin-bottom:16px">
+            Esta operação migra todos os produtos e peças do banco de dados para o estoque compartilhado
+            (<code style="background:var(--bg);padding:1px 5px;border-radius:4px;font-size:.78rem">shared_ijx</code>),
+            permitindo que <strong>João e Igor vejam o mesmo estoque</strong> em tempo real.
+            <br><br>
+            <strong>Execute apenas uma vez.</strong> Após a migração, qualquer alteração feita por um sócio será vista pelo outro.
+          </p>
+
+          <!-- STATUS BOX -->
+          <div id="migStatus" style="background:var(--bg);border:1px solid var(--b);border-radius:8px;padding:14px 16px;margin-bottom:16px;min-height:52px;font-size:.8rem;line-height:1.8">
+            <span style="color:var(--li)">Clique em "Verificar" para checar o estado atual do banco.</span>
+          </div>
+
+          <!-- BARRA DE PROGRESSO -->
+          <div id="migProgWrap" style="display:none;margin-bottom:16px">
+            <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--mu);margin-bottom:4px">
+              <span id="migProgLabel">Migrando...</span>
+              <span id="migProgPct">0%</span>
+            </div>
+            <div style="height:8px;background:var(--b);border-radius:4px;overflow:hidden">
+              <div id="migProgBar" style="height:100%;background:var(--am);border-radius:4px;width:0%;transition:width .3s ease"></div>
+            </div>
+          </div>
+
+          <!-- LOG -->
+          <div id="migLog" style="display:none;background:#0f172a;border-radius:8px;padding:14px 16px;margin-bottom:16px;max-height:240px;overflow-y:auto;font-family:monospace;font-size:.74rem;line-height:1.8;color:#94a3b8"></div>
+
+          <!-- BOTÕES -->
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="bsg" onclick="verificarMigracao()" id="btnVerif">🔍 Verificar estado</button>
+            <button class="ba" onclick="executarMigracao()" id="btnMig" style="background:var(--am)" disabled>🔄 Executar migração</button>
+            <button class="bsg" onclick="verificarPosMigracao()" id="btnVerifPos" style="display:none">✅ Verificar resultado</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- MIGRAÇÃO DE PEÇAS -->
+      <div class="cd" style="border-left:3px solid #0891b2;margin-top:12px">
+        <div class="cdh">
+          <span class="cdht">🔧 Migrar peças para estoque compartilhado</span>
+        </div>
+        <div class="cdb">
+          <div id="migPecasStatus" style="background:var(--bg);border:1px solid var(--b);border-radius:8px;padding:14px 16px;margin-bottom:16px;font-size:.8rem;color:var(--li)">
+            Clique em "Verificar peças" para checar.
+          </div>
+          <div id="migPecasLog" style="display:none;background:#0f172a;border-radius:8px;padding:14px 16px;margin-bottom:16px;max-height:180px;overflow-y:auto;font-family:monospace;font-size:.74rem;line-height:1.8;color:#94a3b8"></div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="bsg" onclick="verificarPecas()" id="btnVerifPecas">🔍 Verificar peças</button>
+            <button class="ba" onclick="migrarPecas()" id="btnMigPecas" style="background:#0891b2" disabled>🔄 Migrar peças</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
 <!-- EDIT MODAL -->
 <div class="mo h" id="MO">
   <div class="moo" onclick="closeModal()"></div>
@@ -1339,6 +1413,9 @@ onAuthStateChanged(auth,u=>{
     if(nuEl) nuEl.innerHTML = nomeExib + (perfilAtual==='igor'
       ? ' <span style="font-size:.62rem;background:#fdf4ff;color:#7c3aed;border:1px solid #e9d5ff;padding:1px 6px;border-radius:8px;font-weight:700">Sócio</span>'
       : ' <span style="font-size:.62rem;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;padding:1px 6px;border-radius:8px;font-weight:700">Dono</span>');
+    // Mostrar botão admin só para o dono
+    const btnAdm = document.getElementById('btnAdmin');
+    if(btnAdm) btnAdm.style.display = perfilAtual==='joao' ? '' : 'none';
     loadProds();loadFinancas();loadPecas();
   }
   else{document.getElementById('AS').classList.remove('h');document.getElementById('APP').classList.remove('v');}
@@ -1354,11 +1431,12 @@ function em(c){return({'auth/invalid-credential':'E-mail ou senha incorretos.','
 async function loadProds(){
   if(!user)return;
   try{
-    const q=query(collection(db,'products'),where('userId','==',user.uid));
+    // Produtos são compartilhados entre todos os sócios (shared_ijx)
+    const q=query(collection(db,'products'),where('userId','==','shared_ijx'));
     const snap=await getDocs(q);
     const fp=snap.docs.map(d=>({id:d.id,...d.data()}));
-    prods=fp.length>0?fp:XLSX.map((p,i)=>({...p,userId:user.uid,id:'x'+(i+1)}));
-  }catch(e){prods=XLSX.map((p,i)=>({...p,userId:'local',id:'x'+(i+1)}));}
+    prods=fp.length>0?fp:XLSX.map((p,i)=>({...p,userId:'shared_ijx',id:'x'+(i+1)}));
+  }catch(e){prods=XLSX.map((p,i)=>({...p,userId:'shared_ijx',id:'x'+(i+1)}));}
   prods.forEach((p,i)=>{if(!p.num)p.num=i+1;});
   render();renderSecoes();calcStats();renderAlertas();renderMeta();
 }
@@ -1369,7 +1447,7 @@ window.addProd=async()=>{
   const num=prods.length>0?Math.max(...prods.map(p=>p.num||0))+1:1;
   // FIX 1: data_compra agora armazena data completa YYYY-MM-DD; data_compra_mes extrai só o mês para compatibilidade
   const dcMes=dc?dc.slice(0,7):'';
-  const obj={userId:user.uid,nome,custo,venda,lucro:venda-custo,status,investidor,data_compra:dc,data_compra_mes:dcMes,data_venda:dv,data:dv||dcMes,num,createdAt:new Date().toISOString()};
+  const obj={userId:'shared_ijx',addedBy:user.uid,addedByName:user.displayName||user.email.split('@')[0],nome,custo,venda,lucro:venda-custo,status,investidor,data_compra:dc,data_compra_mes:dcMes,data_venda:dv,data:dv||dcMes,num,createdAt:new Date().toISOString()};
   try{const r=await addDoc(collection(db,'products'),obj);prods.push({...obj,id:r.id});}catch(e){prods.push({...obj,id:'l'+Date.now()});}
   document.getElementById('pN').value='';document.getElementById('pC').value='';document.getElementById('pV').value='';document.getElementById('pDC').value='';document.getElementById('pDV').value='';
   render();renderSecoes();calcStats();renderAlertas();renderMeta();
@@ -1613,13 +1691,14 @@ function renderTabela(lista, tipo){
       const invBadge=p.investidor?`<span class="socio-${p.investidor==='João'?'jo':p.investidor==='Igor'?'ig':'ext'}">${p.investidor}</span>`:'';
       const splitLucro=tipo==='vendidos'&&lp>0?`<div class="lucro-split"><span class="split-pill split-jo">J ${fmt(lp/2)}</span><span class="split-pill split-ig">I ${fmt(lp/2)}</span></div>`:'';
       const dcDisplay=p.data_compra?(p.data_compra.length>7?new Date(p.data_compra+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'2-digit'}):fdt(p.data_compra)):'—';
+      const autorTag=p.addedByName?`<span title="Cadastrado por ${esc(p.addedByName)}" style="font-size:.62rem;color:var(--li);margin-left:3px">· ${esc(p.addedByName)}</span>`:'';
       const custoTag = tipo!=='vendidos' ? `<span class="custo-tag">${fmt(p.custo)}</span>` : '';
 
       return`<tr>
         <td><span class="nb">${p.num||'?'}</span></td>
         <td><div class="pn">${esc(p.nome)}</div><div style="display:flex;gap:4px;margin-top:3px;flex-wrap:wrap">${diasBadge}${custoTag}</div></td>
         <td>${invBadge}</td>
-        <td style="color:var(--li);font-size:.75rem">${dcDisplay}</td>
+        <td style="color:var(--li);font-size:.75rem">${dcDisplay}${autorTag}</td>
         <td style="color:var(--li);font-size:.75rem">${tipo==='vendidos'?fdt(p.data_venda):'—'}</td>
         <td class="ps">${fmt(p.venda)}</td>
         <td class="pp ${lp>=0?'pos':'neg'}">${fmt(lp)}${splitLucro}</td>
@@ -1675,11 +1754,12 @@ function render(){
       const splitLucro=lp>0?`<div class="lucro-split"><span class="split-pill split-jo">João ${fmt(lp/2)}</span><span class="split-pill split-ig">Igor ${fmt(lp/2)}</span></div>`:'';
       // Exibe data de compra com dia se disponível
       const dcDisplay=p.data_compra?(p.data_compra.length>7?new Date(p.data_compra+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'2-digit'}):fdt(p.data_compra)):'—';
+      const autorTag=p.addedByName?`<span title="Cadastrado por ${esc(p.addedByName)}" style="font-size:.62rem;color:var(--li);margin-left:3px">· ${esc(p.addedByName)}</span>`:'';
       return`<tr>
         <td><span class="nb">${p.num||'?'}</span></td>
         <td><div class="pn">${esc(p.nome)}</div></td>
         <td>${invBadge}</td>
-        <td style="color:var(--li);font-size:.75rem">${dcDisplay}</td>
+        <td style="color:var(--li);font-size:.75rem">${dcDisplay}${autorTag}</td>
         <td style="color:var(--li);font-size:.75rem">${fdt(p.data_venda)}</td>
         <td style="color:var(--mu)">${fmt(p.custo)}</td>
         <td class="ps">${fmt(p.venda)}</td>
@@ -2257,7 +2337,8 @@ const TIPO_CORES={'Tela':'#2563eb','Bateria':'#16a34a','Teclado':'#7c3aed','HD/S
 async function loadPecas(){
   if(!user)return;
   try{
-    const q=query(collection(db,'pecas'),where('userId','==',user.uid));
+    // Peças compartilhadas entre todos os sócios
+    const q=query(collection(db,'pecas'),where('userId','==','shared_ijx'));
     const snap=await getDocs(q);
     pecas=snap.docs.map(d=>({id:d.id,...d.data()}));
   }catch(e){pecas=[];}
@@ -2269,7 +2350,7 @@ async function loadPecas(){
       const obj={...f,userId:user.uid,id:'preset_fonte_'+i,criadoEm:'planilha'};
       pecas.push(obj);
       // Salvar no Firestore em background (silencioso)
-      try{await addDoc(collection(db,'pecas'),{...f,userId:user.uid,criadoEm:'planilha'});}catch(e){}
+      try{await addDoc(collection(db,'pecas'),{...f,userId:'shared_ijx',criadoEm:'planilha'});}catch(e){}
     }
   }
   renderPecas();
@@ -2284,7 +2365,7 @@ window.addPeca=async()=>{
   const obs=document.getElementById('pcObs').value.trim();
   const qtd=parseInt(document.getElementById('pcQtd').value)||1;
   if(!nome){alert('Digite o nome da peça!');return;}
-  const obj={userId:user.uid,nome,tipo,custo,venda,lucro:venda-custo,status,obs,quantidade:qtd,criadoEm:new Date().toISOString()};
+  const obj={userId:'shared_ijx',addedBy:user.uid,nome,tipo,custo,venda,lucro:venda-custo,status,obs,quantidade:qtd,criadoEm:new Date().toISOString()};
   try{const r=await addDoc(collection(db,'pecas'),obj);pecas.push({...obj,id:r.id});}
   catch(e){pecas.push({...obj,id:'l'+Date.now()});}
   document.getElementById('pcNome').value='';document.getElementById('pcCusto').value='';document.getElementById('pcVenda').value='';document.getElementById('pcObs').value='';document.getElementById('pcQtd').value='1';
@@ -2397,6 +2478,214 @@ function renderPecas(){
     }).join('');
   }
 }
+
+// ════════════════════════════════════════
+// ADMIN — MIGRAÇÃO DE DADOS
+// ════════════════════════════════════════
+
+function logMig(el, msg, cor='#94a3b8'){
+  const box = document.getElementById(el);
+  if(!box) return;
+  box.style.display = 'block';
+  box.innerHTML += `<span style="color:${cor}">${msg}</span>\n`;
+  box.scrollTop = box.scrollHeight;
+}
+
+function setProgresso(pct, label){
+  const wrap = document.getElementById('migProgWrap');
+  const bar  = document.getElementById('migProgBar');
+  const lbl  = document.getElementById('migProgLabel');
+  const pctEl = document.getElementById('migProgPct');
+  if(wrap) wrap.style.display = 'block';
+  if(bar)  bar.style.width = pct + '%';
+  if(bar)  bar.style.background = pct === 100 ? '#15803d' : '#b45309';
+  if(lbl)  lbl.textContent = label;
+  if(pctEl) pctEl.textContent = pct + '%';
+}
+
+window.verificarMigracao = async () => {
+  const statusEl = document.getElementById('migStatus');
+  const btnMig   = document.getElementById('btnMig');
+  statusEl.innerHTML = '<span style="color:var(--am)">⏳ Verificando banco de dados...</span>';
+
+  try {
+    // Buscar total de produtos com userId do usuário atual
+    const qAtual = query(collection(db,'products'), where('userId','==',user.uid));
+    const snapAtual = await getDocs(qAtual);
+    const totalAtual = snapAtual.size;
+
+    // Buscar produtos já migrados
+    const qShared = query(collection(db,'products'), where('userId','==','shared_ijx'));
+    const snapShared = await getDocs(qShared);
+    const totalShared = snapShared.size;
+
+    let html2 = '';
+    if(totalAtual > 0 && totalShared === 0){
+      html2 = `<strong style="color:#b45309">⚠️ Migração necessária</strong><br>
+        Encontrados <strong>${totalAtual} produtos</strong> com seu userId pessoal.<br>
+        Nenhum produto compartilhado encontrado ainda.<br>
+        <span style="color:var(--mu)">O Igor não consegue ver seus produtos. Execute a migração abaixo.</span>`;
+      btnMig.disabled = false;
+    } else if(totalShared > 0 && totalAtual === 0){
+      html2 = `<strong style="color:#15803d">✅ Já migrado!</strong><br>
+        <strong>${totalShared} produtos</strong> já estão no estoque compartilhado.<br>
+        João e Igor estão vendo o mesmo estoque.`;
+      btnMig.disabled = true;
+    } else if(totalShared > 0 && totalAtual > 0){
+      html2 = `<strong style="color:#b45309">⚠️ Migração parcial detectada</strong><br>
+        <strong>${totalShared} produtos</strong> já migrados + <strong>${totalAtual}</strong> ainda no userId antigo.<br>
+        Execute a migração para completar.`;
+      btnMig.disabled = false;
+    } else {
+      html2 = `<span style="color:var(--li)">Nenhum produto encontrado. O banco está vazio.</span>`;
+      btnMig.disabled = true;
+    }
+    statusEl.innerHTML = html2;
+  } catch(e) {
+    statusEl.innerHTML = `<span style="color:var(--re)">❌ Erro ao verificar: ${e.message}</span>`;
+  }
+};
+
+window.executarMigracao = async () => {
+  const btnMig  = document.getElementById('btnMig');
+  const btnVerif = document.getElementById('btnVerif');
+  const btnVerifPos = document.getElementById('btnVerifPos');
+  const logEl   = 'migLog';
+
+  if(!confirm('Confirma a migração de todos os produtos para o estoque compartilhado (shared_ijx)?\n\nEsta operação é segura e pode ser verificada depois.')) return;
+
+  btnMig.disabled  = true;
+  btnVerif.disabled = true;
+  document.getElementById('migLog').innerHTML = '';
+
+  try {
+    // Buscar TODOS os produtos com userId do usuário (João)
+    const q = query(collection(db,'products'), where('userId','==',user.uid));
+    const snap = await getDocs(q);
+    const total = snap.size;
+
+    if(total === 0){
+      logMig(logEl, '✅ Nenhum produto para migrar.', '#4ade80');
+      setProgresso(100, 'Concluído');
+      return;
+    }
+
+    logMig(logEl, `📦 Encontrados ${total} produtos para migrar...`, '#fbbf24');
+    setProgresso(0, `Migrando 0 de ${total}...`);
+
+    let ok = 0, erros = 0;
+    const batchSize = 5; // processar em lotes para não sobrecarregar
+
+    for(let i = 0; i < snap.docs.length; i++){
+      const docRef = snap.docs[i];
+      const data = docRef.data();
+      try {
+        await updateDoc(doc(db,'products', docRef.id), {
+          userId: 'shared_ijx',
+          migratedAt: new Date().toISOString(),
+          originalOwner: user.uid
+        });
+        ok++;
+        const pct = Math.round((ok + erros) / total * 100);
+        setProgresso(pct, `Migrando ${ok + erros} de ${total}...`);
+        if(ok % 10 === 0 || ok === total){
+          logMig(logEl, `  ✓ ${ok}/${total} — ${data.nome||'sem nome'}`, '#4ade80');
+        }
+      } catch(e) {
+        erros++;
+        logMig(logEl, `  ✗ ERRO em "${data.nome}": ${e.message}`, '#f87171');
+      }
+      // Pequena pausa a cada 20 docs para evitar rate limit
+      if(i > 0 && i % 20 === 0) await new Promise(r=>setTimeout(r, 300));
+    }
+
+    setProgresso(100, 'Migração concluída!');
+    logMig(logEl, `\n✅ Migração concluída: ${ok} sucesso, ${erros} erros.`, '#4ade80');
+    
+    if(erros === 0){
+      document.getElementById('migStatus').innerHTML = `
+        <strong style="color:#15803d">✅ Migração concluída com sucesso!</strong><br>
+        <strong>${ok} produtos</strong> migrados para o estoque compartilhado.<br>
+        O Igor já pode fazer login e ver o mesmo estoque.`;
+    } else {
+      document.getElementById('migStatus').innerHTML = `
+        <strong style="color:#b45309">⚠️ Migração parcial: ${ok} ok, ${erros} erros.</strong><br>
+        Verifique o log abaixo e tente novamente para os itens com erro.`;
+      btnMig.disabled = false;
+    }
+
+    // Recarregar produtos
+    await loadProds();
+    btnVerifPos.style.display = '';
+
+  } catch(e) {
+    logMig(logEl, `\n❌ Erro fatal: ${e.message}`, '#f87171');
+    btnMig.disabled = false;
+  }
+  btnVerif.disabled = false;
+};
+
+window.verificarPosMigracao = async () => {
+  const q = query(collection(db,'products'), where('userId','==','shared_ijx'));
+  const snap = await getDocs(q);
+  const qAntigo = query(collection(db,'products'), where('userId','==',user.uid));
+  const snapAntigo = await getDocs(qAntigo);
+  const statusEl = document.getElementById('migStatus');
+  statusEl.innerHTML = `
+    <strong style="color:#15803d">📊 Estado atual:</strong><br>
+    ✅ Produtos compartilhados: <strong>${snap.size}</strong><br>
+    ${snapAntigo.size > 0 ? `⚠️ Produtos ainda no userId antigo: <strong>${snapAntigo.size}</strong> — execute a migração novamente.` : '✅ Nenhum produto no userId antigo — migração completa!'}`;
+};
+
+// ── MIGRAÇÃO DE PEÇAS ──
+window.verificarPecas = async () => {
+  const statusEl = document.getElementById('migPecasStatus');
+  const btnMigP  = document.getElementById('btnMigPecas');
+  statusEl.innerHTML = '<span style="color:var(--am)">⏳ Verificando peças...</span>';
+  try {
+    const qAtual   = query(collection(db,'pecas'), where('userId','==',user.uid));
+    const qShared  = query(collection(db,'pecas'), where('userId','==','shared_ijx'));
+    const [sA, sS] = await Promise.all([getDocs(qAtual), getDocs(qShared)]);
+    if(sA.size > 0 && sS.size === 0){
+      statusEl.innerHTML = `<strong style="color:#b45309">⚠️ ${sA.size} peças precisam ser migradas.</strong>`;
+      btnMigP.disabled = false;
+    } else if(sS.size > 0 && sA.size === 0){
+      statusEl.innerHTML = `<strong style="color:#15803d">✅ ${sS.size} peças já estão compartilhadas.</strong>`;
+      btnMigP.disabled = true;
+    } else if(sS.size > 0 && sA.size > 0){
+      statusEl.innerHTML = `<strong style="color:#b45309">⚠️ ${sA.size} peças ainda não migradas, ${sS.size} já migradas.</strong>`;
+      btnMigP.disabled = false;
+    } else {
+      statusEl.innerHTML = `<span style="color:var(--li)">Nenhuma peça cadastrada.</span>`;
+    }
+  } catch(e) {
+    statusEl.innerHTML = `<span style="color:var(--re)">❌ Erro: ${e.message}</span>`;
+  }
+};
+
+window.migrarPecas = async () => {
+  const btnMigP = document.getElementById('btnMigPecas');
+  const logEl   = 'migPecasLog';
+  if(!confirm('Migrar todas as peças para estoque compartilhado?')) return;
+  btnMigP.disabled = true;
+  document.getElementById('migPecasLog').innerHTML = '';
+  try {
+    const q = query(collection(db,'pecas'), where('userId','==',user.uid));
+    const snap = await getDocs(q);
+    logMig(logEl, `🔧 ${snap.size} peças encontradas...`, '#fbbf24');
+    let ok = 0;
+    for(const docRef of snap.docs){
+      await updateDoc(doc(db,'pecas', docRef.id), {userId:'shared_ijx', migratedAt:new Date().toISOString()});
+      ok++;
+    }
+    logMig(logEl, `✅ ${ok} peças migradas com sucesso!`, '#4ade80');
+    document.getElementById('migPecasStatus').innerHTML = `<strong style="color:#15803d">✅ ${ok} peças migradas!</strong> Igor já pode ver o mesmo estoque de peças.`;
+    await loadPecas();
+  } catch(e) {
+    logMig(logEl, `❌ Erro: ${e.message}`, '#f87171');
+    btnMigP.disabled = false;
+  }
+};
 
 // Inicializa campo de data com hoje
 document.getElementById('pDC').value=new Date().toISOString().split('T')[0];
