@@ -1455,11 +1455,20 @@ function em(c){return({'auth/invalid-credential':'E-mail ou senha incorretos.','
 async function loadProds(){
   if(!user)return;
   try{
-    // Produtos são compartilhados entre todos os sócios (shared_ijx)
-    const q=query(collection(db,'products'),where('userId','==','shared_ijx'));
-    const snap=await getDocs(q);
-    const fp=snap.docs.map(d=>({id:d.id,...d.data()}));
-    prods=fp.length>0?fp:XLSX.map((p,i)=>({...p,userId:'shared_ijx',id:'x'+(i+1)}));
+    // Buscar produtos compartilhados (shared_ijx) E do userId atual (vendas antigas)
+    const [snapShared, snapOwn] = await Promise.all([
+      getDocs(query(collection(db,'products'),where('userId','==','shared_ijx'))),
+      getDocs(query(collection(db,'products'),where('userId','==',user.uid)))
+    ]);
+    const sharedProds = snapShared.docs.map(d=>({id:d.id,...d.data()}));
+    const ownProds    = snapOwn.docs.map(d=>({id:d.id,...d.data()}));
+    // Juntar evitando duplicatas (mesmo id)
+    const sharedIds = new Set(sharedProds.map(p=>p.id));
+    const extras    = ownProds.filter(p=>!sharedIds.has(p.id));
+    const allProds  = [...sharedProds, ...extras];
+    prods = allProds.length > 0
+      ? allProds
+      : XLSX.map((p,i)=>({...p,userId:'shared_ijx',id:'x'+(i+1)}));
   }catch(e){prods=XLSX.map((p,i)=>({...p,userId:'shared_ijx',id:'x'+(i+1)}));}
   prods.forEach((p,i)=>{if(!p.num)p.num=i+1;});
   render();renderSecoes();calcStats();renderAlertas();renderMeta();
@@ -1680,6 +1689,15 @@ function renderTabela(lista, tipo){
   if(!lista.length) return '<div style="text-align:center;padding:32px;font-size:.78rem;color:var(--li)">Nenhum produto</div>';
   const hoje = new Date();
 
+  // Ordenar por data mais recente primeiro (para vendidos)
+  if(tipo === 'vendidos'){
+    lista = [...lista].sort((a,b)=>{
+      const da = a.data_venda||a.data||'';
+      const db2 = b.data_venda||b.data||'';
+      return db2.localeCompare(da);
+    });
+  }
+
   // Agrupar por marca
   const groups = {};
   lista.forEach(p=>{ const b=brand(p.nome); if(!groups[b])groups[b]=[]; groups[b].push(p); });
@@ -1695,7 +1713,11 @@ function renderTabela(lista, tipo){
     const resumoVal = tipo==='vendidos' ? fmt(lv) : fmt(capGiro);
     const resumoLbl = tipo==='vendidos' ? 'Lucro' : 'Investido';
 
-    const rows = g2.map(p=>{
+    // Ordenar itens do grupo por data mais recente
+    const g2sorted = tipo==='vendidos'
+      ? [...g2].sort((a,b)=>(b.data_venda||b.data||'').localeCompare(a.data_venda||a.data||''))
+      : g2;
+    const rows = g2sorted.map(p=>{
       const lp = p.lucro!==undefined?p.lucro:(p.venda-p.custo);
 
       // Badge de dias (para estoque/anunciados: dias parado; para vendidos: giro)
