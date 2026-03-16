@@ -1232,7 +1232,31 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
         </div>
       </div>
 
-      <!-- MIGRAÇÃO DE PEÇAS -->
+      
+      <!-- CORRIGIR VENDAS SEM CAMPO DATA -->
+      <div class="cd" style="border-left:3px solid #15803d;margin-top:12px">
+        <div class="cdh">
+          <span class="cdht">🔧 Corrigir vendas sem campo "data"</span>
+          <span style="font-size:.72rem;background:var(--gbg);color:var(--gr);border:1px solid var(--gbd);padding:2px 8px;border-radius:10px;font-weight:600">Roda 1x</span>
+        </div>
+        <div class="cdb">
+          <p style="font-size:.82rem;color:var(--mu);line-height:1.7;margin-bottom:14px">
+            Corrige vendas registradas pelo site que ficaram sem o campo <code style="background:var(--bg);padding:1px 5px;border-radius:4px">data</code>,
+            fazendo os gráficos de <strong>Unidades por mês</strong> e <strong>Receita/Lucro</strong> não atualizarem.
+            Preenche o campo <code>data</code> automaticamente a partir da <code>data_venda</code>.
+          </p>
+          <div id="fixDataStatus" style="background:var(--bg);border:1px solid var(--b);border-radius:8px;padding:12px 14px;margin-bottom:14px;font-size:.8rem;color:var(--li)">
+            Clique em "Verificar" para encontrar vendas com problema.
+          </div>
+          <div id="fixDataLog" style="display:none;background:#0f172a;border-radius:8px;padding:12px 14px;margin-bottom:14px;max-height:200px;overflow-y:auto;font-family:monospace;font-size:.74rem;line-height:1.8;color:#94a3b8"></div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="bsg" onclick="verificarVendasSemData()" id="btnVerifData">🔍 Verificar</button>
+            <button class="ba" onclick="corrigirVendasSemData()" id="btnFixData" style="background:#15803d" disabled>🔧 Corrigir agora</button>
+          </div>
+        </div>
+      </div>
+
+<!-- MIGRAÇÃO DE PEÇAS -->
       <div class="cd" style="border-left:3px solid #0891b2;margin-top:12px">
         <div class="cdh">
           <span class="cdht">🔧 Migrar peças para estoque compartilhado</span>
@@ -1932,6 +1956,14 @@ function buildCharts(){
 
   // ── GRÁFICO RECEITA vs LUCRO ──
   const maxRecIdx = d.rec.indexOf(Math.max(...d.rec));
+  (function(){
+    const oldCanvas = document.getElementById('cRL');
+    if(oldCanvas){
+      const newCanvas = document.createElement('canvas');
+      newCanvas.id = 'cRL';
+      oldCanvas.parentNode.replaceChild(newCanvas, oldCanvas);
+    }
+  })();
   chartsInstances['cRL'] = new Chart(document.getElementById('cRL'),{
     type:'bar',
     data:{labels:d.labels,datasets:[
@@ -1944,6 +1976,15 @@ function buildCharts(){
   });
 
   // ── GRÁFICO UNIDADES POR MÊS ──
+  // Substituir canvas do cQ para evitar bug de reutilização do Chart.js
+  (function(){
+    const oldCanvas = document.getElementById('cQ');
+    if(oldCanvas){
+      const newCanvas = document.createElement('canvas');
+      newCanvas.id = 'cQ';
+      oldCanvas.parentNode.replaceChild(newCanvas, oldCanvas);
+    }
+  })();
   chartsInstances['cQ'] = new Chart(document.getElementById('cQ'),{
     type:'line',
     data:{labels:d.labels,datasets:[{label:'Unidades',data:d.qtd,borderColor:'#1c1917',backgroundColor:'rgba(28,25,23,.06)',borderWidth:2,pointBackgroundColor:'#1c1917',pointRadius:4,fill:true,tension:0.3}]},
@@ -1954,6 +1995,7 @@ function buildCharts(){
 
   // ── GRÁFICO LUCRO MÉDIO POR MARCA ──
   const bColors=['#2563eb','#dc2626','#16a34a','#7c3aed','#0891b2','#0284c7','#9ca3af'];
+  (function(){const o=document.getElementById('cLM');if(o){const n=document.createElement('canvas');n.id='cLM';o.parentNode.replaceChild(n,o);}})();
   chartsInstances['cLM'] = new Chart(document.getElementById('cLM'),{
     type:'bar',
     data:{labels:d.marcasChart,datasets:[{label:'Lucro médio',data:d.lucMarca,backgroundColor:bColors,borderRadius:6,borderSkipped:false}]},
@@ -1963,6 +2005,7 @@ function buildCharts(){
   });
 
   // ── GRÁFICO DISTRIBUIÇÃO POR MARCA (DONUT) ──
+  (function(){const o=document.getElementById('cMarca');if(o){const n=document.createElement('canvas');n.id='cMarca';o.parentNode.replaceChild(n,o);}})();
   chartsInstances['cMarca'] = new Chart(document.getElementById('cMarca'),{
     type:'doughnut',
     data:{labels:d.marcasChart,datasets:[{data:d.distMarca,backgroundColor:bColors,borderWidth:0,hoverOffset:6}]},
@@ -2588,6 +2631,104 @@ function renderPecas(){
   }
 }
 
+
+// ── CORRIGIR VENDAS SEM CAMPO DATA ──
+window.verificarVendasSemData = async () => {
+  const statusEl = document.getElementById('fixDataStatus');
+  const btnFix   = document.getElementById('btnFixData');
+  statusEl.innerHTML = '<span style="color:var(--am)">⏳ Verificando...</span>';
+  try {
+    // Buscar todos os produtos vendidos (shared_ijx)
+    const q = query(collection(db,'products'),
+      where('userId','==','shared_ijx'),
+      where('status','==','Vendido')
+    );
+    const snap = await getDocs(q);
+    // Filtrar os que têm data_venda mas não têm data, ou data está errada
+    const problemáticos = snap.docs.filter(d => {
+      const p = d.data();
+      const temDataVenda = p.data_venda && p.data_venda.length >= 7;
+      const temData = p.data && p.data.length >= 7;
+      // Problema: tem data_venda mas não tem data, OU data != mês da data_venda
+      if(!temDataVenda) return false;
+      const mesVenda = p.data_venda.slice(0,7);
+      if(!temData) return true;
+      if(p.data !== mesVenda && p.data !== p.data_venda) return true;
+      return false;
+    });
+
+    if(problemáticos.length === 0){
+      statusEl.innerHTML = '<strong style="color:#15803d">✅ Tudo certo!</strong> Nenhuma venda com problema encontrada. Os gráficos devem estar corretos.';
+      btnFix.disabled = true;
+    } else {
+      statusEl.innerHTML = `<strong style="color:#b45309">⚠️ ${problemáticos.length} venda${problemáticos.length>1?'s':''} com campo "data" incorreto ou vazio.</strong><br>
+        <span style="color:var(--mu)">Clique em "Corrigir agora" para consertar automaticamente.</span>`;
+      btnFix.disabled = false;
+      // Mostrar quais são
+      const nomes = problemáticos.slice(0,5).map(d=>d.data().nome||'sem nome').join(', ');
+      statusEl.innerHTML += `<br><span style="font-size:.75rem;color:var(--li)">Ex: ${nomes}${problemáticos.length>5?'...':''}</span>`;
+    }
+  } catch(e) {
+    statusEl.innerHTML = `<span style="color:var(--re)">❌ Erro: ${e.message}</span>`;
+  }
+};
+
+window.corrigirVendasSemData = async () => {
+  const btnFix   = document.getElementById('btnFixData');
+  const btnVerif = document.getElementById('btnVerifData');
+  const logEl    = 'fixDataLog';
+  btnFix.disabled  = true;
+  btnVerif.disabled = true;
+  document.getElementById('fixDataLog').innerHTML = '';
+  document.getElementById('fixDataLog').style.display = 'block';
+
+  try {
+    const q = query(collection(db,'products'),
+      where('userId','==','shared_ijx'),
+      where('status','==','Vendido')
+    );
+    const snap = await getDocs(q);
+    const problemáticos = snap.docs.filter(d => {
+      const p = d.data();
+      const temDataVenda = p.data_venda && p.data_venda.length >= 7;
+      if(!temDataVenda) return false;
+      const mesVenda = p.data_venda.slice(0,7);
+      const temData = p.data && p.data.length >= 7;
+      if(!temData) return true;
+      if(p.data !== mesVenda && p.data !== p.data_venda) return true;
+      return false;
+    });
+
+    logMig(logEl, `🔧 Corrigindo ${problemáticos.length} vendas...`, '#fbbf24');
+    let ok = 0, erros = 0;
+
+    for(const docRef of problemáticos){
+      const p = docRef.data();
+      const mesVenda = p.data_venda.slice(0,7);
+      try {
+        await updateDoc(doc(db,'products', docRef.id), { data: mesVenda });
+        ok++;
+        logMig(logEl, `  ✓ ${p.nome||'sem nome'} → data: ${mesVenda}`, '#4ade80');
+      } catch(e) {
+        erros++;
+        logMig(logEl, `  ✗ Erro em "${p.nome}": ${e.message}`, '#f87171');
+      }
+    }
+
+    logMig(logEl, `\n✅ Concluído: ${ok} corrigidos, ${erros} erros.`, '#4ade80');
+    document.getElementById('fixDataStatus').innerHTML =
+      `<strong style="color:#15803d">✅ ${ok} vendas corrigidas!</strong> Abra a aba Insights para ver os gráficos atualizados.`;
+
+    // Recarregar produtos e atualizar gráficos
+    await loadProds();
+    if(document.getElementById('pg-insights').classList.contains('on')) buildCharts();
+
+  } catch(e) {
+    logMig(logEl, `\n❌ Erro fatal: ${e.message}`, '#f87171');
+  }
+  btnVerif.disabled = false;
+};
+
 // ════════════════════════════════════════
 // ADMIN — MIGRAÇÃO DE DADOS
 // ════════════════════════════════════════
@@ -2957,17 +3098,28 @@ window.exportarRelatorio = () => {
 function checkNotificacoes(){
   const bar = document.getElementById('notifBar');
   if(!bar) return;
+
+  // Limitar a 3 exibições por dia — controle via localStorage
   const hoje = new Date().toISOString().split('T')[0];
+  const chave = 'bj_notif_' + hoje;
+  const contagem = parseInt(localStorage.getItem(chave)||'0');
+  if(contagem >= 3){ bar.innerHTML=''; bar.classList.remove('on'); return; }
+
   const em3dias = new Date(Date.now()+3*86400000).toISOString().split('T')[0];
-  
   const alertas = fixas.filter(x => x.vencimento && !x.pago).map(x => {
     const venc = x.vencimento;
     const atrasado = venc < hoje;
     const proxima = venc <= em3dias;
     return { ...x, atrasado, proxima };
   }).filter(x => x.atrasado || x.proxima);
-  
+
   if(!alertas.length){ bar.innerHTML=''; bar.classList.remove('on'); return; }
+
+  // Incrementar contador do dia
+  localStorage.setItem(chave, contagem + 1);
+  // Limpar chaves de dias anteriores
+  Object.keys(localStorage).filter(k=>k.startsWith('bj_notif_')&&k!==chave).forEach(k=>localStorage.removeItem(k));
+
   bar.innerHTML = alertas.slice(0,3).map(x => {
     const cls = x.atrasado ? 'danger' : 'warn';
     const icon = x.atrasado ? '🔴' : '🟡';
