@@ -1515,7 +1515,7 @@ window.confirmSell=async()=>{
   const dcRaw=p?.data_compra||p?.data||'';
   const dc=dcRaw?(dcRaw.length===7?dcRaw+'-01':dcRaw):null;
   const dias=dataVenda&&dc?Math.round((new Date(dataVenda)-new Date(dc))/(86400000)):null;
-  const upd={status:'Vendido',plataforma:plat,venda:preco,lucro:preco-(p?.custo||0),data_venda:dataVenda||'',diasParado:dias>=0?dias:null};
+  const mesVenda=dataVenda?dataVenda.slice(0,7):'';const upd={status:'Vendido',plataforma:plat,venda:preco,lucro:preco-(p?.custo||0),data_venda:dataVenda||'',data:mesVenda,diasParado:dias>=0?dias:null};
   await doSaveStatus(sellId,upd);
   if(c6val>0||mpval>0){
     const entBase={userId:user.uid,tipo:'entrada',descricao:'Venda: '+(p?.nome||'Produto'),data:dataVenda||new Date().toISOString().split('T')[0],prodId:sellId};
@@ -1525,6 +1525,8 @@ window.confirmSell=async()=>{
   document.getElementById('SMO').classList.add('h');
   sellId=null;
   if(typeof loadFinancas==='function') loadFinancas();
+  // Atualizar gráficos se Insights estiver aberto
+  if(document.getElementById('pg-insights').classList.contains('on')) buildCharts();
 };
 
 window.updSplitVenda=()=>{
@@ -1543,6 +1545,7 @@ async function doSaveStatus(id,upd){
   if(!id.startsWith('x')&&!id.startsWith('l')){try{await updateDoc(doc(db,'products',id),upd);}catch(e){}}
   const p=prods.find(x=>x.id===id);if(p)Object.assign(p,upd);
   render();renderSecoes();calcStats();
+  if(document.getElementById('pg-insights')&&document.getElementById('pg-insights').classList.contains('on'))buildCharts();
 }
 
 // EDIT MODAL
@@ -1828,40 +1831,146 @@ function renderFinLabel(){
   }
 }
 
+function getMesVenda(p){
+  // Retorna YYYY-MM do mês de venda de forma confiável
+  // Prioridade: data_venda > data (se for mês de venda)
+  if(p.data_venda && p.data_venda.length>=7) return p.data_venda.slice(0,7);
+  if(p.data && p.data.length>=7) return p.data.slice(0,7);
+  return '';
+}
+
+function calcChartsData(){
+  // Gera dados dos gráficos 100% a partir do array prods (tempo real)
+  const vendidos = prods.filter(p=>p.status==='Vendido');
+
+  // Coletar todos os meses com vendas usando helper confiável
+  const mesesSet = new Set();
+  vendidos.forEach(p=>{ const m=getMesVenda(p); if(m) mesesSet.add(m); });
+
+  // Ordenar meses cronologicamente
+  const mesesOrdenados = [...mesesSet].sort();
+
+  const labelMap = {
+    '01':'Jan','02':'Fev','03':'Mar','04':'Abr','05':'Mai','06':'Jun',
+    '07':'Jul','08':'Ago','09':'Set','10':'Out','11':'Nov','12':'Dez'
+  };
+
+  const labels = mesesOrdenados.map(m=>{
+    const [y,mo] = m.split('-');
+    return (labelMap[mo]||mo)+'/'+y.slice(2);
+  });
+
+  const rec = mesesOrdenados.map(m=>
+    vendidos.filter(p=>getMesVenda(p)===m).reduce((s,p)=>s+(p.venda||0),0)
+  );
+
+  const luc = mesesOrdenados.map(m=>
+    vendidos.filter(p=>getMesVenda(p)===m).reduce((s,p)=>s+(p.lucro!==undefined?p.lucro:p.venda-p.custo),0)
+  );
+
+  const qtd = mesesOrdenados.map(m=>
+    vendidos.filter(p=>getMesVenda(p)===m).length
+  );
+
+  // Lucro médio por marca
+  const marcasChart = ['Dell','Lenovo','Acer','Samsung','HP','Asus','Outros'];
+  const lucMarca = marcasChart.map(b=>{
+    const mv = vendidos.filter(p=>brand(p.nome)===b);
+    return mv.length?Math.round(mv.reduce((s,p)=>s+(p.lucro!==undefined?p.lucro:p.venda-p.custo),0)/mv.length):0;
+  });
+
+  // Distribuição por marca (total histórico)
+  const distMarca = marcasChart.map(b=>prods.filter(p=>brand(p.nome)===b).length);
+
+  return {labels,rec,luc,qtd,marcasChart,lucMarca,distMarca};
+}
+
+let chartsInstances = {};
+
 function buildCharts(){
-  if(chartsOk)return;chartsOk=true;
+  // Sempre reconstruir para refletir vendas novas
+  // Destruir gráficos existentes antes de recriar
+  Object.values(chartsInstances).forEach(c=>{try{c.destroy();}catch(e){}});
+  chartsInstances = {};
+  chartsOk = true;
+
+  const d = calcChartsData();
+  const font={family:"'DM Sans',sans-serif",size:11},tc='#78716c',gc='rgba(0,0,0,0.05)';
+
   renderRanking();
   renderGiro();
-  const font={family:"'DM Sans',sans-serif",size:11},tc='#78716c',gc='rgba(0,0,0,0.05)';
-  const maxIdx=CRL.rec.indexOf(Math.max(...CRL.rec));
-  document.getElementById('iBM').textContent=CRL.labels[maxIdx];
-  document.getElementById('iBMN').textContent=fmt(CRL.rec[maxIdx]);
-  const tRec=CRL.rec.reduce((a,b)=>a+b,0),tLuc=CRL.luc.reduce((a,b)=>a+b,0);
-  const tQtd=CQ.values.reduce((a,b)=>a+b,0);
-  document.getElementById('iLT').textContent=fmt(tLuc);
-  document.getElementById('iLTN').textContent='João '+fmt(tLuc/2)+' · Igor '+fmt(tLuc/2);
-  document.getElementById('iMG').textContent=Math.round(tLuc/tRec*100)+'%';
-  const topMarca=CMarca.labels[CMarca.values.indexOf(Math.max(...CMarca.values))];
-  document.getElementById('iMarca').textContent=topMarca;
-  document.getElementById('iMarcaN').textContent=CMarca.values[CMarca.labels.indexOf(topMarca)]+' unidades';
-  document.getElementById('iTk').textContent=fmt(Math.round(tRec/tQtd));
 
-  // FIX 2: card "Em estoque" usa dados reais do array prods, não valor hardcoded
-  const estoqueVivo=prods.filter(p=>p.status==='Estoque');
-  const ne=estoqueVivo.length;
-  const potE=estoqueVivo.reduce((s,p)=>s+(p.lucro!==undefined?p.lucro:p.venda-p.custo),0);
-  document.getElementById('iEst').textContent=ne;
-  document.getElementById('iEstN').textContent=fmt(potE)+' potencial';
+  // ── CARDS DE INSIGHTS ──
+  const tRec = d.rec.reduce((a,b)=>a+b,0);
+  const tLuc = d.luc.reduce((a,b)=>a+b,0);
+  const tQtd = d.qtd.reduce((a,b)=>a+b,0);
 
-  new Chart(document.getElementById('cRL'),{type:'bar',data:{labels:CRL.labels,datasets:[
-    {label:'Receita',data:CRL.rec,backgroundColor:CRL.rec.map((_,i)=>i===maxIdx?'#1c1917':'#d6d2c8'),borderRadius:5,borderSkipped:false,order:2},
-    {label:'Lucro',data:CRL.luc,backgroundColor:CRL.luc.map((_,i)=>i===maxIdx?'#15803d':'#86efac'),borderRadius:5,borderSkipped:false,order:1}
-  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:tc,font,boxWidth:10}},tooltip:{callbacks:{label:ctx=>' '+fmt(ctx.raw)},bodyFont:font,titleFont:font}},scales:{x:{grid:{display:false},ticks:{color:tc,font}},y:{grid:{color:gc},ticks:{color:tc,font,callback:v=>'R$'+(v/1000).toFixed(0)+'k'},border:{display:false}}}}});
-  new Chart(document.getElementById('cQ'),{type:'line',data:{labels:CQ.labels,datasets:[{label:'Unidades',data:CQ.values,borderColor:'#1c1917',backgroundColor:'rgba(28,25,23,.06)',borderWidth:2,pointBackgroundColor:'#1c1917',pointRadius:4,fill:true,tension:0.3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{bodyFont:font,titleFont:font}},scales:{x:{grid:{display:false},ticks:{color:tc,font}},y:{grid:{color:gc},ticks:{color:tc,font,stepSize:5},border:{display:false},beginAtZero:true}}}});
+  // Melhor mês
+  const maxIdx = d.rec.indexOf(Math.max(...d.rec));
+  document.getElementById('iBM').textContent  = d.labels[maxIdx]||'—';
+  document.getElementById('iBMN').textContent = fmt(d.rec[maxIdx]||0);
+
+  // Lucro total
+  document.getElementById('iLT').textContent  = fmt(tLuc);
+  document.getElementById('iLTN').textContent = 'João '+fmt(tLuc/2)+' · Igor '+fmt(tLuc/2);
+
+  // Margem média
+  document.getElementById('iMG').textContent = tRec>0?Math.round(tLuc/tRec*100)+'%':'—';
+
+  // Marca líder
+  const topMarcaIdx = d.distMarca.indexOf(Math.max(...d.distMarca));
+  document.getElementById('iMarca').textContent  = d.marcasChart[topMarcaIdx];
+  document.getElementById('iMarcaN').textContent = d.distMarca[topMarcaIdx]+' unidades';
+
+  // Ticket médio
+  document.getElementById('iTk').textContent = tQtd>0?fmt(Math.round(tRec/tQtd)):'—';
+
+  // Em estoque (dados reais)
+  const estoqueVivo = prods.filter(p=>p.status==='Estoque'||p.status==='Anunciado');
+  document.getElementById('iEst').textContent  = estoqueVivo.length;
+  document.getElementById('iEstN').textContent = fmt(estoqueVivo.reduce((s,p)=>s+(p.lucro!==undefined?p.lucro:p.venda-p.custo),0))+' potencial';
+
+  // ── GRÁFICO RECEITA vs LUCRO ──
+  const maxRecIdx = d.rec.indexOf(Math.max(...d.rec));
+  chartsInstances['cRL'] = new Chart(document.getElementById('cRL'),{
+    type:'bar',
+    data:{labels:d.labels,datasets:[
+      {label:'Receita',data:d.rec,backgroundColor:d.rec.map((_,i)=>i===maxRecIdx?'#1c1917':'#d6d2c8'),borderRadius:5,borderSkipped:false,order:2},
+      {label:'Lucro',data:d.luc,backgroundColor:d.luc.map((_,i)=>i===maxRecIdx?'#15803d':'#86efac'),borderRadius:5,borderSkipped:false,order:1}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:tc,font,boxWidth:10}},tooltip:{callbacks:{label:ctx=>' '+fmt(ctx.raw)},bodyFont:font,titleFont:font}},
+      scales:{x:{grid:{display:false},ticks:{color:tc,font}},y:{grid:{color:gc},ticks:{color:tc,font,callback:v=>'R$'+(v/1000).toFixed(0)+'k'},border:{display:false}}}}
+  });
+
+  // ── GRÁFICO UNIDADES POR MÊS ──
+  chartsInstances['cQ'] = new Chart(document.getElementById('cQ'),{
+    type:'line',
+    data:{labels:d.labels,datasets:[{label:'Unidades',data:d.qtd,borderColor:'#1c1917',backgroundColor:'rgba(28,25,23,.06)',borderWidth:2,pointBackgroundColor:'#1c1917',pointRadius:4,fill:true,tension:0.3}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{bodyFont:font,titleFont:font}},
+      scales:{x:{grid:{display:false},ticks:{color:tc,font}},y:{grid:{color:gc},ticks:{color:tc,font,stepSize:5},border:{display:false},beginAtZero:true}}}
+  });
+
+  // ── GRÁFICO LUCRO MÉDIO POR MARCA ──
   const bColors=['#2563eb','#dc2626','#16a34a','#7c3aed','#0891b2','#0284c7','#9ca3af'];
-  new Chart(document.getElementById('cLM'),{type:'bar',data:{labels:CLM.labels,datasets:[{label:'Lucro médio',data:CLM.luc,backgroundColor:bColors.slice(0,CLM.labels.length),borderRadius:6,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+fmt(ctx.raw)},bodyFont:font,titleFont:font}},scales:{x:{grid:{color:gc},ticks:{color:tc,font,callback:v=>'R$'+v},border:{display:false}},y:{grid:{display:false},ticks:{color:tc,font}}}}});
-  new Chart(document.getElementById('cMarca'),{type:'doughnut',data:{labels:CMarca.labels,datasets:[{data:CMarca.values,backgroundColor:bColors.slice(0,CMarca.labels.length),borderWidth:0,hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'right',labels:{color:tc,font,boxWidth:10,padding:12}},tooltip:{bodyFont:font,titleFont:font}}}});
+  chartsInstances['cLM'] = new Chart(document.getElementById('cLM'),{
+    type:'bar',
+    data:{labels:d.marcasChart,datasets:[{label:'Lucro médio',data:d.lucMarca,backgroundColor:bColors,borderRadius:6,borderSkipped:false}]},
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+fmt(ctx.raw)},bodyFont:font,titleFont:font}},
+      scales:{x:{grid:{color:gc},ticks:{color:tc,font,callback:v=>'R$'+v},border:{display:false}},y:{grid:{display:false},ticks:{color:tc,font}}}}
+  });
+
+  // ── GRÁFICO DISTRIBUIÇÃO POR MARCA (DONUT) ──
+  chartsInstances['cMarca'] = new Chart(document.getElementById('cMarca'),{
+    type:'doughnut',
+    data:{labels:d.marcasChart,datasets:[{data:d.distMarca,backgroundColor:bColors,borderWidth:0,hoverOffset:6}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
+      plugins:{legend:{position:'right',labels:{color:tc,font,boxWidth:10,padding:12}},tooltip:{bodyFont:font,titleFont:font}}}
+  });
 }
+
 
 window.sp2=p=>{
   document.querySelectorAll('.pg').forEach(x=>x.classList.remove('on'));
