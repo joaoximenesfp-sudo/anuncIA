@@ -1020,7 +1020,15 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
 
       <!-- FIXAS + VARIÁVEIS -->
       <div class="fin-cols">
-        <!-- CONTAS FIXAS -->
+        <!-- BREAKDOWN PAGAMENTO -->
+      <div class="cd" style="margin-bottom:10px" id="finPgtoCard">
+        <div class="cdh"><span class="cdht">💳 Gastos por forma de pagamento</span><span style="font-size:.74rem;color:var(--li)" id="finPgtoMes"></span></div>
+        <div style="padding:10px 18px 14px" id="finPgtoBreakdown">
+          <div style="text-align:center;padding:16px;font-size:.76rem;color:var(--li)">Nenhum gasto registrado neste mês</div>
+        </div>
+      </div>
+
+      <!-- CONTAS FIXAS -->
         <div class="fin-sec">
           <div class="fin-sec-h">
             <span class="fin-sec-t">🔒 Contas fixas</span>
@@ -1039,6 +1047,14 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
               <option value="Lazer">🎮 Lazer</option>
               <option value="Assinatura">📱 Assinatura</option>
               <option value="Outro">📦 Outro</option>
+            </select>
+            <select class="fin-inp" id="fxPgto" title="Forma de pagamento" style="width:130px;flex:unset">
+              <option value="Pix">💠 Pix</option>
+              <option value="Débito">💳 Débito</option>
+              <option value="Crédito">💳 Crédito</option>
+              <option value="Crédito Parcelado">💳 Crédito Parc.</option>
+              <option value="Cartão Carina">🟣 Cartão Carina</option>
+              <option value="Dinheiro">💵 Dinheiro</option>
             </select>
             <select class="fin-inp" id="fxParc" title="Parcelas" style="width:90px;flex:unset">
               <option value="0">Sem parc.</option>
@@ -1076,6 +1092,14 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
               <option value="Vestuário">👕 Vestuário</option>
               <option value="Casa">🏠 Casa</option>
               <option value="Outro">📦 Outro</option>
+            </select>
+            <select class="fin-inp" id="vPgto" title="Forma de pagamento" style="width:130px;flex:unset">
+              <option value="Pix">💠 Pix</option>
+              <option value="Débito">💳 Débito</option>
+              <option value="Crédito">💳 Crédito</option>
+              <option value="Crédito Parcelado">💳 Crédito Parc.</option>
+              <option value="Cartão Carina">🟣 Cartão Carina</option>
+              <option value="Dinheiro">💵 Dinheiro</option>
             </select>
             <select class="fin-inp" id="vParc" title="Parcelas" style="width:90px;flex:unset">
               <option value="0">Sem parc.</option>
@@ -1150,7 +1174,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
         <div style="padding:16px 18px">
           <div class="cap-socio-grid" id="capSocioGrid">
             <div class="cap-socio">
-              <div class="cap-socio-nm jo">👤 João <span style="font-size:.65rem;font-weight:400;color:var(--li)">— co-investidor (*)</span></div>
+              <div class="cap-socio-nm jo">👤 João <span style="font-size:.65rem;font-weight:400;color:var(--li)">— parceiro desde abr/2025</span></div>
               <div id="capJoao"></div>
             </div>
             <div class="cap-socio">
@@ -2580,7 +2604,8 @@ window.addVar=async()=>{
   const cat=document.getElementById('vCat').value;
   const parcelas=parseInt(document.getElementById('vParc').value)||0;
   if(!nome||!val){alert('Preencha nome e valor!');return;}
-  const obj={userId:user.uid,nome,valor:val,categoria:cat,mes:finMes,parcelas,parcelaAtual:parcelas>0?1:0,criadoEm:new Date().toISOString()};
+  const pgto=document.getElementById('vPgto').value;
+  const obj={userId:user.uid,nome,valor:val,categoria:cat,pagamento:pgto,mes:finMes,parcelas,parcelaAtual:parcelas>0?1:0,criadoEm:new Date().toISOString()};
   try{const r=await addDoc(collection(db,'financas_var'),obj);variaveis.push({...obj,id:r.id});}catch(e){variaveis.push({...obj,id:'l'+Date.now()});}
   document.getElementById('vNome').value='';document.getElementById('vVal').value='';document.getElementById('vParc').value='0';
   renderFinancas();
@@ -2619,6 +2644,30 @@ function renderFinancas(){
   const saldoEl=document.getElementById('finSaldo');
   saldoEl.textContent=fmt(saldo);saldoEl.className='fin-val '+(saldo>=0?'b':'re');
   document.getElementById('finSaldoSub').textContent=saldo>=0?'disponível':'déficit';
+  const pgtoMesEl=document.getElementById('finPgtoMes');if(pgtoMesEl)pgtoMesEl.textContent=mesNome;
+
+  // Breakdown por forma de pagamento
+  const todasDespesas = [...varsDoMes, ...fixas];
+  const porPgto = {};
+  todasDespesas.forEach(x=>{
+    const k = x.pagamento||'Não informado';
+    if(!porPgto[k]) porPgto[k]=0;
+    porPgto[k]+=x.valor;
+  });
+  const pgtoEl = document.getElementById('finPgtoBreakdown');
+  if(pgtoEl && Object.keys(porPgto).length){
+    const pgtoColors={'Pix':'#0e7490','Débito':'#1d4ed8','Crédito':'#6d28d9','Crédito Parcelado':'#b45309','Cartão Carina':'#9d174d','Dinheiro':'#15803d','Não informado':'#9ca3af'};
+    const pgtoBg={'Pix':'#e0f7fa','Débito':'#eff6ff','Crédito':'#faf5ff','Crédito Parcelado':'#fffbeb','Cartão Carina':'#fdf2f8','Dinheiro':'#f0fdf4','Não informado':'#f5f5f5'};
+    const totalD = Object.values(porPgto).reduce((a,b)=>a+b,0)||1;
+    pgtoEl.innerHTML = Object.entries(porPgto).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`
+      <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--b)">
+        <span style="font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:8px;background:${pgtoBg[k]||'#f5f5f5'};color:${pgtoColors[k]||'#666'};min-width:100px;text-align:center">${k}</span>
+        <div style="flex:1;height:6px;background:var(--b);border-radius:3px;overflow:hidden">
+          <div style="height:100%;width:${Math.round(v/totalD*100)}%;background:${pgtoColors[k]||'#9ca3af'};border-radius:3px"></div>
+        </div>
+        <span style="font-size:.76rem;font-weight:700;color:var(--tx);min-width:64px;text-align:right">${fmt(v)}</span>
+      </div>`).join('');
+  }
   document.getElementById('finMetaVal').textContent=finMetaEco>0?fmt(finMetaEco):'Não definida';
   if(finMetaEco>0){const pct=lucroMes>0?Math.round(Math.min(saldo,finMetaEco)/finMetaEco*100):0;document.getElementById('finMetaSub').textContent=pct+'% atingido';document.getElementById('finMetaInp').value=finMetaEco;}else{document.getElementById('finMetaSub').textContent='defina abaixo';}
   const total=lucroMes||1;
@@ -2637,7 +2686,7 @@ function renderFinancas(){
       const vencStr=x.vencimento?new Date(x.vencimento+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short'}):'—';
       const atrasado=x.vencimento&&!x.pago&&x.vencimento<hoje2;
       const parcBadge=x.parcelas>0?`<span class="parc-badge ${x.parcelaAtual>=x.parcelas?'done':''}">${x.parcelaAtual||1}/${x.parcelas}x</span>`:'';
-      return`<div class="fin-item"><span class="fin-cat-dot" style="background:${CAT_CORES[x.categoria]||'#9ca3af'}"></span><div class="fin-item-info"><div class="fin-item-nm">${esc(x.nome)} ${parcBadge}</div><div class="fin-item-sub">${x.categoria} · vence ${vencStr}${atrasado?' ⚠️ Atrasado':''}${x.parcelas>0?' · '+fmt(x.valor/x.parcelas)+'/parc':''}</div></div><span class="fin-item-val" style="${atrasado?'color:var(--re)':''}">${fmt(x.valor)}</span>${x.pago?`<span class="pagar-btn pago">✓ Pago</span>`:x.parcelas>0?`<button class="pagar-btn" onclick="openPayModal('${x.id}','fixa',${Math.round(x.valor/x.parcelas)})">Pagar parcela</button>`:`<button class="pagar-btn" onclick="openPayModal('${x.id}','fixa',${x.valor})">Pagar</button>`}<button class="fin-del" onclick="delFixa('${x.id}')">✕</button></div>`;
+      return`<div class="fin-item"><span class="fin-cat-dot" style="background:${CAT_CORES[x.categoria]||'#9ca3af'}"></span><div class="fin-item-info"><div class="fin-item-nm">${esc(x.nome)} ${parcBadge}</div><div class="fin-item-sub">${x.categoria} · vence ${vencStr}${atrasado?' ⚠️ Atrasado':''}${x.parcelas>0?' · '+fmt(x.valor/x.parcelas)+'/parc':''}${x.pagamento?` · <span style="font-size:.63rem;font-weight:700;padding:1px 5px;border-radius:5px;background:${{'Pix':'#e0f7fa','Débito':'#eff6ff','Crédito':'#faf5ff','Crédito Parcelado':'#fffbeb','Cartão Carina':'#fdf2f8','Dinheiro':'#f0fdf4'}[x.pagamento]||'#f5f5f5'};color:${{'Pix':'#0e7490','Débito':'#1d4ed8','Crédito':'#6d28d9','Crédito Parcelado':'#b45309','Cartão Carina':'#9d174d','Dinheiro':'#15803d'}[x.pagamento]||'#666'}">${x.pagamento}</span>`:''}</div></div><span class="fin-item-val" style="${atrasado?'color:var(--re)':''}">${fmt(x.valor)}</span>${x.pago?`<span class="pagar-btn pago">✓ Pago</span>`:x.parcelas>0?`<button class="pagar-btn" onclick="openPayModal('${x.id}','fixa',${Math.round(x.valor/x.parcelas)})">Pagar parcela</button>`:`<button class="pagar-btn" onclick="openPayModal('${x.id}','fixa',${x.valor})">Pagar</button>`}<button class="fin-del" onclick="delFixa('${x.id}')">✕</button></div>`;
     }).join('');
   }
   renderCarteiras();
@@ -2647,7 +2696,7 @@ function renderFinancas(){
   else{
     varList.innerHTML=[...varsDoMes].sort((a,b)=>b.valor-a.valor).map(x=>{
       const vParcBadge=x.parcelas>0?'<span class="parc-badge '+(x.parcelaAtual>=x.parcelas?'done':'')+'">'+(x.parcelaAtual||1)+'/'+x.parcelas+'x</span>':'';
-      return`<div class="fin-item"><span class="fin-cat-dot" style="background:${CAT_CORES[x.categoria]||'#9ca3af'}"></span><div class="fin-item-info"><div class="fin-item-nm">${esc(x.nome)} ${vParcBadge}</div><div class="fin-item-sub">${x.categoria}${x.parcelas>0?' · '+fmt(x.valor/x.parcelas)+'/parc':''}</div></div><span class="fin-item-val">${fmt(x.valor)}</span>${x.pago?`<span class="pagar-btn pago">✓ Pago</span>`:x.parcelas>0?`<button class="pagar-btn" onclick="openPayModal('${x.id}','var',${Math.round(x.valor/x.parcelas)})">Pagar parcela</button>`:`<button class="pagar-btn" onclick="openPayModal('${x.id}','var',${x.valor})">Pagar</button>`}<button class="fin-del" onclick="delVar('${x.id}')">✕</button></div>`;
+      return`<div class="fin-item"><span class="fin-cat-dot" style="background:${CAT_CORES[x.categoria]||'#9ca3af'}"></span><div class="fin-item-info"><div class="fin-item-nm">${esc(x.nome)} ${vParcBadge}</div><div class="fin-item-sub">${x.categoria}${x.parcelas>0?' · '+fmt(x.valor/x.parcelas)+'/parc':''}${x.pagamento?` · <span style="font-size:.63rem;font-weight:700;padding:1px 5px;border-radius:5px;background:${{'Pix':'#e0f7fa','Débito':'#eff6ff','Crédito':'#faf5ff','Crédito Parcelado':'#fffbeb','Cartão Carina':'#fdf2f8','Dinheiro':'#f0fdf4'}[x.pagamento]||'#f5f5f5'};color:${{'Pix':'#0e7490','Débito':'#1d4ed8','Crédito':'#6d28d9','Crédito Parcelado':'#b45309','Cartão Carina':'#9d174d','Dinheiro':'#15803d'}[x.pagamento]||'#666'}">${x.pagamento}</span>`:''}</div></div><span class="fin-item-val">${fmt(x.valor)}</span>${x.pago?`<span class="pagar-btn pago">✓ Pago</span>`:x.parcelas>0?`<button class="pagar-btn" onclick="openPayModal('${x.id}','var',${Math.round(x.valor/x.parcelas)})">Pagar parcela</button>`:`<button class="pagar-btn" onclick="openPayModal('${x.id}','var',${x.valor})">Pagar</button>`}<button class="fin-del" onclick="delVar('${x.id}')">✕</button></div>`;
     }).join('');
   }
 }
@@ -3795,57 +3844,63 @@ function buildPainel(){
   const igorProds = prods.filter(p=>p.investidor==='Igor');
   function calcCapitalSocios(){
     // REGRA:
-    // Planilha divide os custos ao meio → custo real = planilha × 2
-    // Com * = ambos investiram (50/50 do custo real)
-    // Sem * = só Igor investiu (100% do custo real)
-    // Lucro = sempre 50/50
+    // Parceria começa em 04/2025 (primeiro * na planilha)
+    // Antes de 04/2025 = só Igor (lucro 100% dele, não entra no cálculo da parceria)
+    // Na parceria: custo real = planilha × 2
+    //   Com * = ambos 50/50 | Sem * = só Igor
+    //   Lucro sempre 50/50
 
-    const vendidos = prods.filter(p=>p.status==='Vendido');
-    const emMao    = prods.filter(p=>p.status!=='Vendido'); // estoque + anunciados
+    const INICIO = '2025-04';
+
+    // Filtrar só produtos da parceria (abr/2025+)
+    const getMC = p => p.data_compra ? p.data_compra.slice(0,7) : p.data ? p.data.slice(0,7) : '';
+    const naParc = prods.filter(p => getMC(p) >= INICIO);
+
+    const vendidos = naParc.filter(p=>p.status==='Vendido');
+    const emMao    = naParc.filter(p=>p.status!=='Vendido');
 
     const comAstV = vendidos.filter(p=>p.nome&&p.nome.includes('*'));
     const semAstV = vendidos.filter(p=>!p.nome||!p.nome.includes('*'));
     const comAstE = emMao.filter(p=>p.nome&&p.nome.includes('*'));
     const semAstE = emMao.filter(p=>!p.nome||!p.nome.includes('*'));
 
-    // Custo real = custo planilha × 2
-    const custoAmbosV = comAstV.reduce((s,p)=>s+p.custo,0)*2;
-    const custoIgorV  = semAstV.reduce((s,p)=>s+p.custo,0)*2;
-    const custoAmbosE = comAstE.reduce((s,p)=>s+p.custo,0)*2;
-    const custoIgorE  = semAstE.reduce((s,p)=>s+p.custo,0)*2;
+    // Custo real = planilha × 2
+    const cr = lst => lst.reduce((s,p)=>s+p.custo,0)*2;
 
-    // ── TOTAL HISTÓRICO (tudo já comprado) ──
-    const joaoTotalInv = (custoAmbosV + custoAmbosE) / 2;
-    const igorTotalInv = custoIgorV + custoIgorE + (custoAmbosV + custoAmbosE) / 2;
+    const joaoInvV = cr(comAstV)/2;
+    const joaoInvE = cr(comAstE)/2;
+    const igorInvV = cr(semAstV) + cr(comAstV)/2;
+    const igorInvE = cr(semAstE) + cr(comAstE)/2;
 
-    // ── CAPITAL ATUAL (só em mão — estoque + anunciados) ──
-    const joaoAtual = custoAmbosE / 2;
-    const igorAtual = custoIgorE + custoAmbosE / 2;
+    const joaoTotalInv = joaoInvV + joaoInvE;
+    const igorTotalInv = igorInvV + igorInvE;
 
-    // ── LUCRO REALIZADO (vendidos, 50/50) ──
     const lucroTotal = vendidos.reduce((s,p)=>s+(p.lucro!==undefined?p.lucro:p.venda-p.custo),0);
     const lucroJoao  = lucroTotal / 2;
     const lucroIgor  = lucroTotal / 2;
 
-    // ── POTENCIAL (se vender tudo em mão) ──
-    const potencialTotal = emMao.reduce((s,p)=>s+(p.lucro!==undefined?p.lucro:p.venda-p.custo),0);
+    const joaoAtual = joaoInvE;
+    const igorAtual = igorInvE;
 
-    // ROI sobre total histórico
     const roiJoao = joaoTotalInv>0 ? Math.round(lucroJoao/joaoTotalInv*100) : 0;
     const roiIgor = igorTotalInv>0 ? Math.round(lucroIgor/igorTotalInv*100) : 0;
 
-    // Saldo líquido = lucro realizado − capital ainda parado
-    const saldoJoao = lucroJoao - joaoAtual;
-    const saldoIgor = lucroIgor - igorAtual;
+    // Lucro Igor antes da parceria (só dele, Jan-Mar/2025)
+    const antesParc = prods.filter(p=>getMC(p) < INICIO && getMC(p) !== '');
+    const lucroIgorAntes = antesParc.filter(p=>p.status==='Vendido').reduce((s,p)=>s+(p.lucro!==undefined?p.lucro:p.venda-p.custo),0);
+
+    const potencial = emMao.reduce((s,p)=>s+(p.lucro!==undefined?p.lucro:p.venda-p.custo),0);
 
     return {
       joaoTotalInv, igorTotalInv,
       joaoAtual, igorAtual,
-      lucroJoao, lucroIgor,
-      lucroTotal, potencialTotal,
+      lucroJoao, lucroIgor, lucroTotal,
       roiJoao, roiIgor,
-      saldoJoao, saldoIgor,
-      qtdEmMao: emMao.length,
+      saldoJoao: lucroJoao - joaoAtual,
+      saldoIgor: lucroIgor - igorAtual,
+      lucroIgorAntes,
+      potencial,
+      qtdParceria: naParc.length,
       qtdComAst: comAstV.length + comAstE.length,
       qtdSemAst: semAstV.length + semAstE.length,
     };
@@ -3860,7 +3915,7 @@ function buildPainel(){
     const roi     = isJoao ? dados.roiJoao      : dados.roiIgor;
     const sal     = isJoao ? dados.saldoJoao    : dados.saldoIgor;
     const regra   = isJoao
-      ? `Co-investidor nos ${dados.qtdComAst} produtos com *`
+      ? `Desde abr/2025 · ${dados.qtdComAst} produtos com *`
       : `${dados.qtdSemAst} exclusivos + ${dados.qtdComAst} compartilhados`;
 
     // Barra visual de proporção: parado vs realizado
@@ -3869,11 +3924,12 @@ function buildPainel(){
     const pctRealizado = Math.min(Math.round(luc/totalBase*100), 100);
 
     const rows = [
-      {l:'Total investido (histórico)',       v:fmt(invHist),  cls:'',  sep:false},
+      {l:'Total investido (desde abr/2025)',  v:fmt(invHist),  cls:'',  sep:false},
       {l:'Capital atual em estoque/anunciado',v:fmt(invAtual), cls:'am',sep:false},
-      {l:'Lucro realizado (50% do total)',    v:fmt(luc),      cls:'g', sep:false},
+      {l:'Lucro da parceria (50/50)',         v:fmt(luc),      cls:'g', sep:false},
       {l:'ROI sobre investimento',            v:roi+'%',       cls: roi>=50?'g':roi>=20?'am':'re', sep:false},
       {l:'Saldo líquido (lucro − parado)',    v:fmt(sal),      cls: sal>=0?'g':'re', sep:true},
+      ...(!isJoao && dados.lucroIgorAntes>0 ? [{l:'+ Lucro pré-parceria (só Igor)',v:fmt(dados.lucroIgorAntes),cls:'g',sep:false}] : []),
     ];
     return `
       <div style="font-size:.67rem;color:var(--li);margin-bottom:10px;padding:4px 8px;background:var(--bg);border-radius:5px;border:1px solid var(--b)">
