@@ -786,7 +786,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
         <div class="sb"><div class="sbl">Receita total</div><div class="sbv g" id="sRec">—</div><div class="sbs" id="sRecS">—</div></div>
         <div class="sb"><div class="sbl">Lucro total</div><div class="sbv" id="sLuc">—</div><div class="sbs" id="sMgm">—</div></div>
         <div class="sb"><div class="sbl">Anunciados</div><div class="sbv b" id="sAnu">—</div><div class="sbs" id="sAnuV">—</div></div>
-        <div class="sb"><div class="sbl">Em estoque</div><div class="sbv" id="sEst">—</div><div class="sbs" id="sEstV">—</div></div>
+        <div class="sb"><div class="sbl">Na mão hoje</div><div class="sbv" id="sEst">—</div><div class="sbs" id="sEstV">—</div></div>
         <div class="sb"><div class="sbl">Potencial</div><div class="sbv a" id="sPot">—</div><div class="sbs">se vender tudo</div></div>
       </div>
       <div class="cd">
@@ -932,7 +932,8 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
         <div class="ib"><div class="ii">📊</div><div><div class="il">Margem média</div><div class="iv" id="iMG">—</div><div class="in">sobre receita total</div></div></div>
         <div class="ib"><div class="ii">🏆</div><div><div class="il">Marca líder</div><div class="iv" id="iMarca">—</div><div class="in" id="iMarcaN">—</div></div></div>
         <div class="ib"><div class="ii">🎯</div><div><div class="il">Ticket médio</div><div class="iv" id="iTk">—</div><div class="in">por notebook vendido</div></div></div>
-        <div class="ib"><div class="ii">📦</div><div><div class="il">Em estoque</div><div class="iv b" id="iEst">—</div><div class="in" id="iEstN">—</div></div></div>
+        <div class="ib"><div class="ii">📦</div><div><div class="il">Na mão hoje</div><div class="iv b" id="iEst">—</div><div class="in" id="iEstN">—</div></div></div>
+        <div class="ib"><div class="ii">🎯</div><div><div class="il">Potencial</div><div class="iv am" id="iPot">—</div><div class="in" id="iPotN">—</div></div></div>
       </div>
       <div class="cg">
         <div class="cc full"><div class="ch"><div class="ct">Receita vs Lucro por mês (R$)</div><div class="cs">Evolução financeira mensal — sem salários</div></div><div class="cw tall"><canvas id="cRL"></canvas></div></div>
@@ -2100,6 +2101,13 @@ function fmt(v){return'R$ '+Math.round(v||0).toLocaleString('pt-BR');}
 function fdt(d){if(!d)return'—';const parts=d.split('-');if(parts.length<2)return'—';const[y,m]=parts;const ms=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];return(ms[parseInt(m)-1]||m)+'/'+y.slice(2);}
 function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
+// Função única de lucro — usada em TODAS as camadas para consistência
+function getLucro(p){
+  if(p.lucro !== undefined && p.lucro !== null && p.lucro !== 0) return p.lucro;
+  if(p.venda > 0 && p.custo >= 0) return p.venda - p.custo;
+  return p.lucro || 0;
+}
+
 // ── VENDAS SECTIONS ──
 let vendaSection = 'hoje';
 window.setVendaSection = (sec, btn) => {
@@ -2324,15 +2332,17 @@ function calcStats(){
   const v=prods.filter(p=>p.status==='Vendido');
   const an=prods.filter(p=>p.status==='Anunciado');
   const es=prods.filter(p=>p.status==='Estoque');
-  const rec=v.reduce((s,p)=>s+(p.venda||0),0),luc=v.reduce((s,p)=>s+(p.lucro!==undefined?p.lucro:p.venda-p.custo),0);
+  const rec=v.reduce((s,p)=>s+(p.venda||0),0),luc=v.reduce((s,p)=>s+getLucro(p),0);
   const mg=rec>0?Math.round(luc/rec*100):0;
-  const potAn=an.reduce((s,p)=>s+(p.lucro!==undefined?p.lucro:p.venda-p.custo),0);
-  const potEs=es.reduce((s,p)=>s+(p.lucro!==undefined?p.lucro:p.venda-p.custo),0);
+  const potAn=an.reduce((s,p)=>s+getLucro(p),0);
+  const potEs=es.reduce((s,p)=>s+getLucro(p),0);
+  const emMaoTotal=[...an,...es]; // Estoque + Anunciados = tudo na mão hoje
+  const potEmMao=potAn+potEs;
   document.getElementById('sRec').textContent=fmt(rec);document.getElementById('sRecS').textContent=v.length+' vendas';
   document.getElementById('sLuc').textContent=fmt(luc);document.getElementById('sMgm').textContent='margem '+mg+'%';
   document.getElementById('sAnu').textContent=an.length;document.getElementById('sAnuV').textContent=fmt(potAn)+' potencial';
-  document.getElementById('sEst').textContent=es.length;document.getElementById('sEstV').textContent=fmt(potEs)+' potencial';
-  document.getElementById('sPot').textContent=fmt(potAn+potEs);
+  document.getElementById('sEst').textContent=emMaoTotal.length;document.getElementById('sEstV').textContent=an.length+' anunciados · '+es.length+' estoque';
+  document.getElementById('sPot').textContent=fmt(potEmMao);
 }
 
 // ════════════════════════════════════════
@@ -2396,7 +2406,7 @@ function calcChartsData(){
   );
 
   const luc = mesesOrdenados.map(m=>
-    vendidos.filter(p=>getMesVenda(p)===m).reduce((s,p)=>s+(p.lucro!==undefined?p.lucro:p.venda-p.custo),0)
+    vendidos.filter(p=>getMesVenda(p)===m).reduce((s,p)=>s+getLucro(p),0)
   );
 
   const qtd = mesesOrdenados.map(m=>
@@ -2407,7 +2417,7 @@ function calcChartsData(){
   const marcasChart = ['Dell','Lenovo','Acer','Samsung','HP','Asus','Outros'];
   const lucMarca = marcasChart.map(b=>{
     const mv = vendidos.filter(p=>brand(p.nome)===b);
-    return mv.length?Math.round(mv.reduce((s,p)=>s+(p.lucro!==undefined?p.lucro:p.venda-p.custo),0)/mv.length):0;
+    return mv.length?Math.round(mv.reduce((s,p)=>s+getLucro(p),0)/mv.length):0;
   });
 
   // Distribuição por marca (total histórico)
@@ -2431,35 +2441,45 @@ function buildCharts(){
   renderRanking();
   renderGiro();
 
-  // ── CARDS DE INSIGHTS ──
-  const tRec = d.rec.reduce((a,b)=>a+b,0);
-  const tLuc = d.luc.reduce((a,b)=>a+b,0);
-  const tQtd = d.qtd.reduce((a,b)=>a+b,0);
+  // ── CARDS DE INSIGHTS — calculados direto do prods (mesma fonte que Vendas) ──
+  const vTodos  = prods.filter(p=>p.status==='Vendido');
+  const tRec    = vTodos.reduce((s,p)=>s+(p.venda||0),0);
+  const tLuc    = vTodos.reduce((s,p)=>s+getLucro(p),0);
+  const tQtd    = vTodos.length;
+  const tMg     = tRec>0?Math.round(tLuc/tRec*100):0;
+  const tTk     = tQtd>0?Math.round(tRec/tQtd):0;
 
-  // Melhor mês
-  const maxIdx = d.rec.indexOf(Math.max(...d.rec));
+  // Melhor mês (usa calcChartsData para o gráfico, mas cards lêem prods diretamente)
+  const maxIdx  = d.rec.indexOf(Math.max(...d.rec));
   document.getElementById('iBM').textContent  = d.labels[maxIdx]||'—';
   document.getElementById('iBMN').textContent = fmt(d.rec[maxIdx]||0);
 
-  // Lucro total
+  // Lucro total — MESMO cálculo do calcStats (sLuc)
   document.getElementById('iLT').textContent  = fmt(tLuc);
   document.getElementById('iLTN').textContent = 'João '+fmt(tLuc/2)+' · Igor '+fmt(tLuc/2);
 
-  // Margem média
-  document.getElementById('iMG').textContent = tRec>0?Math.round(tLuc/tRec*100)+'%':'—';
+  // Margem — MESMO cálculo do calcStats (sMgm)
+  document.getElementById('iMG').textContent = tMg+'%';
 
   // Marca líder
   const topMarcaIdx = d.distMarca.indexOf(Math.max(...d.distMarca));
   document.getElementById('iMarca').textContent  = d.marcasChart[topMarcaIdx];
   document.getElementById('iMarcaN').textContent = d.distMarca[topMarcaIdx]+' unidades';
 
-  // Ticket médio
-  document.getElementById('iTk').textContent = tQtd>0?fmt(Math.round(tRec/tQtd)):'—';
+  // Ticket médio — MESMO cálculo (sRec/qtd)
+  document.getElementById('iTk').textContent = fmt(tTk);
 
-  // Em estoque (dados reais)
+  // Em estoque — MESMO cálculo do calcStats (sEst = Estoque+Anunciados)
   const estoqueVivo = prods.filter(p=>p.status==='Estoque'||p.status==='Anunciado');
+  const potEmMaoI   = estoqueVivo.reduce((s,p)=>s+getLucro(p),0);
   document.getElementById('iEst').textContent  = estoqueVivo.length;
-  document.getElementById('iEstN').textContent = fmt(estoqueVivo.reduce((s,p)=>s+(p.lucro!==undefined?p.lucro:p.venda-p.custo),0))+' potencial';
+  document.getElementById('iEstN').textContent = fmt(potEmMaoI)+' potencial';
+
+  // Potencial total — MESMO cálculo do calcStats (sPot)
+  const elIPot = document.getElementById('iPot');
+  if(elIPot) elIPot.textContent = fmt(potEmMaoI);
+  const elIPotN = document.getElementById('iPotN');
+  if(elIPotN) elIPotN.textContent = estoqueVivo.filter(p=>p.status==='Anunciado').length+' anunciados · '+estoqueVivo.filter(p=>p.status==='Estoque').length+' estoque';
 
   // ── GRÁFICO RECEITA vs LUCRO ──
   const maxRecIdx = d.rec.indexOf(Math.max(...d.rec));
@@ -2603,7 +2623,7 @@ let metaValor=parseFloat(localStorage.getItem('bj_meta'))||0;
 function renderMeta(){
   const mes=new Date().toISOString().slice(0,7);
   const lucMes=prods.filter(p=>p.status==='Vendido'&&(p.data_venda||'').startsWith(mes))
-    .reduce((s,p)=>s+(p.lucro!==undefined?p.lucro:p.venda-p.custo),0);
+    .reduce((s,p)=>s+getLucro(p),0);
   const meta=metaValor;
   const pct=meta>0?Math.min(Math.round(lucMes/meta*100),100):0;
   document.getElementById('metaCur').textContent=fmt(lucMes);
@@ -2645,9 +2665,9 @@ function renderAlertas(){
   const vendAnt=prods.filter(p=>p.status==='Vendido'&&(p.data_venda||'').startsWith(mesAnterior));
   if(vendMes.length>=3&&vendAnt.length>=3){
     const recMes=vendMes.reduce((s,p)=>s+(p.venda||0),0);
-    const lucMes=vendMes.reduce((s,p)=>s+(p.lucro!==undefined?p.lucro:p.venda-p.custo),0);
+    const lucMes=vendMes.reduce((s,p)=>s+getLucro(p),0);
     const recAnt=vendAnt.reduce((s,p)=>s+(p.venda||0),0);
-    const lucAnt=vendAnt.reduce((s,p)=>s+(p.lucro!==undefined?p.lucro:p.venda-p.custo),0);
+    const lucAnt=vendAnt.reduce((s,p)=>s+getLucro(p),0);
     const mgMes=recMes>0?Math.round(lucMes/recMes*100):0;
     const mgAnt=recAnt>0?Math.round(lucAnt/recAnt*100):0;
     const diff=mgMes-mgAnt;
@@ -2925,7 +2945,7 @@ function renderFinancas(){
   const mesNome=MES_NOMES[m-1]+'/'+String(y).slice(2);
   document.getElementById('finMesLabel').textContent=mesNome;
   document.getElementById('finVarMesLabel').textContent='· '+mesNome;
-  const lucroMes=prods.filter(p=>p.status==='Vendido'&&(p.data_venda||'').startsWith(finMes)).reduce((s,p)=>s+(p.lucro!==undefined?p.lucro:p.venda-p.custo),0);
+  const lucroMes=prods.filter(p=>p.status==='Vendido'&&(p.data_venda||'').startsWith(finMes)).reduce((s,p)=>s+getLucro(p),0);
   const totalFixas=fixas.reduce((s,x)=>s+x.valor,0);
   const varsDoMes=variaveis.filter(x=>x.mes===finMes);
   const totalVar=varsDoMes.reduce((s,x)=>s+x.valor,0);
