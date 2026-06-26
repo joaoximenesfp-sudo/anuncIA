@@ -5,6 +5,7 @@
 <title>Business IJX</title>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root{--bg:#f9f8f6;--w:#fff;--b:#e8e5df;--b2:#d6d2c8;--tx:#1c1917;--mu:#78716c;--li:#a8a29e;
   --gr:#15803d;--gbg:#f0fdf4;--gbd:#bbf7d0;--am:#b45309;--abg:#fffbeb;--abd:#fde68a;
@@ -765,7 +766,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
         <button class="nt on" onclick="sp2('vendas')">Vendas</button>
         <button class="nt" onclick="sp2('insights')">Insights</button>
         <button class="nt" onclick="sp2('painel')">📈 Painel</button>
-        <button class="nt" onclick="sp2('anuncios')">Anúncios IA</button>
+
         <button class="nt" id="nav-fin" onclick="sp2('financas')">Finanças</button>
         <button class="nt" onclick="sp2('logistica')">🚗 Logística</button>
       </div>
@@ -1009,43 +1010,6 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
     </div>
   </div>
 
-  <!-- ANÚNCIOS -->
-  <div class="pg" id="pg-anuncios">
-    <div class="wr">
-      <div class="ph"><div><div class="pht">Gerar Anúncio</div><div class="phs">IA cria o texto ideal para cada plataforma</div></div></div>
-      <div class="aps">
-        <span style="font-size:.78rem;font-weight:600;color:var(--tx)">🔑 Chave Gemini</span>
-        <input class="api inp" type="password" id="KI" placeholder="AIzaSy...">
-        <button class="bsm" onclick="saveKey()">Salvar</button>
-        <span class="ksl" id="KS">✓ Salva</span>
-        <span style="font-size:.7rem;color:var(--li)">Grátis em aistudio.google.com</span>
-      </div>
-      <div class="sec"><div class="secl">1 · Descrição do produto</div><textarea class="inp" id="aDesc" placeholder="Dell Latitude i5 10ª geração, 8GB RAM, SSD 256GB, Windows 11..."></textarea></div>
-      <div class="sec">
-        <div class="secl">2 · Preço de venda</div>
-        <div class="pw"><div class="pr"><span class="pp2">R$</span><input type="number" class="inp" id="aPreco" placeholder="0" min="0"></div>
-        <button class="bsg" id="bSug" onclick="sugPrice()">✦ Sugerir com IA</button></div>
-        <div class="ph2" id="PH"></div>
-      </div>
-      <div class="sec"><div class="secl">3 · Plataformas</div>
-        <div class="plg">
-          <button class="plb on" data-p="marketplace" onclick="togP(this)">📘 Marketplace</button>
-          <button class="plb on" data-p="olx" onclick="togP(this)">🟠 OLX</button>
-          <button class="plb on" data-p="mercadolivre" onclick="togP(this)">🟡 Mercado Livre</button>
-        </div>
-      </div>
-      <button class="bge" id="bGen" onclick="genAds()">✦ Gerar anúncios com IA</button>
-      <div class="lw" id="LW"><div class="sp"></div><div class="lm2">Criando seus anúncios...</div><div class="ls" id="LS"></div></div>
-      <div class="res" id="RA">
-        <div class="tipb" id="TB"></div>
-        <div class="sec" style="padding:0;overflow:hidden">
-          <div style="padding:14px 16px 0"><div class="rtb" id="RTB"></div></div>
-          <div id="RPS" style="padding:0 16px 16px"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- FINANÇAS -->
   <div class="pg" id="pg-financas">
     <div class="wr">
@@ -1085,9 +1049,10 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
       <!-- HERO CARDS -->
       <div class="fin-hero">
         <div class="fin-card lucro">
-          <div class="fin-lbl">Lucro do negócio</div>
+          <div class="fin-lbl">Sua parte do lucro (50%)</div>
           <div class="fin-val g" id="finLucro">—</div>
           <div class="fin-sub" id="finLucroSub">no mês selecionado</div>
+          <div class="fin-sub" id="finLucroTotal" style="margin-top:4px;padding-top:4px;border-top:1px solid var(--b);color:var(--li)">Valor cheio (negócio): —</div>
         </div>
         <div class="fin-card gasto">
           <div class="fin-lbl">Total de gastos</div>
@@ -1475,6 +1440,49 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
           <button class="bcan" onclick="limparAvisos()" style="font-size:.72rem;padding:4px 10px">Limpar todos</button>
         </div>
         <div id="syncList"><div class="sync-empty">Nenhuma pendência no momento ✅</div></div>
+      </div>
+
+      <!-- IMPORTAR PLANILHA (FONTE DA VERDADE) -->
+      <div class="cd" style="border-left:3px solid #15803d">
+        <div class="cdh">
+          <span class="cdht">📥 Importar planilha Excel (sincronizar estoque)</span>
+          <span style="font-size:.72rem;background:var(--gbg);color:var(--gr);border:1px solid var(--gbd);padding:2px 8px;border-radius:10px;font-weight:600">Fonte da verdade</span>
+        </div>
+        <div class="cdb">
+          <p style="font-size:.82rem;color:var(--mu);line-height:1.7;margin-bottom:16px">
+            Suba o arquivo <code style="background:var(--bg);padding:1px 5px;border-radius:4px">Financeiro.xlsx</code> (abas <strong>2024</strong> e <strong>2025</strong>) pra sincronizar o estoque de notebooks do site com a planilha.
+            Essa importação <strong>substitui todos os notebooks compartilhados</strong> pelos dados atuais da planilha — qualquer venda/edição feita só no site desde a última importação será perdida se não estiver também na planilha.
+            <br><br>
+            <strong>Status de venda:</strong> itens com "Mês Venda" preenchido entram como <em>Vendido</em>; sem isso entram como <em>Estoque</em> (você pode marcar manualmente como "Anunciado" depois, na lista de produtos).
+            <br>
+            <strong>Investidor:</strong> itens com <code>*</code> no nome, ou com "joao p"/"joao pagou" no texto, são marcados como compartilhados (50/50) automaticamente.
+          </p>
+
+          <div style="margin-bottom:14px">
+            <input type="file" id="impFile" accept=".xlsx,.xls" style="font-size:.82rem">
+          </div>
+
+          <div id="impStatus" style="background:var(--bg);border:1px solid var(--b);border-radius:8px;padding:14px 16px;margin-bottom:16px;min-height:44px;font-size:.8rem;line-height:1.8">
+            <span style="color:var(--li)">Selecione o arquivo e clique em "Processar" pra ver o que vai mudar antes de confirmar.</span>
+          </div>
+
+          <div id="impProgWrap" style="display:none;margin-bottom:16px">
+            <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--mu);margin-bottom:4px">
+              <span id="impProgLabel">Importando...</span>
+              <span id="impProgPct">0%</span>
+            </div>
+            <div style="height:8px;background:var(--b);border-radius:4px;overflow:hidden">
+              <div id="impProgBar" style="height:100%;background:#15803d;border-radius:4px;width:0%;transition:width .3s ease"></div>
+            </div>
+          </div>
+
+          <div id="impLog" style="display:none;background:#0f172a;border-radius:8px;padding:14px 16px;margin-bottom:16px;max-height:280px;overflow-y:auto;font-family:monospace;font-size:.74rem;line-height:1.8;color:#94a3b8"></div>
+
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="bsg" onclick="processarPlanilha()" id="btnProcessarImp">🔍 Processar (só conferir)</button>
+            <button class="ba" onclick="confirmarImportacao()" id="btnConfirmarImp" style="background:#15803d" disabled>✅ Confirmar e sincronizar</button>
+          </div>
+        </div>
       </div>
 
       <!-- MIGRAÇÃO DE DADOS -->
@@ -2685,10 +2693,10 @@ window.sp2=p=>{
 // ADS
 let selP=new Set(['marketplace','olx','mercadolivre']);
 let apiKey=localStorage.getItem('gk')||'';
-if(apiKey){document.getElementById('KI').value=apiKey;document.getElementById('KS').classList.add('on');}
+if(apiKey&&document.getElementById('KI')){document.getElementById('KI').value=apiKey;document.getElementById('KS').classList.add('on');}
 window.saveKey=()=>{const k=g('KI');if(!k){alert('Cole sua chave!');return;}apiKey=k;localStorage.setItem('gk',k);const s=document.getElementById('KS');s.classList.add('on');setTimeout(()=>s.classList.remove('on'),3000);};
 window.togP=btn=>{const p=btn.dataset.p;if(selP.has(p)){if(selP.size>1){selP.delete(p);btn.classList.remove('on');}}else{selP.add(p);btn.classList.add('on');}};
-async function gemini(prompt){const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:prompt}]}]})});const d=await r.json();if(d.error)throw new Error(d.error.message);return d.candidates?.[0]?.content?.parts?.[0]?.text||'';}
+async function gemini(prompt){const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1024,messages:[{role:'user',content:prompt}]})});const d=await r.json();if(d.error)throw new Error(d.error.message||'Erro na API');return d.content?.[0]?.text||'';}
 window.sugPrice=async()=>{
   const desc=g('aDesc');if(!desc){alert('Preencha a descrição!');return;}if(!apiKey){alert('Salve sua chave!');return;}
   const btn=document.getElementById('bSug');btn.disabled=true;btn.textContent='Analisando...';
@@ -2703,7 +2711,7 @@ window.sugPrice=async()=>{
 const steps=['Analisando produto...','Criando título...','Redigindo anúncios...','Otimizando plataformas...','Finalizando...'];
 window.genAds=async()=>{
   const desc=g('aDesc'),preco=document.getElementById('aPreco').value;
-  if(!apiKey){alert('Salve sua chave Gemini!');return;}if(!desc){alert('Preencha a descrição!');return;}
+  if(!apiKey){alert('Salve sua chave da Claude API!');return;}if(!desc){alert('Preencha a descrição!');return;}
   const btn=document.getElementById('bGen');btn.disabled=true;
   document.getElementById('LW').classList.add('on');document.getElementById('RA').classList.remove('on');
   let si=0;const iv=setInterval(()=>{document.getElementById('LS').textContent=steps[si++%steps.length];},1400);
@@ -3066,7 +3074,8 @@ function renderFinancas(){
   const mesNome=MES_NOMES[m-1]+'/'+String(y).slice(2);
   document.getElementById('finMesLabel').textContent=mesNome;
   document.getElementById('finVarMesLabel').textContent='· '+mesNome;
-  const lucroMes=prods.filter(p=>p.status==='Vendido'&&(p.data_venda||'').startsWith(finMes)).reduce((s,p)=>s+getLucro(p),0);
+  const lucroMesTotal=prods.filter(p=>p.status==='Vendido'&&(p.data_venda||'').startsWith(finMes)).reduce((s,p)=>s+getLucro(p),0);
+  const lucroMes=lucroMesTotal/2; // sua parte (50%)
   const totalFixas=fixas.reduce((s,x)=>s+x.valor,0);
   const varsDoMes=variaveis.filter(x=>x.mes===finMes);
   const totalVar=varsDoMes.reduce((s,x)=>s+x.valor,0);
@@ -3074,11 +3083,13 @@ function renderFinancas(){
   const saldo=lucroMes-totalGastos;
   document.getElementById('finLucro').textContent=fmt(lucroMes);
   document.getElementById('finLucroSub').textContent=prods.filter(p=>p.status==='Vendido'&&(p.data_venda||'').startsWith(finMes)).length+' vendas em '+mesNome;
+  const finLucroTotalEl=document.getElementById('finLucroTotal');
+  if(finLucroTotalEl) finLucroTotalEl.textContent='Valor cheio (negócio): '+fmt(lucroMesTotal);
   document.getElementById('finGastos').textContent=fmt(totalGastos);
   document.getElementById('finGastosSub').textContent=fmt(totalFixas)+' fixo · '+fmt(totalVar)+' variável';
   const saldoEl=document.getElementById('finSaldo');
   saldoEl.textContent=fmt(saldo);saldoEl.className='fin-val '+(saldo>=0?'b':'re');
-  document.getElementById('finSaldoSub').textContent=saldo>=0?'disponível':'déficit';
+  document.getElementById('finSaldoSub').textContent=(saldo>=0?'disponível':'déficit')+' · sua parte − seus gastos';
   const pgtoMesEl=document.getElementById('finPgtoMes');if(pgtoMesEl)pgtoMesEl.textContent=mesNome;
 
   // Breakdown por forma de pagamento
@@ -3508,6 +3519,169 @@ window.limparAvisos = async () => {
 };
 
 // Recarregar avisos quando abrir Admin
+// ════════════════════════════════════════
+// IMPORTAR PLANILHA EXCEL (fonte da verdade)
+// ════════════════════════════════════════
+let pendingImport = null;
+
+const IMP_NON_NOTEBOOK = ['salario','premio bolao copa','rendimentos','serviço alexandre (engenho group)','serviço alexandre engenho group'];
+
+// Colunas (0-indexed, vindas de sheet_to_json com header:1) — variam por aba
+const IMP_SHEET_CFG = {
+  '2025': { item:2, venda:6, custo:7, mesCompra:9, mesVenda:10 },
+  '2024': { item:1, venda:4, custo:5, mesCompra:7, mesVenda:8 },
+};
+
+function impPad(n){ return String(n).padStart(2,'0'); }
+
+function impParseMonth(val){
+  if(val===undefined||val===null||val==='') return '';
+  if(val instanceof Date) return val.getFullYear()+'-'+impPad(val.getMonth()+1);
+  if(typeof val === 'number'){
+    // serial de data do Excel
+    const d = XLSX.SSF? XLSX.SSF.parse_date_code(val) : null;
+    if(d) return d.y+'-'+impPad(d.m);
+    return '';
+  }
+  const s = String(val).trim();
+  let m = s.match(/^(\d{1,2})\/(\d{2,4})$/);
+  if(m){ let yy=m[2].length===2?('20'+m[2]):m[2]; return yy+'-'+impPad(m[1]); }
+  m = s.match(/^(\d{4})-(\d{2})/);
+  if(m) return m[1]+'-'+m[2];
+  return '';
+}
+
+function impNum(v){
+  if(v===undefined||v===null||v==='') return 0;
+  if(typeof v==='number') return v;
+  const n = parseFloat(String(v).replace(',','.').trim());
+  return isNaN(n)?0:n;
+}
+
+async function impLerPlanilha(file){
+  const buf = await file.arrayBuffer();
+  const wb = XLSX.read(buf, {type:'array', cellDates:true});
+  const itens = [];
+
+  for(const sheetName of ['2024','2025']){
+    const sheet = wb.Sheets[sheetName];
+    if(!sheet) continue;
+    const cfg = IMP_SHEET_CFG[sheetName];
+    const rows = XLSX.utils.sheet_to_json(sheet, {header:1, raw:true, defval:''});
+    for(const row of rows){
+      const rawNome = row[cfg.item];
+      if(!rawNome || typeof rawNome !== 'string') continue;
+      const nomeTrim = rawNome.trim();
+      if(!nomeTrim) continue;
+      const keyLower = nomeTrim.toLowerCase();
+      if(IMP_NON_NOTEBOOK.includes(keyLower)) continue;
+
+      const custo = impNum(row[cfg.custo]);
+      const venda = impNum(row[cfg.venda]);
+      const dc = impParseMonth(row[cfg.mesCompra]);
+      const dv = impParseMonth(row[cfg.mesVenda]);
+
+      let nome = nomeTrim;
+      const joaoMarker = /joao\s*p(agou)?\b|joão\s*p(agou)?\b/i.test(nome);
+      nome = nome.replace(/\s*joao\s*pagou\s*(metade)?\s*/ig,' ').replace(/\s*joao\s*p\b/ig,'').replace(/\s+/g,' ').trim();
+      if(joaoMarker && !nome.includes('*')) nome = nome+'*';
+
+      itens.push({
+        nome, custo, venda, lucro: venda-custo,
+        status: dv ? 'Vendido' : 'Estoque',
+        data_compra: dc, data_venda: dv, data: dv||dc,
+      });
+    }
+  }
+
+  itens.forEach((it,i)=>{ it.num = i+1; });
+  return itens;
+}
+
+window.processarPlanilha = async () => {
+  const fileInput = document.getElementById('impFile');
+  const statusEl = document.getElementById('impStatus');
+  const btnConfirm = document.getElementById('btnConfirmarImp');
+  if(!fileInput.files.length){ alert('Selecione o arquivo .xlsx primeiro!'); return; }
+  statusEl.innerHTML = '<span style="color:var(--am)">⏳ Lendo planilha...</span>';
+  btnConfirm.disabled = true;
+  try{
+    const itens = await impLerPlanilha(fileInput.files[0]);
+    pendingImport = itens;
+    const vendido = itens.filter(i=>i.status==='Vendido').length;
+    const estoque = itens.filter(i=>i.status==='Estoque').length;
+    const joao = itens.filter(i=>i.nome.endsWith('*')).length;
+    const exemplos = itens.slice(-5).map(i=>`${i.nome} (${i.status}, ${i.data||'sem data'})`).join('<br>');
+    statusEl.innerHTML = `<strong style="color:#15803d">✅ ${itens.length} itens lidos da planilha</strong> (${vendido} vendidos, ${estoque} estoque, ${joao} com João*).<br>
+      <span style="color:var(--mu)">Últimos 5 itens encontrados:</span><br><span style="font-size:.74rem;color:var(--li)">${exemplos}</span><br><br>
+      <strong style="color:var(--am)">⚠️ Confirmar vai SUBSTITUIR todos os notebooks compartilhados atuais por esses ${itens.length} itens.</strong>`;
+    btnConfirm.disabled = false;
+  }catch(e){
+    statusEl.innerHTML = `<span style="color:var(--re)">❌ Erro ao ler planilha: ${e.message}</span>`;
+    pendingImport = null;
+  }
+};
+
+window.confirmarImportacao = async () => {
+  if(!pendingImport || !pendingImport.length){ alert('Processe a planilha primeiro!'); return; }
+  if(!confirm(`Confirma substituir TODOS os notebooks compartilhados pelos ${pendingImport.length} itens da planilha? Essa ação não pode ser desfeita.`)) return;
+
+  const btnConfirm = document.getElementById('btnConfirmarImp');
+  const btnProc = document.getElementById('btnProcessarImp');
+  btnConfirm.disabled = true; btnProc.disabled = true;
+  document.getElementById('impLog').innerHTML = '';
+  setImpProgresso(0, 'Removendo estoque antigo...');
+
+  try{
+    // 1. Apagar todos os produtos compartilhados atuais
+    const q = query(collection(db,'products'), where('userId','==','shared_ijx'));
+    const snap = await getDocs(q);
+    logMig('impLog', `🗑️ Removendo ${snap.size} produtos antigos...`, '#fbbf24');
+    let del=0;
+    for(const d of snap.docs){
+      try{ await deleteDoc(doc(db,'products', d.id)); del++; }catch(e){}
+      if(del % 20 === 0) await new Promise(r=>setTimeout(r,150));
+    }
+    logMig('impLog', `✓ ${del} produtos antigos removidos.`, '#4ade80');
+
+    // 2. Inserir os itens novos da planilha
+    setImpProgresso(10, `Inserindo ${pendingImport.length} itens...`);
+    let ok=0;
+    for(let i=0;i<pendingImport.length;i++){
+      const it = pendingImport[i];
+      const obj = {...it, userId:'shared_ijx', addedBy:'import_planilha', addedByName:'Importação planilha', createdAt:new Date().toISOString()};
+      try{ await addDoc(collection(db,'products'), obj); ok++; }
+      catch(e){ logMig('impLog', `✗ Erro em "${it.nome}": ${e.message}`, '#f87171'); }
+      const pct = 10+Math.round((i+1)/pendingImport.length*88);
+      setImpProgresso(pct, `Inserindo ${i+1} de ${pendingImport.length}...`);
+      if(i>0 && i%20===0) await new Promise(r=>setTimeout(r,250));
+    }
+
+    setImpProgresso(100, 'Importação concluída!');
+    logMig('impLog', `\n✅ ${ok} itens importados com sucesso.`, '#4ade80');
+    document.getElementById('impStatus').innerHTML = `<strong style="color:#15803d">✅ Sincronizado!</strong> ${ok} notebooks da planilha agora são o estoque oficial do site.`;
+    pendingImport = null;
+
+    await loadProds();
+    if(document.getElementById('pg-insights').classList.contains('on')) buildCharts();
+    if(document.getElementById('pg-painel').classList.contains('on')){ buildPainel(); buildPainelCharts(); }
+  }catch(e){
+    logMig('impLog', `\n❌ Erro fatal: ${e.message}`, '#f87171');
+  }
+  btnProc.disabled = false;
+};
+
+function setImpProgresso(pct, label){
+  const wrap = document.getElementById('impProgWrap');
+  const bar  = document.getElementById('impProgBar');
+  const lbl  = document.getElementById('impProgLabel');
+  const pctEl = document.getElementById('impProgPct');
+  if(wrap) wrap.style.display = 'block';
+  if(bar)  bar.style.width = pct+'%';
+  if(lbl)  lbl.textContent = label;
+  if(pctEl) pctEl.textContent = pct+'%';
+}
+
 // ════════════════════════════════════════
 // ADMIN — MIGRAÇÃO DE DADOS
 // ════════════════════════════════════════
