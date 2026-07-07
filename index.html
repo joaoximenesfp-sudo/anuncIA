@@ -769,6 +769,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
 
         <button class="nt" id="nav-fin" onclick="sp2('financas')">Finanças</button>
         <button class="nt" onclick="sp2('logistica')">🚗 Logística</button>
+        <button class="nt" onclick="sp2('clientes')">👥 Clientes</button>
       </div>
       <div class="nr">
         <span class="nu" id="NU"></span>
@@ -1692,6 +1693,74 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
     </div>
   </div>
 
+  <!-- CLIENTES -->
+  <style>
+    #pg-clientes .cli-hero{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+    #pg-clientes .cli-stat{background:var(--w);border:1px solid var(--b);border-radius:12px;padding:12px 14px}
+    #pg-clientes .cli-stat .cli-stat-lbl{font-size:.7rem;color:var(--mu);font-weight:600;margin-bottom:2px}
+    #pg-clientes .cli-stat .cli-stat-val{font-size:1.4rem;font-weight:800;color:var(--tx);line-height:1.1}
+    #pg-clientes .cli-stat.q{border-color:var(--rbg);background:linear-gradient(180deg,#fff, #fff6f6)}
+    #pg-clientes .cli-stat.pj{border-color:var(--bbd);background:linear-gradient(180deg,#fff,#f6f9ff)}
+    #pg-clientes .cli-stat.f{border-color:var(--gbd);background:linear-gradient(180deg,#fff,#f5fdf7)}
+    #pg-clientes .cli-add{background:var(--w);border:1px solid var(--b);border-radius:12px;padding:14px;margin-bottom:14px;display:grid;grid-template-columns:1.6fr 1fr 1fr auto;gap:8px;align-items:end}
+    #pg-clientes .cli-search{width:100%;margin-bottom:12px}
+    #pg-clientes .cli-card{display:flex;align-items:center;gap:12px;background:var(--w);border:1px solid var(--b);border-radius:12px;padding:12px 14px;margin-bottom:8px}
+    #pg-clientes .cli-tag{font-size:.66rem;font-weight:700;padding:4px 8px;border-radius:20px;white-space:nowrap;min-width:120px;text-align:center}
+    #pg-clientes .cli-tag.re{background:var(--rbg);color:var(--re)}
+    #pg-clientes .cli-tag.am{background:var(--abg);color:var(--am)}
+    #pg-clientes .cli-tag.gr{background:var(--gbg);color:var(--gr)}
+    #pg-clientes .cli-tag.bl{background:var(--bbg);color:var(--bl)}
+    #pg-clientes .cli-tag.mu{background:var(--bg);color:var(--mu)}
+    #pg-clientes .cli-main{flex:1;min-width:0}
+    #pg-clientes .cli-nome{font-weight:700;font-size:.92rem;color:var(--tx)}
+    #pg-clientes .cli-meta{font-size:.72rem;color:var(--mu);margin-top:2px}
+    #pg-clientes .cli-wa{background:#25d366;color:#fff;font-size:.76rem;font-weight:700;padding:7px 12px;border-radius:8px;text-decoration:none;white-space:nowrap}
+    #pg-clientes .cli-wa.off{background:var(--bg);color:var(--li);cursor:default}
+    @media(max-width:720px){
+      #pg-clientes .cli-hero{grid-template-columns:1fr 1fr}
+      #pg-clientes .cli-add{grid-template-columns:1fr 1fr}
+      #pg-clientes .cli-card{flex-wrap:wrap}
+      #pg-clientes .cli-tag{order:-1}
+    }
+  </style>
+  <div class="pg" id="pg-clientes">
+    <div class="wr">
+      <div class="ph">
+        <div>
+          <div class="pht">👥 Clientes</div>
+          <div class="phs">Base de recompra — quem já comprou é o lead mais barato que existe</div>
+        </div>
+      </div>
+
+      <div class="cli-hero">
+        <div class="cli-stat"><div class="cli-stat-lbl">Total de clientes</div><div class="cli-stat-val" id="cliStatTot">0</div></div>
+        <div class="cli-stat q"><div class="cli-stat-lbl">🔥 Recompra quente</div><div class="cli-stat-val" id="cliStatQuentes">0</div></div>
+        <div class="cli-stat pj"><div class="cli-stat-lbl">🏢 Potencial PJ</div><div class="cli-stat-val" id="cliStatPJ">0</div></div>
+        <div class="cli-stat f"><div class="cli-stat-lbl">📞 Follow-up</div><div class="cli-stat-val" id="cliStatFollow">0</div></div>
+      </div>
+
+      <div class="cli-add">
+        <div class="fc"><label class="fl">Nome do cliente</label><input class="inp" type="text" id="cliNome" placeholder="Ex.: Carlos Eduardo"></div>
+        <div class="fc"><label class="fl">WhatsApp</label><input class="inp" type="tel" id="cliWpp" placeholder="19999999999"></div>
+        <div class="fc"><label class="fl">Perfil</label>
+          <select class="inp" id="cliPerfil">
+            <option value="">—</option>
+            <option value="basico">🏠 Uso básico</option>
+            <option value="trabalho">💼 Trabalho</option>
+            <option value="estudante">🎓 Estudante</option>
+            <option value="gamer">🎮 Gamer</option>
+            <option value="empresa">🏢 Empresa (PJ)</option>
+          </select>
+        </div>
+        <button class="bsav" onclick="addClienteManual()">+ Cadastrar</button>
+      </div>
+
+      <input class="inp cli-search" type="text" id="cliBusca" placeholder="🔎 Buscar cliente pelo nome..." oninput="cliFiltrar()">
+
+      <div id="cliLista"></div>
+    </div>
+  </div>
+
   <!-- MODAL EDIÇÃO LOGÍSTICA -->
   <div class="log-edit-modal" id="logEditModal">
     <div class="log-edit-overlay" onclick="closeLogEdit()"></div>
@@ -1827,6 +1896,28 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
           <option value="Outro">Outro</option>
         </select>
       </div>
+      <div class="fc full">
+        <label class="fl">👤 Cliente <span style="font-size:.67rem;color:var(--li);font-weight:400">opcional — vira base de recompra</span></label>
+        <div style="position:relative">
+          <input class="inp" type="text" id="smCliBusca" placeholder="Buscar ou digitar nome do comprador..." autocomplete="off" oninput="cliSellBusca(this.value)" onfocus="cliSellBusca(this.value)">
+          <div id="smCliDrop" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:30;background:var(--w);border:1px solid var(--b2);border-radius:8px;margin-top:2px;max-height:170px;overflow:auto;box-shadow:0 6px 18px rgba(0,0,0,.09)"></div>
+        </div>
+        <input type="hidden" id="smCliId" value="">
+        <div id="smCliNovo" style="display:none;margin-top:6px;background:var(--gbg);border:1px solid var(--gbd);border-radius:8px;padding:8px">
+          <div style="font-size:.7rem;color:var(--gr);font-weight:700;margin-bottom:5px">✨ Novo cliente — <span id="smCliNovoNome"></span></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+            <input class="inp" type="tel" id="smCliWpp" placeholder="WhatsApp (só números)" style="font-size:.8rem">
+            <select class="inp" id="smCliPerfil" style="font-size:.8rem">
+              <option value="">Perfil de uso</option>
+              <option value="basico">🏠 Uso básico</option>
+              <option value="trabalho">💼 Trabalho / home office</option>
+              <option value="estudante">🎓 Estudante</option>
+              <option value="gamer">🎮 Gamer</option>
+              <option value="empresa">🏢 Empresa (PJ)</option>
+            </select>
+          </div>
+        </div>
+      </div>
       <div class="fc">
         <label class="fl">Preço de venda R$</label>
         <input class="inp" type="number" id="smPreco" placeholder="0" min="0" oninput="updDias();updSplitVenda()">
@@ -1923,7 +2014,7 @@ const CQ={labels:["Jan/25", "Fev/25", "Mar/25", "Abr/25", "Mai/25", "Jun/25", "J
 const CLM={labels:['Dell','Lenovo','Acer','Samsung','HP','Asus','Outros'],luc:[274,293,270,213,250,225,205],tic:[495,566,448,357,432,275,313]};
 const CMarca={labels:['Dell','Lenovo','Acer','Samsung','HP','Asus','Outros'],values:[97,45,33,23,14,2,14]};
 
-let user=null,prods=[],filt='todos',editId=null,chartsOk=false,sellId=null;
+let user=null,prods=[],filt='todos',editId=null,chartsOk=false,sellId=null,clientes=[];
 
 // Emails autorizados — adicione os emails de João e Igor aqui
 const EMAIL_IGOR = 'i155757@dac.unicamp.br';
@@ -1946,7 +2037,7 @@ onAuthStateChanged(auth,u=>{
     // Mostrar botão admin só para o dono
     const btnAdm = document.getElementById('btnAdmin');
     if(btnAdm) btnAdm.style.display = perfilAtual==='joao' ? '' : 'none';
-    loadProds();loadFinancas();loadPecas();loadLogistica();
+    loadProds();loadFinancas();loadPecas();loadLogistica();loadClientes();
     setTimeout(carregarAvisos, 2000); // carregar avisos após login
   }
   else{document.getElementById('AS').classList.remove('h');document.getElementById('APP').classList.remove('v');}
@@ -2024,6 +2115,13 @@ window.updStatus=(id,newVal)=>{
     document.getElementById('smPreco').value=p.venda||'';
     document.getElementById('smPlat').value=p.plataforma||'';
     document.getElementById('smData').value=new Date().toISOString().split('T')[0];
+    // Cliente: limpa e pré-preenche se o produto já tiver um vinculado
+    document.getElementById('smCliBusca').value=p.cliente_nome||'';
+    document.getElementById('smCliId').value=p.cliente_id||'';
+    document.getElementById('smCliDrop').style.display='none';
+    document.getElementById('smCliNovo').style.display='none';
+    document.getElementById('smCliWpp').value='';
+    document.getElementById('smCliPerfil').value='';
     document.getElementById('smDiasHint').textContent='';
     document.getElementById('smDiasHint').className='dias-hint';
     document.getElementById('SMO').classList.remove('h');
@@ -2057,6 +2155,8 @@ window.updDias=()=>{
 window.cancelSell=()=>{
   document.getElementById('SMO').classList.add('h');
   sellId=null;
+  const cd=document.getElementById('smCliDrop'); if(cd) cd.style.display='none';
+  const cn=document.getElementById('smCliNovo'); if(cn) cn.style.display='none';
   // Limpar checkboxes das contas
   document.querySelectorAll('#smContasList input[type=checkbox]').forEach(cb=>cb.checked=false);
   const totalEl=document.getElementById('smTotalPagar');
@@ -2147,7 +2247,19 @@ window.confirmSell=async()=>{
   const dcRaw=p?.data_compra||p?.data||'';
   const dc=dcRaw?(dcRaw.length===7?dcRaw+'-01':dcRaw):null;
   const dias=dataVenda&&dc?Math.round((new Date(dataVenda)-new Date(dc))/(86400000)):null;
-  const mesVenda=dataVenda?dataVenda.slice(0,7):'';const upd={status:'Vendido',plataforma:plat,venda:preco,lucro:preco-(p?.custo||0),data_venda:dataVenda||'',data:mesVenda,diasParado:dias>=0?dias:null};
+  // ── Resolver cliente (existente ou novo) ──
+  let cliId=document.getElementById('smCliId').value||'';
+  let cliNome=(document.getElementById('smCliBusca').value||'').trim();
+  if(cliNome && !cliId){
+    // Nome digitado sem selecionar existente → cria cliente novo
+    const wpp=(document.getElementById('smCliWpp').value||'').replace(/\D/g,'');
+    const perfil=document.getElementById('smCliPerfil').value||'';
+    cliId=await salvarCliente({nome:cliNome,whatsapp:wpp,perfil,origem:plat||''});
+  } else if(cliId){
+    // Cliente existente comprando de novo → atualiza última compra
+    await tocarCliente(cliId, dataVenda);
+  }
+  const mesVenda=dataVenda?dataVenda.slice(0,7):'';const upd={status:'Vendido',plataforma:plat,venda:preco,lucro:preco-(p?.custo||0),data_venda:dataVenda||'',data:mesVenda,diasParado:dias>=0?dias:null,cliente_id:cliId,cliente_nome:cliNome};
   await doSaveStatus(sellId,upd);
   if(c6val>0||mpval>0){
     const entBase={userId:user.uid,tipo:'entrada',descricao:'Venda: '+(p?.nome||'Produto'),data:dataVenda||new Date().toISOString().split('T')[0],prodId:sellId};
@@ -2193,6 +2305,163 @@ async function doSaveStatus(id,upd){
   const p=prods.find(x=>x.id===id);if(p)Object.assign(p,upd);
   render();renderSecoes();calcStats();
   if(document.getElementById('pg-insights')&&document.getElementById('pg-insights').classList.contains('on'))buildCharts();
+}
+
+// ════════════════════════════════════════
+// MÓDULO CLIENTES (CRM leve) — base de recompra
+// Estatísticas são DERIVADAS de products (cliente_id), então
+// nunca "desincronizam" mesmo se uma venda for editada.
+// ════════════════════════════════════════
+async function loadClientes(){
+  if(!user)return;
+  try{
+    const snap=await getDocs(query(collection(db,'clientes'),where('userId','==','shared_ijx')));
+    clientes=snap.docs.map(d=>({id:d.id,...d.data()}));
+  }catch(e){clientes=[];}
+  if(document.getElementById('pg-clientes')&&document.getElementById('pg-clientes').classList.contains('on'))renderClientes();
+}
+
+// Cria (ou reaproveita por nome) um cliente. Retorna o id.
+async function salvarCliente(dados){
+  const nome=(dados.nome||'').trim();
+  if(!nome)return '';
+  const existente=clientes.find(c=>(c.nome||'').trim().toLowerCase()===nome.toLowerCase());
+  if(existente){
+    const upd={};
+    if(dados.whatsapp && !existente.whatsapp) upd.whatsapp=dados.whatsapp;
+    if(dados.perfil && !existente.perfil) upd.perfil=dados.perfil;
+    if(dados.origem && !existente.origem) upd.origem=dados.origem;
+    if(Object.keys(upd).length){
+      try{ if(!existente.id.startsWith('l')) await updateDoc(doc(db,'clientes',existente.id),upd); }catch(e){}
+      Object.assign(existente,upd);
+    }
+    return existente.id;
+  }
+  const obj={userId:'shared_ijx',addedBy:user.uid,nome,whatsapp:dados.whatsapp||'',perfil:dados.perfil||'',origem:dados.origem||'',cidade:'',obs:'',criado_em:new Date().toISOString()};
+  try{
+    const r=await addDoc(collection(db,'clientes'),obj);
+    clientes.push({...obj,id:r.id});
+    return r.id;
+  }catch(e){ const lid='l'+Date.now(); clientes.push({...obj,id:lid}); return lid; }
+}
+
+// Placeholder de "toque" — stats são derivadas, então não precisa mutar contadores.
+async function tocarCliente(id, dataVenda){ /* derivado de products, nada a fazer */ }
+
+// Estatísticas de um cliente a partir das vendas reais
+function cliStats(c){
+  const compras=prods.filter(p=>p.cliente_id===c.id && p.status==='Vendido');
+  const datas=compras.map(p=>p.data_venda).filter(Boolean).sort();
+  const ultima=datas.length?datas[datas.length-1]:null;
+  const totalGasto=compras.reduce((s,p)=>s+(p.venda||0),0);
+  let mesesDesde=null;
+  if(ultima){ const d=ultima.length===7?ultima+'-01':ultima; mesesDesde=Math.floor((Date.now()-new Date(d))/(86400000*30.4)); }
+  return {nCompras:compras.length,ultima,totalGasto,mesesDesde,itens:compras};
+}
+
+// Classifica o cliente na melhor "oportunidade" (prioridade menor = mais quente)
+function cliOportunidade(c,st){
+  const pj = c.perfil==='empresa' || st.nCompras>=2;
+  if(st.mesesDesde!==null && st.mesesDesde>=18) return {prio:1,tag:'🔥 Recompra madura',cls:'re',tipo:'recompra'};
+  if(pj) return {prio:2,tag:'🏢 Potencial PJ / volume',cls:'bl',tipo:'pj'};
+  if(st.mesesDesde!==null && st.mesesDesde>=12) return {prio:3,tag:'⏳ Aquecendo p/ troca',cls:'am',tipo:'recompra'};
+  if(st.mesesDesde!==null && st.mesesDesde<=6) return {prio:4,tag:'📞 Follow-up garantia',cls:'gr',tipo:'followup'};
+  return {prio:5,tag:'Cliente',cls:'mu',tipo:'geral'};
+}
+
+function waLink(c,tipo){
+  const num=(c.whatsapp||'').replace(/\D/g,'');
+  if(!num)return '';
+  const full=num.length<=11?'55'+num:num;
+  const primeiro=(c.nome||'').trim().split(' ')[0];
+  let msg;
+  if(tipo==='recompra') msg=`Olá ${primeiro}! Aqui é da Business IJX 👋 Faz um tempo que você comprou com a gente. Chegou notebook novo no estoque com garantia que pode te interessar — quer dar uma olhada?`;
+  else if(tipo==='followup') msg=`Olá ${primeiro}! Aqui é da Business IJX 👋 Passando só pra saber se está tudo certo com o notebook. Qualquer coisa a garantia continua valendo, é só chamar!`;
+  else if(tipo==='pj') msg=`Olá ${primeiro}! Aqui é da Business IJX 👋 Trabalhamos com notebooks revisados e com garantia, ótimos pra equipe. Se precisar de mais máquinas, monto uma condição especial pra volume. Posso te enviar o que temos hoje?`;
+  else msg=`Olá ${primeiro}! Aqui é da Business IJX 👋`;
+  return `https://wa.me/${full}?text=${encodeURIComponent(msg)}`;
+}
+
+window.addClienteManual=async()=>{
+  const nome=document.getElementById('cliNome').value.trim();
+  if(!nome){alert('Digite o nome!');return;}
+  const wpp=document.getElementById('cliWpp').value.replace(/\D/g,'');
+  const perfil=document.getElementById('cliPerfil').value;
+  await salvarCliente({nome,whatsapp:wpp,perfil,origem:'manual'});
+  document.getElementById('cliNome').value='';document.getElementById('cliWpp').value='';document.getElementById('cliPerfil').value='';
+  renderClientes();
+};
+
+window.cliFiltrar=()=>renderClientes();
+
+// ── Busca de cliente dentro do modal de venda ──
+window.cliSellBusca=(val)=>{
+  const drop=document.getElementById('smCliDrop');
+  const novo=document.getElementById('smCliNovo');
+  const q=(val||'').trim().toLowerCase();
+  document.getElementById('smCliId').value=''; // digitar quebra o vínculo até selecionar de novo
+  if(!q){drop.style.display='none';novo.style.display='none';return;}
+  const matches=clientes.filter(c=>(c.nome||'').toLowerCase().includes(q)).slice(0,6);
+  if(matches.length){
+    drop.innerHTML=matches.map(c=>{
+      const st=cliStats(c);
+      const sub=st.nCompras+' compra'+(st.nCompras!==1?'s':'')+(c.whatsapp?' · 📱':'');
+      return `<div onclick="cliSellPick('${c.id}')" style="padding:8px 10px;cursor:pointer;border-bottom:1px solid var(--b);font-size:.82rem" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''"><strong>${esc(c.nome)}</strong> <span style="color:var(--li);font-size:.72rem">${sub}</span></div>`;
+    }).join('');
+    drop.style.display='block';
+  } else { drop.style.display='none'; }
+  const exato=clientes.some(c=>(c.nome||'').trim().toLowerCase()===q);
+  if(!exato){ novo.style.display='block'; document.getElementById('smCliNovoNome').textContent='"'+val.trim()+'"'; }
+  else { novo.style.display='none'; }
+};
+window.cliSellPick=(id)=>{
+  const c=clientes.find(x=>x.id===id); if(!c)return;
+  document.getElementById('smCliBusca').value=c.nome;
+  document.getElementById('smCliId').value=id;
+  document.getElementById('smCliDrop').style.display='none';
+  document.getElementById('smCliNovo').style.display='none';
+};
+
+function renderClientes(){
+  const lista=document.getElementById('cliLista');
+  if(!lista)return;
+  const q=(document.getElementById('cliBusca')?.value||'').trim().toLowerCase();
+  // monta clientes com stats + oportunidade
+  let arr=clientes.map(c=>{const st=cliStats(c);return {c,st,op:cliOportunidade(c,st)};});
+  // stats de topo
+  const totCli=arr.length;
+  const quentes=arr.filter(x=>x.op.prio===1).length;
+  const pjs=arr.filter(x=>x.op.prio===2).length;
+  const follows=arr.filter(x=>x.op.prio===4).length;
+  const elTot=document.getElementById('cliStatTot'); if(elTot)elTot.textContent=totCli;
+  const elQ=document.getElementById('cliStatQuentes'); if(elQ)elQ.textContent=quentes;
+  const elPJ=document.getElementById('cliStatPJ'); if(elPJ)elPJ.textContent=pjs;
+  const elF=document.getElementById('cliStatFollow'); if(elF)elF.textContent=follows;
+  // filtro de busca
+  if(q) arr=arr.filter(x=>(x.c.nome||'').toLowerCase().includes(q));
+  // ordena por oportunidade e depois por meses desde a última compra (mais antigo primeiro)
+  arr.sort((a,b)=>a.op.prio-b.op.prio || ((b.st.mesesDesde||0)-(a.st.mesesDesde||0)));
+  if(!arr.length){
+    lista.innerHTML='<div style="text-align:center;color:var(--li);padding:30px;font-size:.85rem">Nenhum cliente ainda. Cadastre pela venda (modal 🎉 Registrar venda) ou pelo formulário acima. A base cresce a cada venda.</div>';
+    return;
+  }
+  lista.innerHTML=arr.map(({c,st,op})=>{
+    const wl=waLink(c,op.tipo);
+    const ultimaFmt=st.ultima?(st.ultima.length===7?st.ultima:new Date(st.ultima+'T12:00:00').toLocaleDateString('pt-BR')):'—';
+    const perfilLbl={basico:'🏠 Básico',trabalho:'💼 Trabalho',estudante:'🎓 Estudante',gamer:'🎮 Gamer',empresa:'🏢 Empresa'}[c.perfil]||'';
+    const mesesTxt=st.mesesDesde!==null?(st.mesesDesde===0?'este mês':st.mesesDesde+' mês(es) atrás'):'sem venda registrada';
+    const wppBtn=wl
+      ? `<a href="${wl}" target="_blank" class="cli-wa">💬 WhatsApp</a>`
+      : `<span class="cli-wa off" title="Cliente sem WhatsApp cadastrado">📱 sem contato</span>`;
+    return `<div class="cli-card">
+      <div class="cli-tag ${op.cls}">${op.tag}</div>
+      <div class="cli-main">
+        <div class="cli-nome">${esc(c.nome)}</div>
+        <div class="cli-meta">${st.nCompras} compra${st.nCompras!==1?'s':''} · ${fmt(st.totalGasto)} · última ${ultimaFmt} (${mesesTxt})${perfilLbl?' · '+perfilLbl:''}${c.origem?' · via '+esc(c.origem):''}</div>
+      </div>
+      <div class="cli-actions">${wppBtn}</div>
+    </div>`;
+  }).join('');
 }
 
 // EDIT MODAL
@@ -2680,12 +2949,15 @@ window.sp2=p=>{
        (p==='insights'&&t.textContent.includes('Insight'))||
        (p==='painel'&&t.textContent.includes('Painel'))||
        (p==='anuncios'&&t.textContent.includes('Anún'))||
-       (p==='financas'&&t.textContent.includes('Finan')))t.classList.add('on');
+       (p==='financas'&&t.textContent.includes('Finan'))||
+       (p==='logistica'&&t.textContent.includes('Logística'))||
+       (p==='clientes'&&t.textContent.includes('Clientes')))t.classList.add('on');
   });
   if(p==='insights')buildCharts();
   if(p==='painel'){buildPainel();buildPainelCharts();}
   if(p==='financas'){renderFinLabel();checkNotificacoes();}
   if(p==='admin'){carregarAvisos();}
+  if(p==='clientes'){renderClientes();}
   if(p==='logistica'){renderLogistica();}
   else{const bar=document.getElementById('notifBar');if(bar){bar.innerHTML='';bar.classList.remove('on');adjustPageTop();}}
 };
