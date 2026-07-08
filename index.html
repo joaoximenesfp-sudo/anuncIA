@@ -123,14 +123,14 @@ nav{position:sticky;top:0;z-index:50;background:rgba(249,248,246,.93);backdrop-f
 .mo{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:24px}
 .mo.h{display:none}
 .moo{position:absolute;inset:0;background:rgba(0,0,0,.4);backdrop-filter:blur(4px)}
-.mc{position:relative;background:var(--w);border-radius:16px;width:100%;max-width:520px;box-shadow:var(--shm);overflow:hidden}
-.mch{padding:20px 24px 16px;border-bottom:1px solid var(--b);display:flex;align-items:center;justify-content:space-between}
+.mc{position:relative;background:var(--w);border-radius:16px;width:100%;max-width:520px;box-shadow:var(--shm);overflow:hidden;max-height:calc(100vh - 48px);max-height:calc(100dvh - 48px);display:flex;flex-direction:column}
+.mch{padding:20px 24px 16px;border-bottom:1px solid var(--b);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
 .mct{font-family:'Instrument Serif',serif;font-size:1.2rem;color:var(--tx)}
 .mcl{width:30px;height:30px;border-radius:7px;border:1px solid var(--b);background:transparent;color:var(--mu);cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;transition:all .15s}
 .mcl:hover{background:var(--b);color:var(--tx)}
-.mcb{padding:20px 24px 24px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.mcb{padding:20px 24px 24px;display:grid;grid-template-columns:1fr 1fr;gap:12px;overflow-y:auto;flex:1 1 auto;min-height:0}
 .mcb .full{grid-column:1/-1}
-.mca{padding:0 24px 20px;display:flex;justify-content:flex-end;gap:8px;border-top:1px solid var(--b)}
+.mca{padding:14px 24px 18px;display:flex;justify-content:flex-end;gap:8px;border-top:1px solid var(--b);flex-shrink:0;background:var(--w)}
 .bcan{padding:9px 18px;border:1px solid var(--b2);border-radius:8px;background:transparent;color:var(--mu);font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;transition:all .15s}
 .bcan:hover{border-color:var(--tx);color:var(--tx)}
 .bsav{padding:9px 22px;background:var(--tx);color:#fff;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;transition:opacity .15s}
@@ -140,17 +140,23 @@ nav{position:sticky;top:0;z-index:50;background:rgba(249,248,246,.93);backdrop-f
 .smo{position:fixed;inset:0;z-index:150;display:flex;align-items:center;justify-content:center;padding:24px}
 .smo.h{display:none}
 .smoo{position:absolute;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(5px)}
-.smc{position:relative;background:var(--w);border-radius:16px;width:100%;max-width:460px;box-shadow:var(--shm);overflow:hidden}
-.smch{padding:20px 24px 14px;border-bottom:1px solid var(--b);display:flex;align-items:center;justify-content:space-between}
+.smc{position:relative;background:var(--w);border-radius:16px;width:100%;max-width:460px;box-shadow:var(--shm);overflow:hidden;max-height:calc(100vh - 48px);max-height:calc(100dvh - 48px);display:flex;flex-direction:column}
+.smch{padding:20px 24px 14px;border-bottom:1px solid var(--b);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
 .smct{font-family:'Instrument Serif',serif;font-size:1.15rem;color:var(--tx)}
 .smcl{width:30px;height:30px;border-radius:7px;border:1px solid var(--b);background:transparent;color:var(--mu);cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;transition:all .15s}
 .smcl:hover{background:var(--b)}
-.smcp{padding:10px 24px 10px;background:var(--bg);border-bottom:1px solid var(--b);font-size:.83rem;font-weight:500;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.smcb{padding:18px 24px 20px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.smcp{padding:10px 24px 10px;background:var(--bg);border-bottom:1px solid var(--b);font-size:.83rem;font-weight:500;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:0}
+.smcb{padding:18px 24px 20px;display:grid;grid-template-columns:1fr 1fr;gap:12px;overflow-y:auto;flex:1 1 auto;min-height:0}
 .smcb .full{grid-column:1/-1}
 .dias-hint{font-size:.73rem;font-weight:600;margin-top:3px;min-height:16px}
 .dias-hint.verde{color:var(--gr)}.dias-hint.am{color:var(--am)}.dias-hint.re{color:var(--re)}
-.smca{padding:0 24px 20px;display:flex;justify-content:flex-end;gap:8px}
+.smca{padding:14px 24px 18px;display:flex;justify-content:flex-end;gap:8px;flex-shrink:0;border-top:1px solid var(--b);background:var(--w)}
+.modal-sucesso{position:absolute;inset:0;background:var(--w);border-radius:16px;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:32px;z-index:20}
+.modal-sucesso.on{display:flex}
+.modal-sucesso .ms-icon{font-size:3rem;line-height:1;animation:msPop .35s ease}
+.modal-sucesso .ms-tit{font-size:1.3rem;font-weight:800;color:var(--gr)}
+.modal-sucesso .ms-resumo{font-size:.9rem;color:var(--mu);max-width:320px;line-height:1.5}
+@keyframes msPop{0%{transform:scale(.4);opacity:0}70%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
 .bvnd{padding:10px 22px;background:var(--gr);color:#fff;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.84rem;font-weight:600;cursor:pointer;transition:opacity .15s}
 .bvnd:hover{opacity:.85}
 
@@ -727,6 +733,8 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
   .mcb{grid-template-columns:1fr}
   .smcb{grid-template-columns:1fr}
   .fin-cols{grid-template-columns:1fr}
+  .mo,.smo{padding:12px}
+  .mc,.smc{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px)}
 }
 </style>
 </head>
@@ -1710,13 +1718,88 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
     #pg-clientes .cli-tag.am{background:var(--abg);color:var(--am)}
     #pg-clientes .cli-tag.gr{background:var(--gbg);color:var(--gr)}
     #pg-clientes .cli-tag.bl{background:var(--bbg);color:var(--bl)}
+    #pg-clientes .cli-tag.rp{background:#f3e8ff;color:#7c3aed}
     #pg-clientes .cli-tag.mu{background:var(--bg);color:var(--mu)}
     #pg-clientes .cli-main{flex:1;min-width:0}
     #pg-clientes .cli-nome{font-weight:700;font-size:.92rem;color:var(--tx)}
     #pg-clientes .cli-meta{font-size:.72rem;color:var(--mu);margin-top:2px}
     #pg-clientes .cli-wa{background:#25d366;color:#fff;font-size:.76rem;font-weight:700;padding:7px 12px;border-radius:8px;text-decoration:none;white-space:nowrap}
     #pg-clientes .cli-wa.off{background:var(--bg);color:var(--li);cursor:default}
+    #pg-clientes .cli-wrap{margin-bottom:8px}
+    #pg-clientes .cli-wrap .cli-card{margin-bottom:0}
+    #pg-clientes .cli-chev{display:inline-block;width:14px;color:var(--li);font-size:.8rem}
+    #pg-clientes .cli-nb-count{font-size:.68rem;font-weight:700;color:var(--bl);background:var(--bbg);padding:1px 6px;border-radius:10px;vertical-align:middle}
+    #pg-clientes .cli-gar-badge{font-size:.66rem;font-weight:700;padding:1px 6px;border-radius:10px;vertical-align:middle}
+    #pg-clientes .cli-gar-badge.ga{background:var(--gbg);color:var(--gr)}
+    #pg-clientes .cli-gar-badge.gv{background:var(--abg);color:var(--am)}
+    #pg-clientes .cli-details{background:var(--bg);border:1px solid var(--b);border-top:none;border-radius:0 0 12px 12px;padding:6px 10px 10px;margin-top:-4px}
+    #pg-clientes .cli-nb{padding:7px 6px;border-bottom:1px solid var(--b)}
+    #pg-clientes .cli-nb-row{display:grid;grid-template-columns:88px 1fr auto auto;gap:10px;align-items:center;font-size:.78rem}
+    #pg-clientes .cli-nb-garantia{font-size:.7rem;margin-top:4px;padding-left:2px}
+    #pg-clientes .cli-nb-garantia.ga{color:var(--gr)}
+    #pg-clientes .cli-nb-garantia.gv{color:var(--am);font-weight:600}
+    #pg-clientes .cli-nb-garantia.ge{color:var(--li)}
+    #pg-clientes .cli-nb:last-child{border-bottom:none}
+    #pg-clientes .cli-nb-badge{font-size:.62rem;font-weight:700;padding:2px 7px;border-radius:10px;text-align:center}
+    #pg-clientes .cli-nb-badge.sv{background:var(--gbg);color:var(--gr)}
+    #pg-clientes .cli-nb-badge.san{background:var(--abg);color:var(--am)}
+    #pg-clientes .cli-nb-badge.se{background:#eef2f7;color:var(--mu)}
+    #pg-clientes .cli-nb-nome{font-weight:600;color:var(--tx);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    #pg-clientes .cli-nb-val{font-weight:700;color:var(--tx);white-space:nowrap}
+    #pg-clientes .cli-nb-data{color:var(--li);font-size:.7rem;white-space:nowrap}
+    #pg-clientes .cli-nb-empty{color:var(--li);font-size:.76rem;padding:8px 4px;text-align:center}
+    #pg-clientes .cli-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+    #pg-clientes .cli-toggle{display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid var(--b)}
+    #pg-clientes .cli-tg{background:none;border:none;border-bottom:2px solid transparent;color:var(--mu);font-size:.92rem;font-weight:700;padding:9px 16px;cursor:pointer;margin-bottom:-1px}
+    #pg-clientes .cli-tg:hover{color:var(--tx)}
+    #pg-clientes .cli-tg.on{color:var(--tx);border-bottom-color:var(--tx)}
+    #pg-clientes .cli-actions{display:flex;gap:6px;align-items:center;flex-shrink:0}
+    #pg-clientes .forn-contatei{background:var(--bg);border:1px solid var(--b2);border-radius:8px;padding:7px 10px;font-size:.85rem;cursor:pointer;line-height:1}
+    #pg-clientes .forn-contatei:hover{background:var(--gbg);border-color:var(--gbd)}
+    #pg-clientes .cli-meta.forn-nudge{color:var(--am);font-weight:600}
+    #pg-clientes .cli-chip{border:1px solid var(--b2);background:var(--w);color:var(--mu);font-size:.75rem;font-weight:600;padding:6px 11px;border-radius:20px;cursor:pointer;transition:.12s}
+    #pg-clientes .cli-chip:hover{border-color:var(--tx)}
+    #pg-clientes .cli-chip.on{background:var(--tx);color:var(--w);border-color:var(--tx)}
+    #pg-clientes .cli-chip-n{opacity:.7;font-size:.68rem}
+    #pg-clientes .cli-proc{font-size:.72rem;color:#7c3aed;margin-top:3px;font-weight:500}
+    #pg-clientes .cli-info-edit{background:var(--w);border:1px dashed var(--b2);border-radius:10px;padding:10px;margin-bottom:10px}
+    #pg-clientes .cli-ie-contatos{margin-bottom:10px}
+    #pg-clientes .cli-ie-contatos>label{display:block;font-size:.68rem;color:var(--mu);font-weight:700;margin-bottom:5px}
+    #pg-clientes .cli-ie-hint{font-weight:400;color:var(--li);font-size:.66rem}
+    #pg-clientes .cli-contato-row{display:flex;gap:6px;margin-bottom:5px;align-items:center}
+    #pg-clientes .cli-contato-row .inp{font-size:.8rem}
+    #pg-clientes .cli-ct-nome{flex:0 0 32%;min-width:0}
+    #pg-clientes .cli-ct-num{flex:1;min-width:0}
+    #pg-clientes .cli-contato-row.principal .cli-ct-nome{background:var(--bg);color:var(--mu)}
+    #pg-clientes .cli-ct-wa,#pg-clientes .cli-ct-rem{border:none;border-radius:7px;padding:6px 9px;cursor:pointer;font-size:.8rem;flex-shrink:0;line-height:1}
+    #pg-clientes .cli-ct-wa{background:#25d366;color:#fff}
+    #pg-clientes .cli-ct-rem{background:var(--rbg);color:var(--re);font-weight:700}
+    #pg-clientes .cli-add-contato{background:none;border:1px dashed var(--b2);color:var(--mu);border-radius:8px;padding:6px 12px;font-size:.74rem;cursor:pointer;margin-top:2px}
+    #pg-clientes .cli-add-contato:hover{border-color:var(--tx);color:var(--tx)}
+    #pg-clientes .cli-ie-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    #pg-clientes .cli-ie-field label{display:block;font-size:.68rem;color:var(--mu);font-weight:700;margin-bottom:3px}
+    #pg-clientes .cli-ie-field .inp{font-size:.8rem;width:100%}
+    #pg-clientes .cli-ie-field textarea.inp{resize:vertical;min-height:38px}
+    #pg-clientes .cli-ie-save{margin-top:8px;background:var(--tx);color:var(--w);border:none;border-radius:8px;padding:7px 14px;font-size:.78rem;font-weight:700;cursor:pointer}
+    #pg-clientes .cli-match{margin-top:9px;background:var(--gbg);border:1px solid var(--gbd);border-radius:8px;padding:8px 10px}
+    #pg-clientes .cli-match.none{background:var(--bg);border-color:var(--b);color:var(--li);font-size:.74rem;text-align:center}
+    #pg-clientes .cli-match-tit{font-size:.72rem;font-weight:700;color:var(--gr);margin-bottom:5px}
+    #pg-clientes .cli-match-row{display:flex;justify-content:space-between;gap:8px;font-size:.76rem;padding:2px 0}
+    #pg-clientes .cli-match-nome{font-weight:600;color:var(--tx);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    #pg-clientes .cli-match-val{color:var(--mu);white-space:nowrap}
+    #pg-clientes .cli-radar-head{font-size:.76rem;color:var(--mu);background:var(--abg);border:1px solid var(--gbd);border-radius:10px;padding:9px 12px;margin-bottom:10px;line-height:1.5}
+    #pg-clientes .cli-radar{display:flex;align-items:center;gap:12px;background:var(--w);border:1px solid var(--b);border-left:4px solid var(--gr);border-radius:10px;padding:10px 12px;margin-bottom:7px}
+    #pg-clientes .cli-radar.w{border-left-color:var(--am)}
+    #pg-clientes .cli-radar.u{border-left-color:var(--re)}
+    #pg-clientes .cli-radar-dias{font-size:1.25rem;font-weight:800;color:var(--tx);min-width:44px;text-align:center}
+    #pg-clientes .cli-radar-dias small{font-size:.7rem;font-weight:600;color:var(--li)}
+    #pg-clientes .cli-radar-info{flex:1;min-width:0}
+    #pg-clientes .cli-radar-maq{font-weight:700;font-size:.86rem;color:var(--tx)}
+    #pg-clientes .cli-radar-cli{font-size:.72rem;color:var(--mu);margin-top:1px}
+    @media(max-width:720px){#pg-clientes .cli-ie-grid{grid-template-columns:1fr}}
     @media(max-width:720px){
+      #pg-clientes .cli-nb-row{grid-template-columns:70px 1fr;row-gap:2px}
+      #pg-clientes .cli-nb-val,#pg-clientes .cli-nb-data{grid-column:2}
       #pg-clientes .cli-hero{grid-template-columns:1fr 1fr}
       #pg-clientes .cli-add{grid-template-columns:1fr 1fr}
       #pg-clientes .cli-card{flex-wrap:wrap}
@@ -1732,6 +1815,12 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
         </div>
       </div>
 
+      <div class="cli-toggle">
+        <button class="cli-tg on" id="tgClientes" onclick="cliTrocarAba('clientes')">👥 Clientes</button>
+        <button class="cli-tg" id="tgFornecedores" onclick="cliTrocarAba('fornecedores')">📦 Fornecedores</button>
+      </div>
+
+      <div id="cliView">
       <div class="cli-hero">
         <div class="cli-stat"><div class="cli-stat-lbl">Total de clientes</div><div class="cli-stat-val" id="cliStatTot">0</div></div>
         <div class="cli-stat q"><div class="cli-stat-lbl">🔥 Recompra quente</div><div class="cli-stat-val" id="cliStatQuentes">0</div></div>
@@ -1750,6 +1839,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
             <option value="estudante">🎓 Estudante</option>
             <option value="gamer">🎮 Gamer</option>
             <option value="empresa">🏢 Empresa (PJ)</option>
+            <option value="repasse">🔁 Repasse de notebooks</option>
           </select>
         </div>
         <button class="bsav" onclick="addClienteManual()">+ Cadastrar</button>
@@ -1757,7 +1847,42 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
 
       <input class="inp cli-search" type="text" id="cliBusca" placeholder="🔎 Buscar cliente pelo nome..." oninput="cliFiltrar()">
 
+      <div style="font-size:.7rem;color:var(--li);margin:-4px 0 10px;padding-left:2px;line-height:1.5">🛡️ Garantia legal obrigatória: <strong>90 dias</strong> a partir da venda (CDC art. 26, II — produto durável). A contagem regressiva por máquina aparece ao expandir o cliente.</div>
+
+      <div id="cliChips" class="cli-chips"></div>
+
       <div id="cliLista"></div>
+      </div><!-- /cliView -->
+
+      <div id="fornView" style="display:none">
+        <div class="cli-hero" style="grid-template-columns:1fr 1fr 1fr">
+          <div class="cli-stat"><div class="cli-stat-lbl">Total fornecedores</div><div class="cli-stat-val" id="fornStatTot">0</div></div>
+          <div class="cli-stat f"><div class="cli-stat-lbl">📞 Cutucar (30d+)</div><div class="cli-stat-val" id="fornStatNudge">0</div></div>
+          <div class="cli-stat pj"><div class="cli-stat-lbl">Com WhatsApp</div><div class="cli-stat-val" id="fornStatWpp">0</div></div>
+        </div>
+
+        <div class="cli-add">
+          <div class="fc"><label class="fl">Nome / apelido</label><input class="inp" type="text" id="fornNome" placeholder="Ex.: Marcos assistência"></div>
+          <div class="fc"><label class="fl">WhatsApp</label><input class="inp" type="tel" id="fornWpp" placeholder="19999999999"></div>
+          <div class="fc"><label class="fl">Tipo</label>
+            <select class="inp" id="fornTipo">
+              <option value="">—</option>
+              <option value="pf">🧍 Pessoa física</option>
+              <option value="loja">🏪 Loja / assistência</option>
+              <option value="repassador">🔁 Repassador</option>
+              <option value="empresa">🏢 Empresa</option>
+              <option value="outro">❓ Outro</option>
+            </select>
+          </div>
+          <button class="bsav" onclick="addFornecedorManual()">+ Cadastrar</button>
+        </div>
+
+        <input class="inp cli-search" type="text" id="fornBusca" placeholder="🔎 Buscar fornecedor ou o que costuma ter..." oninput="renderFornecedores()">
+
+        <div style="font-size:.7rem;color:var(--li);margin:-4px 0 10px;padding-left:2px;line-height:1.5">📦 Ordenados por <strong>mais tempo sem contato</strong> — os do topo valem um "tem mais notebook pra vender?". Toque 📞 pra marcar que falou hoje e reiniciar a contagem.</div>
+
+        <div id="fornLista"></div>
+      </div><!-- /fornView -->
     </div>
   </div>
 
@@ -1865,10 +1990,39 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
       <!-- FIX 1: Modal editar também usa date -->
       <div class="fc"><label class="fl">Data de compra</label><input class="inp" id="eDC" type="date"></div>
       <div class="fc"><label class="fl">Mês de venda</label><input class="inp" id="eDV" type="month"></div>
+      <div class="fc full">
+        <label class="fl">👤 Cliente <span style="font-size:.67rem;color:var(--li);font-weight:400">amarra este notebook a um comprador (mesmo em estoque/reservado)</span></label>
+        <div style="position:relative">
+          <input class="inp" type="text" id="eCliBusca" placeholder="Buscar ou digitar nome do cliente..." autocomplete="off" oninput="cliEditBusca(this.value)" onfocus="cliEditBusca(this.value)">
+          <div id="eCliDrop" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:30;background:var(--w);border:1px solid var(--b2);border-radius:8px;margin-top:2px;max-height:170px;overflow:auto;box-shadow:0 6px 18px rgba(0,0,0,.09)"></div>
+        </div>
+        <input type="hidden" id="eCliId" value="">
+        <div id="eCliNovo" style="display:none;margin-top:6px;background:var(--gbg);border:1px solid var(--gbd);border-radius:8px;padding:8px">
+          <div style="font-size:.7rem;color:var(--gr);font-weight:700;margin-bottom:5px">✨ Novo cliente — <span id="eCliNovoNome"></span></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+            <input class="inp" type="tel" id="eCliWpp" placeholder="WhatsApp (só números)" style="font-size:.8rem">
+            <select class="inp" id="eCliPerfil" style="font-size:.8rem">
+              <option value="">Perfil de uso</option>
+              <option value="basico">🏠 Uso básico</option>
+              <option value="trabalho">💼 Trabalho / home office</option>
+              <option value="estudante">🎓 Estudante</option>
+              <option value="gamer">🎮 Gamer</option>
+              <option value="empresa">🏢 Empresa (PJ)</option>
+              <option value="repasse">🔁 Repasse de notebooks</option>
+            </select>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="mca">
       <button class="bcan" onclick="closeModal()">Cancelar</button>
       <button class="bsav" onclick="saveEdit()">Salvar alterações</button>
+    </div>
+    <div class="modal-sucesso" id="moSucesso">
+      <div class="ms-icon">✅</div>
+      <div class="ms-tit">Alterações salvas!</div>
+      <div class="ms-resumo" id="moSucessoResumo"></div>
+      <button class="bsav" onclick="concluirEdit()">Concluir</button>
     </div>
   </div>
 </div>
@@ -1914,6 +2068,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
               <option value="estudante">🎓 Estudante</option>
               <option value="gamer">🎮 Gamer</option>
               <option value="empresa">🏢 Empresa (PJ)</option>
+              <option value="repasse">🔁 Repasse de notebooks</option>
             </select>
           </div>
         </div>
@@ -1924,7 +2079,8 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
       </div>
       <div class="fc">
         <label class="fl">Data da venda</label>
-        <input class="inp" type="date" id="smData" onchange="updDias()">
+        <input class="inp" type="date" id="smData" onchange="updDias();syncDiaFromData()">
+        <select class="inp" id="smDataDia" style="margin-top:6px;font-size:.82rem" onchange="setDataFromDia()" title="Escolha o dia exato do mês"></select>
       </div>
       <div class="fc full">
         <div class="dias-hint" id="smDiasHint"></div>
@@ -1943,7 +2099,6 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
         </div>
         <div style="font-size:.71rem;color:var(--li);margin-top:5px" id="smSplitHint"></div>
       </div>
-    </div>
       <!-- PAGAR CONTAS COM ESSA VENDA -->
       <div class="sm-contas-wrap" style="grid-column:1/-1">
         <div class="sm-contas-title">
@@ -1962,6 +2117,12 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
     <div class="smca">
       <button class="bcan" onclick="cancelSell()">Cancelar</button>
       <button class="bvnd" onclick="confirmSell()">✓ Confirmar venda</button>
+    </div>
+    <div class="modal-sucesso" id="smSucesso">
+      <div class="ms-icon">✅</div>
+      <div class="ms-tit">Venda concluída!</div>
+      <div class="ms-resumo" id="smSucessoResumo"></div>
+      <button class="bvnd" onclick="concluirVenda()">Concluir</button>
     </div>
   </div>
 </div>
@@ -2014,7 +2175,7 @@ const CQ={labels:["Jan/25", "Fev/25", "Mar/25", "Abr/25", "Mai/25", "Jun/25", "J
 const CLM={labels:['Dell','Lenovo','Acer','Samsung','HP','Asus','Outros'],luc:[274,293,270,213,250,225,205],tic:[495,566,448,357,432,275,313]};
 const CMarca={labels:['Dell','Lenovo','Acer','Samsung','HP','Asus','Outros'],values:[97,45,33,23,14,2,14]};
 
-let user=null,prods=[],filt='todos',editId=null,chartsOk=false,sellId=null,clientes=[];
+let user=null,prods=[],filt='todos',editId=null,chartsOk=false,sellId=null,clientes=[],fornecedores=[];
 
 // Emails autorizados — adicione os emails de João e Igor aqui
 const EMAIL_IGOR = 'i155757@dac.unicamp.br';
@@ -2037,7 +2198,7 @@ onAuthStateChanged(auth,u=>{
     // Mostrar botão admin só para o dono
     const btnAdm = document.getElementById('btnAdmin');
     if(btnAdm) btnAdm.style.display = perfilAtual==='joao' ? '' : 'none';
-    loadProds();loadFinancas();loadPecas();loadLogistica();loadClientes();
+    loadProds();loadFinancas();loadPecas();loadLogistica();loadClientes();loadFornecedores();
     setTimeout(carregarAvisos, 2000); // carregar avisos após login
   }
   else{document.getElementById('AS').classList.remove('h');document.getElementById('APP').classList.remove('v');}
@@ -2111,10 +2272,12 @@ window.updStatus=(id,newVal)=>{
   if(!p)return;
   if(newVal==='Vendido'){
     sellId=id;
+    document.getElementById('smSucesso').classList.remove('on');
     document.getElementById('smProdNome').textContent=p.nome||'Produto';
     document.getElementById('smPreco').value=p.venda||'';
     document.getElementById('smPlat').value=p.plataforma||'';
     document.getElementById('smData').value=new Date().toISOString().split('T')[0];
+    preencherDiasDoMes();
     // Cliente: limpa e pré-preenche se o produto já tiver um vinculado
     document.getElementById('smCliBusca').value=p.cliente_nome||'';
     document.getElementById('smCliId').value=p.cliente_id||'';
@@ -2134,6 +2297,36 @@ window.updStatus=(id,newVal)=>{
     doSaveStatus(id,{status:newVal});
   }
 };
+
+// Preenche o dropdown com todos os dias do mês da data selecionada (com dia da semana)
+function preencherDiasDoMes(){
+  const dataInput=document.getElementById('smData');
+  const sel=document.getElementById('smDataDia');
+  if(!dataInput||!sel)return;
+  let ymd=dataInput.value;
+  if(!ymd){ ymd=new Date().toISOString().split('T')[0]; }
+  const [y,m]=ymd.split('-').map(Number);
+  const diaAtual=Number(ymd.split('-')[2]);
+  const diasNoMes=new Date(y,m,0).getDate();
+  const semana=['dom','seg','ter','qua','qui','sex','sáb'];
+  const mm=String(m).padStart(2,'0');
+  let opts='';
+  for(let d=1; d<=diasNoMes; d++){
+    const dd=String(d).padStart(2,'0');
+    const ds=semana[new Date(y,m-1,d).getDay()];
+    const marcado = d===diaAtual?' selected':'';
+    opts+=`<option value="${y}-${mm}-${dd}"${marcado}>${dd}/${mm}/${y} · ${ds}</option>`;
+  }
+  sel.innerHTML=opts;
+}
+// Dropdown → data
+window.setDataFromDia=()=>{
+  const sel=document.getElementById('smDataDia');
+  document.getElementById('smData').value=sel.value;
+  updDias();
+};
+// Data (calendário) → regenera dias do mês correspondente
+window.syncDiaFromData=()=>{ preencherDiasDoMes(); };
 
 window.updDias=()=>{
   if(!sellId)return;
@@ -2157,6 +2350,7 @@ window.cancelSell=()=>{
   sellId=null;
   const cd=document.getElementById('smCliDrop'); if(cd) cd.style.display='none';
   const cn=document.getElementById('smCliNovo'); if(cn) cn.style.display='none';
+  const cs=document.getElementById('smSucesso'); if(cs) cs.classList.remove('on');
   // Limpar checkboxes das contas
   document.querySelectorAll('#smContasList input[type=checkbox]').forEach(cb=>cb.checked=false);
   const totalEl=document.getElementById('smTotalPagar');
@@ -2281,11 +2475,22 @@ window.confirmSell=async()=>{
   }
   // Notificar o sócio sobre a venda
   criarAviso('venda_realizada', p?.nome||'');
-  document.getElementById('SMO').classList.add('h');
-  sellId=null;
   if(typeof loadFinancas==='function') loadFinancas();
   // Atualizar gráficos se Insights estiver aberto
   if(document.getElementById('pg-insights').classList.contains('on')) buildCharts();
+  // Tela de conclusão (em vez de fechar direto)
+  const resumo=document.getElementById('smSucessoResumo');
+  if(resumo) resumo.innerHTML=`<strong>${esc(p?.nome||'Produto')}</strong> — ${fmt(preco)}${cliNome?` · 👤 ${esc(cliNome)}`:''}`;
+  document.getElementById('smSucesso').classList.add('on');
+  sellId=null;
+};
+
+window.concluirVenda=()=>{
+  document.getElementById('smSucesso').classList.remove('on');
+  document.getElementById('SMO').classList.add('h');
+  document.querySelectorAll('#smContasList input[type=checkbox]').forEach(cb=>cb.checked=false);
+  const totalEl=document.getElementById('smTotalPagar'); if(totalEl) totalEl.style.display='none';
+  render();
 };
 
 window.updSplitVenda=()=>{
@@ -2337,7 +2542,7 @@ async function salvarCliente(dados){
     }
     return existente.id;
   }
-  const obj={userId:'shared_ijx',addedBy:user.uid,nome,whatsapp:dados.whatsapp||'',perfil:dados.perfil||'',origem:dados.origem||'',cidade:'',obs:'',criado_em:new Date().toISOString()};
+  const obj={userId:'shared_ijx',addedBy:user.uid,nome,whatsapp:dados.whatsapp||'',contatos:[],perfil:dados.perfil||'',origem:dados.origem||'',cidade:'',obs:'',procurando:'',criado_em:new Date().toISOString()};
   try{
     const r=await addDoc(collection(db,'clientes'),obj);
     clientes.push({...obj,id:r.id});
@@ -2350,17 +2555,32 @@ async function tocarCliente(id, dataVenda){ /* derivado de products, nada a faze
 
 // Estatísticas de um cliente a partir das vendas reais
 function cliStats(c){
-  const compras=prods.filter(p=>p.cliente_id===c.id && p.status==='Vendido');
+  const todos=prods.filter(p=>p.cliente_id===c.id);
+  const compras=todos.filter(p=>p.status==='Vendido');
   const datas=compras.map(p=>p.data_venda).filter(Boolean).sort();
   const ultima=datas.length?datas[datas.length-1]:null;
   const totalGasto=compras.reduce((s,p)=>s+(p.venda||0),0);
   let mesesDesde=null;
   if(ultima){ const d=ultima.length===7?ultima+'-01':ultima; mesesDesde=Math.floor((Date.now()-new Date(d))/(86400000*30.4)); }
-  return {nCompras:compras.length,ultima,totalGasto,mesesDesde,itens:compras};
+  return {nCompras:compras.length,ultima,totalGasto,mesesDesde,itens:compras,itensTodos:todos};
+}
+
+// Garantia legal obrigatória — CDC art. 26, II: produto durável = 90 dias da entrega/venda
+const GARANTIA_DIAS=90;
+function garantiaInfo(dataVenda){
+  if(!dataVenda) return null;
+  const base=dataVenda.length===7?dataVenda+'-01':dataVenda;
+  const venc=new Date(base+'T12:00:00');
+  if(isNaN(venc)) return null;
+  venc.setDate(venc.getDate()+GARANTIA_DIAS);
+  const hoje=new Date(); hoje.setHours(12,0,0,0);
+  const diasRest=Math.round((venc-hoje)/86400000);
+  return {diasRest, vencFmt:venc.toLocaleDateString('pt-BR'), ativa:diasRest>0};
 }
 
 // Classifica o cliente na melhor "oportunidade" (prioridade menor = mais quente)
 function cliOportunidade(c,st){
+  if(c.perfil==='repasse') return {prio:1,tag:'🔁 Repasse — mandar novidades',cls:'rp',tipo:'repasse'};
   const pj = c.perfil==='empresa' || st.nCompras>=2;
   if(st.mesesDesde!==null && st.mesesDesde>=18) return {prio:1,tag:'🔥 Recompra madura',cls:'re',tipo:'recompra'};
   if(pj) return {prio:2,tag:'🏢 Potencial PJ / volume',cls:'bl',tipo:'pj'};
@@ -2370,7 +2590,8 @@ function cliOportunidade(c,st){
 }
 
 function waLink(c,tipo){
-  const num=(c.whatsapp||'').replace(/\D/g,'');
+  const raw=(c.whatsapp||'') || (Array.isArray(c.contatos)&&c.contatos[0]?c.contatos[0].numero:'');
+  const num=(raw||'').replace(/\D/g,'');
   if(!num)return '';
   const full=num.length<=11?'55'+num:num;
   const primeiro=(c.nome||'').trim().split(' ')[0];
@@ -2378,6 +2599,8 @@ function waLink(c,tipo){
   if(tipo==='recompra') msg=`Olá ${primeiro}! Aqui é da Business IJX 👋 Faz um tempo que você comprou com a gente. Chegou notebook novo no estoque com garantia que pode te interessar — quer dar uma olhada?`;
   else if(tipo==='followup') msg=`Olá ${primeiro}! Aqui é da Business IJX 👋 Passando só pra saber se está tudo certo com o notebook. Qualquer coisa a garantia continua valendo, é só chamar!`;
   else if(tipo==='pj') msg=`Olá ${primeiro}! Aqui é da Business IJX 👋 Trabalhamos com notebooks revisados e com garantia, ótimos pra equipe. Se precisar de mais máquinas, monto uma condição especial pra volume. Posso te enviar o que temos hoje?`;
+  else if(tipo==='repasse') msg=`Olá ${primeiro}! Aqui é da Business IJX 👋 Chegou lote novo no estoque. Tenho máquinas com preço de repasse pra quem revende — posso te mandar a lista com specs e valores de atacado?`;
+  else if(tipo==='garantia') msg=`Olá ${primeiro}! Aqui é da Business IJX 👋 Passando pra saber se está tudo certo com seu notebook. Sua garantia está chegando ao fim — se tiver qualquer coisa pra ajustar, me chama que resolvemos ainda dentro da garantia!`;
   else msg=`Olá ${primeiro}! Aqui é da Business IJX 👋`;
   return `https://wa.me/${full}?text=${encodeURIComponent(msg)}`;
 }
@@ -2422,6 +2645,351 @@ window.cliSellPick=(id)=>{
   document.getElementById('smCliNovo').style.display='none';
 };
 
+// ── Busca de cliente dentro do modal de EDIÇÃO de produto ──
+window.cliEditBusca=(val)=>{
+  const drop=document.getElementById('eCliDrop');
+  const novo=document.getElementById('eCliNovo');
+  const q=(val||'').trim().toLowerCase();
+  document.getElementById('eCliId').value='';
+  if(!q){drop.style.display='none';novo.style.display='none';return;}
+  const matches=clientes.filter(c=>(c.nome||'').toLowerCase().includes(q)).slice(0,6);
+  if(matches.length){
+    drop.innerHTML=matches.map(c=>{
+      const st=cliStats(c);
+      const sub=st.nCompras+' compra'+(st.nCompras!==1?'s':'')+(c.whatsapp?' · 📱':'');
+      return `<div onclick="cliEditPick('${c.id}')" style="padding:8px 10px;cursor:pointer;border-bottom:1px solid var(--b);font-size:.82rem" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''"><strong>${esc(c.nome)}</strong> <span style="color:var(--li);font-size:.72rem">${sub}</span></div>`;
+    }).join('');
+    drop.style.display='block';
+  } else { drop.style.display='none'; }
+  const exato=clientes.some(c=>(c.nome||'').trim().toLowerCase()===q);
+  if(!exato){ novo.style.display='block'; document.getElementById('eCliNovoNome').textContent='"'+val.trim()+'"'; }
+  else { novo.style.display='none'; }
+};
+window.cliEditPick=(id)=>{
+  const c=clientes.find(x=>x.id===id); if(!c)return;
+  document.getElementById('eCliBusca').value=c.nome;
+  document.getElementById('eCliId').value=id;
+  document.getElementById('eCliDrop').style.display='none';
+  document.getElementById('eCliNovo').style.display='none';
+};
+
+// Estado dos cards expandidos na aba Clientes
+const cliExpandido=new Set();
+let cliFiltro='todos';
+const fornExpandido=new Set();
+let cliAba='clientes';
+window.cliToggle=(id)=>{
+  if(cliExpandido.has(id)) cliExpandido.delete(id); else cliExpandido.add(id);
+  renderClientes();
+};
+
+// ── Chips de filtro por oportunidade ──
+function renderCliChips(arr){
+  const el=document.getElementById('cliChips'); if(!el)return;
+  const cRecompra=arr.filter(x=>x.op.tipo==='recompra').length;
+  const cRepasse=arr.filter(x=>x.op.tipo==='repasse').length;
+  const cPj=arr.filter(x=>x.op.tipo==='pj').length;
+  const cFollow=arr.filter(x=>x.op.tipo==='followup').length;
+  const cProc=arr.filter(x=>x.c.procurando&&x.c.procurando.trim()).length;
+  let cGar=0;
+  arr.forEach(x=>x.st.itens.forEach(p=>{const g=garantiaInfo(p.data_venda); if(g&&g.ativa&&g.diasRest<=30)cGar++;}));
+  const chips=[
+    ['todos','Todos',arr.length],
+    ['recompra','🔥 Recompra',cRecompra],
+    ['repasse','🔁 Repasse',cRepasse],
+    ['pj','🏢 PJ',cPj],
+    ['followup','📞 Follow-up',cFollow],
+    ['procurando','🔍 Procurando',cProc],
+    ['garantia','🛡️ Garantia ≤30d',cGar]
+  ];
+  el.innerHTML=chips.map(([k,lbl,n])=>`<button class="cli-chip${cliFiltro===k?' on':''}" onclick="cliSetFiltro('${k}')">${lbl}${n?` <span class="cli-chip-n">${n}</span>`:''}</button>`).join('');
+}
+window.cliSetFiltro=(f)=>{ cliFiltro=f; renderClientes(); };
+function passaFiltro(x){
+  const f=cliFiltro;
+  if(f==='todos') return true;
+  if(f==='procurando') return !!(x.c.procurando&&x.c.procurando.trim());
+  return x.op.tipo===f;
+}
+
+// ── Radar de garantia: máquinas vencendo em até 30 dias ──
+function renderRadarGarantia(arr){
+  const itens=[];
+  arr.forEach(x=>x.st.itens.forEach(p=>{
+    const g=garantiaInfo(p.data_venda);
+    if(g&&g.ativa&&g.diasRest<=30) itens.push({c:x.c,p,g});
+  }));
+  itens.sort((a,b)=>a.g.diasRest-b.g.diasRest);
+  if(!itens.length) return '<div style="text-align:center;color:var(--li);padding:30px;font-size:.85rem">Nenhuma garantia vencendo nos próximos 30 dias. 👍</div>';
+  return `<div class="cli-radar-head">🛡️ Garantia legal vencendo em até 30 dias — bom momento pra um contato proativo (reforça seu diferencial e planta recompra)</div>`+itens.map(({c,p,g})=>{
+    const wl=waLink(c,'garantia');
+    const urg=g.diasRest<=7?'u':g.diasRest<=15?'w':'';
+    const wpp=wl?`<a href="${wl}" target="_blank" class="cli-wa">💬 Avisar</a>`:`<span class="cli-wa off">📱 sem contato</span>`;
+    return `<div class="cli-radar ${urg}">
+      <div class="cli-radar-dias">${g.diasRest}<small>d</small></div>
+      <div class="cli-radar-info">
+        <div class="cli-radar-maq">${esc(p.nome||'—')}</div>
+        <div class="cli-radar-cli">👤 ${esc(c.nome)} · vence ${g.vencFmt}</div>
+      </div>
+      ${wpp}
+    </div>`;
+  }).join('');
+}
+
+// ── Match do "procurando" contra o estoque atual ──
+function matchEstoque(texto){
+  if(!texto||!texto.trim())return [];
+  const norm=s=>(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  const stop=new Set(['de','para','pra','ate','um','uma','com','e','o','a','reais','notebook','note','maquina','que','por','volta','uns','mais','menos','ou','na','no','pro','uns','tela','ssd']);
+  const termos=(norm(texto).match(/[a-z0-9]+/g)||[]).filter(t=>t.length>=2 && !stop.has(t));
+  if(!termos.length)return [];
+  const estoque=prods.filter(p=>p.status==='Estoque'||p.status==='Anunciado');
+  return estoque.map(p=>{
+    const nome=norm(p.nome);
+    const hits=termos.filter(t=>nome.includes(t)).length;
+    return {p,hits};
+  }).filter(x=>x.hits>0).sort((a,b)=>b.hits-a.hits).slice(0,5);
+}
+
+// ── Editor inline (procurando + notas) + matches de estoque ──
+function cliEditorHTML(c){
+  let matchHtml='';
+  if(c.procurando&&c.procurando.trim()){
+    const matches=matchEstoque(c.procurando);
+    if(matches.length){
+      matchHtml=`<div class="cli-match"><div class="cli-match-tit">🎯 No estoque agora (bate com o que ele procura):</div>${matches.map(m=>`<div class="cli-match-row"><span class="cli-match-nome">${esc(m.p.nome||'—')}</span><span class="cli-match-val">${fmt(m.p.venda||0)} · ${esc(m.p.status||'')}</span></div>`).join('')}</div>`;
+    } else {
+      matchHtml=`<div class="cli-match none">Nenhuma máquina no estoque bate com a busca agora.</div>`;
+    }
+  }
+  const extras=Array.isArray(c.contatos)?c.contatos:[];
+  const extraRows=extras.map(ct=>contatoRowHTML(ct.nome||'',ct.numero||'')).join('');
+  return `<div class="cli-info-edit">
+    <div class="cli-ie-contatos">
+      <label>📱 Contatos <span class="cli-ie-hint">o principal é o usado nos botões de WhatsApp</span></label>
+      <div class="cli-contato-row principal">
+        <input class="inp cli-ct-nome" value="Principal" disabled>
+        <input class="inp cli-ct-num" id="cliWpp_${c.id}" value="${esc(c.whatsapp||'')}" placeholder="WhatsApp (só números)">
+        <button class="cli-ct-wa" onclick="cliOpenContato(this)" title="Abrir no WhatsApp">💬</button>
+      </div>
+      <div id="cliContatos_${c.id}">${extraRows}</div>
+      <button class="cli-add-contato" onclick="cliAddContato('${c.id}')">+ Adicionar contato</button>
+    </div>
+    <div class="cli-ie-grid">
+      <div class="cli-ie-field">
+        <label>🔍 Procurando</label>
+        <input class="inp" id="cliProc_${c.id}" value="${esc(c.procurando||'')}" placeholder="Ex.: i5 16GB até R$2.000 pra faculdade">
+      </div>
+      <div class="cli-ie-field">
+        <label>📝 Notas</label>
+        <textarea class="inp" id="cliObs_${c.id}" rows="2" placeholder="Como negocia, preferências, quem indicou...">${esc(c.obs||'')}</textarea>
+      </div>
+    </div>
+    <button class="cli-ie-save" onclick="salvarClienteInfo('${c.id}')">💾 Salvar</button>
+    ${matchHtml}
+  </div>`;
+}
+// Linha de contato adicional (nome + número + abrir + remover)
+function contatoRowHTML(nome,numero){
+  return `<div class="cli-contato-row"><input class="inp cli-ct-nome" value="${esc(nome)}" placeholder="Nome (ex: esposa)"><input class="inp cli-ct-num" value="${esc(numero)}" placeholder="WhatsApp"><button class="cli-ct-wa" onclick="cliOpenContato(this)" title="Abrir no WhatsApp">💬</button><button class="cli-ct-rem" onclick="cliRemContato(this)" title="Remover">✕</button></div>`;
+}
+window.cliAddContato=(id)=>{
+  const box=document.getElementById('cliContatos_'+id); if(!box)return;
+  const tmp=document.createElement('div');
+  tmp.innerHTML=contatoRowHTML('','');
+  box.appendChild(tmp.firstChild);
+};
+window.cliRemContato=(btn)=>{ const row=btn.closest('.cli-contato-row'); if(row)row.remove(); };
+window.cliOpenContato=(btn)=>{
+  const row=btn.closest('.cli-contato-row');
+  const num=(row.querySelector('.cli-ct-num')?.value||'').replace(/\D/g,'');
+  if(!num){ alert('Número vazio — preencha antes de abrir.'); return; }
+  const full=num.length<=11?'55'+num:num;
+  window.open('https://wa.me/'+full,'_blank');
+};
+
+window.salvarClienteInfo=async(id)=>{
+  const c=clientes.find(x=>x.id===id); if(!c)return;
+  const proc=(document.getElementById('cliProc_'+id)?.value||'').trim();
+  const obs=(document.getElementById('cliObs_'+id)?.value||'').trim();
+  const whatsapp=(document.getElementById('cliWpp_'+id)?.value||'').replace(/\D/g,'');
+  const contatos=[];
+  const box=document.getElementById('cliContatos_'+id);
+  if(box){
+    box.querySelectorAll('.cli-contato-row').forEach(row=>{
+      const nome=(row.querySelector('.cli-ct-nome')?.value||'').trim();
+      const numero=(row.querySelector('.cli-ct-num')?.value||'').replace(/\D/g,'');
+      if(numero) contatos.push({nome,numero});
+    });
+  }
+  const upd={procurando:proc,obs,whatsapp,contatos};
+  try{ if(!id.startsWith('l')) await updateDoc(doc(db,'clientes',id),upd); }catch(e){}
+  Object.assign(c,upd);
+  renderClientes();
+};
+
+// ════════════════════════════════════════
+// MÓDULO FORNECEDORES — quem te vende notebooks (lastro de sourcing)
+// ════════════════════════════════════════
+async function loadFornecedores(){
+  if(!user)return;
+  try{
+    const snap=await getDocs(query(collection(db,'fornecedores'),where('userId','==','shared_ijx')));
+    fornecedores=snap.docs.map(d=>({id:d.id,...d.data()}));
+  }catch(e){fornecedores=[];}
+  const fv=document.getElementById('fornView');
+  if(fv&&fv.style.display!=='none')renderFornecedores();
+}
+window.cliTrocarAba=(aba)=>{
+  cliAba=aba;
+  const cv=document.getElementById('cliView'), fv=document.getElementById('fornView');
+  const tc=document.getElementById('tgClientes'), tf=document.getElementById('tgFornecedores');
+  if(aba==='fornecedores'){ cv.style.display='none'; fv.style.display=''; tc.classList.remove('on'); tf.classList.add('on'); renderFornecedores(); }
+  else { fv.style.display='none'; cv.style.display=''; tf.classList.remove('on'); tc.classList.add('on'); renderClientes(); }
+};
+async function salvarFornecedor(dados){
+  const nome=(dados.nome||'').trim(); if(!nome)return '';
+  const existe=fornecedores.find(f=>(f.nome||'').trim().toLowerCase()===nome.toLowerCase());
+  if(existe){
+    const upd={};
+    if(dados.whatsapp&&!existe.whatsapp)upd.whatsapp=dados.whatsapp;
+    if(dados.tipo&&!existe.tipo)upd.tipo=dados.tipo;
+    if(Object.keys(upd).length){ try{if(!existe.id.startsWith('l'))await updateDoc(doc(db,'fornecedores',existe.id),upd);}catch(e){} Object.assign(existe,upd); }
+    return existe.id;
+  }
+  const obj={userId:'shared_ijx',addedBy:user.uid,nome,whatsapp:dados.whatsapp||'',contatos:[],tipo:dados.tipo||'',regiao:'',obs:'',costuma:'',ultimo_contato:'',criado_em:new Date().toISOString()};
+  try{ const r=await addDoc(collection(db,'fornecedores'),obj); fornecedores.push({...obj,id:r.id}); return r.id; }
+  catch(e){ const lid='l'+Date.now(); fornecedores.push({...obj,id:lid}); return lid; }
+}
+window.addFornecedorManual=async()=>{
+  const nome=document.getElementById('fornNome').value.trim();
+  if(!nome){alert('Digite o nome!');return;}
+  const wpp=document.getElementById('fornWpp').value.replace(/\D/g,'');
+  const tipo=document.getElementById('fornTipo').value;
+  await salvarFornecedor({nome,whatsapp:wpp,tipo});
+  document.getElementById('fornNome').value='';document.getElementById('fornWpp').value='';document.getElementById('fornTipo').value='';
+  renderFornecedores();
+};
+function fornDiasSemContato(f){
+  const base=f.ultimo_contato||f.criado_em;
+  if(!base)return null;
+  const d=new Date(base); if(isNaN(d))return null;
+  return Math.floor((Date.now()-d)/86400000);
+}
+function fornWaLink(f){
+  const raw=(f.whatsapp||'')||(Array.isArray(f.contatos)&&f.contatos[0]?f.contatos[0].numero:'');
+  const num=(raw||'').replace(/\D/g,''); if(!num)return '';
+  const full=num.length<=11?'55'+num:num;
+  const primeiro=(f.nome||'').trim().split(' ')[0];
+  const msg=`Olá ${primeiro}! Aqui é da Business IJX 👋 Tudo bem? Você tem mais algum notebook disponível pra vender? Compro à vista e pago bem por máquina em bom estado — unidade ou lote. Me avisa quando aparecer!`;
+  return `https://wa.me/${full}?text=${encodeURIComponent(msg)}`;
+}
+window.fornToggle=(id)=>{ if(fornExpandido.has(id))fornExpandido.delete(id); else fornExpandido.add(id); renderFornecedores(); };
+window.fornContatei=async(id)=>{
+  const f=fornecedores.find(x=>x.id===id); if(!f)return;
+  const hoje=new Date().toISOString(); f.ultimo_contato=hoje;
+  try{ if(!id.startsWith('l')) await updateDoc(doc(db,'fornecedores',id),{ultimo_contato:hoje}); }catch(e){}
+  renderFornecedores();
+};
+window.fornAddContato=(id)=>{
+  const box=document.getElementById('fornContatos_'+id); if(!box)return;
+  const tmp=document.createElement('div'); tmp.innerHTML=contatoRowHTML('',''); box.appendChild(tmp.firstChild);
+};
+window.salvarFornecedorInfo=async(id)=>{
+  const f=fornecedores.find(x=>x.id===id); if(!f)return;
+  const whatsapp=(document.getElementById('fornWpp_'+id)?.value||'').replace(/\D/g,'');
+  const tipo=document.getElementById('fornTipo_'+id)?.value||'';
+  const costuma=(document.getElementById('fornCostuma_'+id)?.value||'').trim();
+  const obs=(document.getElementById('fornObs_'+id)?.value||'').trim();
+  const contatos=[];
+  const box=document.getElementById('fornContatos_'+id);
+  if(box) box.querySelectorAll('.cli-contato-row').forEach(row=>{
+    const nome=(row.querySelector('.cli-ct-nome')?.value||'').trim();
+    const numero=(row.querySelector('.cli-ct-num')?.value||'').replace(/\D/g,'');
+    if(numero)contatos.push({nome,numero});
+  });
+  const upd={whatsapp,tipo,costuma,obs,contatos};
+  try{ if(!id.startsWith('l')) await updateDoc(doc(db,'fornecedores',id),upd); }catch(e){}
+  Object.assign(f,upd);
+  renderFornecedores();
+};
+function fornEditorHTML(f){
+  const extras=Array.isArray(f.contatos)?f.contatos:[];
+  const extraRows=extras.map(ct=>contatoRowHTML(ct.nome||'',ct.numero||'')).join('');
+  const tipoOpts=['','pf','loja','repassador','empresa','outro'];
+  const tipoTxt={'':'—',pf:'🧍 Pessoa física',loja:'🏪 Loja / assistência',repassador:'🔁 Repassador',empresa:'🏢 Empresa',outro:'❓ Outro'};
+  return `<div class="cli-info-edit">
+    <div class="cli-ie-contatos">
+      <label>📱 Contatos <span class="cli-ie-hint">o principal é o usado no botão de WhatsApp</span></label>
+      <div class="cli-contato-row principal">
+        <input class="inp cli-ct-nome" value="Principal" disabled>
+        <input class="inp cli-ct-num" id="fornWpp_${f.id}" value="${esc(f.whatsapp||'')}" placeholder="WhatsApp (só números)">
+        <button class="cli-ct-wa" onclick="cliOpenContato(this)" title="Abrir no WhatsApp">💬</button>
+      </div>
+      <div id="fornContatos_${f.id}">${extraRows}</div>
+      <button class="cli-add-contato" onclick="fornAddContato('${f.id}')">+ Adicionar contato</button>
+    </div>
+    <div class="cli-ie-grid">
+      <div class="cli-ie-field">
+        <label>🏷️ Tipo</label>
+        <select class="inp" id="fornTipo_${f.id}">${tipoOpts.map(v=>`<option value="${v}"${f.tipo===v?' selected':''}>${tipoTxt[v]}</option>`).join('')}</select>
+      </div>
+      <div class="cli-ie-field">
+        <label>💻 Costuma ter</label>
+        <input class="inp" id="fornCostuma_${f.id}" value="${esc(f.costuma||'')}" placeholder="Ex.: ThinkPad, Dell i5, lotes de empresa">
+      </div>
+    </div>
+    <div class="cli-ie-grid" style="grid-template-columns:1fr">
+      <div class="cli-ie-field">
+        <label>📝 Notas</label>
+        <textarea class="inp" id="fornObs_${f.id}" rows="2" placeholder="Preço que costuma pedir, confiança, prazo de entrega...">${esc(f.obs||'')}</textarea>
+      </div>
+    </div>
+    <button class="cli-ie-save" onclick="salvarFornecedorInfo('${f.id}')">💾 Salvar</button>
+  </div>`;
+}
+function renderFornecedores(){
+  const lista=document.getElementById('fornLista'); if(!lista)return;
+  const q=(document.getElementById('fornBusca')?.value||'').trim().toLowerCase();
+  let arr=fornecedores.slice();
+  const tot=arr.length;
+  const comWpp=arr.filter(f=>(f.whatsapp||'')||((f.contatos||[])[0])).length;
+  const nudge=arr.filter(f=>{const d=fornDiasSemContato(f);return d!==null&&d>=30;}).length;
+  const e1=document.getElementById('fornStatTot'); if(e1)e1.textContent=tot;
+  const e2=document.getElementById('fornStatNudge'); if(e2)e2.textContent=nudge;
+  const e3=document.getElementById('fornStatWpp'); if(e3)e3.textContent=comWpp;
+  if(q) arr=arr.filter(f=>(f.nome||'').toLowerCase().includes(q)||(f.costuma||'').toLowerCase().includes(q));
+  arr.sort((a,b)=>(fornDiasSemContato(b)||0)-(fornDiasSemContato(a)||0));
+  if(!arr.length){
+    lista.innerHTML=`<div style="text-align:center;color:var(--li);padding:30px;font-size:.85rem">${fornecedores.length?'Nenhum fornecedor neste filtro.':'Nenhum fornecedor ainda. Cadastre acima quem te vende notebooks — a base cresce a cada nova fonte.'}</div>`;
+    return;
+  }
+  const tipoLbl={pf:'🧍 Pessoa física',loja:'🏪 Loja/assist.',repassador:'🔁 Repassador',empresa:'🏢 Empresa',outro:'❓ Outro'};
+  lista.innerHTML=arr.map(f=>{
+    const exp=fornExpandido.has(f.id);
+    const wl=fornWaLink(f);
+    const dias=fornDiasSemContato(f);
+    const diasTxt=dias===null?'sem registro de contato':dias===0?'falou hoje':dias===1?'1 dia sem contato':`${dias} dias sem contato`;
+    const nudged=dias!==null&&dias>=30;
+    const wpp=wl?`<a href="${wl}" target="_blank" class="cli-wa" onclick="event.stopPropagation()">💬 Cutucar</a>`:`<span class="cli-wa off">📱 sem contato</span>`;
+    const tag=f.tipo&&tipoLbl[f.tipo]?tipoLbl[f.tipo]:'📦 Fornecedor';
+    return `<div class="cli-wrap">
+      <div class="cli-card">
+        <div class="cli-tag bl">${tag}</div>
+        <div class="cli-main" onclick="fornToggle('${f.id}')" style="cursor:pointer">
+          <div class="cli-nome"><span class="cli-chev">${exp?'▾':'▸'}</span>${esc(f.nome)}${f.costuma?` <span class="cli-nb-count" style="color:var(--mu);background:var(--bg)">💻 ${esc(f.costuma)}</span>`:''}</div>
+          <div class="cli-meta${nudged?' forn-nudge':''}">${diasTxt}${nudged?' · vale cutucar!':''}</div>
+        </div>
+        <div class="cli-actions">
+          <button class="forn-contatei" onclick="event.stopPropagation();fornContatei('${f.id}')" title="Marcar que falei com ele hoje">📞</button>
+          ${wpp}
+        </div>
+      </div>
+      ${exp?`<div class="cli-details">${fornEditorHTML(f)}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
 function renderClientes(){
   const lista=document.getElementById('cliLista');
   if(!lista)return;
@@ -2437,29 +3005,85 @@ function renderClientes(){
   const elQ=document.getElementById('cliStatQuentes'); if(elQ)elQ.textContent=quentes;
   const elPJ=document.getElementById('cliStatPJ'); if(elPJ)elPJ.textContent=pjs;
   const elF=document.getElementById('cliStatFollow'); if(elF)elF.textContent=follows;
+  // chips de filtro (com contagens)
+  renderCliChips(arr);
   // filtro de busca
   if(q) arr=arr.filter(x=>(x.c.nome||'').toLowerCase().includes(q));
+  // modo radar de garantia (lista por máquina)
+  if(cliFiltro==='garantia'){ lista.innerHTML=renderRadarGarantia(arr); return; }
+  // filtro por oportunidade / procurando
+  arr=arr.filter(passaFiltro);
   // ordena por oportunidade e depois por meses desde a última compra (mais antigo primeiro)
   arr.sort((a,b)=>a.op.prio-b.op.prio || ((b.st.mesesDesde||0)-(a.st.mesesDesde||0)));
   if(!arr.length){
-    lista.innerHTML='<div style="text-align:center;color:var(--li);padding:30px;font-size:.85rem">Nenhum cliente ainda. Cadastre pela venda (modal 🎉 Registrar venda) ou pelo formulário acima. A base cresce a cada venda.</div>';
+    lista.innerHTML=`<div style="text-align:center;color:var(--li);padding:30px;font-size:.85rem">${clientes.length?'Nenhum cliente neste filtro.':'Nenhum cliente ainda. Cadastre pela venda (modal 🎉 Registrar venda) ou pelo formulário acima.'}</div>`;
     return;
   }
   lista.innerHTML=arr.map(({c,st,op})=>{
     const wl=waLink(c,op.tipo);
     const ultimaFmt=st.ultima?(st.ultima.length===7?st.ultima:new Date(st.ultima+'T12:00:00').toLocaleDateString('pt-BR')):'—';
-    const perfilLbl={basico:'🏠 Básico',trabalho:'💼 Trabalho',estudante:'🎓 Estudante',gamer:'🎮 Gamer',empresa:'🏢 Empresa'}[c.perfil]||'';
+    const perfilLbl={basico:'🏠 Básico',trabalho:'💼 Trabalho',estudante:'🎓 Estudante',gamer:'🎮 Gamer',empresa:'🏢 Empresa',repasse:'🔁 Repasse'}[c.perfil]||'';
     const mesesTxt=st.mesesDesde!==null?(st.mesesDesde===0?'este mês':st.mesesDesde+' mês(es) atrás'):'sem venda registrada';
     const wppBtn=wl
       ? `<a href="${wl}" target="_blank" class="cli-wa">💬 WhatsApp</a>`
       : `<span class="cli-wa off" title="Cliente sem WhatsApp cadastrado">📱 sem contato</span>`;
-    return `<div class="cli-card">
-      <div class="cli-tag ${op.cls}">${op.tag}</div>
-      <div class="cli-main">
-        <div class="cli-nome">${esc(c.nome)}</div>
-        <div class="cli-meta">${st.nCompras} compra${st.nCompras!==1?'s':''} · ${fmt(st.totalGasto)} · última ${ultimaFmt} (${mesesTxt})${perfilLbl?' · '+perfilLbl:''}${c.origem?' · via '+esc(c.origem):''}</div>
+    const exp=cliExpandido.has(c.id);
+    const nNb=st.itensTodos.length;
+    const chev=`<span class="cli-chev">${exp?'▾':'▸'}</span>`;
+    // Selo da garantia legal mais próxima de vencer (entre as vendas ativas)
+    let garBadge='';
+    const garAtivas=st.itens.map(p=>garantiaInfo(p.data_venda)).filter(g=>g&&g.ativa);
+    if(garAtivas.length){
+      const min=Math.min(...garAtivas.map(g=>g.diasRest));
+      garBadge=` <span class="cli-gar-badge ${min<=15?'gv':'ga'}" title="Garantia legal (90d) mais próxima de vencer">🛡️ ${min}d</span>`;
+    }
+    let detalhes='';
+    if(exp){
+      const rows=nNb
+        ? st.itensTodos.slice().sort((a,b)=>(b.data_venda||b.data||'').localeCompare(a.data_venda||a.data||'')).map(p=>{
+            const stcls=p.status==='Vendido'?'sv':p.status==='Anunciado'?'san':'se';
+            const val=p.status==='Vendido'?fmt(p.venda||0):fmt(p.venda||0)+' (previsto)';
+            const dtInfo=p.status==='Vendido'&&p.data_venda
+              ? 'vendido '+(p.data_venda.length===7?p.data_venda:new Date(p.data_venda+'T12:00:00').toLocaleDateString('pt-BR'))
+              : (p.data_compra?'comprado '+p.data_compra:'');
+            let garantiaLine='';
+            if(p.status==='Vendido'){
+              const g=garantiaInfo(p.data_venda);
+              if(g){
+                if(g.ativa){
+                  const gcls=g.diasRest<=15?'gv':'ga';
+                  garantiaLine=`<div class="cli-nb-garantia ${gcls}">🛡️ Garantia legal (90d): <strong>${g.diasRest} dia${g.diasRest!==1?'s':''}</strong> p/ vencer · até ${g.vencFmt}</div>`;
+                } else {
+                  garantiaLine=`<div class="cli-nb-garantia ge">🛡️ Garantia legal (90d) expirada · venceu ${g.vencFmt}</div>`;
+                }
+              } else {
+                garantiaLine=`<div class="cli-nb-garantia ge">🛡️ Garantia legal (90d) — sem data de venda registrada</div>`;
+              }
+            }
+            return `<div class="cli-nb">
+              <div class="cli-nb-row">
+                <span class="cli-nb-badge ${stcls}">${esc(p.status||'—')}</span>
+                <span class="cli-nb-nome">${esc(p.nome||'—')}</span>
+                <span class="cli-nb-val">${val}</span>
+                <span class="cli-nb-data">${dtInfo}</span>
+              </div>
+              ${garantiaLine}
+            </div>`;
+          }).join('')
+        : '<div class="cli-nb-empty">Nenhum notebook anexado ainda.</div>';
+      detalhes=`<div class="cli-details">${cliEditorHTML(c)}${rows}</div>`;
+    }
+    return `<div class="cli-wrap">
+      <div class="cli-card">
+        <div class="cli-tag ${op.cls}">${op.tag}</div>
+        <div class="cli-main" onclick="cliToggle('${c.id}')" style="cursor:pointer">
+          <div class="cli-nome">${chev}${esc(c.nome)}${nNb?` <span class="cli-nb-count">${nNb} 💻</span>`:''}${garBadge}</div>
+          <div class="cli-meta">${st.nCompras} compra${st.nCompras!==1?'s':''} · ${fmt(st.totalGasto)} · última ${ultimaFmt} (${mesesTxt})${perfilLbl?' · '+perfilLbl:''}${c.origem?' · via '+esc(c.origem):''}</div>
+          ${c.procurando&&c.procurando.trim()?`<div class="cli-proc">🔍 Procura: ${esc(c.procurando)}</div>`:''}
+        </div>
+        <div class="cli-actions">${wppBtn}</div>
       </div>
-      <div class="cli-actions">${wppBtn}</div>
+      ${detalhes}
     </div>`;
   }).join('');
 }
@@ -2477,18 +3101,43 @@ window.openEdit=id=>{
   document.getElementById('eDC').value=dcRaw.length===7?dcRaw+'-01':dcRaw;
   document.getElementById('eDV').value=p.data_venda||'';
   document.getElementById('eInv').value=p.investidor||'João';
+  // Cliente vinculado (se houver)
+  document.getElementById('eCliBusca').value=p.cliente_nome||'';
+  document.getElementById('eCliId').value=p.cliente_id||'';
+  document.getElementById('eCliDrop').style.display='none';
+  document.getElementById('eCliNovo').style.display='none';
+  document.getElementById('eCliWpp').value='';
+  document.getElementById('eCliPerfil').value='';
+  document.getElementById('moSucesso').classList.remove('on');
   document.getElementById('MO').classList.remove('h');
 };
-window.closeModal=()=>{document.getElementById('MO').classList.add('h');editId=null;};
+window.closeModal=()=>{document.getElementById('MO').classList.add('h');editId=null;const s=document.getElementById('moSucesso');if(s)s.classList.remove('on');};
 window.saveEdit=async()=>{
   if(!editId)return;
   const nome=g('eN'),custo=parseFloat(document.getElementById('eC').value)||0,venda=parseFloat(document.getElementById('eV').value)||0,status=document.getElementById('eS').value,dc=document.getElementById('eDC').value,dv=document.getElementById('eDV').value,investidor=document.getElementById('eInv').value;
   const dcMes=dc?dc.slice(0,7):'';
-  const upd={nome,custo,venda,lucro:venda-custo,status,investidor,data_compra:dc,data_compra_mes:dcMes,data_venda:dv,data:dv||dcMes};
+  // Resolver cliente vinculado (existente ou novo)
+  let cliId=document.getElementById('eCliId').value||'';
+  let cliNome=(document.getElementById('eCliBusca').value||'').trim();
+  if(cliNome && !cliId){
+    const wpp=(document.getElementById('eCliWpp').value||'').replace(/\D/g,'');
+    const perfil=document.getElementById('eCliPerfil').value||'';
+    cliId=await salvarCliente({nome:cliNome,whatsapp:wpp,perfil,origem:'cadastro'});
+  }
+  const upd={nome,custo,venda,lucro:venda-custo,status,investidor,data_compra:dc,data_compra_mes:dcMes,data_venda:dv,data:dv||dcMes,cliente_id:cliId,cliente_nome:cliNome};
   if(!editId.startsWith('x')&&!editId.startsWith('l')){try{await updateDoc(doc(db,'products',editId),upd);}catch(e){}}
   const p=prods.find(p=>p.id===editId);if(p)Object.assign(p,upd);
   criarAviso('produto_editado', nome);
-  closeModal();render();renderSecoes();calcStats();
+  render();renderSecoes();calcStats();
+  if(document.getElementById('pg-clientes')&&document.getElementById('pg-clientes').classList.contains('on'))renderClientes();
+  const resumo=document.getElementById('moSucessoResumo');
+  if(resumo) resumo.innerHTML=`<strong>${esc(nome)}</strong>${cliNome?` · 👤 ${esc(cliNome)}`:''}`;
+  document.getElementById('moSucesso').classList.add('on');
+};
+
+window.concluirEdit=()=>{
+  document.getElementById('moSucesso').classList.remove('on');
+  closeModal();
 };
 
 window.setF=(f,btn)=>{filt=f;document.querySelectorAll('.fc2').forEach(c=>c.classList.remove('on'));btn.classList.add('on');render();};
@@ -2957,7 +3606,7 @@ window.sp2=p=>{
   if(p==='painel'){buildPainel();buildPainelCharts();}
   if(p==='financas'){renderFinLabel();checkNotificacoes();}
   if(p==='admin'){carregarAvisos();}
-  if(p==='clientes'){renderClientes();}
+  if(p==='clientes'){ if(cliAba==='fornecedores')renderFornecedores(); else renderClientes(); }
   if(p==='logistica'){renderLogistica();}
   else{const bar=document.getElementById('notifBar');if(bar){bar.innerHTML='';bar.classList.remove('on');adjustPageTop();}}
 };
