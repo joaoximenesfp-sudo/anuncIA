@@ -248,6 +248,34 @@ input[type=number].inp{padding-left:32px}
 .meta-inp:focus{border-color:var(--tx)}
 .meta-btn{padding:4px 11px;border-radius:6px;border:1px solid var(--b2);background:transparent;font-size:.73rem;font-weight:600;color:var(--mu);cursor:pointer;transition:all .15s}
 .meta-btn:hover{border-color:var(--tx);color:var(--tx)}
+.metas3-wrap{background:var(--w);border:1px solid var(--b);border-radius:var(--rad);padding:14px 18px;margin-bottom:12px;box-shadow:var(--sh)}
+.metas3-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.metas3-titulo{font-size:.9rem;font-weight:700;color:var(--tx);text-transform:capitalize}
+.metas3-metrica{color:var(--mu);font-weight:600}
+.metas3-gear{background:none;border:none;font-size:1rem;cursor:pointer;opacity:.6}
+.metas3-gear:hover{opacity:1}
+.metas3-atual{font-size:.82rem;color:var(--mu);margin-bottom:8px}
+.metas3-atual-val{font-size:1.15rem;font-weight:800;color:var(--tx)}
+.metas3-bar{position:relative;height:12px;background:var(--bg);border-radius:6px;overflow:hidden;margin-bottom:10px}
+.metas3-fill{height:100%;background:var(--li);border-radius:6px;transition:width .6s ease}
+.metas3-fill.bronze{background:#d97706}
+.metas3-fill.prata{background:#3b82f6}
+.metas3-fill.ouro{background:linear-gradient(90deg,#f59e0b,#eab308)}
+.metas3-mark{position:absolute;top:-2px;width:2px;height:16px;background:var(--mu);opacity:.5}
+.metas3-tiers{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px}
+.metas3-tier{background:var(--bg);border:1px solid var(--b);border-radius:10px;padding:8px 10px;text-align:center;position:relative}
+.metas3-tier.ok{background:var(--gbg);border-color:var(--gbd)}
+.metas3-tier-emoji{font-size:1rem;display:block}
+.metas3-tier-nome{font-size:.68rem;color:var(--mu);font-weight:700;display:block;margin-top:1px}
+.metas3-tier-val{font-size:.82rem;font-weight:800;color:var(--tx);display:block;margin-top:2px}
+.metas3-tier-check{position:absolute;top:5px;right:7px;font-size:.7rem}
+.metas3-msg{font-size:.8rem;color:var(--tx);text-align:center;padding:4px 0}
+.metas3-config{border-top:1px solid var(--b);margin-top:10px;padding-top:12px}
+.metas3-cfg-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px}
+.metas3-cfg-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:6px}
+.metas3-config label{font-size:.68rem;color:var(--mu);font-weight:600;display:flex;flex-direction:column;gap:3px}
+.metas3-config .meta-inp{width:100%}
+@media(max-width:600px){.metas3-cfg-row,.metas3-cfg-row3{grid-template-columns:1fr}}
 
 /* ── RANKING / TABELA INSIGHTS ── */
 .rk-wrap{background:var(--w);border:1px solid var(--b);border-radius:var(--rad);box-shadow:var(--sh);overflow:hidden;margin-bottom:12px}
@@ -363,6 +391,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
 .ext-wal{font-size:.67rem;padding:2px 7px;border-radius:10px;flex-shrink:0;font-weight:600}
 .ext-wal.c6{background:#fff7ed;color:#f97316}
 .ext-wal.mp{background:#e0f2fe;color:#009ee3}
+.ext-wal.socio{background:#faf5ff;color:#7c3aed}
 .ext-empty{text-align:center;padding:32px;font-size:.78rem;color:var(--li)}
 .ext-list{max-height:380px;overflow-y:auto}
 
@@ -818,21 +847,41 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
       </div>
       <div class="tab-pg on" id="tab-notebooks">
       <div class="banner">📊 <strong>333 produtos</strong> importados da planilha — 250 vendidos · 46 em estoque · 37 anunciados · <span style="color:#1d4ed8">🔄 estoque compartilhado entre sócios</span></div>
-      <!-- META MENSAL -->
-      <div class="meta-bar-wrap" id="metaWrap">
-        <div class="meta-top">
-          <span class="meta-lbl">Meta mensal de lucro</span>
-          <div class="meta-vals">
-            <span class="meta-cur" id="metaCur">—</span>
-            <span class="meta-of" id="metaOf">/ —</span>
-            <span class="meta-pct" id="metaPct">—</span>
-          </div>
+      <!-- METAS PROGRESSIVAS (3 níveis) -->
+      <div class="metas3-wrap" id="metaWrap">
+        <div class="metas3-head">
+          <div class="metas3-titulo">🎯 Metas de <span id="m3Mes">—</span> · <span id="m3MetricaLbl" class="metas3-metrica">Lucro</span></div>
+          <button class="metas3-gear" onclick="m3ToggleConfig()" title="Configurar metas">⚙️</button>
         </div>
-        <div class="meta-bar"><div class="meta-fill" id="metaFill" style="width:0%"></div></div>
-        <div class="meta-edit">
-          <input class="meta-inp" type="number" id="metaInp" placeholder="Meta R$" min="0">
-          <button class="meta-btn" onclick="saveMeta()">Definir meta</button>
-          <span style="font-size:.7rem;color:var(--li)" id="metaMsg"></span>
+        <div class="metas3-atual"><span class="metas3-atual-lbl">Realizado no mês:</span> <span class="metas3-atual-val" id="m3Atual">—</span></div>
+        <div class="metas3-bar">
+          <div class="metas3-fill" id="m3Fill" style="width:0%"></div>
+          <div class="metas3-mark" id="m3Mark1"></div>
+          <div class="metas3-mark" id="m3Mark2"></div>
+        </div>
+        <div class="metas3-tiers" id="m3Tiers"></div>
+        <div class="metas3-msg" id="m3Msg"></div>
+        <div class="metas3-config" id="m3Config" style="display:none">
+          <div class="metas3-cfg-row">
+            <label>Métrica
+              <select class="meta-inp" id="m3Metrica">
+                <option value="lucro">💰 Lucro</option>
+                <option value="faturamento">📈 Faturamento</option>
+                <option value="vendas">📦 Nº de vendas</option>
+              </select>
+            </label>
+            <label>Crescimento por mês (%)
+              <input class="meta-inp" type="number" id="m3Cresc" min="0" step="1" placeholder="Ex: 5">
+            </label>
+          </div>
+          <div class="metas3-cfg-row3">
+            <label>🥉 Base <input class="meta-inp" type="number" id="m3M1" min="0" placeholder="10000"></label>
+            <label>🥈 Ideal <input class="meta-inp" type="number" id="m3M2" min="0" placeholder="15000"></label>
+            <label>🥇 Desafio <input class="meta-inp" type="number" id="m3M3" min="0" placeholder="20000"></label>
+          </div>
+          <div style="font-size:.68rem;color:var(--li);margin:4px 0 8px">As 3 metas valem para <strong>este mês</strong> e sobem <span id="m3CrescLbl">—</span> a cada mês seguinte (progressivas).</div>
+          <button class="meta-btn" onclick="salvarMetas3()">💾 Salvar metas</button>
+          <span style="font-size:.7rem;color:var(--gr);margin-left:8px" id="m3SaveMsg"></span>
         </div>
       </div>
       <!-- ALERTAS -->
@@ -2115,6 +2164,14 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
             <input class="inp" type="number" id="smMP" placeholder="R$ 0" min="0" oninput="updSplitVenda()" style="font-size:.82rem">
           </div>
         </div>
+        <div style="margin-top:9px;background:#faf5ff;border:1px solid #e9d5ff;border-radius:8px;padding:8px 10px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+            <div style="font-size:.69rem;color:#7c3aed;font-weight:700">🤝 Repasse ao sócio investidor</div>
+            <button type="button" onclick="smSugerirRepasse()" style="background:none;border:1px solid #e9d5ff;color:#7c3aed;border-radius:6px;font-size:.65rem;font-weight:700;padding:2px 7px;cursor:pointer">✨ Sugerir</button>
+          </div>
+          <input class="inp" type="number" id="smSocio" placeholder="R$ 0" min="0" oninput="updSplitVenda()" style="font-size:.82rem">
+          <div style="font-size:.67rem;color:var(--li);margin-top:4px" id="smSocioHint"></div>
+        </div>
         <div style="font-size:.71rem;color:var(--li);margin-top:5px" id="smSplitHint"></div>
       </div>
       <!-- PAGAR CONTAS COM ESSA VENDA -->
@@ -2216,7 +2273,7 @@ onAuthStateChanged(auth,u=>{
     // Mostrar botão admin só para o dono
     const btnAdm = document.getElementById('btnAdmin');
     if(btnAdm) btnAdm.style.display = perfilAtual==='joao' ? '' : 'none';
-    loadProds();loadFinancas();loadPecas();loadLogistica();loadClientes();loadFornecedores();
+    loadProds();loadFinancas();loadPecas();loadLogistica();loadClientes();loadFornecedores();loadMetas3();
     setTimeout(carregarAvisos, 2000); // carregar avisos após login
   }
   else{document.getElementById('AS').classList.remove('h');document.getElementById('APP').classList.remove('v');}
@@ -2248,19 +2305,9 @@ async function loadProds(){
       : SEED_PRODS.map((p,i)=>({...p,userId:'shared_ijx',id:'x'+(i+1)}));
   }catch(e){prods=SEED_PRODS.map((p,i)=>({...p,userId:'shared_ijx',id:'x'+(i+1)}));}
   prods.forEach((p,i)=>{if(!p.num)p.num=i+1;});
-  // Normalizar status: para cada produto, se tiver correspondente no XLSX
-  // e não foi vendido manualmente pelo site, usa o status do XLSX
-  const xlsxMap = {};
-  SEED_PRODS.forEach(xp=>{ xlsxMap[xp.nome.trim().toLowerCase()] = xp.status; });
-  prods.forEach(p=>{
-    const key = (p.nome||'').trim().toLowerCase();
-    if(xlsxMap[key]){
-      // Só sobrescreve se o status atual não é uma venda registrada pelo site
-      // (vendas pelo site têm data_venda definida com formato YYYY-MM-DD completo)
-      const vendidoPeloSite = p.status==='Vendido' && p.data_venda && p.data_venda.length===10;
-      if(!vendidoPeloSite) p.status = xlsxMap[key];
-    }
-  });
+  // (Removido) A normalização de status pela lista SEED_PRODS foi retirada:
+  // ela sobrescrevia o status salvo no Firestore a cada load, revertendo
+  // alterações manuais (Anunciado/Estoque/etc). O Firestore é a fonte da verdade agora.
   render();renderSecoes();calcStats();renderAlertas();renderMeta();
 }
 
@@ -2309,6 +2356,8 @@ window.updStatus=(id,newVal)=>{
     document.getElementById('smCliNovo').style.display='none';
     document.getElementById('smCliWpp').value='';
     document.getElementById('smCliPerfil').value='';
+    document.getElementById('smSocio').value='';
+    const shint0=document.getElementById('smSocioHint'); if(shint0) shint0.textContent='';
     document.getElementById('smDiasHint').textContent='';
     document.getElementById('smDiasHint').className='dias-hint';
     document.getElementById('SMO').classList.remove('h');
@@ -2477,12 +2526,17 @@ window.confirmSell=async()=>{
     // Cliente existente comprando de novo → atualiza última compra
     await tocarCliente(cliId, dataVenda);
   }
-  const mesVenda=dataVenda?dataVenda.slice(0,7):'';const upd={status:'Vendido',plataforma:plat,venda:preco,lucro:preco-(p?.custo||0),data_venda:dataVenda||'',data:mesVenda,diasParado:dias>=0?dias:null,cliente_id:cliId,cliente_nome:cliNome};
+  const socioVal=parseFloat(document.getElementById('smSocio').value)||0;
+  const mesVenda=dataVenda?dataVenda.slice(0,7):'';const upd={status:'Vendido',plataforma:plat,venda:preco,lucro:preco-(p?.custo||0),data_venda:dataVenda||'',data:mesVenda,diasParado:dias>=0?dias:null,cliente_id:cliId,cliente_nome:cliNome,repasse_socio:socioVal};
   await doSaveStatus(sellId,upd);
   if(c6val>0||mpval>0){
     const entBase={userId:user.uid,tipo:'entrada',descricao:'Venda: '+(p?.nome||'Produto'),data:dataVenda||new Date().toISOString().split('T')[0],prodId:sellId};
     if(c6val>0) await addExtrato({...entBase,valor:c6val,carteira:'c6'});
     if(mpval>0) await addExtrato({...entBase,valor:mpval,carteira:'mp'});
+  }
+  // ── Repasse ao sócio investidor (saída do caixa) ──
+  if(socioVal>0){
+    await addExtrato({userId:user.uid,tipo:'saida',descricao:'Repasse ao sócio — '+(p?.nome||'Produto'),data:dataVenda||new Date().toISOString().split('T')[0],prodId:sellId,valor:socioVal,carteira:'socio'});
   }
   // ── Pagar contas selecionadas no modal ──
   const contasSel = getContasSelecionadas();
@@ -2504,7 +2558,7 @@ window.confirmSell=async()=>{
   if(document.getElementById('pg-insights').classList.contains('on')) buildCharts();
   // Tela de conclusão (em vez de fechar direto)
   const resumo=document.getElementById('smSucessoResumo');
-  if(resumo) resumo.innerHTML=`<strong>${esc(p?.nome||'Produto')}</strong> — ${fmt(preco)}${cliNome?` · 👤 ${esc(cliNome)}`:''}`;
+  if(resumo) resumo.innerHTML=`<strong>${esc(p?.nome||'Produto')}</strong> — ${fmt(preco)}${cliNome?` · 👤 ${esc(cliNome)}`:''}${socioVal>0?`<br><span style="color:#7c3aed">🤝 Repasse ao sócio: ${fmt(socioVal)}</span>`:''}`;
   document.getElementById('smSucesso').classList.add('on');
   sellId=null;
 };
@@ -2517,12 +2571,40 @@ window.concluirVenda=()=>{
   render();
 };
 
+// Calcula quanto do valor desta venda cabe ao sócio investidor (Igor),
+// usando a mesma regra de rateio do patrimônio: custo dele de volta + metade do lucro (se 50/50).
+function smCalcRepasse(){
+  const p=prods.find(x=>x.id===sellId); if(!p)return null;
+  const preco=parseFloat(document.getElementById('smPreco').value)||p.venda||0;
+  const custoReal=(p.custo||0)*((p.id&&String(p.id).startsWith('x'))?2:1);
+  const lucro=preco-custoReal;
+  const b=investidorDe(p);
+  if(b==='joao') return {valor:0, txt:'Máquina 100% sua — nada a repassar ao sócio.'};
+  if(b==='igor') return {valor:preco, txt:`Máquina 100% do sócio — custo ${fmt(custoReal)} + lucro ${fmt(lucro)} = venda inteira.`};
+  // ambos (50/50): devolve metade do custo dele + metade do lucro
+  const val=(custoReal/2)+(lucro/2);
+  return {valor:Math.max(val,0), txt:`50/50: metade do custo (${fmt(custoReal/2)}) + metade do lucro (${fmt(lucro/2)}).`};
+}
+window.smSugerirRepasse=()=>{
+  const r=smCalcRepasse();
+  if(!r){alert('Abra uma venda primeiro.');return;}
+  document.getElementById('smSocio').value=r.valor>0?r.valor.toFixed(2):'';
+  updSplitVenda();
+};
+
 window.updSplitVenda=()=>{
   const total=parseFloat(document.getElementById('smPreco').value)||0;
   const c6=parseFloat(document.getElementById('smC6').value)||0;
   const mp=parseFloat(document.getElementById('smMP').value)||0;
+  const socio=parseFloat(document.getElementById('smSocio').value)||0;
   const hint=document.getElementById('smSplitHint');
-  const diff=total-(c6+mp);
+  const shint=document.getElementById('smSocioHint');
+  // dica do repasse sugerido
+  if(shint){
+    const r=smCalcRepasse();
+    shint.textContent=r?(socio>0?r.txt:'Sugestão: '+fmt(r.valor)+' — '+r.txt):'';
+  }
+  const diff=total-(c6+mp+socio);
   if(total===0){hint.textContent='';return;}
   if(Math.abs(diff)<0.01){hint.textContent='✓ Distribuição completa ('+fmt(total)+')';hint.style.color='var(--gr)';}
   else if(diff>0){hint.textContent='Faltam '+fmt(diff)+' distribuir';hint.style.color='var(--am)';}
@@ -3741,30 +3823,90 @@ window.avancarParcela=async(id,tipo)=>{
   renderFinancas();
 };
 
-// ── META MENSAL ──
-let metaValor=parseFloat(localStorage.getItem('bj_meta'))||0;
-function renderMeta(){
-  const mes=new Date().toISOString().slice(0,7);
-  const lucMes=prods.filter(p=>p.status==='Vendido'&&(p.data_venda||'').startsWith(mes))
-    .reduce((s,p)=>s+getLucro(p),0);
-  const meta=metaValor;
-  const pct=meta>0?Math.min(Math.round(lucMes/meta*100),100):0;
-  document.getElementById('metaCur').textContent=fmt(lucMes);
-  document.getElementById('metaOf').textContent=meta>0?'/ '+fmt(meta):'/ (sem meta)';
-  const pctEl=document.getElementById('metaPct');
-  pctEl.textContent=meta>0?pct+'%':'—';
-  pctEl.className='meta-pct'+(pct<50?' re':pct<80?' warn':'');
-  const fill=document.getElementById('metaFill');
-  fill.style.width=pct+'%';
-  fill.className='meta-fill'+(pct<50?' re':pct<80?' warn':'');
-  if(metaValor>0)document.getElementById('metaInp').value=metaValor;
-}
-window.saveMeta=()=>{
-  const v=parseFloat(document.getElementById('metaInp').value);
-  if(!v||v<=0){alert('Digite um valor válido!');return;}
-  metaValor=v;localStorage.setItem('bj_meta',v);
+// ── METAS PROGRESSIVAS (3 níveis) ──
+let metas3 = { metrica:'lucro', mesRef:new Date().toISOString().slice(0,7), crescimento:5, m1:10000, m2:15000, m3:20000, _docId:null };
+
+async function loadMetas3(){
+  try{ const ls=JSON.parse(localStorage.getItem('bj_metas3')||'null'); if(ls) metas3={...metas3,...ls}; }catch(e){}
+  try{
+    const snap=await getDocs(query(collection(db,'config'),where('userId','==','shared_ijx')));
+    const d0=snap.docs.find(d=>d.data().tipo==='metas3');
+    if(d0){ metas3={...metas3,...(d0.data().dados||{})}; metas3._docId=d0.id; }
+  }catch(e){}
   renderMeta();
-  const m=document.getElementById('metaMsg');m.textContent='✓ Salvo';setTimeout(()=>m.textContent='',2000);
+}
+
+function m3Realizado(mes){
+  const vend = prods.filter(p=>p.status==='Vendido' && getMesVenda(p)===mes);
+  if(metas3.metrica==='faturamento') return vend.reduce((s,p)=>s+(p.venda||0),0);
+  if(metas3.metrica==='vendas') return vend.length;
+  return vend.reduce((s,p)=>s+getLucro(p),0);
+}
+function m3AlvosDoMes(mes){
+  const [ry,rm]=(metas3.mesRef||mes).split('-').map(Number);
+  const [y,m]=mes.split('-').map(Number);
+  const meses=(y-ry)*12+(m-rm);
+  const fator=Math.pow(1+(metas3.crescimento||0)/100, meses);
+  return { a1: metas3.m1*fator, a2: metas3.m2*fator, a3: metas3.m3*fator };
+}
+function m3Fmt(v){ return metas3.metrica==='vendas' ? Math.round(v)+' un' : fmt(v); }
+
+// mantém o nome renderMeta pois é chamado em vários lugares
+function renderMeta(){
+  const wrap=document.getElementById('metaWrap'); if(!wrap)return;
+  const mes=new Date().toISOString().slice(0,7);
+  const nomeMes=new Date(mes+'-01T12:00:00').toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  set('m3Mes', nomeMes);
+  set('m3MetricaLbl', {lucro:'Lucro',faturamento:'Faturamento',vendas:'Nº de vendas'}[metas3.metrica]||'Lucro');
+  const {a1,a2,a3}=m3AlvosDoMes(mes);
+  const atual=m3Realizado(mes);
+  set('m3Atual', m3Fmt(atual));
+  const pct=a3>0?Math.min(atual/a3*100,100):0;
+  const fill=document.getElementById('m3Fill');
+  const nivel=atual>=a3?3:atual>=a2?2:atual>=a1?1:0;
+  if(fill){ fill.style.width=pct+'%'; fill.className='metas3-fill'+(nivel>=3?' ouro':nivel>=2?' prata':nivel>=1?' bronze':''); }
+  const mk1=document.getElementById('m3Mark1'), mk2=document.getElementById('m3Mark2');
+  if(mk1) mk1.style.left=(a3>0?Math.min(a1/a3*100,100):0)+'%';
+  if(mk2) mk2.style.left=(a3>0?Math.min(a2/a3*100,100):0)+'%';
+  const tier=(emoji,nome,alvo,ok)=>`<div class="metas3-tier${ok?' ok':''}"><span class="metas3-tier-emoji">${emoji}</span><span class="metas3-tier-nome">${nome}</span><span class="metas3-tier-val">${m3Fmt(alvo)}</span><span class="metas3-tier-check">${ok?'✅':''}</span></div>`;
+  const tiersEl=document.getElementById('m3Tiers');
+  if(tiersEl) tiersEl.innerHTML=tier('🥉','Base',a1,atual>=a1)+tier('🥈','Ideal',a2,atual>=a2)+tier('🥇','Desafio',a3,atual>=a3);
+  const msgEl=document.getElementById('m3Msg');
+  if(msgEl){
+    if(nivel>=3) msgEl.innerHTML='🔥 <strong>Desafio batido!</strong> Mês histórico — passaram do teto. Bora manter o ritmo!';
+    else {
+      const prox=nivel===2?a3:nivel===1?a2:a1;
+      const nomeProx=nivel===2?'o Desafio 🥇':nivel===1?'a meta Ideal 🥈':'a meta Base 🥉';
+      msgEl.innerHTML=`Faltam <strong>${m3Fmt(prox-atual)}</strong> pra bater ${nomeProx}.`;
+    }
+  }
+  // preenche config
+  const setV=(id,v)=>{const e=document.getElementById(id);if(e)e.value=v;};
+  setV('m3Metrica',metas3.metrica); setV('m3Cresc',metas3.crescimento);
+  setV('m3M1',metas3.m1); setV('m3M2',metas3.m2); setV('m3M3',metas3.m3);
+  set('m3CrescLbl',(metas3.crescimento||0)+'%');
+}
+window.m3ToggleConfig=()=>{ const c=document.getElementById('m3Config'); if(c) c.style.display=c.style.display==='none'?'block':'none'; };
+window.salvarMetas3=async()=>{
+  const metrica=document.getElementById('m3Metrica').value;
+  const crescimento=parseFloat(document.getElementById('m3Cresc').value)||0;
+  const m1=parseFloat(document.getElementById('m3M1').value)||0;
+  const m2=parseFloat(document.getElementById('m3M2').value)||0;
+  const m3=parseFloat(document.getElementById('m3M3').value)||0;
+  if(m1<=0||m2<=0||m3<=0){alert('Preencha as 3 metas com valores válidos!');return;}
+  if(!(m1<=m2 && m2<=m3)){ if(!confirm('As metas não estão em ordem crescente (Base ≤ Ideal ≤ Desafio). Salvar mesmo assim?')) return; }
+  // Âncora no mês atual: as metas digitadas valem pra este mês e sobem daqui pra frente
+  const mesRef=new Date().toISOString().slice(0,7);
+  const dados={metrica,crescimento,m1,m2,m3,mesRef};
+  metas3={...metas3,...dados};
+  localStorage.setItem('bj_metas3',JSON.stringify(dados));
+  try{
+    if(metas3._docId){ await updateDoc(doc(db,'config',metas3._docId),{dados}); }
+    else { const r=await addDoc(collection(db,'config'),{userId:'shared_ijx',tipo:'metas3',dados}); metas3._docId=r.id; }
+  }catch(e){}
+  renderMeta();
+  const m=document.getElementById('m3SaveMsg'); if(m){m.textContent='✓ Salvo';setTimeout(()=>m.textContent='',2000);}
 };
 
 // ── ALERTAS INTELIGENTES ──
@@ -3931,8 +4073,8 @@ function renderExtrato(){
   const totalSai=extrato.filter(x=>x.tipo==='saida').reduce((s,x)=>s+x.valor,0);
   if(res)res.textContent='+'+fmt(totalEnt)+' · -'+fmt(totalSai);
   el.innerHTML=sorted.map(x=>{
-    const walLabel=x.carteira==='c6'?'C6':'MP';
-    const walCls=x.carteira==='c6'?'c6':'mp';
+    const walLabel=x.carteira==='c6'?'C6':x.carteira==='socio'?'🤝 Sócio':'MP';
+    const walCls=x.carteira==='c6'?'c6':x.carteira==='socio'?'socio':'mp';
     const isEnt=x.tipo==='entrada';
     const dtFmt=x.data?new Date(x.data+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short'}):'—';
     return`<div class="ext-item"><div class="ext-ico ${isEnt?'ent':'sai'}">${isEnt?'↑':'↓'}</div><div class="ext-info"><div class="ext-nm">${esc(x.descricao||'')}</div><div class="ext-dt">${dtFmt}${x.categoria?' · '+x.categoria:''}</div></div><span class="ext-wal ${walCls}">${walLabel}</span><span class="ext-val ${isEnt?'ent':'sai'}">${isEnt?'+':'-'}${fmt(x.valor)}</span></div>`;
@@ -4517,6 +4659,7 @@ window.limparAvisos = async () => {
 // IMPORTAR PLANILHA EXCEL (fonte da verdade)
 // ════════════════════════════════════════
 let pendingImport = null;
+let impSuspeitos = [];
 
 const IMP_NON_NOTEBOOK = ['salario','premio bolao copa','rendimentos','serviço alexandre (engenho group)','serviço alexandre engenho group'];
 
@@ -4537,11 +4680,21 @@ function impParseMonth(val){
     if(d) return d.y+'-'+impPad(d.m);
     return '';
   }
-  const s = String(val).trim();
-  let m = s.match(/^(\d{1,2})\/(\d{2,4})$/);
-  if(m){ let yy=m[2].length===2?('20'+m[2]):m[2]; return yy+'-'+impPad(m[1]); }
-  m = s.match(/^(\d{4})-(\d{2})/);
-  if(m) return m[1]+'-'+m[2];
+  let s = String(val).trim().toLowerCase();
+  if(!s) return '';
+  // AAAA-MM ou AAAA/MM (ano primeiro)
+  let m = s.match(/(\d{4})[-\/.](\d{1,2})/);
+  if(m){ const mo=+m[2]; if(mo>=1&&mo<=12) return m[1]+'-'+impPad(mo); }
+  // DD/MM/AAAA ou D/M/AA (data completa) -> mês = 2º número, ano = 3º
+  m = s.match(/(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2,4})/);
+  if(m){ const mo=+m[2]; let yy=m[3].length===2?('20'+m[3]):m[3]; if(mo>=1&&mo<=12) return yy+'-'+impPad(mo); }
+  // Nome de mês pt-BR + ano (ex.: "mar/2025", "março 2025", "mar-25")
+  const meses={jan:1,fev:2,mar:3,abr:4,mai:5,jun:6,jul:7,ago:8,set:9,out:10,nov:11,dez:12};
+  m = s.match(/(jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez)[a-zç]*[\s\/.\-]+(\d{2,4})/);
+  if(m){ let yy=m[2].length===2?('20'+m[2]):m[2]; return yy+'-'+impPad(meses[m[1]]); }
+  // MM/AAAA ou M/AA (mês/ano, dois números)
+  m = s.match(/(\d{1,2})[\/.\-](\d{2,4})/);
+  if(m){ const mo=+m[1]; let yy=m[2].length===2?('20'+m[2]):m[2]; if(mo>=1&&mo<=12) return yy+'-'+impPad(mo); }
   return '';
 }
 
@@ -4556,6 +4709,7 @@ async function impLerPlanilha(file){
   const buf = await file.arrayBuffer();
   const wb = XLSX.read(buf, {type:'array', cellDates:true});
   const itens = [];
+  impSuspeitos = [];
 
   for(const sheetName of ['2024','2025']){
     const sheet = wb.Sheets[sheetName];
@@ -4573,7 +4727,13 @@ async function impLerPlanilha(file){
       const custo = impNum(row[cfg.custo]);
       const venda = impNum(row[cfg.venda]);
       const dc = impParseMonth(row[cfg.mesCompra]);
-      const dv = impParseMonth(row[cfg.mesVenda]);
+      const rawDv = row[cfg.mesVenda];
+      const dv = impParseMonth(rawDv);
+      // Suspeito: tinha ALGO na coluna de venda mas não deu pra ler como data
+      // → provavelmente vendeu mas vai entrar como Estoque
+      if(dv==='' && rawDv!==undefined && rawDv!==null && String(rawDv).trim()!==''){
+        impSuspeitos.push({ nome: nomeTrim, raw: String(rawDv).trim(), aba: sheetName });
+      }
 
       let nome = nomeTrim;
       // Quem pagou: "João"/"João P"/"João pagou" = 100% João | "*" = 50/50 | senão = 100% Igor
@@ -4607,10 +4767,18 @@ window.processarPlanilha = async () => {
     pendingImport = itens;
     const vendido = itens.filter(i=>i.status==='Vendido').length;
     const estoque = itens.filter(i=>i.status==='Estoque').length;
-    const joao = itens.filter(i=>i.nome.endsWith('*')).length;
+    const joao = itens.filter(i=>i.investidor==='João').length;
+    const ambos = itens.filter(i=>i.investidor==='Compartilhado').length;
     const exemplos = itens.slice(-5).map(i=>`${i.nome} (${i.status}, ${i.data||'sem data'})`).join('<br>');
-    statusEl.innerHTML = `<strong style="color:#15803d">✅ ${itens.length} itens lidos da planilha</strong> (${vendido} vendidos, ${estoque} estoque, ${joao} com João*).<br>
-      <span style="color:var(--mu)">Últimos 5 itens encontrados:</span><br><span style="font-size:.74rem;color:var(--li)">${exemplos}</span><br><br>
+    let suspeitosHtml = '';
+    if(impSuspeitos.length){
+      const linhas = impSuspeitos.map(s=>`• ${esc(s.nome)} <span style="color:var(--li)">(venda: "${esc(s.raw)}")</span>`).join('<br>');
+      suspeitosHtml = `<br><br><div style="background:#fef3c7;border:1px solid #fbbf24;border-radius:8px;padding:10px;font-size:.78rem;text-align:left">
+        <strong style="color:#92400e">⚠️ ${impSuspeitos.length} item(ns) com algo na coluna de venda que não consegui ler como data</strong> — vão entrar como <strong>Estoque</strong>. Se já venderam, ajuste a data de venda na planilha e reimporte:<br><br>${linhas}
+      </div>`;
+    }
+    statusEl.innerHTML = `<strong style="color:#15803d">✅ ${itens.length} itens lidos da planilha</strong> (${vendido} vendidos, ${estoque} estoque · ${joao} João, ${ambos} 50/50).<br>
+      <span style="color:var(--mu)">Últimos 5 itens encontrados:</span><br><span style="font-size:.74rem;color:var(--li)">${exemplos}</span>${suspeitosHtml}<br><br>
       <strong style="color:var(--am)">⚠️ Confirmar vai SUBSTITUIR todos os notebooks compartilhados atuais por esses ${itens.length} itens.</strong>`;
     btnConfirm.disabled = false;
   }catch(e){
@@ -5992,8 +6160,8 @@ function buildPainel(){
     const ppM = {};
     vM.filter(p=>p.plataforma).forEach(p=>{ if(!ppM[p.plataforma])ppM[p.plataforma]={qtd:0,luc:0}; ppM[p.plataforma].qtd++; ppM[p.plataforma].luc+=p.lucro; });
     
-    // Meta progress
-    const metaLucro = parseFloat(localStorage.getItem('bj_meta'))||0;
+    // Meta progress (usa a meta Ideal 🥈 do mês, da nova estrutura de 3 metas)
+    const metaLucro = (typeof m3AlvosDoMes==='function' && metas3) ? m3AlvosDoMes(painelMes).a2 : 0;
     const metaPct = metaLucro>0?Math.min(Math.round(lucM/metaLucro*100),100):0;
     
     relBody.innerHTML = `
