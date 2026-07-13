@@ -248,6 +248,20 @@ input[type=number].inp{padding-left:32px}
 .meta-inp:focus{border-color:var(--tx)}
 .meta-btn{padding:4px 11px;border-radius:6px;border:1px solid var(--b2);background:transparent;font-size:.73rem;font-weight:600;color:var(--mu);cursor:pointer;transition:all .15s}
 .meta-btn:hover{border-color:var(--tx);color:var(--tx)}
+.pecaprod-box{border:1px dashed var(--b2);border-radius:10px;padding:10px 12px;background:var(--bg)}
+.pecaprod-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.pecaprod-add{background:var(--tx);color:var(--w);border:none;border-radius:7px;padding:5px 12px;font-size:.73rem;font-weight:700;cursor:pointer}
+.pecaprod-row{display:grid;grid-template-columns:135px 1fr 110px 30px;gap:6px;margin-bottom:5px;align-items:center}
+.pecaprod-row .inp{font-size:.8rem}
+.pp-rem{background:var(--rbg);color:var(--re);border:none;border-radius:7px;padding:6px 0;font-size:.78rem;font-weight:700;cursor:pointer}
+.pecaprod-total{font-size:.76rem;color:var(--mu);background:var(--w);border:1px solid var(--b);border-radius:7px;padding:6px 10px;margin-top:6px}
+.custo-brk{font-size:.64rem;color:var(--li);margin-top:1px;white-space:nowrap}
+.custo-brk .cb-pc{color:#c2410c}
+.pecaprod-row.existente{grid-template-columns:135px 1fr 110px 30px;background:var(--gbg);border:1px solid var(--gbd);border-radius:7px;padding:5px 8px}
+.pe-tag{font-size:.72rem;font-weight:700;color:var(--gr)}
+.pe-nome{font-size:.78rem;color:var(--tx);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pe-custo{font-size:.78rem;font-weight:700;color:var(--tx);text-align:right}
+@media(max-width:700px){.pecaprod-row{grid-template-columns:1fr 1fr;grid-auto-rows:auto}}
 .metas3-wrap{background:var(--w);border:1px solid var(--b);border-radius:var(--rad);padding:14px 18px;margin-bottom:12px;box-shadow:var(--sh)}
 .metas3-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
 .metas3-titulo{font-size:.9rem;font-weight:700;color:var(--tx);text-transform:capitalize}
@@ -898,7 +912,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
         <div class="cdb">
           <div class="fr">
             <div class="fc" style="grid-column:1/-1"><input class="inp" type="text" id="pN" placeholder="Dell Latitude i5 10ª · SSD 256GB · 8GB RAM"></div>
-            <div class="fc"><span class="fla">Custo R$</span><input class="inp" type="number" id="pC" placeholder="0" min="0"></div>
+            <div class="fc"><span class="fla">Custo R$</span><input class="inp" type="number" id="pC" placeholder="0" min="0" oninput="ppTotal()"></div>
             <div class="fc"><span class="fla">Venda R$</span><input class="inp" type="number" id="pV" placeholder="0" min="0"></div>
             <div class="fc"><span class="fla">Status</span>
               <select class="inp" id="pS">
@@ -934,6 +948,16 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
               <input class="inp" type="text" id="pForn" placeholder="Buscar fornecedor existente ou digitar um novo..." autocomplete="off" oninput="pFornBusca(this.value)" onfocus="pFornBusca(this.value)">
               <input type="hidden" id="pFornId">
               <div id="pFornDrop" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:30;background:var(--w);border:1px solid var(--b2);border-radius:8px;max-height:170px;overflow:auto;box-shadow:0 6px 18px rgba(0,0,0,.09)"></div>
+            </div>
+            <div class="fc" style="grid-column:1/-1">
+              <div class="pecaprod-box">
+                <div class="pecaprod-head">
+                  <span class="fla" style="margin:0">🔧 Peças aplicadas nesta máquina <span style="font-weight:400;color:var(--li);text-transform:none">— entram no custo e vão pro estoque de peças</span></span>
+                  <button type="button" class="pecaprod-add" onclick="ppAddLinha()">+ Peça</button>
+                </div>
+                <div id="ppLista"></div>
+                <div class="pecaprod-total" id="ppTotal" style="display:none"></div>
+              </div>
             </div>
             <div class="fc"><span class="fla" style="opacity:0">.</span><button class="ba" onclick="addProd()">+ Adicionar</button></div>
           </div>
@@ -1058,7 +1082,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
         <div class="ib"><div class="ii">🎯</div><div><div class="il">Potencial</div><div class="iv am" id="iPot">—</div><div class="in" id="iPotN">—</div></div></div>
       </div>
       <div class="cg">
-        <div class="cc full"><div class="ch"><div class="ct">Receita vs Lucro por mês (R$)</div><div class="cs">Evolução financeira mensal — sem salários</div></div><div class="cw tall"><canvas id="cRL"></canvas></div></div>
+        <div class="cc full"><div class="ch"><div class="ct">Receita vs Gasto em compras por mês (R$)</div><div class="cs">Cinza = receita (vendas do mês) · Barras = gasto em notebooks comprados no mês, por sócio · Linha = lucro</div></div><div class="cw tall"><canvas id="cRL"></canvas></div></div>
         <div class="cc"><div class="ch"><div class="ct">Unidades vendidas por mês</div><div class="cs">Volume de notebooks</div></div><div class="cw"><canvas id="cQ"></canvas></div></div>
         <div class="cc"><div class="ch"><div class="ct">Lucro médio por marca (R$)</div><div class="cs">Qual marca rende mais por venda</div></div><div class="cw"><canvas id="cLM"></canvas></div></div>
         <div class="cc full"><div class="ch"><div class="ct">Distribuição do estoque por marca</div><div class="cs">Total histórico de produtos</div></div><div class="cw"><canvas id="cMarca"></canvas></div></div>
@@ -2080,6 +2104,17 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
           </div>
         </div>
       </div>
+      <div class="fc full">
+        <div class="pecaprod-box">
+          <div class="pecaprod-head">
+            <span class="fl" style="margin:0">🔧 Peças desta máquina <span style="font-weight:400;color:var(--li);text-transform:none">— somam no custo e vão pro estoque de peças</span></span>
+            <button type="button" class="pecaprod-add" onclick="peAddLinha()">+ Peça</button>
+          </div>
+          <div id="peExistentes"></div>
+          <div id="peLista"></div>
+          <div class="pecaprod-total" id="peTotal" style="display:none"></div>
+        </div>
+      </div>
     </div>
     <div class="mca">
       <button class="bcan" onclick="closeModal()">Cancelar</button>
@@ -2311,6 +2346,118 @@ async function loadProds(){
   render();renderSecoes();calcStats();renderAlertas();renderMeta();
 }
 
+// ── PEÇAS NO CADASTRO DE PRODUTO ──
+// Peça aplicada aumenta o custo real da máquina E vai pro estoque de peças (aba Peças).
+const PP_TIPOS=['Tela','Bateria','Teclado','HD/SSD','RAM','Placa-mãe','Carregador','Plug/Tomada','Carcaça','Outro'];
+const PP_EMOJI={'Tela':'🖥️','Bateria':'🔋','Teclado':'⌨️','HD/SSD':'💾','RAM':'🧠','Placa-mãe':'🔌','Carregador':'⚡','Plug/Tomada':'🔌','Carcaça':'📦','Outro':'🔧'};
+let ppSeq=0;
+window.ppAddLinha=()=>{
+  const box=document.getElementById('ppLista'); if(!box)return;
+  const id='pp'+(++ppSeq);
+  const div=document.createElement('div');
+  div.className='pecaprod-row'; div.id=id;
+  div.innerHTML=`
+    <select class="inp pp-tipo">${PP_TIPOS.map(t=>`<option value="${t}">${PP_EMOJI[t]} ${t}</option>`).join('')}</select>
+    <input class="inp pp-nome" type="text" placeholder="Descrição (ex: SSD 256GB Kingston)">
+    <input class="inp pp-custo" type="number" min="0" placeholder="Custo R$" oninput="ppTotal()">
+    <button type="button" class="pp-rem" onclick="ppRemLinha('${id}')" title="Remover">✕</button>`;
+  box.appendChild(div);
+  ppTotal();
+};
+window.ppRemLinha=(id)=>{ const el=document.getElementById(id); if(el)el.remove(); ppTotal(); };
+window.ppTotal=()=>{
+  const rows=document.querySelectorAll('#ppLista .pecaprod-row');
+  let soma=0; rows.forEach(r=>{ soma+=parseFloat(r.querySelector('.pp-custo').value)||0; });
+  const el=document.getElementById('ppTotal'); if(!el)return;
+  if(!rows.length){ el.style.display='none'; return; }
+  const base=parseFloat(document.getElementById('pC').value)||0;
+  el.style.display='block';
+  el.innerHTML=`${rows.length} peça${rows.length!==1?'s':''} · <strong>${fmt(soma)}</strong> em peças &nbsp;→&nbsp; custo total da máquina: <strong style="color:var(--tx)">${fmt(base+soma)}</strong>`;
+};
+function ppColetar(){
+  const out=[];
+  document.querySelectorAll('#ppLista .pecaprod-row').forEach(r=>{
+    const tipo=r.querySelector('.pp-tipo').value;
+    const nome=(r.querySelector('.pp-nome').value||'').trim()||tipo;
+    const custo=parseFloat(r.querySelector('.pp-custo').value)||0;
+    out.push({tipo,nome,custo});
+  });
+  return out;
+}
+function ppLimpar(){ const b=document.getElementById('ppLista'); if(b)b.innerHTML=''; ppTotal(); }
+
+// ── PEÇAS NO MODAL DE EDIÇÃO (adicionar peça em notebook já cadastrado) ──
+let peSeq=0;
+function peRenderExistentes(prodId){
+  const box=document.getElementById('peExistentes'); if(!box)return;
+  const jaTem=pecas.filter(pc=>pc.produto_id===prodId);
+  if(!jaTem.length){ box.innerHTML=''; return; }
+  box.innerHTML=jaTem.map(pc=>`<div class="pecaprod-row existente">
+      <span class="pe-tag">${PP_EMOJI[pc.tipo]||'🔧'} ${esc(pc.tipo||'')}</span>
+      <span class="pe-nome">${esc(pc.nome||'')}</span>
+      <span class="pe-custo">${fmt(pc.custo||0)}</span>
+      <button type="button" class="pp-rem" onclick="peRemExistente('${pc.id}')" title="Remover peça">✕</button>
+    </div>`).join('');
+}
+window.peRemExistente=async(pecaId)=>{
+  if(!confirm('Remover esta peça? O custo dela sai da máquina.'))return;
+  const i=pecas.findIndex(x=>x.id===pecaId); if(i<0)return;
+  const pc=pecas[i];
+  try{ if(!String(pecaId).startsWith('l')) await deleteDoc(doc(db,'pecas',pecaId)); }catch(e){}
+  pecas.splice(i,1);
+  // recalcula o custo do produto
+  const p=prods.find(x=>x.id===editId);
+  if(p){
+    const novoPecas=Math.max(0,(p.custo_pecas||0)-(pc.custo||0));
+    const base=p.custo_base!==undefined?p.custo_base:(p.custo-(p.custo_pecas||0));
+    const novoCusto=base+novoPecas;
+    const upd={custo:novoCusto,custo_base:base,custo_pecas:novoPecas,lucro:(p.venda||0)-novoCusto};
+    try{ if(!String(p.id).startsWith('l')&&!String(p.id).startsWith('x')) await updateDoc(doc(db,'products',p.id),upd); }catch(e){}
+    Object.assign(p,upd);
+    document.getElementById('eC').value=novoCusto;
+  }
+  peRenderExistentes(editId); peTotal();
+  render();renderSecoes();calcStats();
+  if(typeof renderPecas==='function') renderPecas();
+};
+window.peAddLinha=()=>{
+  const box=document.getElementById('peLista'); if(!box)return;
+  const id='pe'+(++peSeq);
+  const div=document.createElement('div');
+  div.className='pecaprod-row'; div.id=id;
+  div.innerHTML=`
+    <select class="inp pe-tipo">${PP_TIPOS.map(t=>`<option value="${t}">${PP_EMOJI[t]} ${t}</option>`).join('')}</select>
+    <input class="inp pe-nomein" type="text" placeholder="Descrição (ex: SSD 256GB Kingston)">
+    <input class="inp pe-custoin" type="number" min="0" placeholder="Custo R$" oninput="peTotal()">
+    <button type="button" class="pp-rem" onclick="peRemLinha('${id}')" title="Remover">✕</button>`;
+  box.appendChild(div);
+  peTotal();
+};
+window.peRemLinha=(id)=>{ const el=document.getElementById(id); if(el)el.remove(); peTotal(); };
+window.peTotal=()=>{
+  const el=document.getElementById('peTotal'); if(!el)return;
+  const jaTem=pecas.filter(pc=>pc.produto_id===editId);
+  const somaJa=jaTem.reduce((s,pc)=>s+(pc.custo||0),0);
+  let somaNovas=0;
+  document.querySelectorAll('#peLista .pecaprod-row').forEach(r=>{ somaNovas+=parseFloat(r.querySelector('.pe-custoin').value)||0; });
+  const totalPecas=somaJa+somaNovas;
+  if(!jaTem.length && !somaNovas && !document.querySelectorAll('#peLista .pecaprod-row').length){ el.style.display='none'; return; }
+  const custoCampo=parseFloat(document.getElementById('eC').value)||0;
+  const base=custoCampo-somaJa;   // campo já inclui as peças existentes
+  el.style.display='block';
+  el.innerHTML=`📦 Máquina: <strong>${fmt(Math.max(base,0))}</strong> &nbsp;·&nbsp; 🔧 Peças: <strong>${fmt(totalPecas)}</strong> &nbsp;→&nbsp; custo total: <strong style="color:var(--tx)">${fmt(Math.max(base,0)+totalPecas)}</strong>`;
+};
+function peColetar(){
+  const out=[];
+  document.querySelectorAll('#peLista .pecaprod-row').forEach(r=>{
+    const tipo=r.querySelector('.pe-tipo').value;
+    const nome=(r.querySelector('.pe-nomein').value||'').trim()||tipo;
+    const custo=parseFloat(r.querySelector('.pe-custoin').value)||0;
+    out.push({tipo,nome,custo});
+  });
+  return out;
+}
+
 window.addProd=async()=>{
   const nome=g('pN'),custo=parseFloat(document.getElementById('pC').value)||0,venda=parseFloat(document.getElementById('pV').value)||0,status=document.getElementById('pS').value,dc=document.getElementById('pDC').value,investidor=document.getElementById('pInv').value;
   const canal=document.getElementById('pCanal').value;
@@ -2320,14 +2467,27 @@ window.addProd=async()=>{
   let fornNome=(document.getElementById('pForn').value||'').trim();
   if(fornNome && !fornId){ fornId=await salvarFornecedor({nome:fornNome}); }
   const num=prods.length>0?Math.max(...prods.map(p=>p.num||0))+1:1;
+  // Peças aplicadas: entram no custo real da máquina
+  const pecasNovas=ppColetar();
+  const custoPecas=pecasNovas.reduce((s,x)=>s+x.custo,0);
+  const custoTotal=custo+custoPecas;
   // data_compra armazena data completa YYYY-MM-DD; data_compra_mes extrai só o mês
   const dcMes=dc?dc.slice(0,7):'';
-  const obj={userId:'shared_ijx',addedBy:user.uid,addedByName:user.displayName||user.email.split('@')[0],nome,custo,venda,lucro:venda-custo,status,investidor,data_compra:dc,data_compra_mes:dcMes,data_venda:'',data:dcMes,canal_compra:canal,fornecedor_id:fornId,fornecedor_nome:fornNome,num,createdAt:new Date().toISOString()};
-  try{const r=await addDoc(collection(db,'products'),obj);prods.push({...obj,id:r.id});}catch(e){prods.push({...obj,id:'l'+Date.now()});}
+  const obj={userId:'shared_ijx',addedBy:user.uid,addedByName:user.displayName||user.email.split('@')[0],nome,custo:custoTotal,custo_base:custo,custo_pecas:custoPecas,venda,lucro:venda-custoTotal,status,investidor,data_compra:dc,data_compra_mes:dcMes,data_venda:'',data:dcMes,canal_compra:canal,fornecedor_id:fornId,fornecedor_nome:fornNome,num,createdAt:new Date().toISOString()};
+  let prodId='l'+Date.now();
+  try{const r=await addDoc(collection(db,'products'),obj);prodId=r.id;prods.push({...obj,id:r.id});}catch(e){prods.push({...obj,id:prodId});}
+  // Grava as peças na aba Peças, já vinculadas a esta máquina
+  for(const pc of pecasNovas){
+    const pobj={userId:'shared_ijx',addedBy:user.uid,nome:pc.nome,tipo:pc.tipo,custo:pc.custo,venda:0,lucro:0,status:'Usado',obs:'Aplicada em: '+nome,quantidade:1,produto_id:prodId,produto_nome:nome,criadoEm:new Date().toISOString()};
+    try{const pr=await addDoc(collection(db,'pecas'),pobj);pecas.push({...pobj,id:pr.id});}
+    catch(e){pecas.push({...pobj,id:'lp'+Date.now()+Math.random()});}
+  }
   document.getElementById('pN').value='';document.getElementById('pC').value='';document.getElementById('pV').value='';document.getElementById('pDC').value='';document.getElementById('pCanal').value='';document.getElementById('pForn').value='';document.getElementById('pFornId').value='';
+  ppLimpar();
   // Notificar o sócio sobre o novo produto
   criarAviso('produto_adicionado', nome);
   render();renderSecoes();calcStats();renderAlertas();renderMeta();
+  if(typeof renderPecas==='function') renderPecas();
   if(document.getElementById('fornView')&&document.getElementById('fornView').style.display!=='none')renderFornecedores();
 };
 
@@ -2579,14 +2739,15 @@ function smCalcRepasse(){
   const custoReal=custoRealDe(p);
   const lucro=preco-custoReal;
   const metadeLucro=lucro/2;
-  const b=investidorDe(p);
-  // Quanto do custo o Igor pôs nesta máquina
-  const custoIgor = b==='igor' ? custoReal : b==='ambos' ? custoReal/2 : 0;
+  const sp=custoSplit(p);
+  const custoIgor=sp.igor;               // máquina (se dele) + metade das peças
   const val=custoIgor+metadeLucro;
+  const b=investidorDe(p);
+  const pc=sp.pecas>0?` (inclui ${fmt(sp.pecas/2)} da metade das peças)`:'';
   let txt;
-  if(b==='igor')      txt=`Só o sócio investiu: devolve ${fmt(custoIgor)} (custo dele) + ${fmt(metadeLucro)} (metade do lucro).`;
-  else if(b==='ambos')txt=`50/50: devolve ${fmt(custoIgor)} (metade do custo) + ${fmt(metadeLucro)} (metade do lucro).`;
-  else                txt=`Você investiu sozinho: sócio recebe só ${fmt(metadeLucro)} (metade do lucro).`;
+  if(b==='igor')      txt=`Máquina do sócio: devolve ${fmt(custoIgor)}${pc} + ${fmt(metadeLucro)} (metade do lucro).`;
+  else if(b==='ambos')txt=`50/50: devolve ${fmt(custoIgor)}${pc} + ${fmt(metadeLucro)} (metade do lucro).`;
+  else                txt=`Máquina sua: sócio recebe ${fmt(custoIgor)}${pc} + ${fmt(metadeLucro)} (metade do lucro).`;
   return {valor:Math.max(val,0), txt};
 }
 window.smSugerirRepasse=()=>{
@@ -3252,6 +3413,9 @@ window.openEdit=id=>{
   document.getElementById('eCliNovo').style.display='none';
   document.getElementById('eCliWpp').value='';
   document.getElementById('eCliPerfil').value='';
+  const peL=document.getElementById('peLista'); if(peL) peL.innerHTML='';
+  peRenderExistentes(id);
+  peTotal();
   document.getElementById('moSucesso').classList.remove('on');
   document.getElementById('MO').classList.remove('h');
 };
@@ -3268,11 +3432,27 @@ window.saveEdit=async()=>{
     const perfil=document.getElementById('eCliPerfil').value||'';
     cliId=await salvarCliente({nome:cliNome,whatsapp:wpp,perfil,origem:'cadastro'});
   }
-  const upd={nome,custo,venda,lucro:venda-custo,status,investidor,data_compra:dc,data_compra_mes:dcMes,data_venda:dv,data:dv||dcMes,cliente_id:cliId,cliente_nome:cliNome};
+  // Peças: as já existentes continuam; as novas somam no custo
+  const pecasJa=pecas.filter(pc=>pc.produto_id===editId);
+  const somaJa=pecasJa.reduce((s,pc)=>s+(pc.custo||0),0);
+  const pecasNovas=peColetar();
+  const somaNovas=pecasNovas.reduce((s,x)=>s+x.custo,0);
+  const baseMaquina=Math.max(0, custo - somaJa);   // campo de custo já inclui as peças existentes
+  const custoFinal=baseMaquina+somaJa+somaNovas;
+  const totalPecas=somaJa+somaNovas;
+
+  const upd={nome,custo:custoFinal,custo_base:baseMaquina,custo_pecas:totalPecas,venda,lucro:venda-custoFinal,status,investidor,data_compra:dc,data_compra_mes:dcMes,data_venda:dv,data:dv||dcMes,cliente_id:cliId,cliente_nome:cliNome};
   if(!editId.startsWith('x')&&!editId.startsWith('l')){try{await updateDoc(doc(db,'products',editId),upd);}catch(e){}}
+  // Grava as peças novas na aba Peças, vinculadas a esta máquina
+  for(const pc of pecasNovas){
+    const pobj={userId:'shared_ijx',addedBy:user.uid,nome:pc.nome,tipo:pc.tipo,custo:pc.custo,venda:0,lucro:0,status:'Usado',obs:'Aplicada em: '+nome,quantidade:1,produto_id:editId,produto_nome:nome,criadoEm:new Date().toISOString()};
+    try{const pr=await addDoc(collection(db,'pecas'),pobj);pecas.push({...pobj,id:pr.id});}
+    catch(e){pecas.push({...pobj,id:'lp'+Date.now()+Math.random()});}
+  }
   const p=prods.find(p=>p.id===editId);if(p)Object.assign(p,upd);
   criarAviso('produto_editado', nome);
   render();renderSecoes();calcStats();
+  if(typeof renderPecas==='function') renderPecas();
   if(document.getElementById('pg-clientes')&&document.getElementById('pg-clientes').classList.contains('on'))renderClientes();
   const resumo=document.getElementById('moSucessoResumo');
   if(resumo) resumo.innerHTML=`<strong>${esc(nome)}</strong>${cliNome?` · 👤 ${esc(cliNome)}`:''}`;
@@ -3310,7 +3490,25 @@ function investidorDe(p){
 // Custo REAL de um produto. Itens novos (importação corrigida / cadastro manual) já
 // guardam o valor real. Apenas o fallback antigo embutido (ids 'x...') guarda metade.
 function custoRealDe(p){
+  // Fallback antigo (ids 'x...') guardava metade; itens do Firestore já são o custo da planilha.
   return (p.custo||0) * ((p.id&&String(p.id).startsWith('x'))?2:1);
+}
+
+// Divide o custo de um produto entre os sócios.
+// REGRA: o custo da MÁQUINA segue quem investiu (50/50, só João ou só Igor).
+//        o custo das PEÇAS é SEMPRE rachado 50/50 entre os dois.
+function custoSplit(p){
+  const total = custoRealDe(p);
+  const pecas = Math.min(p.custo_pecas||0, total);   // peças aplicadas nesta máquina
+  const maquina = total - pecas;                      // custo da máquina em si
+  const b = investidorDe(p);
+  const maqJoao = b==='ambos' ? maquina/2 : b==='joao' ? maquina : 0;
+  const maqIgor = b==='ambos' ? maquina/2 : b==='igor' ? maquina : 0;
+  return {
+    joao: maqJoao + pecas/2,
+    igor: maqIgor + pecas/2,
+    maquina, pecas
+  };
 }
 
 // Função única de lucro — usada em TODAS as camadas para consistência
@@ -3515,7 +3713,7 @@ function render(){
         <td>${invBadge}</td>
         <td style="color:var(--li);font-size:.75rem">${dcDisplay}${autorTag}</td>
         <td style="color:var(--li);font-size:.75rem">${fdt(p.data_venda)}</td>
-        <td style="color:var(--mu)">${fmt(p.custo)}</td>
+        <td style="color:var(--mu)">${fmt(p.custo)}${(p.custo_pecas>0)?`<div class="custo-brk"><span title="Pago na máquina">📦 ${fmt(p.custo_base!==undefined?p.custo_base:(p.custo-p.custo_pecas))}</span> <span class="cb-pc" title="Pago em peças">🔧 ${fmt(p.custo_pecas)}</span></div>`:''}</td>
         <td class="ps">${fmt(p.venda)}</td>
         <td class="pp ${lp>=0?'pos':'neg'}">${fmt(lp)}${diasInfo}${splitLucro}</td>
         <td>${sb}${platInfo}</td>
@@ -3584,6 +3782,13 @@ function renderFinLabel(){
   }
 }
 
+function getMesCompra(p){
+  // Retorna YYYY-MM do mês de COMPRA (quando o dinheiro saiu)
+  if(p.data_compra && p.data_compra.length>=7) return p.data_compra.slice(0,7);
+  if(p.data_compra_mes && p.data_compra_mes.length>=7) return p.data_compra_mes.slice(0,7);
+  return '';
+}
+
 function getMesVenda(p){
   // Retorna YYYY-MM do mês de venda de forma confiável
   // Prioridade: data_venda > data (se for mês de venda)
@@ -3596,9 +3801,11 @@ function calcChartsData(){
   // Gera dados dos gráficos 100% a partir do array prods (tempo real)
   const vendidos = prods.filter(p=>p.status==='Vendido');
 
-  // Coletar todos os meses com vendas usando helper confiável
+  // Meses do eixo: precisa cobrir tanto VENDAS quanto COMPRAS
+  // (mês pode ter compra sem venda, e vice-versa)
   const mesesSet = new Set();
   vendidos.forEach(p=>{ const m=getMesVenda(p); if(m) mesesSet.add(m); });
+  prods.forEach(p=>{ const m=getMesCompra(p); if(m) mesesSet.add(m); });
 
   // Ordenar meses cronologicamente
   const mesesOrdenados = [...mesesSet].sort();
@@ -3625,6 +3832,18 @@ function calcChartsData(){
     vendidos.filter(p=>getMesVenda(p)===m).length
   );
 
+  // GASTO em compras por mês (mês da COMPRA, TODAS as máquinas — vendidas e em estoque)
+  // Máquina segue quem investiu; peças sempre 50/50.
+  const gastoJoaoMes = mesesOrdenados.map(m=>
+    prods.filter(p=>getMesCompra(p)===m).reduce((s,p)=>s+custoSplit(p).joao,0)
+  );
+  const gastoIgorMes = mesesOrdenados.map(m=>
+    prods.filter(p=>getMesCompra(p)===m).reduce((s,p)=>s+custoSplit(p).igor,0)
+  );
+  // Lucro é sempre 50/50 entre os sócios
+  const lucJoaoMes = luc.map(v=>v/2);
+  const lucIgorMes = luc.map(v=>v/2);
+
   // Lucro médio por marca
   const marcasChart = ['Dell','Lenovo','Acer','Samsung','HP','Asus','Outros'];
   const lucMarca = marcasChart.map(b=>{
@@ -3635,7 +3854,7 @@ function calcChartsData(){
   // Distribuição por marca (total histórico)
   const distMarca = marcasChart.map(b=>prods.filter(p=>brand(p.nome)===b).length);
 
-  return {labels,rec,luc,qtd,marcasChart,lucMarca,distMarca};
+  return {labels,rec,luc,qtd,marcasChart,lucMarca,distMarca,gastoJoaoMes,gastoIgorMes,lucJoaoMes,lucIgorMes};
 }
 
 let chartsInstances = {};
@@ -3694,7 +3913,6 @@ function buildCharts(){
   if(elIPotN) elIPotN.textContent = estoqueVivo.filter(p=>p.status==='Anunciado').length+' anunciados · '+estoqueVivo.filter(p=>p.status==='Estoque').length+' estoque';
 
   // ── GRÁFICO RECEITA vs LUCRO ──
-  const maxRecIdx = d.rec.indexOf(Math.max(...d.rec));
   (function(){
     const oldCanvas = document.getElementById('cRL');
     if(oldCanvas){
@@ -3706,12 +3924,46 @@ function buildCharts(){
   chartsInstances['cRL'] = new Chart(document.getElementById('cRL'),{
     type:'bar',
     data:{labels:d.labels,datasets:[
-      {label:'Receita',data:d.rec,backgroundColor:d.rec.map((_,i)=>i===maxRecIdx?'#1c1917':'#d6d2c8'),borderRadius:5,borderSkipped:false,order:2},
-      {label:'Lucro',data:d.luc,backgroundColor:d.luc.map((_,i)=>i===maxRecIdx?'#15803d':'#86efac'),borderRadius:5,borderSkipped:false,order:1}
+      // FUNDO: receita do mês (mês da VENDA) — barra larga cinza
+      {label:'💰 Receita (vendas do mês)', data:d.rec, backgroundColor:'#57534e',
+       grouped:false, order:5, barPercentage:0.92, categoryPercentage:0.86,
+       borderRadius:4, borderSkipped:false},
+      // FRENTE: gasto em compras (mês da COMPRA, todas as máquinas) — empilhado por sócio
+      {label:'💙 Comprou: João', data:d.gastoJoaoMes, backgroundColor:'#60a5fa',
+       stack:'gasto', order:3, barPercentage:0.46, categoryPercentage:0.86,
+       borderRadius:0, borderSkipped:false},
+      {label:'💜 Comprou: Igor', data:d.gastoIgorMes, backgroundColor:'#a78bfa',
+       stack:'gasto', order:2, barPercentage:0.46, categoryPercentage:0.86,
+       borderRadius:{topLeft:4,topRight:4}, borderSkipped:false},
+      // LUCRO: linha (vendas do mês) — base de tempo diferente, por isso não empilha
+      {type:'line', label:'💚 Lucro (vendas do mês)', data:d.luc,
+       borderColor:'#16a34a', backgroundColor:'#16a34a', borderWidth:2.5,
+       pointRadius:3, pointBackgroundColor:'#16a34a', tension:0.3, order:1, fill:false}
     ]},
     options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{labels:{color:tc,font,boxWidth:10}},tooltip:{callbacks:{label:ctx=>' '+fmt(ctx.raw)},bodyFont:font,titleFont:font}},
-      scales:{x:{grid:{display:false},ticks:{color:tc,font}},y:{grid:{color:gc},ticks:{color:tc,font,callback:v=>'R$'+(v/1000).toFixed(0)+'k'},border:{display:false}}}}
+      plugins:{
+        legend:{labels:{color:tc,font,boxWidth:10,usePointStyle:false}},
+        tooltip:{
+          bodyFont:font,titleFont:font,
+          callbacks:{
+            label:ctx=>' '+ctx.dataset.label+': '+fmt(ctx.raw),
+            afterBody:(items)=>{
+              const i=items[0].dataIndex;
+              const gasto=(d.gastoJoaoMes[i]||0)+(d.gastoIgorMes[i]||0);
+              const receita=d.rec[i]||0;
+              const saldo=receita-gasto;
+              const out=['','Gasto total em compras: '+fmt(gasto)];
+              out.push(saldo>=0 ? 'Saldo do mês: +'+fmt(saldo) : 'Saldo do mês: -'+fmt(-saldo)+' (investiu mais do que faturou)');
+              if(receita>0) out.push('Margem: '+Math.round((d.luc[i]/receita)*100)+'%');
+              return out;
+            }
+          }
+        }
+      },
+      scales:{
+        x:{stacked:true, grid:{display:false}, ticks:{color:tc,font}},
+        y:{stacked:true, grid:{color:gc}, ticks:{color:tc,font,callback:v=>'R$'+(v/1000).toFixed(0)+'k'}, border:{display:false}}
+      }}
   });
 
   // ── GRÁFICO UNIDADES POR MÊS ──
@@ -4400,7 +4652,7 @@ function renderPecas(){
       return`<tr>
         <td><div class="pn">${nomeExibido}${atBadge}</div><div style="margin-top:2px">${obsBadge}</div></td>
         <td style="text-align:center">${qtdBadge}</td>
-        <td style="color:var(--mu)">${fmt(p.custo)}</td>
+        <td style="color:var(--mu)">${fmt(p.custo)}${(p.custo_pecas>0)?`<div class="custo-brk"><span title="Pago na máquina">📦 ${fmt(p.custo_base!==undefined?p.custo_base:(p.custo-p.custo_pecas))}</span> <span class="cb-pc" title="Pago em peças">🔧 ${fmt(p.custo_pecas)}</span></div>`:''}</td>
         <td class="ps">${fmt(p.venda)}</td>
         <td class="pp ${(p.lucro||0)>=0?'pos':'neg'}">${fmt(p.lucro||0)}</td>
         <td><select class="sel" onchange="updPecaStatus('${p.id}',this.value)">
@@ -4675,8 +4927,10 @@ const IMP_NON_NOTEBOOK = ['salario','premio bolao copa','rendimentos','serviço 
 
 // Colunas (0-indexed, vindas de sheet_to_json com header:1) — variam por aba
 const IMP_SHEET_CFG = {
-  '2025': { item:2, venda:6, custo:7, mesCompra:9, mesVenda:10 },
-  '2024': { item:1, venda:4, custo:5, mesCompra:7, mesVenda:8 },
+  // custo/venda antigas são colunas derivadas; as REAIS são lucroReal (lucro já líquido,
+  // descontando peças) e vendaTotal (última coluna = venda real).
+  '2025': { item:2, venda:6, custo:7, lucroReal:8, mesCompra:9, mesVenda:10, vendaTotal:11 },
+  '2024': { item:1, venda:4, custo:5, lucroReal:6, mesCompra:7, mesVenda:8, vendaTotal:9 },
 };
 
 function impPad(n){ return String(n).padStart(2,'0'); }
@@ -4734,10 +4988,12 @@ async function impLerPlanilha(file){
       const keyLower = nomeTrim.toLowerCase();
       if(IMP_NON_NOTEBOOK.includes(keyLower)) continue;
 
-      // A planilha anota custo E venda pela METADE (convenção dos sócios).
-      // Aqui convertemos para valores REAIS (×2) — o banco guarda o real.
-      const custo = impNum(row[cfg.custo])*2;
-      const venda = impNum(row[cfg.venda])*2;
+      // Mapeamento ORIGINAL (validado contra a realidade pelos sócios):
+      // col venda e col custo da planilha são as corretas; lucro = venda - custo.
+      // A última coluna da planilha é venda ESPERADA (especulação) e NÃO é usada.
+      const custo = impNum(row[cfg.custo]);
+      const venda = impNum(row[cfg.venda]);
+      const lucroReal = venda - custo;
       const dc = impParseMonth(row[cfg.mesCompra]);
       const rawDv = row[cfg.mesVenda];
       const dv = impParseMonth(rawDv);
@@ -4755,7 +5011,7 @@ async function impLerPlanilha(file){
       else investidor='Igor';
 
       itens.push({
-        nome, custo, venda, lucro: venda-custo,
+        nome, custo, venda, lucro: lucroReal,
         status: dv ? 'Vendido' : 'Estoque',
         data_compra: dc, data_venda: dv, data: dv||dc,
         investidor,
@@ -4781,7 +5037,10 @@ window.processarPlanilha = async () => {
     const estoque = itens.filter(i=>i.status==='Estoque').length;
     const joao = itens.filter(i=>i.investidor==='João').length;
     const ambos = itens.filter(i=>i.investidor==='Compartilhado').length;
-    const exemplos = itens.slice(-5).map(i=>`${i.nome} (${i.status}, ${i.data||'sem data'})`).join('<br>');
+    const exemplos = itens.slice(-5).map(i=>`${i.nome} — venda ${fmt(i.venda)} · custo ${fmt(i.custo)} · <strong>lucro ${fmt(i.lucro)}</strong> (${i.status})`).join('<br>');
+    const totLucro=itens.filter(i=>i.status==='Vendido').reduce((s,i)=>s+i.lucro,0);
+    const totVenda=itens.filter(i=>i.status==='Vendido').reduce((s,i)=>s+i.venda,0);
+    const margem=totVenda>0?Math.round(totLucro/totVenda*100):0;
     let suspeitosHtml = '';
     if(impSuspeitos.length){
       const linhas = impSuspeitos.map(s=>`• ${esc(s.nome)} <span style="color:var(--li)">(venda: "${esc(s.raw)}")</span>`).join('<br>');
@@ -4790,8 +5049,12 @@ window.processarPlanilha = async () => {
       </div>`;
     }
     statusEl.innerHTML = `<strong style="color:#15803d">✅ ${itens.length} itens lidos da planilha</strong> (${vendido} vendidos, ${estoque} estoque · ${joao} João, ${ambos} 50/50).<br>
-      <span style="font-size:.74rem;color:#1d4ed8">🔢 Valores convertidos: custo e venda da planilha (metade) × 2 = valores reais no site.</span><br>
-      <span style="color:var(--mu)">Últimos 5 itens encontrados:</span><br><span style="font-size:.74rem;color:var(--li)">${exemplos}</span>${suspeitosHtml}<br><br>
+      <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:8px 10px;margin:6px 0;font-size:.78rem;text-align:left">
+        <strong style="color:#1d4ed8">🔢 Confira ANTES de confirmar:</strong><br>
+        Faturamento: <strong>${fmt(totVenda)}</strong> · Lucro: <strong>${fmt(totLucro)}</strong> · Margem: <strong>${margem}%</strong><br>
+        <span style="color:var(--li);font-size:.72rem">Margem acima de ~40% indica leitura errada das colunas.</span>
+      </div>
+      <span style="color:var(--mu);font-size:.74rem">Últimos 5 itens:</span><br><span style="font-size:.72rem;color:var(--li)">${exemplos}</span>${suspeitosHtml}<br><br>
       <strong style="color:var(--am)">⚠️ Confirmar vai SUBSTITUIR todos os notebooks compartilhados atuais por esses ${itens.length} itens.</strong>`;
     btnConfirm.disabled = false;
   }catch(e){
@@ -5801,17 +6064,16 @@ window.renderTabelaSocios = () => {
   }
 
   // Totais
-  const crA = lst => lst.reduce((s,p)=>s+custoRealDe(p),0);
-  const totInvJoao = crA(lista.filter(p=>investidorDe(p)==='ambos'))/2 + crA(lista.filter(p=>investidorDe(p)==='joao'));
-  const totInvIgor = crA(lista.filter(p=>investidorDe(p)==='ambos'))/2 + crA(lista.filter(p=>investidorDe(p)==='igor'));
+  const totInvJoao = lista.reduce((s,p)=>s+custoSplit(p).joao,0);
+  const totInvIgor = lista.reduce((s,p)=>s+custoSplit(p).igor,0);
   const totLuc = lista.filter(p=>p.status==='Vendido').reduce((s,p)=>s+(p.lucro||0),0);
 
   const rows = lista.map(p=>{
     const bkt = investidorDe(p);
     // Custo real: XLSX divide ao meio (id começa com 'x'), Firebase já tem o valor real
-    const custoReal = custoRealDe(p);
-    const invJoao = bkt==='ambos' ? custoReal/2 : bkt==='joao' ? custoReal : 0;
-    const invIgor = bkt==='ambos' ? custoReal/2 : bkt==='igor' ? custoReal : 0;
+    const _sp = custoSplit(p);
+    const invJoao = _sp.joao;
+    const invIgor = _sp.igor;
     const sb = p.status==='Vendido'?'<span class="bv sv">Vendido</span>':p.status==='Anunciado'?'<span class="bv san">Anunciado</span>':'<span class="bv se">Estoque</span>';
     const ast = bkt==='ambos'
       ? '<span style="font-size:.65rem;background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0;padding:1px 5px;border-radius:5px;font-weight:700">★ Ambos</span>'
@@ -6032,14 +6294,14 @@ function buildPainel(){
     const joaoE  = emMao.filter(p=>investidorDe(p)==='joao');
     const igorE  = emMao.filter(p=>investidorDe(p)==='igor');
 
-    // Custo real por item (só o fallback antigo 'x...' guarda metade)
-    const cr = lst => lst.reduce((s,p)=>s+custoRealDe(p),0);
+    // Investimento por sócio: máquina segue quem pagou, peças sempre 50/50
+    const somaJoao = lst => lst.reduce((s,p)=>s+custoSplit(p).joao,0);
+    const somaIgor = lst => lst.reduce((s,p)=>s+custoSplit(p).igor,0);
 
-    // 50/50 divide; João-100% vai todo pro João; Igor-100% vai todo pro Igor
-    const joaoInvV = cr(ambosV)/2 + cr(joaoV);
-    const joaoInvE = cr(ambosE)/2 + cr(joaoE);
-    const igorInvV = cr(ambosV)/2 + cr(igorV);
-    const igorInvE = cr(ambosE)/2 + cr(igorE);
+    const joaoInvV = somaJoao(vendidos);
+    const joaoInvE = somaJoao(emMao);
+    const igorInvV = somaIgor(vendidos);
+    const igorInvE = somaIgor(emMao);
 
     const joaoTotalInv = joaoInvV + joaoInvE;
     const igorTotalInv = igorInvV + igorInvE;
