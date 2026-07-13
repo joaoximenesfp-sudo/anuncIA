@@ -2571,19 +2571,23 @@ window.concluirVenda=()=>{
   render();
 };
 
-// Calcula quanto do valor desta venda cabe ao sócio investidor (Igor),
-// usando a mesma regra de rateio do patrimônio: custo dele de volta + metade do lucro (se 50/50).
+// Repasse ao sócio investidor (Igor).
+// REGRA: o investimento volta pra quem investiu + o lucro é SEMPRE dividido 50/50.
 function smCalcRepasse(){
   const p=prods.find(x=>x.id===sellId); if(!p)return null;
   const preco=parseFloat(document.getElementById('smPreco').value)||p.venda||0;
-  const custoReal=(p.custo||0)*((p.id&&String(p.id).startsWith('x'))?2:1);
+  const custoReal=custoRealDe(p);
   const lucro=preco-custoReal;
+  const metadeLucro=lucro/2;
   const b=investidorDe(p);
-  if(b==='joao') return {valor:0, txt:'Máquina 100% sua — nada a repassar ao sócio.'};
-  if(b==='igor') return {valor:preco, txt:`Máquina 100% do sócio — custo ${fmt(custoReal)} + lucro ${fmt(lucro)} = venda inteira.`};
-  // ambos (50/50): devolve metade do custo dele + metade do lucro
-  const val=(custoReal/2)+(lucro/2);
-  return {valor:Math.max(val,0), txt:`50/50: metade do custo (${fmt(custoReal/2)}) + metade do lucro (${fmt(lucro/2)}).`};
+  // Quanto do custo o Igor pôs nesta máquina
+  const custoIgor = b==='igor' ? custoReal : b==='ambos' ? custoReal/2 : 0;
+  const val=custoIgor+metadeLucro;
+  let txt;
+  if(b==='igor')      txt=`Só o sócio investiu: devolve ${fmt(custoIgor)} (custo dele) + ${fmt(metadeLucro)} (metade do lucro).`;
+  else if(b==='ambos')txt=`50/50: devolve ${fmt(custoIgor)} (metade do custo) + ${fmt(metadeLucro)} (metade do lucro).`;
+  else                txt=`Você investiu sozinho: sócio recebe só ${fmt(metadeLucro)} (metade do lucro).`;
+  return {valor:Math.max(val,0), txt};
 }
 window.smSugerirRepasse=()=>{
   const r=smCalcRepasse();
@@ -3301,6 +3305,12 @@ function investidorDe(p){
   if(/jo[ãa]o/i.test(nome)) return 'joao';   // "(João)", "João P", "João pagou" = 100% João
   if(nome.includes('*')) return 'ambos';     // "*" = 50/50
   return 'igor';
+}
+
+// Custo REAL de um produto. Itens novos (importação corrigida / cadastro manual) já
+// guardam o valor real. Apenas o fallback antigo embutido (ids 'x...') guarda metade.
+function custoRealDe(p){
+  return (p.custo||0) * ((p.id&&String(p.id).startsWith('x'))?2:1);
 }
 
 // Função única de lucro — usada em TODAS as camadas para consistência
@@ -4724,8 +4734,10 @@ async function impLerPlanilha(file){
       const keyLower = nomeTrim.toLowerCase();
       if(IMP_NON_NOTEBOOK.includes(keyLower)) continue;
 
-      const custo = impNum(row[cfg.custo]);
-      const venda = impNum(row[cfg.venda]);
+      // A planilha anota custo E venda pela METADE (convenção dos sócios).
+      // Aqui convertemos para valores REAIS (×2) — o banco guarda o real.
+      const custo = impNum(row[cfg.custo])*2;
+      const venda = impNum(row[cfg.venda])*2;
       const dc = impParseMonth(row[cfg.mesCompra]);
       const rawDv = row[cfg.mesVenda];
       const dv = impParseMonth(rawDv);
@@ -4778,6 +4790,7 @@ window.processarPlanilha = async () => {
       </div>`;
     }
     statusEl.innerHTML = `<strong style="color:#15803d">✅ ${itens.length} itens lidos da planilha</strong> (${vendido} vendidos, ${estoque} estoque · ${joao} João, ${ambos} 50/50).<br>
+      <span style="font-size:.74rem;color:#1d4ed8">🔢 Valores convertidos: custo e venda da planilha (metade) × 2 = valores reais no site.</span><br>
       <span style="color:var(--mu)">Últimos 5 itens encontrados:</span><br><span style="font-size:.74rem;color:var(--li)">${exemplos}</span>${suspeitosHtml}<br><br>
       <strong style="color:var(--am)">⚠️ Confirmar vai SUBSTITUIR todos os notebooks compartilhados atuais por esses ${itens.length} itens.</strong>`;
     btnConfirm.disabled = false;
@@ -5718,8 +5731,7 @@ function renderEvolucao(){
   mesesCompra.forEach(m=>{
     const doMes = todos.filter(p=>getMCe(p)===m);
     doMes.forEach(p=>{
-      const isXe = p.id && String(p.id).startsWith('x');
-      const custoR = isXe ? p.custo*2 : p.custo;
+      const custoR = custoRealDe(p);
       const b = investidorDe(p);
       if(b==='ambos'){ joaoAcum+=custoR/2; igorAcum+=custoR/2; }
       else if(b==='joao'){ joaoAcum+=custoR; }
@@ -5789,7 +5801,7 @@ window.renderTabelaSocios = () => {
   }
 
   // Totais
-  const crA = lst => lst.reduce((s,p)=>s+(p.custo||0),0)*2;
+  const crA = lst => lst.reduce((s,p)=>s+custoRealDe(p),0);
   const totInvJoao = crA(lista.filter(p=>investidorDe(p)==='ambos'))/2 + crA(lista.filter(p=>investidorDe(p)==='joao'));
   const totInvIgor = crA(lista.filter(p=>investidorDe(p)==='ambos'))/2 + crA(lista.filter(p=>investidorDe(p)==='igor'));
   const totLuc = lista.filter(p=>p.status==='Vendido').reduce((s,p)=>s+(p.lucro||0),0);
@@ -5797,8 +5809,7 @@ window.renderTabelaSocios = () => {
   const rows = lista.map(p=>{
     const bkt = investidorDe(p);
     // Custo real: XLSX divide ao meio (id começa com 'x'), Firebase já tem o valor real
-    const isXlsx = p.id && String(p.id).startsWith('x');
-    const custoReal = isXlsx ? p.custo*2 : p.custo;
+    const custoReal = custoRealDe(p);
     const invJoao = bkt==='ambos' ? custoReal/2 : bkt==='joao' ? custoReal : 0;
     const invIgor = bkt==='ambos' ? custoReal/2 : bkt==='igor' ? custoReal : 0;
     const sb = p.status==='Vendido'?'<span class="bv sv">Vendido</span>':p.status==='Anunciado'?'<span class="bv san">Anunciado</span>':'<span class="bv se">Estoque</span>';
@@ -5846,13 +5857,12 @@ function renderProjecao(){
   const d = calcCapitalSocios();
   // Calcular potencial correto (considerando custo real = ×2 para XLSX)
   const lucroReal = p => {
-    const isX = p.id && String(p.id).startsWith('x');
-    const custoR = isX ? p.custo*2 : p.custo;
+    const custoR = custoRealDe(p);
     return p.venda > 0 ? p.venda - custoR : 0;
   };
   const potTotal  = emMao.reduce((s,p)=>s+lucroReal(p),0);
   const recTotal  = emMao.reduce((s,p)=>s+(p.venda||0),0);
-  const capTotal  = emMao.reduce((s,p)=>s+(p.id&&String(p.id).startsWith('x')?p.custo*2:p.custo),0);
+  const capTotal  = emMao.reduce((s,p)=>s+custoRealDe(p),0);
   const roiProj   = capTotal>0?Math.round(potTotal/capTotal*100):0;
 
   // Por marca
@@ -5862,8 +5872,7 @@ function renderProjecao(){
     const b=brand(p.nome);
     if(!porMarca[b])porMarca[b]={qtd:0,cap:0,pot:0};
     porMarca[b].qtd++;
-    const isX2 = p.id && String(p.id).startsWith('x');
-    porMarca[b].cap += isX2 ? p.custo*2 : p.custo;
+    porMarca[b].cap += custoRealDe(p);
     porMarca[b].pot += lucroReal(p);
   });
 
@@ -6023,8 +6032,8 @@ function buildPainel(){
     const joaoE  = emMao.filter(p=>investidorDe(p)==='joao');
     const igorE  = emMao.filter(p=>investidorDe(p)==='igor');
 
-    // Custo real = planilha × 2
-    const cr = lst => lst.reduce((s,p)=>s+(p.custo||0),0)*2;
+    // Custo real por item (só o fallback antigo 'x...' guarda metade)
+    const cr = lst => lst.reduce((s,p)=>s+custoRealDe(p),0);
 
     // 50/50 divide; João-100% vai todo pro João; Igor-100% vai todo pro Igor
     const joaoInvV = cr(ambosV)/2 + cr(joaoV);
