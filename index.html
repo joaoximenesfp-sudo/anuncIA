@@ -257,12 +257,67 @@ input[type=number].inp{padding-left:32px}
 .pecaprod-total{font-size:.76rem;color:var(--mu);background:var(--w);border:1px solid var(--b);border-radius:7px;padding:6px 10px;margin-top:6px}
 .custo-brk{font-size:.64rem;color:var(--li);margin-top:1px;white-space:nowrap}
 .custo-brk .cb-pc{color:#c2410c}
-.pecaprod-row.existente{grid-template-columns:135px 1fr 110px 30px;background:var(--gbg);border:1px solid var(--gbd);border-radius:7px;padding:5px 8px}
+.pecaprod-row.existente{grid-template-columns:120px 1fr 90px 30px 30px;background:var(--gbg);border:1px solid var(--gbd);border-radius:7px;padding:5px 8px}
+.pe-mov{background:#eff6ff;color:#1d4ed8;border:none;border-radius:7px;padding:6px 0;font-size:.85rem;font-weight:700;cursor:pointer}
+.pe-mov:hover{background:#dbeafe}
 .pe-tag{font-size:.72rem;font-weight:700;color:var(--gr)}
 .pe-nome{font-size:.78rem;color:var(--tx);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pe-custo{font-size:.78rem;font-weight:700;color:var(--tx);text-align:right}
 @media(max-width:700px){.pecaprod-row{grid-template-columns:1fr 1fr;grid-auto-rows:auto}}
 .metas3-wrap{background:var(--w);border:1px solid var(--b);border-radius:var(--rad);padding:14px 18px;margin-bottom:12px;box-shadow:var(--sh)}
+.milhao-wrap{background:linear-gradient(135deg,#1c1917,#292524);border:1px solid #44403c;border-radius:var(--rad);padding:16px 18px;margin-bottom:12px;box-shadow:var(--sh);color:#fafaf9}
+.proj-wrap{background:var(--w);border:1px solid var(--b);border-radius:var(--rad);padding:16px 18px;margin-bottom:14px;box-shadow:var(--sh)}
+.proj-head{margin-bottom:12px}
+.proj-tit{font-size:1rem;font-weight:800;color:var(--tx)}
+.proj-sub{font-size:.72rem;color:var(--li);margin-top:1px}
+.proj-fases{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+.proj-fase{background:var(--bg);border:1px solid var(--b);border-radius:10px;padding:10px 12px}
+.proj-fase.agora{background:var(--gbg);border-color:var(--gbd)}
+.pf-lbl{font-size:.68rem;font-weight:700;color:var(--mu);margin-bottom:6px;display:flex;justify-content:space-between;align-items:baseline;gap:4px}
+.pf-per{font-size:.6rem;font-weight:500;color:var(--li);white-space:nowrap}
+.proj-parcial{font-size:.75rem;color:var(--mu);background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:8px 11px;margin-bottom:10px;line-height:1.5}
+.pf-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.pf-grid div{display:flex;flex-direction:column}
+.pf-grid span{font-size:.6rem;color:var(--li);font-weight:600}
+.pf-grid strong{font-size:.82rem;color:var(--tx)}
+.pf-grid .pf-hi strong{color:var(--gr)}
+.proj-insight{font-size:.8rem;color:var(--tx);background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:10px 12px;line-height:1.5;margin-bottom:14px}
+.pi-nota{display:block;margin-top:4px;font-size:.74rem;color:var(--mu)}
+.proj-cen-head{font-size:.85rem;font-weight:700;color:var(--tx);margin-bottom:7px}
+.proj-cen-head span{font-weight:400;font-size:.7rem;color:var(--li)}
+.proj-tabs{display:flex;gap:6px;margin-bottom:6px}
+.proj-tab{border:1px solid var(--b2);background:var(--w);color:var(--mu);font-size:.76rem;font-weight:600;padding:6px 12px;border-radius:20px;cursor:pointer}
+.proj-tab.on{background:var(--tx);color:var(--w);border-color:var(--tx)}
+.proj-tab-desc{font-size:.72rem;color:var(--li);margin-bottom:9px;line-height:1.4}
+.proj-tb{width:100%;border-collapse:collapse;font-size:.78rem}
+.proj-tb th{text-align:right;font-size:.65rem;color:var(--mu);font-weight:700;padding:5px 8px;border-bottom:1px solid var(--b);text-transform:uppercase}
+.proj-tb th:first-child{text-align:left}
+.proj-tb td{text-align:right;padding:7px 8px;border-bottom:1px solid var(--b);color:var(--mu)}
+.proj-tb td:first-child{text-align:left;color:var(--tx)}
+.proj-tb .pt-g{color:var(--gr);font-weight:700}
+.proj-tb .pt-luc{color:var(--tx);font-weight:700}
+.proj-tb .pt-ac{font-weight:700;color:var(--mu)}
+.proj-tb .pt-ac.ouro{color:#b45309;background:#fffbeb}
+.proj-milhao{margin-top:10px;font-size:.8rem;color:var(--mu);background:var(--bg);border:1px solid var(--b);border-radius:10px;padding:9px 12px;line-height:1.5}
+.proj-milhao.ok{background:#fffbeb;border-color:#fde68a;color:#92400e}
+@media(max-width:820px){.proj-fases{grid-template-columns:1fr}.proj-tb{font-size:.72rem}}
+.milhao-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.milhao-tit{font-size:.95rem;font-weight:800;color:#fde68a}
+.milhao-sub{font-size:.7rem;font-weight:400;color:#a8a29e;margin-left:4px}
+.milhao-wrap .metas3-gear{color:#a8a29e}
+.milhao-nums{display:flex;align-items:baseline;gap:8px;margin-bottom:8px}
+.milhao-atual{font-size:1.75rem;font-weight:800;color:#fbbf24;line-height:1}
+.milhao-alvo{font-size:.82rem;color:#a8a29e}
+.milhao-bar{height:10px;background:#44403c;border-radius:5px;overflow:hidden;margin-bottom:12px}
+.milhao-fill{height:100%;background:linear-gradient(90deg,#f59e0b,#fbbf24,#fde68a);border-radius:5px;transition:width .8s ease}
+.milhao-info{display:grid;grid-template-columns:1fr 1fr 1.2fr;gap:8px;margin-bottom:8px}
+.milhao-box{background:rgba(255,255,255,.06);border:1px solid #44403c;border-radius:10px;padding:8px 10px}
+.milhao-box.destaque{background:rgba(251,191,36,.1);border-color:#78716c}
+.mlb-lbl{font-size:.66rem;color:#a8a29e;font-weight:700;margin-bottom:2px}
+.mlb-val{font-size:.95rem;font-weight:800;color:#fafaf9;line-height:1.2}
+.mlb-sub{font-size:.62rem;color:#78716c;margin-top:1px}
+.milhao-msg{font-size:.78rem;color:#d6d3d1;text-align:center;padding-top:2px}
+@media(max-width:700px){.milhao-info{grid-template-columns:1fr}}
 .metas3-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
 .metas3-titulo{font-size:.9rem;font-weight:700;color:var(--tx);text-transform:capitalize}
 .metas3-metrica{color:var(--mu);font-weight:600}
@@ -861,6 +916,34 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
       </div>
       <div class="tab-pg on" id="tab-notebooks">
       <div class="banner">📊 <strong>333 produtos</strong> importados da planilha — 250 vendidos · 46 em estoque · 37 anunciados · <span style="color:#1d4ed8">🔄 estoque compartilhado entre sócios</span></div>
+      <!-- META DO MILHÃO (marco acumulado) -->
+      <div class="milhao-wrap" id="milhaoWrap">
+        <div class="milhao-head">
+          <div class="milhao-tit">🏆 Meta do Milhão <span class="milhao-sub">lucro acumulado desde o início</span></div>
+          <button class="metas3-gear" onclick="mlToggleConfig()" title="Configurar">⚙️</button>
+        </div>
+        <div class="milhao-nums">
+          <div class="milhao-atual" id="mlAtual">—</div>
+          <div class="milhao-alvo">de <span id="mlAlvo">R$ 1.000.000</span></div>
+        </div>
+        <div class="milhao-bar"><div class="milhao-fill" id="mlFill" style="width:0%"></div></div>
+        <div class="milhao-info">
+          <div class="milhao-box"><div class="mlb-lbl">Falta</div><div class="mlb-val" id="mlFalta">—</div></div>
+          <div class="milhao-box"><div class="mlb-lbl">Ritmo atual</div><div class="mlb-val" id="mlRitmo">—</div><div class="mlb-sub">média dos últimos 6 meses</div></div>
+          <div class="milhao-box destaque"><div class="mlb-lbl">Chegada estimada</div><div class="mlb-val" id="mlEta">—</div><div class="mlb-sub" id="mlEtaSub"></div></div>
+        </div>
+        <div class="milhao-msg" id="mlMsg"></div>
+        <div class="metas3-config" id="mlConfig" style="display:none">
+          <div class="metas3-cfg-row">
+            <label>Alvo (R$)<input class="meta-inp" type="number" id="mlAlvoInp" min="0" step="10000" placeholder="1000000"></label>
+            <label>Crescimento esperado ao ano (%)<input class="meta-inp" type="number" id="mlCresc" min="0" step="5" placeholder="Ex: 30"></label>
+          </div>
+          <div style="font-size:.68rem;color:var(--li);margin:2px 0 8px">O crescimento anual ajusta a projeção — se vocês crescem, chegam antes.</div>
+          <button class="meta-btn" onclick="salvarMilhao()">💾 Salvar</button>
+          <span style="font-size:.7rem;color:var(--gr);margin-left:8px" id="mlSaveMsg"></span>
+        </div>
+      </div>
+
       <!-- METAS PROGRESSIVAS (3 níveis) -->
       <div class="metas3-wrap" id="metaWrap">
         <div class="metas3-head">
@@ -1313,6 +1396,30 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
             <button class="mes-btn" onclick="painelMudaMes(1)">›</button>
           </div>
         </div>
+      </div>
+
+      <!-- PROJEÇÃO DE CRESCIMENTO -->
+      <div class="proj-wrap">
+        <div class="proj-head">
+          <div>
+            <div class="proj-tit">📈 Projeção de crescimento</div>
+            <div class="proj-sub">Calculada com o histórico real de vocês — atualiza a cada venda</div>
+          </div>
+        </div>
+
+        <div class="proj-fases" id="projFases"></div>
+        <div class="proj-parcial" id="projParcial" style="display:none"></div>
+        <div class="proj-insight" id="projInsight"></div>
+
+        <div class="proj-cen-head">Projeção 5 anos <span>· o crescimento desacelera naturalmente conforme a base cresce</span></div>
+        <div class="proj-tabs">
+          <button class="proj-tab" onclick="projSetCen('cons',this)">🐢 Conservador</button>
+          <button class="proj-tab on" onclick="projSetCen('real',this)">🎯 Realista</button>
+          <button class="proj-tab" onclick="projSetCen('otim',this)">🚀 Otimista</button>
+        </div>
+        <div class="proj-tab-desc" id="projCenDesc"></div>
+        <div class="proj-tabela" id="projTabela"></div>
+        <div class="proj-milhao" id="projMilhao"></div>
       </div>
 
       <!-- CARDS RÁPIDOS -->
@@ -1977,6 +2084,30 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
     </div>
   </div>
 
+  <!-- MODAL MOVER COMPONENTE (canibalismo organizado) -->
+  <div class="mo h" id="MVO">
+    <div class="moo" onclick="peMoverFechar()"></div>
+    <div class="mc" style="max-width:420px">
+      <div class="mch">
+        <span class="mct">⇄ Mover componente</span>
+        <button class="mcl" onclick="peMoverFechar()">✕</button>
+      </div>
+      <div class="mcb" style="grid-template-columns:1fr">
+        <input type="hidden" id="mvPecaId">
+        <div style="background:var(--bg);border:1px solid var(--b);border-radius:8px;padding:10px 12px;font-size:.85rem" id="mvInfo"></div>
+        <div class="fc">
+          <label class="fl">Mover para</label>
+          <select class="inp" id="mvDestino"></select>
+        </div>
+        <div style="font-size:.72rem;color:var(--mu);background:#fef3c7;border:1px solid #fbbf24;border-radius:8px;padding:8px 10px" id="mvAviso"></div>
+      </div>
+      <div class="mca">
+        <button class="bcan" onclick="peMoverFechar()">Cancelar</button>
+        <button class="bsav" onclick="peMoverConfirmar()">⇄ Mover</button>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL EDIÇÃO LOGÍSTICA -->
   <div class="log-edit-modal" id="logEditModal">
     <div class="log-edit-overlay" onclick="closeLogEdit()"></div>
@@ -2308,7 +2439,7 @@ onAuthStateChanged(auth,u=>{
     // Mostrar botão admin só para o dono
     const btnAdm = document.getElementById('btnAdmin');
     if(btnAdm) btnAdm.style.display = perfilAtual==='joao' ? '' : 'none';
-    loadProds();loadFinancas();loadPecas();loadLogistica();loadClientes();loadFornecedores();loadMetas3();
+    loadProds();loadFinancas();loadPecas();loadLogistica();loadClientes();loadFornecedores();loadMetas3();loadMilhao();
     setTimeout(carregarAvisos, 2000); // carregar avisos após login
   }
   else{document.getElementById('AS').classList.remove('h');document.getElementById('APP').classList.remove('v');}
@@ -2348,8 +2479,8 @@ async function loadProds(){
 
 // ── PEÇAS NO CADASTRO DE PRODUTO ──
 // Peça aplicada aumenta o custo real da máquina E vai pro estoque de peças (aba Peças).
-const PP_TIPOS=['Tela','Bateria','Teclado','HD/SSD','RAM','Placa-mãe','Carregador','Plug/Tomada','Carcaça','Outro'];
-const PP_EMOJI={'Tela':'🖥️','Bateria':'🔋','Teclado':'⌨️','HD/SSD':'💾','RAM':'🧠','Placa-mãe':'🔌','Carregador':'⚡','Plug/Tomada':'🔌','Carcaça':'📦','Outro':'🔧'};
+const PP_TIPOS=['RAM','SSD/HD','Processador','Tela','Bateria','Teclado','Placa-mãe','Carregador','Carcaça','Outro'];
+const PP_EMOJI={'RAM':'🧠','SSD/HD':'💾','Processador':'⚙️','Tela':'🖥️','Bateria':'🔋','Teclado':'⌨️','Placa-mãe':'🔌','Carregador':'⚡','Carcaça':'📦','Outro':'🔧','HD/SSD':'💾','Plug/Tomada':'🔌'};
 let ppSeq=0;
 window.ppAddLinha=()=>{
   const box=document.getElementById('ppLista'); if(!box)return;
@@ -2396,6 +2527,7 @@ function peRenderExistentes(prodId){
       <span class="pe-tag">${PP_EMOJI[pc.tipo]||'🔧'} ${esc(pc.tipo||'')}</span>
       <span class="pe-nome">${esc(pc.nome||'')}</span>
       <span class="pe-custo">${fmt(pc.custo||0)}</span>
+      <button type="button" class="pe-mov" onclick="peMoverAbrir('${pc.id}')" title="Mover para outra máquina">⇄</button>
       <button type="button" class="pp-rem" onclick="peRemExistente('${pc.id}')" title="Remover peça">✕</button>
     </div>`).join('');
 }
@@ -2457,6 +2589,64 @@ function peColetar(){
   });
   return out;
 }
+
+// ════════════════════════════════════════
+// CANIBALISMO ORGANIZADO — mover componente entre máquinas
+// O custo do componente SEGUE o componente: sai do custo da origem,
+// entra no custo do destino. Lucro das duas máquinas é recalculado.
+// ════════════════════════════════════════
+async function ajustaCustoPecas(prodId, delta){
+  if(!prodId) return;                                   // destino "estoque solto"
+  const p=prods.find(x=>x.id===prodId); if(!p) return;
+  const pecasAtual=Math.max(0,(p.custo_pecas||0)+delta);
+  const base=p.custo_base!==undefined?p.custo_base:((p.custo||0)-(p.custo_pecas||0));
+  const novoCusto=Math.max(0, base+pecasAtual);
+  const upd={custo:novoCusto, custo_base:base, custo_pecas:pecasAtual, lucro:(p.venda||0)-novoCusto};
+  try{ if(!String(prodId).startsWith('l')&&!String(prodId).startsWith('x')) await updateDoc(doc(db,'products',prodId),upd); }catch(e){}
+  Object.assign(p,upd);
+}
+
+window.peMoverAbrir=(pecaId)=>{
+  const pc=pecas.find(x=>x.id===pecaId); if(!pc)return;
+  const origem=prods.find(x=>x.id===pc.produto_id);
+  // destinos possíveis: qualquer notebook != origem, + estoque solto
+  const destinos=prods.filter(p=>p.id!==pc.produto_id)
+    .sort((a,b)=>(a.status==='Vendido'?1:0)-(b.status==='Vendido'?0:0) || (a.nome||'').localeCompare(b.nome||''));
+  const opts=['<option value="">🧰 Estoque solto (fora de qualquer máquina)</option>']
+    .concat(destinos.map(p=>`<option value="${p.id}">${esc(p.nome)} — ${esc(p.status||'')}</option>`)).join('');
+  document.getElementById('mvPecaId').value=pecaId;
+  document.getElementById('mvInfo').innerHTML=`<strong>${PP_EMOJI[pc.tipo]||'🔧'} ${esc(pc.nome||'')}</strong> · ${fmt(pc.custo||0)}<br><span style="color:var(--li);font-size:.72rem">Hoje em: ${origem?esc(origem.nome):'estoque solto'}</span>`;
+  document.getElementById('mvDestino').innerHTML=opts;
+  document.getElementById('mvAviso').innerHTML=`O custo de <strong>${fmt(pc.custo||0)}</strong> sai da máquina de origem e entra na de destino. O lucro das duas é recalculado.`;
+  document.getElementById('MVO').classList.remove('h');
+};
+window.peMoverFechar=()=>{ document.getElementById('MVO').classList.add('h'); };
+window.peMoverConfirmar=async()=>{
+  const pecaId=document.getElementById('mvPecaId').value;
+  const destId=document.getElementById('mvDestino').value;
+  const pc=pecas.find(x=>x.id===pecaId); if(!pc)return;
+  const origemId=pc.produto_id||'';
+  if(origemId===destId){ alert('Escolha uma máquina diferente.'); return; }
+  const custo=pc.custo||0;
+  const dest=prods.find(x=>x.id===destId);
+  // 1) tira o custo da origem
+  await ajustaCustoPecas(origemId, -custo);
+  // 2) põe o custo no destino
+  await ajustaCustoPecas(destId, +custo);
+  // 3) atualiza o vínculo da peça
+  const upd={produto_id:destId||'', produto_nome:dest?dest.nome:'', status:destId?'Usado':'Estoque',
+             obs:destId?('Aplicada em: '+dest.nome):'Solta no estoque'};
+  try{ if(!String(pecaId).startsWith('l')) await updateDoc(doc(db,'pecas',pecaId),upd); }catch(e){}
+  Object.assign(pc,upd);
+  peMoverFechar();
+  if(editId){ peRenderExistentes(editId); peTotal();
+    const p=prods.find(x=>x.id===editId);
+    if(p) document.getElementById('eC').value=p.custo;
+  }
+  render();renderSecoes();calcStats();
+  if(typeof renderPecas==='function') renderPecas();
+  criarAviso('produto_editado', (pc.nome||'Componente')+' → '+(dest?dest.nome:'estoque'));
+};
 
 window.addProd=async()=>{
   const nome=g('pN'),custo=parseFloat(document.getElementById('pC').value)||0,venda=parseFloat(document.getElementById('pV').value)||0,status=document.getElementById('pS').value,dc=document.getElementById('pDC').value,investidor=document.getElementById('pInv').value;
@@ -3738,7 +3928,30 @@ function render(){
 }
 window.togBG=(id,aid)=>{const el=document.getElementById(id),arr=document.getElementById(aid),o=el.style.display!=='none';el.style.display=o?'none':'block';if(arr)arr.textContent=o?'▸':'▾';};
 
+// Mantém as projeções vivas mesmo com o app aberto por muito tempo:
+// (1) ao voltar pra aba do navegador  (2) na virada do dia/mês
+let _projUltimoDia = new Date().toDateString();
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState!=='visible') return;
+  const hoje=new Date().toDateString();
+  if(hoje!==_projUltimoDia){
+    // Virou o dia (ou o mês): o "mês corrente parcial" e as médias mudam
+    _projUltimoDia=hoje;
+  }
+  try{ if(typeof renderMeta==='function') renderMeta(); }catch(e){}
+  try{ if(typeof renderCrescimento==='function') renderCrescimento(); }catch(e){}
+});
+// Recalcula a cada 30 min (pega virada de mês com o app aberto a noite toda)
+setInterval(()=>{
+  try{ if(typeof renderMeta==='function') renderMeta(); }catch(e){}
+  try{ if(typeof renderCrescimento==='function') renderCrescimento(); }catch(e){}
+}, 30*60*1000);
+
 function calcStats(){
+  // Mantém metas e projeções sempre em dia — calcStats roda em TODA mudança de dados
+  // (venda, cadastro, edição, exclusão, importação, carga inicial).
+  try{ if(typeof renderMeta==='function') renderMeta(); }catch(e){}
+  try{ if(typeof renderCrescimento==='function') renderCrescimento(); }catch(e){}
   const v=prods.filter(p=>p.status==='Vendido');
   const an=prods.filter(p=>p.status==='Anunciado');
   const es=prods.filter(p=>p.status==='Estoque');
@@ -4085,6 +4298,85 @@ window.avancarParcela=async(id,tipo)=>{
   renderFinancas();
 };
 
+// ── META DO MILHÃO (marco de lucro acumulado) ──
+let milhao = { alvo:1000000, crescAno:30, _docId:null };
+
+async function loadMilhao(){
+  try{ const ls=JSON.parse(localStorage.getItem('bj_milhao')||'null'); if(ls) milhao={...milhao,...ls}; }catch(e){}
+  try{
+    const snap=await getDocs(query(collection(db,'config'),where('userId','==','shared_ijx')));
+    const d0=snap.docs.find(d=>d.data().tipo==='milhao');
+    if(d0){ milhao={...milhao,...(d0.data().dados||{})}; milhao._docId=d0.id; }
+  }catch(e){}
+  renderMilhao();
+}
+window.mlToggleConfig=()=>{ const c=document.getElementById('mlConfig'); if(c) c.style.display=c.style.display==='none'?'block':'none'; };
+window.salvarMilhao=async()=>{
+  const alvo=parseFloat(document.getElementById('mlAlvoInp').value)||0;
+  const crescAno=parseFloat(document.getElementById('mlCresc').value)||0;
+  if(alvo<=0){alert('Digite um alvo válido!');return;}
+  const dados={alvo,crescAno};
+  milhao={...milhao,...dados};
+  localStorage.setItem('bj_milhao',JSON.stringify(dados));
+  try{
+    if(milhao._docId){ await updateDoc(doc(db,'config',milhao._docId),{dados}); }
+    else { const r=await addDoc(collection(db,'config'),{userId:'shared_ijx',tipo:'milhao',dados}); milhao._docId=r.id; }
+  }catch(e){}
+  renderMilhao();
+  const m=document.getElementById('mlSaveMsg'); if(m){m.textContent='✓ Salvo';setTimeout(()=>m.textContent='',2000);}
+};
+
+function renderMilhao(){
+  const wrap=document.getElementById('milhaoWrap'); if(!wrap)return;
+  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  const vendidos=prods.filter(p=>p.status==='Vendido');
+  const acum=vendidos.reduce((s,p)=>s+getLucro(p),0);
+  const alvo=milhao.alvo||1000000;
+  const falta=Math.max(0,alvo-acum);
+  const pct=alvo>0?Math.min(acum/alvo*100,100):0;
+
+  set('mlAtual',fmt(acum));
+  set('mlAlvo',fmt(alvo));
+  set('mlFalta',fmt(falta));
+  const fill=document.getElementById('mlFill'); if(fill) fill.style.width=pct.toFixed(1)+'%';
+
+  // Ritmo: média dos últimos 6 meses com venda
+  const porMes={};
+  vendidos.forEach(p=>{const m=getMesVenda(p); if(m){porMes[m]=(porMes[m]||0)+getLucro(p);}});
+  const meses=Object.keys(porMes).sort().slice(-6);
+  const ritmo=meses.length?meses.reduce((s,m)=>s+porMes[m],0)/meses.length:0;
+  set('mlRitmo',ritmo>0?fmt(ritmo)+'/mês':'—');
+
+  // Projeção: quantos meses até o alvo, com crescimento anual composto
+  const g=(milhao.crescAno||0)/100;
+  const gMes=Math.pow(1+g,1/12)-1;   // crescimento mensal equivalente
+  let restante=falta, m=0, atualRitmo=ritmo;
+  if(acum>=alvo){
+    set('mlEta','🎉 Batida!'); set('mlEtaSub','');
+    document.getElementById('mlMsg').innerHTML='🏆 <strong>Meta do milhão alcançada.</strong> Hora de definir a próxima.';
+  } else if(ritmo<=0){
+    set('mlEta','—'); set('mlEtaSub','sem vendas recentes');
+    document.getElementById('mlMsg').innerHTML='Registre vendas para o sistema projetar a chegada.';
+  } else {
+    while(restante>0 && m<600){ restante-=atualRitmo; atualRitmo*=(1+gMes); m++; }
+    const anos=Math.floor(m/12), ms=m%12;
+    const chegada=new Date(); chegada.setMonth(chegada.getMonth()+m);
+    const anoTxt=anos>0?anos+' ano'+(anos!==1?'s':''):'';
+    const mesTxt=ms>0?ms+' mes'+(ms!==1?'es':''):'';
+    set('mlEta',[anoTxt,mesTxt].filter(Boolean).join(' e ')||'este mês');
+    set('mlEtaSub','~'+chegada.toLocaleDateString('pt-BR',{month:'short',year:'numeric'})+(g>0?` · com ${milhao.crescAno}% a.a.`:' · sem crescimento'));
+    const msg=document.getElementById('mlMsg');
+    if(msg){
+      const semCresc=Math.ceil(falta/ritmo);
+      const ganho=semCresc-m;
+      msg.innerHTML=`Faltam <strong>${fmt(falta)}</strong> · ${pct.toFixed(1)}% do caminho.` +
+        (g>0&&ganho>0?` <span style="color:var(--gr)">Crescendo ${milhao.crescAno}% ao ano, vocês chegam ${ganho} ${ganho===1?'mês':'meses'} antes.</span>`:'');
+    }
+  }
+  const setV=(id,v)=>{const e=document.getElementById(id);if(e)e.value=v;};
+  setV('mlAlvoInp',milhao.alvo); setV('mlCresc',milhao.crescAno);
+}
+
 // ── METAS PROGRESSIVAS (3 níveis) ──
 let metas3 = { metrica:'lucro', mesRef:new Date().toISOString().slice(0,7), crescimento:5, m1:10000, m2:15000, m3:20000, _docId:null };
 
@@ -4115,6 +4407,7 @@ function m3Fmt(v){ return metas3.metrica==='vendas' ? Math.round(v)+' un' : fmt(
 
 // mantém o nome renderMeta pois é chamado em vários lugares
 function renderMeta(){
+  renderMilhao();
   const wrap=document.getElementById('metaWrap'); if(!wrap)return;
   const mes=new Date().toISOString().slice(0,7);
   const nomeMes=new Date(mes+'-01T12:00:00').toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
@@ -6191,7 +6484,136 @@ function renderProjecao(){
 }
 
 // ── BUILD PAINEL ──
+// ════════════════════════════════════════
+// PROJEÇÃO DE CRESCIMENTO — calculada do histórico real
+// ════════════════════════════════════════
+let projCenario='real';
+const PROJ_CENARIOS={
+  cons:{nome:'Conservador', desc:'Se nada mudar: mesmo canal, mesmo ritmo, sem destravar volume nem nota fiscal.', gs:[.25,.20,.15,.12,.10]},
+  real:{nome:'Realista',    desc:'Crescimento continua, mas desacelera conforme a base aumenta. É o cenário mais provável.', gs:[.60,.45,.35,.25,.20]},
+  otim:{nome:'Otimista',    desc:'Destravam lotes com nota, venda PJ e crédito de giro. Exige formalização e provavelmente time.', gs:[.90,.70,.50,.35,.25]},
+};
+window.projSetCen=(c,btn)=>{
+  projCenario=c;
+  document.querySelectorAll('.proj-tab').forEach(b=>b.classList.remove('on'));
+  if(btn) btn.classList.add('on');
+  renderCrescimento();
+};
+
+function projDados(){
+  const vend=prods.filter(p=>p.status==='Vendido'&&getMesVenda(p));
+  const porMes={};
+  vend.forEach(p=>{const m=getMesVenda(p);
+    if(!porMes[m])porMes[m]={n:0,rec:0,luc:0};
+    porMes[m].n++; porMes[m].rec+=(p.venda||0); porMes[m].luc+=getLucro(p);
+  });
+  const meses=Object.keys(porMes).sort();
+  // O mês ATUAL está incompleto — incluí-lo desinfla a média. Usa só meses fechados.
+  const mesAtual=new Date().toISOString().slice(0,7);
+  const fechados=meses.filter(m=>m<mesAtual);
+  const agg=ms=>{
+    const val=ms.filter(m=>porMes[m]);
+    if(!val.length) return null;
+    const n=val.reduce((s,m)=>s+porMes[m].n,0);
+    const rec=val.reduce((s,m)=>s+porMes[m].rec,0);
+    const luc=val.reduce((s,m)=>s+porMes[m].luc,0);
+    const k=val.length;
+    return {k,undMes:n/k,ticket:n?rec/n:0,lucUnd:n?luc/n:0,lucMes:luc/k,recMes:rec/k,
+            de:val[0],ate:val[val.length-1]};
+  };
+  // Fases: primeiros 6 da parceria | 6 seguintes | últimos 3 meses FECHADOS
+  const daParceria=fechados.filter(m=>m>='2025-04');
+  const f1=agg(daParceria.slice(0,6));
+  const f2=agg(daParceria.slice(6,12));
+  const f3=agg(fechados.slice(-3));
+  const acum=vend.reduce((s,p)=>s+getLucro(p),0);
+  // Dados do mês corrente (parcial), só pra informar
+  const parcial=porMes[mesAtual]||null;
+  return {porMes,meses,fechados,mesAtual,parcial,f1,f2,f3,acum};
+}
+
+function renderCrescimento(){
+  const wrap=document.getElementById('projFases'); if(!wrap)return;
+  const d=projDados();
+  if(!d.f3){ wrap.innerHTML='<div style="color:var(--li);padding:20px;text-align:center;font-size:.85rem">Registre vendas para o sistema calcular a projeção.</div>'; return; }
+
+  // Fases
+  const nomeMes=m=>{const [y,mo]=m.split('-');return ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'][+mo-1]+'/'+y.slice(2);};
+  const periodo=f=>f?(f.de===f.ate?nomeMes(f.de):nomeMes(f.de)+' a '+nomeMes(f.ate)):'';
+  const fase=(lbl,f,destaque)=>f?`<div class="proj-fase${destaque?' agora':''}">
+      <div class="pf-lbl">${lbl}<span class="pf-per">${periodo(f)}</span></div>
+      <div class="pf-grid">
+        <div><span>Und/mês</span><strong>${f.undMes.toFixed(1)}</strong></div>
+        <div><span>Ticket</span><strong>${fmt(f.ticket)}</strong></div>
+        <div><span>Lucro/máq</span><strong>${fmt(f.lucUnd)}</strong></div>
+        <div class="pf-hi"><span>Lucro/mês</span><strong>${fmt(f.lucMes)}</strong></div>
+      </div></div>`:'';
+  wrap.innerHTML=fase('Início da parceria',d.f1)+fase('Fase 2',d.f2)+fase('Agora',d.f3,true);
+
+  // Aviso do mês corrente (parcial — não entra na média)
+  const av=document.getElementById('projParcial');
+  if(av){
+    if(d.parcial){
+      const hoje=new Date(), diasCorridos=hoje.getDate();
+      const diasNoMes=new Date(hoje.getFullYear(),hoje.getMonth()+1,0).getDate();
+      const proj=d.parcial.n/diasCorridos*diasNoMes;
+      av.style.display='block';
+      av.innerHTML=`📅 <strong>${nomeMes(d.mesAtual)} ainda está correndo</strong> (dia ${diasCorridos} de ${diasNoMes}): ${d.parcial.n} vendida${d.parcial.n!==1?'s':''} · ${fmt(d.parcial.luc)} de lucro até agora. <span style="color:var(--li)">No ritmo atual, fecha em ~${proj.toFixed(0)} unidades. Este mês NÃO entra nas médias acima (senão puxaria o resultado pra baixo).</span>`;
+    } else { av.style.display='none'; }
+  }
+
+  // Insight: de onde vem o crescimento — volume ou ticket?
+  const ins=document.getElementById('projInsight');
+  if(ins && d.f1 && d.f3){
+    const dUnd=(d.f3.undMes/d.f1.undMes-1)*100;
+    const dTic=(d.f3.ticket/d.f1.ticket-1)*100;
+    const dLuc=(d.f3.lucMes/d.f1.lucMes-1)*100;
+    let txt;
+    if(dTic>dUnd+15){
+      txt=`<strong>🎯 Vocês cresceram por TICKET, não por volume.</strong> As unidades vendidas mudaram ${dUnd>=0?'+':''}${dUnd.toFixed(0)}%, mas o ticket subiu <strong>+${dTic.toFixed(0)}%</strong>. Ou seja: mesma quantidade de trabalho, máquina melhor, mais lucro. <span class="pi-nota">Isso indica que o teto de volume de vocês dois é ~${d.f3.undMes.toFixed(0)} máquinas/mês — o crescimento agora vem de comprar máquina melhor, não mais máquina.</span>`;
+    } else if(dUnd>dTic+15){
+      txt=`<strong>📦 Vocês cresceram por VOLUME.</strong> Unidades +${dUnd.toFixed(0)}%, ticket ${dTic>=0?'+':''}${dTic.toFixed(0)}%. <span class="pi-nota">Atenção: volume tem teto (tempo de vocês dois). Subir o ticket rende mais por hora trabalhada.</span>`;
+    } else {
+      txt=`<strong>⚖️ Crescimento equilibrado.</strong> Unidades ${dUnd>=0?'+':''}${dUnd.toFixed(0)}%, ticket ${dTic>=0?'+':''}${dTic.toFixed(0)}%, lucro mensal ${dLuc>=0?'+':''}${dLuc.toFixed(0)}%.`;
+    }
+    ins.innerHTML=txt;
+  }
+
+  // Projeção
+  const cen=PROJ_CENARIOS[projCenario];
+  document.getElementById('projCenDesc').textContent=cen.desc;
+  let luc=d.f3.lucMes, rec=d.f3.recMes, acum=d.acum;
+  const anoBase=new Date().getFullYear();
+  let anoMilhao=null;
+  const linhas=cen.gs.map((g,i)=>{
+    luc*=(1+g); rec*=(1+g);
+    const antes=acum; acum+=luc*12;
+    if(!anoMilhao && antes<1000000 && acum>=1000000) anoMilhao=anoBase+1+i;
+    return `<tr>
+      <td><strong>${anoBase+1+i}</strong></td>
+      <td class="pt-g">+${(g*100).toFixed(0)}%</td>
+      <td>${fmt(luc)}</td>
+      <td>${fmt(rec*12)}</td>
+      <td class="pt-luc">${fmt(luc*12)}</td>
+      <td class="pt-ac${acum>=1000000?' ouro':''}">${fmt(acum)}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('projTabela').innerHTML=`<table class="proj-tb">
+    <thead><tr><th>Ano</th><th>Cresc.</th><th>Lucro/mês</th><th>Faturamento/ano</th><th>Lucro/ano</th><th>Acumulado</th></tr></thead>
+    <tbody>${linhas}</tbody></table>`;
+
+  const ml=document.getElementById('projMilhao');
+  const lucFinal=luc, porSocio=luc/2;
+  if(ml){
+    ml.innerHTML=anoMilhao
+      ? `🏆 <strong>Meta do milhão (lucro acumulado) alcançada em ${anoMilhao}</strong> neste cenário. Em ${anoBase+5}, cada sócio estaria tirando <strong>${fmt(porSocio)}/mês</strong>.`
+      : `Neste cenário o milhão acumulado <strong>não chega até ${anoBase+5}</strong> (chegaria a ${fmt(acum)}). Cada sócio estaria tirando ${fmt(porSocio)}/mês.`;
+    ml.className='proj-milhao'+(anoMilhao?' ok':'');
+  }
+}
+
 function buildPainel(){
+  renderCrescimento();
   const [y,m] = painelMes.split('-').map(Number);
   const mesNome = MES_NOMES[m-1]+'/'+String(y).slice(2);
   const elLabel = document.getElementById('painelMesLabel');
