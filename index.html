@@ -26,6 +26,11 @@ body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;line-
 .at{flex:1;padding:9px;background:none;border:none;color:var(--li);font-family:'DM Sans',sans-serif;font-size:.84rem;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .18s}
 .at.on{color:var(--tx);border-bottom-color:var(--tx)}
 .fi{margin-bottom:12px}
+.pw-wrap{position:relative;display:block}
+.pw-inp{padding-right:44px !important;width:100%}
+.pw-eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:1.05rem;line-height:1;padding:6px;border-radius:6px;opacity:.65;transition:opacity .15s,background .15s}
+.pw-eye:hover{opacity:1;background:rgba(0,0,0,.05)}
+.pw-eye:active{transform:translateY(-50%) scale(.92)}
 .fl{display:block;font-size:.7rem;font-weight:600;color:var(--mu);letter-spacing:.07em;text-transform:uppercase;margin-bottom:5px}
 .inp{width:100%;padding:10px 13px;background:var(--bg);border:1px solid var(--b);border-radius:8px;color:var(--tx);font-family:'DM Sans',sans-serif;font-size:.9rem;outline:none;transition:border-color .15s,box-shadow .15s}
 .inp:focus{border-color:var(--tx);box-shadow:0 0 0 3px rgba(28,25,23,.07);background:var(--w)}
@@ -249,6 +254,35 @@ input[type=number].inp{padding-left:32px}
 .meta-btn{padding:4px 11px;border-radius:6px;border:1px solid var(--b2);background:transparent;font-size:.73rem;font-weight:600;color:var(--mu);cursor:pointer;transition:all .15s}
 .meta-btn:hover{border-color:var(--tx);color:var(--tx)}
 .pecaprod-box{border:1px dashed var(--b2);border-radius:10px;padding:10px 12px;background:var(--bg)}
+.spec-builder{border:1px solid var(--b2);border-radius:10px;padding:12px 14px;background:var(--w)}
+.dual-metric{display:flex;align-items:center;gap:10px;margin-top:2px}
+.dm-item{display:flex;flex-direction:column;cursor:help}
+.dm-val{font-size:1.35rem;font-weight:800;color:var(--tx);line-height:1.1}
+.dm-val.mk{color:#7c3aed}
+.dm-lbl{font-size:.66rem;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.02em}
+.dm-sub{display:block;font-weight:400;font-size:.6rem;color:var(--li);text-transform:none;letter-spacing:0}
+.dm-sep{width:1px;align-self:stretch;background:var(--b);margin:2px 0}
+.metric-help{display:inline-block;width:14px;height:14px;line-height:14px;text-align:center;border-radius:50%;background:var(--bg);color:var(--li);font-size:.62rem;cursor:help;font-weight:700}
+.metric-help:hover{background:var(--tx);color:var(--w)}
+.spec-row{display:grid;grid-template-columns:130px 1fr;gap:10px;margin-bottom:10px}
+.spec-field{display:flex;flex-direction:column;gap:3px}
+.spec-lbl{font-size:.68rem;font-weight:700;color:var(--mu)}
+.spec-opt{font-weight:400;color:var(--li)}
+.spec-sel{font-size:.85rem}
+.spec-chips-wrap{display:flex;flex-direction:column;gap:9px}
+.spec-group{display:flex;flex-direction:column;gap:5px}
+.spec-chips{display:flex;flex-wrap:wrap;gap:5px}
+.spec-chip{border:1px solid var(--b2);background:var(--w);color:var(--mu);font-size:.78rem;font-weight:600;padding:5px 12px;border-radius:8px;cursor:pointer;transition:.12s}
+.spec-chip:hover{border-color:var(--tx);color:var(--tx)}
+.spec-chip.on{background:var(--tx);color:var(--w);border-color:var(--tx)}
+.spec-chip.sm{padding:4px 9px;font-size:.72rem}
+.spec-chip.out{background:#faf5ff;border-color:#e9d5ff;color:#7c3aed}
+.spec-chip.out.on{background:#7c3aed;color:#fff;border-color:#7c3aed}
+.spec-chip.add{background:none;border-style:dashed;color:var(--li);font-weight:700}
+.spec-chip.add:hover{border-color:var(--tx);color:var(--tx)}
+.spec-armaz-cat{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.spec-armaz-lbl{font-size:.66rem;font-weight:700;color:var(--li);min-width:64px;text-align:right}
+.spec-ger-wrap{margin-top:2px}
 .pecaprod-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
 .pecaprod-add{background:var(--tx);color:var(--w);border:none;border-radius:7px;padding:5px 12px;font-size:.73rem;font-weight:700;cursor:pointer}
 .pecaprod-row{display:grid;grid-template-columns:135px 1fr 110px 30px;gap:6px;margin-bottom:5px;align-items:center}
@@ -844,20 +878,35 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
     <div class="alo"><span class="aln">Business IJX</span><span class="alt">Gestão de Notebooks</span></div>
     <div class="ats">
       <button class="at on" onclick="swAt('login')">Entrar</button>
-      <button class="at" onclick="swAt('reg')" style="display:none">Cadastrar</button>
+      <button class="at" onclick="swAt('reg')">Cadastrar</button>
     </div>
     <div id="fLogin">
-      <div class="fi"><label class="fl">E-mail</label><input class="inp" type="email" id="lE" placeholder="seu@email.com"></div>
-      <div class="fi"><label class="fl">Senha</label><input class="inp" type="password" id="lP" placeholder="••••••••"></div>
+      <div class="fi"><label class="fl">E-mail</label><input class="inp" type="email" id="lE" placeholder="seu@email.com" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <div class="fi"><label class="fl">Senha</label>
+        <div class="pw-wrap">
+          <input class="inp pw-inp" type="password" id="lP" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+          <button type="button" class="pw-eye" id="lPeye" onclick="togglePw('lP','lPeye')" aria-label="Mostrar senha" title="Mostrar senha">👁️</button>
+        </div>
+      </div>
+      <div style="text-align:right;margin:-4px 0 8px">
+        <button type="button" onclick="esqueciSenha()" style="background:none;border:none;color:var(--mu);font-size:.76rem;cursor:pointer;text-decoration:underline;padding:0">Esqueci minha senha</button>
+      </div>
+      <div id="AM" style="display:none;font-size:.8rem;background:#f0fdf4;border:1px solid #bbf7d0;color:#15803d;border-radius:8px;padding:9px 11px;margin-bottom:8px;line-height:1.45"></div>
       <button class="bp" onclick="doLogin()">Entrar</button>
       <div style="text-align:center;margin-top:14px;font-size:.72rem;color:var(--li)">🔒 Acesso restrito aos sócios</div>
     </div>
     <div id="fReg" style="display:none">
-      <div style="text-align:center;padding:24px 8px">
-        <div style="font-size:2rem;margin-bottom:12px">🔒</div>
-        <div style="font-size:.9rem;font-weight:600;color:var(--tx);margin-bottom:8px">Acesso restrito</div>
-        <div style="font-size:.78rem;color:var(--mu);line-height:1.6">Este sistema é de uso exclusivo dos sócios.<br>Entre em contato para solicitar acesso.</div>
+      <div style="font-size:.76rem;color:var(--mu);background:var(--bg);border:1px solid var(--b);border-radius:8px;padding:9px 11px;margin-bottom:12px;line-height:1.5">
+        🔒 Só os e-mails dos sócios podem criar conta. Os dados são compartilhados — a conta nova enxerga tudo que já existe.
       </div>
+      <div class="fi"><label class="fl">E-mail</label><input class="inp" type="email" id="rE" placeholder="seu@email.com"></div>
+      <div class="fi"><label class="fl">Senha (mínimo 6 caracteres)</label>
+        <div class="pw-wrap">
+          <input class="inp pw-inp" type="password" id="rP" placeholder="••••••••" onkeydown="if(event.key==='Enter')doReg()">
+          <button type="button" class="pw-eye" id="rPeye" onclick="togglePw('rP','rPeye')" title="Mostrar senha">👁️</button>
+        </div>
+      </div>
+      <button class="bp" onclick="doReg()">Criar conta</button>
     </div>
     <div class="ae" id="AE"></div>
   </div>
@@ -874,7 +923,6 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
         <button class="nt" onclick="sp2('painel')">📈 Painel</button>
 
         <button class="nt" id="nav-fin" onclick="sp2('financas')">Finanças</button>
-        <button class="nt" onclick="sp2('logistica')">🚗 Logística</button>
         <button class="nt" onclick="sp2('clientes')">👥 Clientes</button>
       </div>
       <div class="nr">
@@ -985,7 +1033,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
       <div class="al-row" id="alertsRow"></div>
       <div class="sr">
         <div class="sb"><div class="sbl">Receita total</div><div class="sbv g" id="sRec">—</div><div class="sbs" id="sRecS">—</div></div>
-        <div class="sb"><div class="sbl">Lucro total</div><div class="sbv" id="sLuc">—</div><div class="sbs" id="sMgm">—</div></div>
+        <div class="sb" title="Margem = lucro ÷ venda (quanto sobra de cada R$100 vendido). Markup = lucro ÷ custo (quanto rendeu sobre o que pagou; 100% = dobrou)."><div class="sbl">Lucro total</div><div class="sbv" id="sLuc">—</div><div class="sbs" id="sMgm">—</div></div>
         <div class="sb"><div class="sbl">Anunciados</div><div class="sbv b" id="sAnu">—</div><div class="sbs" id="sAnuV">—</div></div>
         <div class="sb"><div class="sbl">Na mão hoje</div><div class="sbv" id="sEst">—</div><div class="sbs" id="sEstV">—</div></div>
         <div class="sb"><div class="sbl">Potencial</div><div class="sbv a" id="sPot">—</div><div class="sbs">se vender tudo</div></div>
@@ -994,7 +1042,42 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
         <div class="cdh"><span class="cdht">Adicionar produto</span></div>
         <div class="cdb">
           <div class="fr">
-            <div class="fc" style="grid-column:1/-1"><input class="inp" type="text" id="pN" placeholder="Dell Latitude i5 10ª · SSD 256GB · 8GB RAM"></div>
+            <div class="fc" style="grid-column:1/-1">
+              <div class="spec-builder">
+                <div class="spec-row">
+                  <div class="spec-field">
+                    <span class="spec-lbl">Marca</span>
+                    <select class="inp spec-sel" id="pMarca" onchange="montarNome()">
+                      <option value="">—</option>
+                      <option>Dell</option><option>Lenovo</option><option>HP</option>
+                      <option>Acer</option><option>Asus</option><option>Samsung</option>
+                      <option>Positivo</option><option>Vaio</option><option>LG</option><option>Apple</option><option>Outro</option>
+                    </select>
+                  </div>
+                  <div class="spec-field spec-modelo">
+                    <span class="spec-lbl">Modelo <span class="spec-opt">(opcional)</span></span>
+                    <input class="inp spec-sel" type="text" id="pModelo" placeholder="Latitude 5490, IdeaPad 3..." oninput="montarNome()">
+                  </div>
+                </div>
+                <div class="spec-chips-wrap">
+                  <div class="spec-group">
+                    <span class="spec-lbl">⚙️ Processador</span>
+                    <div class="spec-chips" id="chipsCpu"></div>
+                  </div>
+                  <div class="spec-group">
+                    <span class="spec-lbl">🧠 Memória RAM</span>
+                    <div class="spec-chips" id="chipsRam"></div>
+                    <span class="spec-lbl" style="margin-top:5px;display:block">↳ Tipo</span>
+                    <div class="spec-chips" id="chipsRamTipo"></div>
+                  </div>
+                  <div class="spec-group">
+                    <span class="spec-lbl">💾 Armazenamento</span>
+                    <div class="spec-chips" id="chipsSsd"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="fc" style="grid-column:1/-1"><input class="inp" type="text" id="pN" placeholder="Monte acima ou digite: Dell Latitude i5 10ª · SSD 256GB · 8GB RAM" oninput="nomeManual=true"></div>
             <div class="fc"><span class="fla">Custo R$</span><input class="inp" type="number" id="pC" placeholder="0" min="0" oninput="ppTotal()"></div>
             <div class="fc"><span class="fla">Venda R$</span><input class="inp" type="number" id="pV" placeholder="0" min="0"></div>
             <div class="fc"><span class="fla">Status</span>
@@ -1013,6 +1096,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
             </div>
             <!-- FIX 1: Data de compra agora é type="date" (dia exato) -->
             <div class="fc"><span class="fla">Data Compra</span><input class="inp" type="date" id="pDC"></div>
+            <div class="fc"><span class="fla">⛽ Gasolina / busca R$ <span style="font-size:.62rem;color:var(--li)">valor cheio — rachado 50/50</span></span><input class="inp" type="number" id="pGas" placeholder="0" min="0" step="0.01" oninput="ppTotal()"></div>
             <div class="fc"><span class="fla">Canal</span>
               <select class="inp" id="pCanal">
                 <option value="">—</option>
@@ -1085,6 +1169,10 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
       <div id="sec-tudo" style="display:none">
         <div class="cd">
           <div class="cdh"><span class="cdht">Todos os produtos por marca</span><span style="font-size:.76rem;color:var(--li)" id="plbl">—</span></div>
+          <div style="padding:0 16px 10px">
+            <input class="inp" type="text" id="pBusca" placeholder="🔎 Buscar por nome, specs, cliente, fornecedor... (ex: i5 16gb, thinkpad, dell ssd)" oninput="render()" style="width:100%">
+            <div id="pBuscaInfo" style="font-size:.7rem;color:var(--li);margin-top:4px;display:none"></div>
+          </div>
           <div id="PL"><div style="text-align:center;padding:48px;color:var(--li)">Carregando...</div></div>
         </div>
       </div>
@@ -1158,7 +1246,20 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
       <div class="ig">
         <div class="ib"><div class="ii">📈</div><div><div class="il">Melhor mês</div><div class="iv" id="iBM">—</div><div class="in" id="iBMN">—</div></div></div>
         <div class="ib"><div class="ii">💰</div><div><div class="il">Lucro total</div><div class="iv" id="iLT">—</div><div class="in" id="iLTN">—</div></div></div>
-        <div class="ib"><div class="ii">📊</div><div><div class="il">Margem média</div><div class="iv" id="iMG">—</div><div class="in">sobre receita total</div></div></div>
+        <div class="ib"><div class="ii">📊</div><div style="flex:1">
+          <div class="il">Rentabilidade <span class="metric-help" title="Duas formas de medir o mesmo lucro. Passe o mouse em cada número.">ⓘ</span></div>
+          <div class="dual-metric">
+            <div class="dm-item" title="MARGEM = lucro ÷ venda. De cada R$100 que entra na venda, quanto sobra de lucro. É o padrão do varejo.">
+              <span class="dm-val" id="iMG">—</span>
+              <span class="dm-lbl">margem <span class="dm-sub">lucro ÷ venda</span></span>
+            </div>
+            <div class="dm-sep"></div>
+            <div class="dm-item" title="MARKUP = lucro ÷ custo. Quanto o lucro representa em cima do que você pagou. 100% = dobrou o dinheiro.">
+              <span class="dm-val mk" id="iMK">—</span>
+              <span class="dm-lbl">markup <span class="dm-sub">lucro ÷ custo</span></span>
+            </div>
+          </div>
+        </div></div>
         <div class="ib"><div class="ii">🏆</div><div><div class="il">Marca líder</div><div class="iv" id="iMarca">—</div><div class="in" id="iMarcaN">—</div></div></div>
         <div class="ib"><div class="ii">🎯</div><div><div class="il">Ticket médio</div><div class="iv" id="iTk">—</div><div class="in">por notebook vendido</div></div></div>
         <div class="ib"><div class="ii">📦</div><div><div class="il">Na mão hoje</div><div class="iv b" id="iEst">—</div><div class="in" id="iEstN">—</div></div></div>
@@ -1780,125 +1881,6 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
   </div>
 
   <!-- LOGÍSTICA -->
-  <div class="pg" id="pg-logistica">
-    <div class="wr">
-      <div class="ph">
-        <div>
-          <div class="pht">🚗 Logística</div>
-          <div class="phs">Gasolina, pedágios, imprevistos e custos de deslocamento</div>
-        </div>
-        <div class="mes-sel">
-          <button class="mes-btn" onclick="logMudaMes(-1)">‹</button>
-          <span class="mes-label" id="logMesLabel">—</span>
-          <button class="mes-btn" onclick="logMudaMes(1)">›</button>
-        </div>
-      </div>
-
-      <!-- CARDS RESUMO -->
-      <div class="log-hero">
-        <div class="log-card gas">
-          <div class="log-lbl">⛽ Gasolina</div>
-          <div class="log-val" id="logValGas">R$ 0</div>
-          <div class="log-sub" id="logSubGas">no mês</div>
-        </div>
-        <div class="log-card impr">
-          <div class="log-lbl">⚠️ Imprevistos</div>
-          <div class="log-val" id="logValImpr">R$ 0</div>
-          <div class="log-sub" id="logSubImpr">no mês</div>
-        </div>
-        <div class="log-card km">
-          <div class="log-lbl">🛣️ Km rodados</div>
-          <div class="log-val" id="logValKm">0 km</div>
-          <div class="log-sub" id="logSubKm">no mês</div>
-        </div>
-        <div class="log-card total">
-          <div class="log-lbl">💸 Total logística</div>
-          <div class="log-val" id="logValTotal">R$ 0</div>
-          <div class="log-sub" id="logSubTotal">todos os tipos</div>
-          <div style="font-size:.67rem;color:var(--am);margin-top:3px;font-weight:600" id="logSubReemb"></div>
-        </div>
-      </div>
-
-      <!-- FORMULÁRIO -->
-      <div class="log-form">
-        <div class="log-form-title">➕ Registrar gasto</div>
-        <div class="log-tipo-tabs">
-          <button class="log-tipo-btn gas on" onclick="setLogTipo('Gasolina',this)">⛽ Gasolina</button>
-          <button class="log-tipo-btn pedaggio" onclick="setLogTipo('Pedágio',this)">🛣️ Pedágio</button>
-          <button class="log-tipo-btn manut" onclick="setLogTipo('Manutenção',this)">🔧 Manutenção</button>
-          <button class="log-tipo-btn impr" onclick="setLogTipo('Imprevisto',this)">⚠️ Imprevisto</button>
-          <button class="log-tipo-btn outro" onclick="setLogTipo('Outro',this)">📦 Outro</button>
-        </div>
-        <input type="hidden" id="logTipo" value="Gasolina">
-        <div class="log-form-grid">
-          <div class="fc">
-            <span class="fla">Descrição</span>
-            <input class="inp" type="text" id="logDesc" placeholder="Ex: Gasolina Americana, Pedágio SP-65...">
-          </div>
-          <div class="fc">
-            <span class="fla">Valor R$</span>
-            <input class="inp" type="number" id="logVal" placeholder="0" min="0" step="0.01">
-          </div>
-          <div class="fc">
-            <span class="fla">Km rodados</span>
-            <input class="inp" type="number" id="logKm" placeholder="0" min="0" title="Opcional">
-          </div>
-          <div class="fc">
-            <span class="fla">Data</span>
-            <input class="inp" type="date" id="logData">
-          </div>
-          <div class="fc">
-            <span class="fla">&nbsp;</span>
-            <button class="bsg" onclick="addLogistica()" style="white-space:nowrap">+ Adicionar</button>
-          </div>
-        </div>
-        <div class="fc" style="margin-top:8px">
-          <span class="fla">Observação (opcional)</span>
-          <input class="inp" type="text" id="logObs" placeholder="Ex: Viagem Americana buscar Dell, caminho Hortolândia...">
-        </div>
-      </div>
-
-      <!-- GRÁFICOS -->
-      <div class="log-chart-wrap">
-        <div class="log-cc">
-          <div class="log-ch">
-            <div class="log-ct">Gastos por tipo</div>
-            <div class="log-cs" id="logChartMes">—</div>
-          </div>
-          <div class="log-cw"><canvas id="cLogTipo"></canvas></div>
-        </div>
-        <div class="log-cc">
-          <div class="log-ch">
-            <div class="log-ct">Evolução mensal</div>
-            <div class="log-cs">Total de gastos logísticos por mês</div>
-          </div>
-          <div class="log-cw"><canvas id="cLogMes"></canvas></div>
-        </div>
-      </div>
-
-      <!-- LISTA -->
-      <div class="log-list">
-        <div class="log-list-head">
-          <span style="font-size:.8rem;font-weight:600;color:var(--tx)">Registros do mês</span>
-          <div style="display:flex;gap:6px;margin-left:auto;flex-wrap:wrap">
-            <select class="sel" id="logFiltTipo" onchange="renderLogistica()" style="height:30px;font-size:.74rem">
-              <option value="todos">Todos os tipos</option>
-              <option value="Gasolina">⛽ Gasolina</option>
-              <option value="Pedágio">🛣️ Pedágio</option>
-              <option value="Manutenção">🔧 Manutenção</option>
-              <option value="Imprevisto">⚠️ Imprevisto</option>
-              <option value="Outro">📦 Outro</option>
-            </select>
-          </div>
-        </div>
-        <div id="logLista">
-          <div style="text-align:center;padding:40px;font-size:.78rem;color:var(--li)">Nenhum registro ainda</div>
-        </div>
-      </div>
-
-    </div>
-  </div>
-
   <!-- CLIENTES -->
   <style>
     #pg-clientes .cli-hero{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
@@ -2108,81 +2090,6 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
     </div>
   </div>
 
-  <!-- MODAL EDIÇÃO LOGÍSTICA -->
-  <div class="log-edit-modal" id="logEditModal">
-    <div class="log-edit-overlay" onclick="closeLogEdit()"></div>
-    <div class="log-edit-box">
-      <div class="log-edit-head">
-        <span class="log-edit-title">✏️ Editar registro</span>
-        <button class="log-edit-close" onclick="closeLogEdit()">✕</button>
-      </div>
-      <div class="log-edit-body">
-
-        <!-- DADOS BÁSICOS -->
-        <div class="log-edit-section">Informações</div>
-        <div style="display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-bottom:8px">
-          <div class="fc"><span class="fla">Descrição</span>
-            <input class="inp" type="text" id="leDesc" placeholder="Descrição"></div>
-          <div class="fc"><span class="fla">Valor R$</span>
-            <input class="inp" type="number" id="leVal" min="0" step="0.01"></div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px">
-          <div class="fc"><span class="fla">Data</span>
-            <input class="inp" type="date" id="leData"></div>
-          <div class="fc"><span class="fla">Km rodados</span>
-            <input class="inp" type="number" id="leKm" min="0" placeholder="0"></div>
-          <div class="fc"><span class="fla">Tipo</span>
-            <select class="inp" id="leTipo">
-              <option value="Gasolina">⛽ Gasolina</option>
-              <option value="Pedágio">🛣️ Pedágio</option>
-              <option value="Manutenção">🔧 Manutenção</option>
-              <option value="Imprevisto">⚠️ Imprevisto</option>
-              <option value="Outro">📦 Outro</option>
-            </select></div>
-        </div>
-        <div class="fc" style="margin-bottom:14px"><span class="fla">Observação</span>
-          <input class="inp" type="text" id="leObs" placeholder="Ex: Viagem Americana buscar Dell..."></div>
-
-        <!-- QUEM PAGOU -->
-        <div class="log-edit-section">Quem pagou?</div>
-        <div class="log-split-grid" id="lePagadorGrid">
-          <div class="log-split-card joao" onclick="setPagador('joao',this)" id="lePagJoao">
-            <div class="log-split-nm jo">👤 João</div>
-            <div class="log-split-val" id="lePagJoaoVal">pagou tudo</div>
-          </div>
-          <div class="log-split-card igor" onclick="setPagador('igor',this)" id="lePagIgor">
-            <div class="log-split-nm ig">👤 Igor</div>
-            <div class="log-split-val" id="lePagIgorVal">pagou tudo</div>
-          </div>
-          <div class="log-split-card ambos" onclick="setPagador('ambos',this)" id="lePagAmbos">
-            <div class="log-split-nm am">👥 Dividido — cada um pagou metade</div>
-            <div class="log-split-val" id="lePagAmbosVal">50% / 50%</div>
-          </div>
-        </div>
-
-        <!-- REEMBOLSO (aparece quando um só pagou) -->
-        <div id="leReembSection" style="display:none">
-          <div class="log-edit-section">Reembolso do outro sócio</div>
-          <div id="leReembRow" class="log-reemb-row" onclick="toggleReembolso()">
-            <div class="log-reemb-ico" id="leReembIco"></div>
-            <div class="log-reemb-nm" id="leReembNm">—</div>
-            <span class="log-reemb-val" id="leReembVal">—</span>
-          </div>
-          <div style="font-size:.7rem;color:var(--li);margin-top:4px" id="leReembHint">
-            Clique para marcar como pago/pendente
-          </div>
-        </div>
-
-        <!-- AÇÕES -->
-        <div style="display:flex;gap:8px;margin-top:18px;padding-top:14px;border-top:1px solid var(--b)">
-          <button class="bcan" onclick="closeLogEdit()" style="flex:1">Cancelar</button>
-          <button class="bvnd" onclick="salvarLogEdit()" style="flex:2">✓ Salvar alterações</button>
-        </div>
-
-      </div>
-    </div>
-  </div>
-
 <!-- EDIT MODAL -->
 <div class="mo h" id="MO">
   <div class="moo" onclick="closeModal()"></div>
@@ -2196,7 +2103,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
       <div class="fc"><label class="fl">Custo R$</label><input class="inp" id="eC" type="number" min="0"></div>
       <div class="fc"><label class="fl">Preço de venda R$</label><input class="inp" id="eV" type="number" min="0"></div>
       <div class="fc"><label class="fl">Status</label>
-        <select class="inp" id="eS">
+        <select class="inp" id="eS" onchange="ePlatToggle()">
           <option value="Anunciado">Anunciado</option>
           <option value="Estoque">Estoque</option>
           <option value="Vendido">Vendido</option>
@@ -2212,6 +2119,21 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
       <!-- FIX 1: Modal editar também usa date -->
       <div class="fc"><label class="fl">Data de compra</label><input class="inp" id="eDC" type="date"></div>
       <div class="fc"><label class="fl">Mês de venda</label><input class="inp" id="eDV" type="month"></div>
+      <div class="fc full" id="ePlatWrap">
+        <label class="fl">🛒 Onde vendeu? <span style="font-size:.67rem;color:var(--li);font-weight:400">alimenta o ranking de plataformas no Painel</span></label>
+        <select class="inp" id="ePlat">
+          <option value="">— Não informado —</option>
+          <option value="Marketplace">📘 Marketplace</option>
+          <option value="OLX">🟠 OLX</option>
+          <option value="Mercado Livre">🟡 Mercado Livre</option>
+          <option value="WhatsApp">💬 WhatsApp</option>
+          <option value="Instagram">📸 Instagram</option>
+          <option value="Indicação">🤝 Indicação</option>
+          <option value="Shopee">🛍️ Shopee</option>
+          <option value="Presencial">🤝 Presencial / Loja</option>
+          <option value="Outro">Outro</option>
+        </select>
+      </div>
       <div class="fc full">
         <label class="fl">👤 Cliente <span style="font-size:.67rem;color:var(--li);font-weight:400">amarra este notebook a um comprador (mesmo em estoque/reservado)</span></label>
         <div style="position:relative">
@@ -2404,7 +2326,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-import { getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,onAuthStateChanged,updateProfile } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+import { getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,onAuthStateChanged,updateProfile,sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 import { getFirestore,collection,addDoc,getDocs,doc,deleteDoc,updateDoc,query,where,orderBy } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 const app=initializeApp({apiKey:"AIzaSyDmC5BxL2_qf7YT9Yq9gUIhpRBn0RoRa2A",authDomain:"anuncia-70b88.firebaseapp.com",projectId:"anuncia-70b88",storageBucket:"anuncia-70b88.firebasestorage.app",messagingSenderId:"325014740359",appId:"1:325014740359:web:eff4e874f9f18a2ba54722"});
@@ -2418,8 +2340,16 @@ const CMarca={labels:['Dell','Lenovo','Acer','Samsung','HP','Asus','Outros'],val
 
 let user=null,prods=[],filt='todos',editId=null,chartsOk=false,sellId=null,clientes=[],fornecedores=[];
 
-// Emails autorizados — adicione os emails de João e Igor aqui
-const EMAIL_IGOR = 'i155757@dac.unicamp.br';
+// Emails autorizados
+// Dono: pode ter mais de uma conta. Para criar acesso novo sem excluir nada,
+// use "Adicionar usuário" no Firebase Console com um destes e-mails.
+const EMAILS_JOAO = [
+  'joaoximenesfp@gmail.com',
+  'joaoximenes11@hotmail.com',
+  'joaoximenesfp+ijx@gmail.com',   // acesso novo (cai na mesma caixa do gmail)
+];
+const EMAIL_JOAO = EMAILS_JOAO[0];
+const EMAIL_IGOR = 'i155757@dac.unicamp.br';    // sócio
 const EMAILS_AUTH = [EMAIL_IGOR]; // emails autorizados além do dono
 let perfilAtual = 'joao'; // 'joao' = dono | 'igor' = sócio (finanças próprias, sem ver finanças do João)
 
@@ -2439,18 +2369,85 @@ onAuthStateChanged(auth,u=>{
     // Mostrar botão admin só para o dono
     const btnAdm = document.getElementById('btnAdmin');
     if(btnAdm) btnAdm.style.display = perfilAtual==='joao' ? '' : 'none';
-    loadProds();loadFinancas();loadPecas();loadLogistica();loadClientes();loadFornecedores();loadMetas3();loadMilhao();
+    loadProds();loadFinancas();loadPecas();loadClientes();loadFornecedores();loadMetas3();loadMilhao();
+    try{ initSpecBuilder(); loadCpuOutros(); }catch(e){}
     setTimeout(carregarAvisos, 2000); // carregar avisos após login
   }
   else{document.getElementById('AS').classList.remove('h');document.getElementById('APP').classList.remove('v');}
 });
 
 window.swAt=t=>{document.querySelectorAll('.at').forEach((b,i)=>b.classList.toggle('on',(i===0&&t==='login')||(i===1&&t==='reg')));document.getElementById('fLogin').style.display=t==='login'?'block':'none';document.getElementById('fReg').style.display=t==='reg'?'block':'none';document.getElementById('AE').textContent='';};
+// Mostrar/ocultar senha
+window.togglePw=(inpId,btnId)=>{
+  const i=document.getElementById(inpId), b=document.getElementById(btnId);
+  if(!i||!b)return;
+  const mostrando = i.type==='text';
+  i.type = mostrando ? 'password' : 'text';
+  b.textContent = mostrando ? '👁️' : '🙈';
+  b.title = mostrando ? 'Mostrar senha' : 'Ocultar senha';
+  b.setAttribute('aria-label', b.title);
+  i.focus();
+  // mantém o cursor no fim do texto
+  const v=i.value; i.value=''; i.value=v;
+};
+
 window.doLogin=async()=>{try{await signInWithEmailAndPassword(auth,g('lE'),g('lP'));}catch(e){document.getElementById('AE').textContent=em(e.code);}};
-window.doReg=async()=>{document.getElementById('AE').textContent='Cadastro desativado. Entre em contato com o administrador.';};
+
+// Redefinição de senha — o Firebase envia um link seguro para o e-mail cadastrado.
+window.esqueciSenha=async()=>{
+  const erro=document.getElementById('AE');
+  const msg=document.getElementById('AM');
+  const email=(g('lE')||'').trim();
+  erro.textContent=''; msg.style.display='none';
+  if(!email){
+    erro.textContent='Digite seu e-mail no campo acima para receber o link de redefinição.';
+    document.getElementById('lE').focus();
+    return;
+  }
+  try{
+    await sendPasswordResetEmail(auth,email);
+    msg.style.display='block';
+    msg.innerHTML=`📨 <strong>Pedido enviado para ${esc(email)}</strong><br>
+      Se existir conta com esse e-mail, o link chega em alguns minutos (confira o <strong>spam</strong>).<br>
+      <span style="color:#a16207">⚠️ Se não chegar nada:</span> provavelmente <strong>não existe conta com esse e-mail</strong> — o Firebase não avisa quando isso acontece, ele simplesmente não envia.
+      Nesse caso, use a aba <strong>"Cadastrar"</strong> acima para criar a conta.`;
+  }catch(e){
+    erro.textContent=em(e.code);
+  }
+};
+window.doReg=async()=>{
+  const erro=document.getElementById('AE');
+  const email=(g('rE')||'').trim().toLowerCase();
+  const senha=g('rP')||'';
+  erro.textContent='';
+  const permitidos=[...EMAILS_JOAO, EMAIL_IGOR].map(e=>e.toLowerCase());
+  if(!permitidos.includes(email)){
+    erro.textContent='Este e-mail não tem autorização. Só os sócios podem criar conta.';
+    return;
+  }
+  if(senha.length<6){ erro.textContent='A senha precisa ter pelo menos 6 caracteres.'; return; }
+  try{
+    const cred=await createUserWithEmailAndPassword(auth,email,senha);
+    const nome = email===EMAIL_IGOR.toLowerCase() ? 'Igor' : 'João';
+    try{ await updateProfile(cred.user,{displayName:nome}); }catch(e){}
+  }catch(e){
+    erro.textContent = e.code==='auth/email-already-in-use'
+      ? 'Já existe conta com esse e-mail. Use "Entrar" e, se não lembrar a senha, clique em "Esqueci minha senha".'
+      : em(e.code);
+  }
+};
 window.doLogout=()=>signOut(auth);
 function g(id){return document.getElementById(id).value.trim();}
-function em(c){return({'auth/invalid-credential':'E-mail ou senha incorretos.','auth/email-already-in-use':'E-mail já cadastrado.','auth/weak-password':'Senha muito fraca.','auth/invalid-email':'E-mail inválido.'}[c])||'Erro ao autenticar.';}
+function em(c){return({
+  'auth/invalid-credential':'E-mail ou senha incorretos.',
+  'auth/email-already-in-use':'E-mail já cadastrado.',
+  'auth/weak-password':'Senha muito fraca (mínimo 6 caracteres).',
+  'auth/invalid-email':'E-mail inválido.',
+  'auth/user-not-found':'Não existe conta com esse e-mail. Confira se digitou certo.',
+  'auth/missing-email':'Digite seu e-mail.',
+  'auth/too-many-requests':'Muitas tentativas. Aguarde alguns minutos e tente de novo.',
+  'auth/network-request-failed':'Sem conexão. Confira sua internet.'
+}[c])||'Erro ao autenticar.';}
 
 async function loadProds(){
   if(!user)return;
@@ -2477,6 +2474,152 @@ async function loadProds(){
   render();renderSecoes();calcStats();renderAlertas();renderMeta();
 }
 
+// ── MONTADOR DE SPECS POR SELEÇÃO ──
+const SPEC_CPU=['Celeron','i3','i5','i7','i9','Ryzen 3','Ryzen 5','Ryzen 7'];
+const SPEC_GER=['4ª','5ª','6ª','7ª','8ª','9ª','10ª','11ª','12ª','13ª','14ª']; // geração Intel (ordinal)
+const SPEC_SERIE_RYZEN=['2000','3000','4000','5000','6000','7000','8000']; // série Ryzen (milhar)
+const SPEC_RAM_TIPO=['DDR3','DDR3L','DDR4','DDR5'];
+const SPEC_RAM=['4GB','8GB','12GB','16GB','20GB','32GB','64GB'];
+// Armazenamento em 3 categorias
+const SPEC_ARMAZ={
+  'HD':['HD 500GB','HD 1TB'],
+  'SSD SATA':['SSD 120GB','SSD 240GB','SSD 480GB'],
+  'SSD NVMe':['NVMe 128GB','NVMe 256GB','NVMe 512GB','NVMe 1TB']
+};
+// Processadores "Outros" aprendidos com o uso (persistidos)
+let SPEC_CPU_OUTROS=[];
+let specSel={cpu:'',ger:'',ram:'',ramtipo:'',ssd:''};
+let nomeManual=false;
+
+function initSpecBuilder(){
+  renderChipsCpu();
+  const ram=document.getElementById('chipsRam');
+  if(ram) ram.innerHTML=SPEC_RAM.map(v=>`<button type="button" class="spec-chip" data-v="${v}" onclick="pickSpec('ram','${v}',this)">${v}</button>`).join('');
+  const ramT=document.getElementById('chipsRamTipo');
+  if(ramT) ramT.innerHTML=SPEC_RAM_TIPO.map(v=>`<button type="button" class="spec-chip sm" data-v="${v}" onclick="pickSpec('ramtipo','${v}',this)">${v}</button>`).join('');
+  renderChipsArmaz();
+}
+function renderChipsCpu(){
+  const box=document.getElementById('chipsCpu'); if(!box)return;
+  const fixos=SPEC_CPU.map(v=>`<button type="button" class="spec-chip" data-v="${v}" onclick="pickSpec('cpu','${v}',this)">${v}</button>`).join('');
+  const outros=SPEC_CPU_OUTROS.map(v=>`<button type="button" class="spec-chip out" data-v="${v}" onclick="pickSpec('cpu','${v}',this)">${v}</button>`).join('');
+  box.innerHTML=fixos+outros+`<button type="button" class="spec-chip add" onclick="pedirOutroCpu()">+ Outro</button>`;
+}
+function renderChipsArmaz(){
+  const box=document.getElementById('chipsSsd'); if(!box)return;
+  box.innerHTML=Object.entries(SPEC_ARMAZ).map(([cat,arr])=>`
+    <div class="spec-armaz-cat">
+      <span class="spec-armaz-lbl">${cat}</span>
+      <div class="spec-chips">${arr.map(v=>`<button type="button" class="spec-chip sm" data-v="${v}" onclick="pickSpec('ssd','${v}',this)">${v.replace('NVMe ','').replace('SSD ','').replace('HD ','')}</button>`).join('')}</div>
+    </div>`).join('');
+}
+window.pedirOutroCpu=()=>{
+  const nome=prompt('Qual processador? (ex: Athlon Silver, Snapdragon, Core Ultra 5)');
+  if(!nome) return;
+  const v=nome.trim();
+  if(!v) return;
+  if(!SPEC_CPU.includes(v) && !SPEC_CPU_OUTROS.includes(v)){
+    SPEC_CPU_OUTROS.push(v);
+    salvarCpuOutros();
+  }
+  renderChipsCpu();
+  // já seleciona o recém-criado
+  const btn=document.querySelector(`#chipsCpu .spec-chip[data-v="${CSS.escape(v)}"]`);
+  if(btn) pickSpec('cpu',v,btn);
+};
+async function salvarCpuOutros(){
+  try{ localStorage.setItem('bj_cpu_outros',JSON.stringify(SPEC_CPU_OUTROS)); }catch(e){}
+  try{
+    const snap=await getDocs(query(collection(db,'config'),where('userId','==','shared_ijx')));
+    const d0=snap.docs.find(d=>d.data().tipo==='cpu_outros');
+    if(d0) await updateDoc(doc(db,'config',d0.id),{dados:SPEC_CPU_OUTROS});
+    else await addDoc(collection(db,'config'),{userId:'shared_ijx',tipo:'cpu_outros',dados:SPEC_CPU_OUTROS});
+  }catch(e){}
+}
+async function loadCpuOutros(){
+  try{ const ls=JSON.parse(localStorage.getItem('bj_cpu_outros')||'null'); if(Array.isArray(ls)) SPEC_CPU_OUTROS=ls; }catch(e){}
+  try{
+    const snap=await getDocs(query(collection(db,'config'),where('userId','==','shared_ijx')));
+    const d0=snap.docs.find(d=>d.data().tipo==='cpu_outros');
+    if(d0 && Array.isArray(d0.data().dados)) SPEC_CPU_OUTROS=d0.data().dados;
+  }catch(e){}
+  renderChipsCpu();
+}
+window.pickSpec=(key,val,btn)=>{
+  const grupo=btn.parentElement;
+  if(specSel[key]===val){ specSel[key]=''; btn.classList.remove('on'); }
+  else{
+    specSel[key]=val;
+    // SSD tem 3 subgrupos — limpa a seleção em TODOS, não só no grupo do botão
+    if(key==='ssd'){
+      document.querySelectorAll('#chipsSsd .spec-chip').forEach(b=>b.classList.remove('on'));
+    } else {
+      grupo.querySelectorAll('.spec-chip').forEach(b=>b.classList.remove('on'));
+    }
+    btn.classList.add('on');
+  }
+  // Geração/Série: Intel (iX) usa geração ordinal; Ryzen usa série (milhar)
+  if(key==='cpu'){
+    const temGeracao = /^i[3579]$/.test(specSel.cpu) || /^Ryzen/.test(specSel.cpu);
+    // se trocou de família, a geração/série anterior não vale mais
+    const ehRyzen=/^Ryzen/.test(specSel.cpu);
+    const valida = ehRyzen ? SPEC_SERIE_RYZEN.includes(specSel.ger) : SPEC_GER.includes(specSel.ger);
+    if(!valida) specSel.ger='';
+    montarGeracoes(temGeracao);
+  }
+  montarNome(true);
+};
+function montarGeracoes(mostrar){
+  let box=document.getElementById('chipsGer');
+  const cpuGroup=document.getElementById('chipsCpu').parentElement;
+  const ehRyzen=/^Ryzen/.test(specSel.cpu);
+  if(mostrar){
+    const rotulo = ehRyzen ? '↳ Série' : '↳ Geração';
+    const valores = ehRyzen ? SPEC_SERIE_RYZEN : SPEC_GER;
+    if(!box){
+      const div=document.createElement('div');
+      div.className='spec-ger-wrap';
+      div.innerHTML=`<span class="spec-lbl" id="gerLbl" style="margin-top:8px;display:block"></span><div class="spec-chips" id="chipsGer"></div>`;
+      cpuGroup.appendChild(div);
+      box=document.getElementById('chipsGer');
+    }
+    document.getElementById('gerLbl').textContent=rotulo;
+    box.innerHTML=valores.map(g=>`<button type="button" class="spec-chip sm" data-v="${g}" onclick="pickSpec('ger','${g}',this)">${g}</button>`).join('');
+    box.parentElement.style.display='';
+    box.querySelectorAll('.spec-chip').forEach(b=>b.classList.toggle('on', b.dataset.v===specSel.ger));
+  } else {
+    specSel.ger='';
+    if(box){ box.parentElement.style.display='none'; box.querySelectorAll('.spec-chip').forEach(b=>b.classList.remove('on')); }
+  }
+}
+window.montarNome=(fromChip)=>{
+  if(nomeManual && !fromChip) return;      // respeita edição manual
+  const marca=document.getElementById('pMarca')?.value||'';
+  const modelo=document.getElementById('pModelo')?.value.trim()||'';
+  const ehRyzen=/^Ryzen/.test(specSel.cpu);
+  // Intel: "i5 10ª" | Ryzen: "Ryzen 5 5000" (série sem o "ª")
+  const cpu=specSel.cpu + (specSel.ger?(' '+specSel.ger):'');
+  const partes=[];
+  const cab=[marca,modelo].filter(Boolean).join(' ');
+  if(cab) partes.push(cab);
+  if(cpu.trim()) partes.push(cpu.trim());
+  if(specSel.ssd) partes.push(specSel.ssd);
+  if(specSel.ram){
+    // "8GB DDR4 RAM" quando o tipo estiver escolhido; senão "8GB RAM"
+    partes.push(specSel.ram + (specSel.ramtipo?(' '+specSel.ramtipo):'') + ' RAM');
+  }
+  const nome=partes.join(' · ');
+  const campo=document.getElementById('pN');
+  if(campo && (fromChip || !nomeManual)){ campo.value=nome; nomeManual=false; }
+};
+function resetSpecBuilder(){
+  specSel={cpu:'',ger:'',ram:'',ramtipo:'',ssd:''}; nomeManual=false;
+  const m=document.getElementById('pMarca'); if(m)m.value='';
+  const mo=document.getElementById('pModelo'); if(mo)mo.value='';
+  document.querySelectorAll('.spec-chip.on').forEach(b=>b.classList.remove('on'));
+  montarGeracoes(false);
+}
+
 // ── PEÇAS NO CADASTRO DE PRODUTO ──
 // Peça aplicada aumenta o custo real da máquina E vai pro estoque de peças (aba Peças).
 const PP_TIPOS=['RAM','SSD/HD','Processador','Tela','Bateria','Teclado','Placa-mãe','Carregador','Carcaça','Outro'];
@@ -2499,11 +2642,15 @@ window.ppRemLinha=(id)=>{ const el=document.getElementById(id); if(el)el.remove(
 window.ppTotal=()=>{
   const rows=document.querySelectorAll('#ppLista .pecaprod-row');
   let soma=0; rows.forEach(r=>{ soma+=parseFloat(r.querySelector('.pp-custo').value)||0; });
+  const gas=parseFloat(document.getElementById('pGas')?.value)||0;
   const el=document.getElementById('ppTotal'); if(!el)return;
-  if(!rows.length){ el.style.display='none'; return; }
+  if(!rows.length && !gas){ el.style.display='none'; return; }
   const base=parseFloat(document.getElementById('pC').value)||0;
   el.style.display='block';
-  el.innerHTML=`${rows.length} peça${rows.length!==1?'s':''} · <strong>${fmt(soma)}</strong> em peças &nbsp;→&nbsp; custo total da máquina: <strong style="color:var(--tx)">${fmt(base+soma)}</strong>`;
+  const partes=[];
+  if(rows.length) partes.push(`${rows.length} peça${rows.length!==1?'s':''}: ${fmt(soma)}`);
+  if(gas) partes.push(`⛽ gasolina: ${fmt(gas)}`);
+  el.innerHTML=`${partes.join(' · ')} &nbsp;→&nbsp; custo total da máquina: <strong style="color:var(--tx)">${fmt(base+soma+gas)}</strong>`;
 };
 function ppColetar(){
   const out=[];
@@ -2660,10 +2807,11 @@ window.addProd=async()=>{
   // Peças aplicadas: entram no custo real da máquina
   const pecasNovas=ppColetar();
   const custoPecas=pecasNovas.reduce((s,x)=>s+x.custo,0);
-  const custoTotal=custo+custoPecas;
+  const custoGas=parseFloat(document.getElementById('pGas')?.value)||0;   // valor cheio, rachado 50/50
+  const custoTotal=custo+custoPecas+custoGas;
   // data_compra armazena data completa YYYY-MM-DD; data_compra_mes extrai só o mês
   const dcMes=dc?dc.slice(0,7):'';
-  const obj={userId:'shared_ijx',addedBy:user.uid,addedByName:user.displayName||user.email.split('@')[0],nome,custo:custoTotal,custo_base:custo,custo_pecas:custoPecas,venda,lucro:venda-custoTotal,status,investidor,data_compra:dc,data_compra_mes:dcMes,data_venda:'',data:dcMes,canal_compra:canal,fornecedor_id:fornId,fornecedor_nome:fornNome,num,createdAt:new Date().toISOString()};
+  const obj={userId:'shared_ijx',addedBy:user.uid,addedByName:user.displayName||user.email.split('@')[0],nome,custo:custoTotal,custo_base:custo,custo_pecas:custoPecas,custo_gasolina:custoGas,venda,lucro:venda-custoTotal,status,investidor,data_compra:dc,data_compra_mes:dcMes,data_venda:'',data:dcMes,canal_compra:canal,fornecedor_id:fornId,fornecedor_nome:fornNome,num,createdAt:new Date().toISOString()};
   let prodId='l'+Date.now();
   try{const r=await addDoc(collection(db,'products'),obj);prodId=r.id;prods.push({...obj,id:r.id});}catch(e){prods.push({...obj,id:prodId});}
   // Grava as peças na aba Peças, já vinculadas a esta máquina
@@ -2673,6 +2821,8 @@ window.addProd=async()=>{
     catch(e){pecas.push({...pobj,id:'lp'+Date.now()+Math.random()});}
   }
   document.getElementById('pN').value='';document.getElementById('pC').value='';document.getElementById('pV').value='';document.getElementById('pDC').value='';document.getElementById('pCanal').value='';document.getElementById('pForn').value='';document.getElementById('pFornId').value='';
+  const pg=document.getElementById('pGas'); if(pg) pg.value='';
+  try{ resetSpecBuilder(); }catch(e){}
   ppLimpar();
   // Notificar o sócio sobre o novo produto
   criarAviso('produto_adicionado', nome);
@@ -3603,6 +3753,10 @@ window.openEdit=id=>{
   document.getElementById('eCliNovo').style.display='none';
   document.getElementById('eCliWpp').value='';
   document.getElementById('eCliPerfil').value='';
+  // Plataforma de venda — só faz sentido para vendidos
+  const ePlat=document.getElementById('ePlat');
+  if(ePlat) ePlat.value=p.plataforma||'';
+  ePlatToggle();
   const peL=document.getElementById('peLista'); if(peL) peL.innerHTML='';
   peRenderExistentes(id);
   peTotal();
@@ -3610,6 +3764,13 @@ window.openEdit=id=>{
   document.getElementById('MO').classList.remove('h');
 };
 window.closeModal=()=>{document.getElementById('MO').classList.add('h');editId=null;const s=document.getElementById('moSucesso');if(s)s.classList.remove('on');};
+// Campo "onde vendeu" só aparece quando o status é Vendido
+window.ePlatToggle=()=>{
+  const st=document.getElementById('eS'), wrap=document.getElementById('ePlatWrap');
+  if(!st||!wrap)return;
+  wrap.style.display = st.value==='Vendido' ? '' : 'none';
+};
+
 window.saveEdit=async()=>{
   if(!editId)return;
   const nome=g('eN'),custo=parseFloat(document.getElementById('eC').value)||0,venda=parseFloat(document.getElementById('eV').value)||0,status=document.getElementById('eS').value,dc=document.getElementById('eDC').value,dv=document.getElementById('eDV').value,investidor=document.getElementById('eInv').value;
@@ -3631,7 +3792,7 @@ window.saveEdit=async()=>{
   const custoFinal=baseMaquina+somaJa+somaNovas;
   const totalPecas=somaJa+somaNovas;
 
-  const upd={nome,custo:custoFinal,custo_base:baseMaquina,custo_pecas:totalPecas,venda,lucro:venda-custoFinal,status,investidor,data_compra:dc,data_compra_mes:dcMes,data_venda:dv,data:dv||dcMes,cliente_id:cliId,cliente_nome:cliNome};
+  const upd={nome,custo:custoFinal,custo_base:baseMaquina,custo_pecas:totalPecas,venda,lucro:venda-custoFinal,status,investidor,plataforma:(status==='Vendido'?(document.getElementById('ePlat')?.value||''):''),data_compra:dc,data_compra_mes:dcMes,data_venda:dv,data:dv||dcMes,cliente_id:cliId,cliente_nome:cliNome};
   if(!editId.startsWith('x')&&!editId.startsWith('l')){try{await updateDoc(doc(db,'products',editId),upd);}catch(e){}}
   // Grava as peças novas na aba Peças, vinculadas a esta máquina
   for(const pc of pecasNovas){
@@ -3690,14 +3851,17 @@ function custoRealDe(p){
 function custoSplit(p){
   const total = custoRealDe(p);
   const pecas = Math.min(p.custo_pecas||0, total);   // peças aplicadas nesta máquina
-  const maquina = total - pecas;                      // custo da máquina em si
+  const gas = Math.min(p.custo_gasolina||0, total-pecas); // gasolina/busca
+  const maquina = total - pecas - gas;                // custo da máquina em si
   const b = investidorDe(p);
   const maqJoao = b==='ambos' ? maquina/2 : b==='joao' ? maquina : 0;
   const maqIgor = b==='ambos' ? maquina/2 : b==='igor' ? maquina : 0;
+  // Peças E gasolina são SEMPRE rachadas 50/50
+  const rachado = (pecas + gas)/2;
   return {
-    joao: maqJoao + pecas/2,
-    igor: maqIgor + pecas/2,
-    maquina, pecas
+    joao: maqJoao + rachado,
+    igor: maqIgor + rachado,
+    maquina, pecas, gas
   };
 }
 
@@ -3871,7 +4035,28 @@ function renderTabela(lista, tipo){
 
 function render(){
   const list=document.getElementById('PL');
-  const filtered=filt==='todos'?prods:prods.filter(p=>p.status===filt);
+  const porStatus=filt==='todos'?prods:prods.filter(p=>p.status===filt);
+  // Busca: todas as palavras digitadas precisam aparecer (nome, cliente, fornecedor, investidor, status)
+  const q=(document.getElementById('pBusca')?.value||'').toLowerCase().trim();
+  const termos=q.split(/\s+/).filter(Boolean);
+  const filtered = termos.length
+    ? porStatus.filter(p=>{
+        const alvo=[p.nome,p.cliente_nome,p.fornecedor_nome,p.investidor,p.status,p.plataforma,p.canal_compra]
+          .filter(Boolean).join(' ').toLowerCase();
+        return termos.every(t=>alvo.includes(t));
+      })
+    : porStatus;
+  // Info da busca
+  const bi=document.getElementById('pBuscaInfo');
+  if(bi){
+    if(termos.length){
+      bi.style.display='block';
+      const lucroEnc=filtered.filter(p=>p.status==='Vendido').reduce((s,p)=>s+getLucro(p),0);
+      bi.innerHTML=filtered.length
+        ? `${filtered.length} de ${porStatus.length} · ${fmt(filtered.reduce((s,p)=>s+custoRealDe(p),0))} em custo${lucroEnc?` · ${fmt(lucroEnc)} de lucro nos vendidos`:''}`
+        : `Nada encontrado para "${esc(q)}"`;
+    } else bi.style.display='none';
+  }
   if(list){
     document.getElementById('plbl').textContent=filtered.length+' produto'+(filtered.length!==1?'s':'');
     if(!filtered.length){list.innerHTML='<div style="text-align:center;padding:48px;color:var(--li)">📦 Nenhum produto encontrado</div>';return;}
@@ -3956,13 +4141,22 @@ function calcStats(){
   const an=prods.filter(p=>p.status==='Anunciado');
   const es=prods.filter(p=>p.status==='Estoque');
   const rec=v.reduce((s,p)=>s+(p.venda||0),0),luc=v.reduce((s,p)=>s+getLucro(p),0);
-  const mg=rec>0?Math.round(luc/rec*100):0;
+  // Margem MÉDIA POR NOTEBOOK: cada máquina tem sua margem (lucro/venda), tira-se a média.
+  // Cada notebook pesa igual — reflete "quanto ganho, em média, por máquina".
+  const comVenda=v.filter(p=>(p.venda||0)>0);
+  const mg=comVenda.length
+    ? Math.round(comVenda.reduce((s,p)=>s+(getLucro(p)/p.venda*100),0)/comVenda.length)
+    : 0;
+  const comCusto=v.filter(p=>custoRealDe(p)>0);
+  const mk=comCusto.length
+    ? Math.round(comCusto.reduce((s,p)=>s+(getLucro(p)/custoRealDe(p)*100),0)/comCusto.length)
+    : 0;
   const potAn=an.reduce((s,p)=>s+getLucro(p),0);
   const potEs=es.reduce((s,p)=>s+getLucro(p),0);
   const emMaoTotal=[...an,...es]; // Estoque + Anunciados = tudo na mão hoje
   const potEmMao=potAn+potEs;
   document.getElementById('sRec').textContent=fmt(rec);document.getElementById('sRecS').textContent=v.length+' vendas';
-  document.getElementById('sLuc').textContent=fmt(luc);document.getElementById('sMgm').textContent='margem '+mg+'%';
+  document.getElementById('sLuc').textContent=fmt(luc);document.getElementById('sMgm').textContent='margem '+mg+'% · markup '+mk+'%';
   document.getElementById('sAnu').textContent=an.length;document.getElementById('sAnuV').textContent=fmt(potAn)+' potencial';
   document.getElementById('sEst').textContent=emMaoTotal.length;document.getElementById('sEstV').textContent=an.length+' anunciados · '+es.length+' estoque';
   document.getElementById('sPot').textContent=fmt(potEmMao);
@@ -4090,7 +4284,11 @@ function buildCharts(){
   const tRec    = vTodos.reduce((s,p)=>s+(p.venda||0),0);
   const tLuc    = vTodos.reduce((s,p)=>s+getLucro(p),0);
   const tQtd    = vTodos.length;
-  const tMg     = tRec>0?Math.round(tLuc/tRec*100):0;
+  // Margem média por notebook (lucro÷venda) e Markup médio (lucro÷custo) — cada máquina pesa igual
+  const _comV   = vTodos.filter(p=>(p.venda||0)>0);
+  const tMg     = _comV.length ? Math.round(_comV.reduce((s,p)=>s+(getLucro(p)/p.venda*100),0)/_comV.length) : 0;
+  const _comC   = vTodos.filter(p=>custoRealDe(p)>0);
+  const tMk     = _comC.length ? Math.round(_comC.reduce((s,p)=>s+(getLucro(p)/custoRealDe(p)*100),0)/_comC.length) : 0;
   const tTk     = tQtd>0?Math.round(tRec/tQtd):0;
 
   // Melhor mês (usa calcChartsData para o gráfico, mas cards lêem prods diretamente)
@@ -4102,8 +4300,9 @@ function buildCharts(){
   document.getElementById('iLT').textContent  = fmt(tLuc);
   document.getElementById('iLTN').textContent = 'João '+fmt(tLuc/2)+' · Igor '+fmt(tLuc/2);
 
-  // Margem — MESMO cálculo do calcStats (sMgm)
+  // Margem e Markup — média por notebook
   document.getElementById('iMG').textContent = tMg+'%';
+  const iMkEl=document.getElementById('iMK'); if(iMkEl) iMkEl.textContent = tMk+'%';
 
   // Marca líder
   const topMarcaIdx = d.distMarca.indexOf(Math.max(...d.distMarca));
@@ -4229,7 +4428,6 @@ window.sp2=p=>{
        (p==='painel'&&t.textContent.includes('Painel'))||
        (p==='anuncios'&&t.textContent.includes('Anún'))||
        (p==='financas'&&t.textContent.includes('Finan'))||
-       (p==='logistica'&&t.textContent.includes('Logística'))||
        (p==='clientes'&&t.textContent.includes('Clientes')))t.classList.add('on');
   });
   if(p==='insights')buildCharts();
@@ -4237,7 +4435,6 @@ window.sp2=p=>{
   if(p==='financas'){renderFinLabel();checkNotificacoes();}
   if(p==='admin'){carregarAvisos();}
   if(p==='clientes'){ if(cliAba==='fornecedores')renderFornecedores(); else renderClientes(); }
-  if(p==='logistica'){renderLogistica();}
   else{const bar=document.getElementById('notifBar');if(bar){bar.innerHTML='';bar.classList.remove('on');adjustPageTop();}}
 };
 
@@ -5215,8 +5412,19 @@ window.limparAvisos = async () => {
 // ════════════════════════════════════════
 let pendingImport = null;
 let impSuspeitos = [];
+let impIgnorados = [];
 
 const IMP_NON_NOTEBOOK = ['salario','premio bolao copa','rendimentos','serviço alexandre (engenho group)','serviço alexandre engenho group'];
+// Palavras que indicam que a linha NÃO é venda de notebook (entrada de dinheiro, serviço, etc.)
+const IMP_NAO_NB_KEYS = ['salario','salário','rendimento','dividendo','juros','bolao','bolão','premio','prêmio',
+  'serviço','servico','freela','aporte','emprestimo','empréstimo','pix recebido','transferencia','transferência',
+  'reembolso','estorno','cashback','venda de peça','venda de peca','aluguel','13o','décimo','decimo'];
+function impNaoEhNotebook(nome){
+  const s=(nome||'').toLowerCase().trim();
+  if(!s) return true;
+  if(IMP_NON_NOTEBOOK.includes(s)) return true;
+  return IMP_NAO_NB_KEYS.some(k=>s.includes(k));
+}
 
 // Colunas (0-indexed, vindas de sheet_to_json com header:1) — variam por aba
 const IMP_SHEET_CFG = {
@@ -5267,6 +5475,7 @@ async function impLerPlanilha(file){
   const wb = XLSX.read(buf, {type:'array', cellDates:true});
   const itens = [];
   impSuspeitos = [];
+  impIgnorados = [];
 
   for(const sheetName of ['2024','2025']){
     const sheet = wb.Sheets[sheetName];
@@ -5279,7 +5488,10 @@ async function impLerPlanilha(file){
       const nomeTrim = rawNome.trim();
       if(!nomeTrim) continue;
       const keyLower = nomeTrim.toLowerCase();
-      if(IMP_NON_NOTEBOOK.includes(keyLower)) continue;
+      if(impNaoEhNotebook(nomeTrim)){
+        impIgnorados.push({nome:nomeTrim, aba:sheetName, valor:impNum(row[cfg.venda])});
+        continue;
+      }
 
       // Mapeamento ORIGINAL (validado contra a realidade pelos sócios):
       // col venda e col custo da planilha são as corretas; lucro = venda - custo.
@@ -5335,6 +5547,13 @@ window.processarPlanilha = async () => {
     const totVenda=itens.filter(i=>i.status==='Vendido').reduce((s,i)=>s+i.venda,0);
     const margem=totVenda>0?Math.round(totLucro/totVenda*100):0;
     let suspeitosHtml = '';
+    if(impIgnorados.length){
+      const lst=impIgnorados.map(x=>`• ${esc(x.nome)}${x.valor?` <span style="color:var(--li)">(${fmt(x.valor)})</span>`:''}`).join('<br>');
+      suspeitosHtml += `<br><div style="background:#f5f3ff;border:1px solid #ddd6fe;border-radius:8px;padding:10px;font-size:.78rem;text-align:left">
+        <strong style="color:#6d28d9">🚫 ${impIgnorados.length} linha(s) ignorada(s)</strong> — não são venda de notebook (salário, rendimento, serviço...). <strong>Confira se está certo:</strong><br><br>${lst}
+        <br><br><span style="color:var(--li);font-size:.72rem">Se algum notebook de verdade estiver nesta lista, renomeie na planilha (o filtro pega palavras como "salário", "serviço", "rendimento").</span>
+      </div>`;
+    }
     if(impSuspeitos.length){
       const linhas = impSuspeitos.map(s=>`• ${esc(s.nome)} <span style="color:var(--li)">(venda: "${esc(s.raw)}")</span>`).join('<br>');
       suspeitosHtml = `<br><br><div style="background:#fef3c7;border:1px solid #fbbf24;border-radius:8px;padding:10px;font-size:.78rem;text-align:left">
@@ -5629,350 +5848,6 @@ window.migrarPecas = async () => {
     btnMigP.disabled = false;
   }
 };
-
-// ════════════════════════════════════════
-// LOGÍSTICA
-// ════════════════════════════════════════
-let logistica = [];
-let logMes = new Date().toISOString().slice(0,7);
-let logTipoAtual = 'Gasolina';
-let logChartTipo = null, logChartMesInst = null;
-
-const LOG_CORES = {
-  'Gasolina':   '#f97316',
-  'Pedágio':    '#7c3aed',
-  'Manutenção': '#16a34a',
-  'Imprevisto': '#dc2626',
-  'Outro':      '#9ca3af',
-};
-
-async function loadLogistica(){
-  if(!user) return;
-  try{
-    const q = query(collection(db,'logistica'), where('userId','==',user.uid));
-    const snap = await getDocs(q);
-    logistica = snap.docs.map(d=>({id:d.id,...d.data()}));
-  }catch(e){ logistica=[]; }
-  renderLogistica();
-}
-
-window.logMudaMes = (dir) => {
-  const [y,m] = logMes.split('-').map(Number);
-  const d = new Date(y,m-1+dir,1);
-  logMes = d.toISOString().slice(0,7);
-  renderLogistica();
-};
-
-window.setLogTipo = (tipo, btn) => {
-  logTipoAtual = tipo;
-  document.getElementById('logTipo').value = tipo;
-  document.querySelectorAll('.log-tipo-btn').forEach(b=>b.classList.remove('on'));
-  btn.classList.add('on');
-};
-
-window.addLogistica = async () => {
-  const desc = document.getElementById('logDesc').value.trim();
-  const val  = parseFloat(document.getElementById('logVal').value)||0;
-  const km   = parseFloat(document.getElementById('logKm').value)||0;
-  const data = document.getElementById('logData').value || logMes+'-'+new Date().toISOString().slice(8,10);
-  const obs  = document.getElementById('logObs').value.trim();
-  const tipo = logTipoAtual;
-
-  if(!desc || !val){ alert('Preencha descrição e valor!'); return; }
-
-  const obj = {
-    userId: user.uid,
-    tipo, desc, valor: val, km, data,
-    mes: data.slice(0,7),
-    obs, criadoEm: new Date().toISOString()
-  };
-
-  try{
-    const r = await addDoc(collection(db,'logistica'), obj);
-    logistica.push({...obj, id:r.id});
-  }catch(e){
-    logistica.push({...obj, id:'l'+Date.now()});
-  }
-
-  // Limpar form
-  document.getElementById('logDesc').value='';
-  document.getElementById('logVal').value='';
-  document.getElementById('logKm').value='';
-  document.getElementById('logObs').value='';
-  renderLogistica();
-};
-
-window.delLogistica = async (id) => {
-  if(!confirm('Excluir este registro?')) return;
-  if(!id.startsWith('l')) try{ await deleteDoc(doc(db,'logistica',id)); }catch(e){}
-  logistica = logistica.filter(x=>x.id!==id);
-  renderLogistica();
-};
-
-function renderLogistica(){
-  const el = document.getElementById('logMesLabel');
-  if(!el) return;
-  const [y,m] = logMes.split('-').map(Number);
-  const mesNome = MES_NOMES[m-1]+'/'+String(y).slice(2);
-  el.textContent = mesNome;
-
-  const filtTipo = (document.getElementById('logFiltTipo')||{}).value||'todos';
-  const doMes = logistica.filter(x=>x.mes===logMes);
-  const filtrado = filtTipo==='todos' ? doMes : doMes.filter(x=>x.tipo===filtTipo);
-
-  // Cards
-  const gas   = doMes.filter(x=>x.tipo==='Gasolina').reduce((s,x)=>s+x.valor,0);
-  const impr  = doMes.filter(x=>x.tipo==='Imprevisto').reduce((s,x)=>s+x.valor,0);
-  const km    = doMes.reduce((s,x)=>s+(x.km||0),0);
-  const total = doMes.reduce((s,x)=>s+x.valor,0);
-  const nGas  = doMes.filter(x=>x.tipo==='Gasolina').length;
-  const nImpr = doMes.filter(x=>x.tipo==='Imprevisto').length;
-
-  const sv = (id,v) => { const e=document.getElementById(id); if(e)e.textContent=v; };
-  sv('logValGas',  fmt(gas));
-  sv('logSubGas',  nGas+' abastecimento'+(nGas!==1?'s':''));
-  sv('logValImpr', fmt(impr));
-  sv('logSubImpr', nImpr+' imprevisto'+(nImpr!==1?'s':''));
-  sv('logValKm',   km>0?km.toLocaleString('pt-BR')+' km':'0 km');
-  sv('logSubKm',   doMes.length+' registro'+(doMes.length!==1?'s':''));
-  sv('logValTotal',fmt(total));
-  sv('logSubTotal',doMes.length+' registros no mês');
-  // Badge de reembolsos pendentes
-  const pendReemb = doMes.filter(x=>x.pagador&&x.pagador!=='ambos'&&!x.reembPago).length;
-  const elReemb = document.getElementById('logSubReemb');
-  if(elReemb) elReemb.textContent = pendReemb > 0
-    ? `⏳ ${pendReemb} reembolso${pendReemb>1?'s':''} pendente${pendReemb>1?'s':''}`
-    : '';
-  const cmel = document.getElementById('logChartMes');
-  if(cmel) cmel.textContent = mesNome;
-
-  // Lista
-  const lista = document.getElementById('logLista');
-  if(lista){
-    if(!filtrado.length){
-      lista.innerHTML='<div style="text-align:center;padding:40px;font-size:.78rem;color:var(--li)">Nenhum registro'+(filtTipo!=='todos'?' para este tipo':'')+'</div>';
-    } else {
-      const sorted = [...filtrado].sort((a,b)=>b.data.localeCompare(a.data));
-      lista.innerHTML = sorted.map(x=>{
-        const dtFmt = new Date(x.data+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
-        const cor = LOG_CORES[x.tipo]||'#9ca3af';
-        const kmInfo = x.km>0 ? ` · ${x.km} km` : '';
-        const obsInfo = x.obs ? ` · ${x.obs}` : '';
-        // Badge de quem pagou
-        const pagNm = x.pagador==='joao'?'João':x.pagador==='igor'?'Igor':x.pagador==='ambos'?'Dividido':null;
-        const pagCls = x.pagador==='joao'?'jo':x.pagador==='igor'?'ig':x.pagador==='ambos'?'am':null;
-        const pagBadge = pagNm ? `<span class="log-pagador ${pagCls}">${pagNm}</span>` : '';
-        // Badge de reembolso (só quando um pagou tudo)
-        let reembBadge = '';
-        if(x.pagador && x.pagador !== 'ambos'){
-          reembBadge = x.reembPago
-            ? `<span class="log-reemb-badge ok">✓ reembolsado</span>`
-            : `<span class="log-reemb-badge pend">⏳ reembolso pendente</span>`;
-        }
-        return`<div class="log-item">
-          <span class="log-tipo-dot" style="background:${cor}"></span>
-          <div class="log-item-info">
-            <div class="log-item-nm">${esc(x.desc)}${pagBadge}${reembBadge}</div>
-            <div class="log-item-sub">${x.tipo} · ${dtFmt}${kmInfo}${obsInfo}</div>
-          </div>
-          <span class="log-item-val">${fmt(x.valor)}</span>
-          <button class="bed" onclick="openLogEdit('${x.id}')" title="Editar" style="margin-right:2px">✎</button>
-          <button class="log-del" onclick="delLogistica('${x.id}')">✕</button>
-        </div>`;
-      }).join('');
-    }
-  }
-
-  // Gráficos
-  renderLogCharts(doMes);
-}
-
-function renderLogCharts(doMes){
-  const font={family:"'DM Sans',sans-serif",size:11},tc='#78716c',gc='rgba(0,0,0,.05)';
-
-  // Donut por tipo
-  if(logChartTipo){try{logChartTipo.destroy();}catch(e){}}
-  const oldT=document.getElementById('cLogTipo');
-  if(oldT){const n=document.createElement('canvas');n.id='cLogTipo';oldT.parentNode.replaceChild(n,oldT);}
-
-  const tiposData = Object.entries(LOG_CORES).map(([t,c])=>({
-    t, c, v: doMes.filter(x=>x.tipo===t).reduce((s,x)=>s+x.valor,0)
-  })).filter(x=>x.v>0);
-
-  if(tiposData.length){
-    logChartTipo = new Chart(document.getElementById('cLogTipo'),{
-      type:'doughnut',
-      data:{
-        labels: tiposData.map(x=>x.t),
-        datasets:[{data:tiposData.map(x=>x.v),backgroundColor:tiposData.map(x=>x.c),borderWidth:0,hoverOffset:6}]
-      },
-      options:{responsive:true,maintainAspectRatio:false,cutout:'55%',
-        plugins:{legend:{position:'right',labels:{color:tc,font,boxWidth:10,padding:10}},
-          tooltip:{callbacks:{label:ctx=>' '+fmt(ctx.raw)},bodyFont:font,titleFont:font}}}
-    });
-  } else {
-    const canvas=document.getElementById('cLogTipo');
-    if(canvas){const ctx=canvas.getContext('2d');ctx.clearRect(0,0,canvas.width,canvas.height);}
-  }
-
-  // Barras por mês (últimos 6 meses)
-  if(logChartMesInst){try{logChartMesInst.destroy();}catch(e){}}
-  const oldM=document.getElementById('cLogMes');
-  if(oldM){const n=document.createElement('canvas');n.id='cLogMes';oldM.parentNode.replaceChild(n,oldM);}
-
-  const meses6 = [];
-  for(let i=5;i>=0;i--){
-    const d=new Date(parseInt(logMes.split('-')[0]),parseInt(logMes.split('-')[1])-1-i,1);
-    meses6.push(d.toISOString().slice(0,7));
-  }
-  const labelMap={'01':'Jan','02':'Fev','03':'Mar','04':'Abr','05':'Mai','06':'Jun','07':'Jul','08':'Ago','09':'Set','10':'Out','11':'Nov','12':'Dez'};
-  const labels6=meses6.map(m=>{const[y,mo]=m.split('-');return(labelMap[mo]||mo)+'/'+y.slice(2);});
-  const vals6=meses6.map(m=>logistica.filter(x=>x.mes===m).reduce((s,x)=>s+x.valor,0));
-
-  logChartMesInst = new Chart(document.getElementById('cLogMes'),{
-    type:'bar',
-    data:{labels:labels6,datasets:[{
-      label:'Total logística',
-      data:vals6,
-      backgroundColor:meses6.map(m=>m===logMes?'#1c1917':'#d6d2c8'),
-      borderRadius:5,borderSkipped:false
-    }]},
-    options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+fmt(ctx.raw)},bodyFont:font,titleFont:font}},
-      scales:{x:{grid:{display:false},ticks:{color:tc,font}},y:{grid:{color:gc},ticks:{color:tc,font,callback:v=>'R$'+v},border:{display:false},beginAtZero:true}}}
-  });
-}
-
-// ════════════════════════════════════════
-// EDIÇÃO DE REGISTROS DE LOGÍSTICA
-// ════════════════════════════════════════
-let logEditId = null;
-let logEditPagador = null;
-let logEditReembPago = false;
-
-window.openLogEdit = (id) => {
-  const x = logistica.find(l=>l.id===id);
-  if(!x) return;
-  logEditId = id;
-  logEditPagador = x.pagador || null;
-  logEditReembPago = x.reembPago || false;
-
-  // Preencher campos
-  document.getElementById('leDesc').value  = x.desc  || '';
-  document.getElementById('leVal').value   = x.valor || '';
-  document.getElementById('leData').value  = x.data  || '';
-  document.getElementById('leKm').value    = x.km    || '';
-  document.getElementById('leObs').value   = x.obs   || '';
-  document.getElementById('leTipo').value  = x.tipo  || 'Gasolina';
-
-  // Atualizar valores do split
-  atualizarSplitValores(x.valor || 0);
-
-  // Marcar pagador
-  document.querySelectorAll('.log-split-card').forEach(c=>c.classList.remove('sel'));
-  if(x.pagador === 'joao')  document.getElementById('lePagJoao').classList.add('sel');
-  if(x.pagador === 'igor')  document.getElementById('lePagIgor').classList.add('sel');
-  if(x.pagador === 'ambos') document.getElementById('lePagAmbos').classList.add('sel');
-
-  // Seção de reembolso
-  atualizarReembolsoUI(x.pagador, x.valor || 0, x.reembPago || false);
-
-  // Abrir modal
-  document.getElementById('logEditModal').classList.add('on');
-};
-
-window.closeLogEdit = () => {
-  document.getElementById('logEditModal').classList.remove('on');
-  logEditId = null;
-};
-
-window.setPagador = (pagador, btn) => {
-  logEditPagador = pagador;
-  document.querySelectorAll('.log-split-card').forEach(c=>c.classList.remove('sel'));
-  btn.classList.add('sel');
-  const val = parseFloat(document.getElementById('leVal').value)||0;
-  atualizarSplitValores(val);
-  atualizarReembolsoUI(pagador, val, logEditReembPago);
-};
-
-window.toggleReembolso = () => {
-  logEditReembPago = !logEditReembPago;
-  const val = parseFloat(document.getElementById('leVal').value)||0;
-  atualizarReembolsoUI(logEditPagador, val, logEditReembPago);
-};
-
-function atualizarSplitValores(val){
-  const metade = fmt(val/2);
-  document.getElementById('lePagJoaoVal').textContent   = `pagou R$${Math.round(val)},00 — Igor deve R$${Math.round(val/2)}`;
-  document.getElementById('lePagIgorVal').textContent   = `pagou R$${Math.round(val)},00 — João deve R$${Math.round(val/2)}`;
-  document.getElementById('lePagAmbosVal').textContent  = `João: R$${Math.round(val/2)} · Igor: R$${Math.round(val/2)}`;
-}
-
-function atualizarReembolsoUI(pagador, val, reembPago){
-  const sec = document.getElementById('leReembSection');
-  const row = document.getElementById('leReembRow');
-  const ico = document.getElementById('leReembIco');
-  const nm  = document.getElementById('leReembNm');
-  const vEl = document.getElementById('leReembVal');
-
-  if(!pagador || pagador === 'ambos'){
-    if(sec) sec.style.display = 'none';
-    return;
-  }
-  if(sec) sec.style.display = 'block';
-
-  // Quem deve reembolsar?
-  const devedor = pagador === 'joao' ? 'Igor' : 'João';
-  const metade  = Math.round(val/2);
-
-  if(ico){ico.textContent = reembPago ? '✓' : ''; ico.className = 'log-reemb-ico'+(reembPago?' pago':'');}
-  if(nm)  nm.textContent  = `${devedor} deve reembolsar metade`;
-  if(vEl){vEl.textContent = fmt(metade); vEl.className = 'log-reemb-val'+(reembPago?' pago':'');}
-  if(row) row.className   = 'log-reemb-row'+(reembPago?' pago':'');
-}
-
-// Atualizar split ao mudar valor
-document.addEventListener('input', e => {
-  if(e.target.id === 'leVal' && logEditId){
-    const val = parseFloat(e.target.value)||0;
-    atualizarSplitValores(val);
-    atualizarReembolsoUI(logEditPagador, val, logEditReembPago);
-  }
-});
-
-window.salvarLogEdit = async () => {
-  if(!logEditId) return;
-  const upd = {
-    desc:      document.getElementById('leDesc').value.trim(),
-    valor:     parseFloat(document.getElementById('leVal').value)||0,
-    data:      document.getElementById('leData').value,
-    km:        parseFloat(document.getElementById('leKm').value)||0,
-    obs:       document.getElementById('leObs').value.trim(),
-    tipo:      document.getElementById('leTipo').value,
-    pagador:   logEditPagador || null,
-    reembPago: logEditReembPago,
-    mes:       document.getElementById('leData').value.slice(0,7),
-  };
-
-  if(!upd.desc || !upd.valor){ alert('Preencha descrição e valor!'); return; }
-
-  try{
-    if(!logEditId.startsWith('l'))
-      await updateDoc(doc(db,'logistica', logEditId), upd);
-    const item = logistica.find(l=>l.id===logEditId);
-    if(item) Object.assign(item, upd);
-  }catch(e){
-    const item = logistica.find(l=>l.id===logEditId);
-    if(item) Object.assign(item, upd);
-  }
-
-  closeLogEdit();
-  renderLogistica();
-};
-
-// Inicializa campo de data com hoje
-document.getElementById('pDC').value=new Date().toISOString().split('T')[0];
-document.getElementById('logData').value=new Date().toISOString().split('T')[0];
 
 // ════════════════════════════════════════
 // PAINEL — estado
