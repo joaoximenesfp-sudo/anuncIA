@@ -265,6 +265,9 @@ input[type=number].inp{padding-left:32px}
 .falta-tag{display:inline-block;font-size:.68rem;color:#a16207;background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:2px 8px;margin-top:4px;font-weight:600}
 .comp-chips{display:flex;flex-wrap:wrap;gap:3px;margin-top:3px}
 .comp-dd{margin-top:3px}
+.peca-maq{display:inline-block;font-size:.65rem;font-weight:600;color:#1d4ed8;background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:1px 7px;margin-right:4px}
+.peca-maq.alerta{color:#a16207;background:#fffbeb;border-color:#fde68a}
+.peca-forn{display:inline-block;font-size:.65rem;font-weight:600;color:#7c3aed;background:#faf5ff;border:1px solid #e9d5ff;border-radius:6px;padding:1px 7px}
 .comp-lista{margin-top:4px;background:var(--bg);border:1px solid var(--b);border-radius:8px;padding:5px 8px;min-width:180px;max-width:280px}
 .comp-linha{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:3px 0;font-size:.72rem;border-bottom:1px solid var(--b)}
 .comp-linha:last-of-type{border-bottom:none}
@@ -1258,6 +1261,16 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
               <div class="fc"><span class="fla">Observação</span><input class="inp" type="text" id="pcObs" placeholder="Ex: Não funciona, Testar..."></div>
               <div class="fc"><span class="fla">Quantidade</span><input class="inp" type="number" id="pcQtd" placeholder="1" min="1" value="1"></div>
             </div>
+              <div class="fc" style="grid-column:1/-1"><span class="fla">🔧 Fornecedor <span style="font-size:.62rem;color:var(--li);font-weight:400;text-transform:none">de quem comprou (opcional) — vai pra aba Fornecedores</span></span>
+                <div style="display:grid;grid-template-columns:1fr 150px;gap:8px">
+                  <div style="position:relative">
+                    <input class="inp" type="text" id="pcForn" placeholder="Buscar ou digitar novo..." autocomplete="off" oninput="pcFornBusca(this.value)" onfocus="pcFornBusca(this.value)">
+                    <input type="hidden" id="pcFornId">
+                    <div id="pcFornDrop" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:30;background:var(--w);border:1px solid var(--b2);border-radius:8px;margin-top:2px;max-height:160px;overflow:auto;box-shadow:0 6px 18px rgba(0,0,0,.09)"></div>
+                  </div>
+                  <input class="inp" type="tel" id="pcFornTel" placeholder="WhatsApp" autocomplete="off">
+                </div>
+              </div>
               <div class="fc"><span class="fla" style="opacity:0">.</span><button class="ba" onclick="addPeca()">+ Add</button></div>
             </div>
           </div>
@@ -2104,6 +2117,58 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
 
         <div id="fornLista"></div>
       </div><!-- /fornView -->
+    </div>
+  </div>
+
+  <!-- MODAL EDITAR PEÇA -->
+  <div class="mo h" id="PECO">
+    <div class="moo" onclick="closePecaEdit()"></div>
+    <div class="mc" style="max-width:460px">
+      <div class="mch">
+        <span class="mct">✎ Editar peça</span>
+        <button class="mcl" onclick="closePecaEdit()">✕</button>
+      </div>
+      <div class="mcb">
+        <input type="hidden" id="pkId">
+        <div class="fc full"><label class="fl">Nome / descrição</label>
+          <input class="inp" type="text" id="pkNome" placeholder="Ex: SSD SATA 240GB"></div>
+        <div class="fc"><label class="fl">Tipo</label>
+          <select class="inp" id="pkTipo"></select></div>
+        <div class="fc"><label class="fl">Quantidade</label>
+          <input class="inp" type="number" id="pkQtd" min="1" value="1"></div>
+        <div class="fc"><label class="fl">Custo R$</label>
+          <input class="inp" type="number" id="pkCusto" min="0" step="0.01" placeholder="0"></div>
+        <div class="fc"><label class="fl">Venda R$ <span style="font-size:.65rem;color:var(--li);font-weight:400">se vendida</span></label>
+          <input class="inp" type="number" id="pkVenda" min="0" step="0.01" placeholder="0"></div>
+        <div class="fc"><label class="fl">Status</label>
+          <select class="inp" id="pkStatus" onchange="pkVincToggle()">
+            <option value="Estoque">Estoque</option>
+            <option value="Vendido">Vendido</option>
+            <option value="Usado">Usado em máquina</option>
+          </select></div>
+        <div class="fc full"><label class="fl">🔧 Fornecedor <span style="font-size:.65rem;color:var(--li);font-weight:400">de quem você comprou esta peça</span></label>
+          <div style="display:grid;grid-template-columns:1fr 150px;gap:8px">
+            <div style="position:relative">
+              <input class="inp" type="text" id="pkForn" placeholder="Buscar fornecedor ou digitar um novo..." autocomplete="off" oninput="pkFornBusca(this.value)" onfocus="pkFornBusca(this.value)">
+              <input type="hidden" id="pkFornId">
+              <div id="pkFornDrop" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:30;background:var(--w);border:1px solid var(--b2);border-radius:8px;margin-top:2px;max-height:170px;overflow:auto;box-shadow:0 6px 18px rgba(0,0,0,.09)"></div>
+            </div>
+            <input class="inp" type="tel" id="pkFornTel" placeholder="WhatsApp" autocomplete="off">
+          </div>
+          <div id="pkFornLink" style="font-size:.68rem;margin-top:4px"></div>
+        </div>
+        <div class="fc full"><label class="fl">Observação</label>
+          <input class="inp" type="text" id="pkObs" placeholder="Ex: Não funciona, Testar..."></div>
+        <div class="fc full" id="pkVincWrap" style="display:none">
+          <label class="fl">🔗 Em qual máquina está aplicada?</label>
+          <select class="inp" id="pkMaquina"></select>
+          <div style="font-size:.67rem;color:var(--li);margin-top:4px" id="pkMaquinaHint">O custo da peça entra no custo da máquina escolhida.</div>
+        </div>
+      </div>
+      <div class="mca">
+        <button class="bcan" onclick="closePecaEdit()">Cancelar</button>
+        <button class="bsav" onclick="savePecaEdit()">Salvar alterações</button>
+      </div>
     </div>
   </div>
 
@@ -3664,12 +3729,19 @@ async function salvarFornecedor(dados){
   const existe=fornecedores.find(f=>(f.nome||'').trim().toLowerCase()===nome.toLowerCase());
   if(existe){
     const upd={};
-    if(dados.whatsapp&&!existe.whatsapp)upd.whatsapp=dados.whatsapp;
+    // telefone digitado explicitamente atualiza o cadastro
+    if(dados.whatsapp && dados.whatsapp!==existe.whatsapp) upd.whatsapp=dados.whatsapp;
     if(dados.tipo&&!existe.tipo)upd.tipo=dados.tipo;
+    // marca que fornece peças (sem apagar o que já estava)
+    if(dados.costuma){
+      const atual=(existe.costuma||'').trim();
+      if(!atual) upd.costuma=dados.costuma;
+      else if(!atual.toLowerCase().includes(dados.costuma.toLowerCase())) upd.costuma=atual+' · '+dados.costuma;
+    }
     if(Object.keys(upd).length){ try{if(!existe.id.startsWith('l'))await updateDoc(doc(db,'fornecedores',existe.id),upd);}catch(e){} Object.assign(existe,upd); }
     return existe.id;
   }
-  const obj={userId:'shared_ijx',addedBy:user.uid,nome,whatsapp:dados.whatsapp||'',contatos:[],tipo:dados.tipo||'',regiao:'',obs:'',costuma:'',ultimo_contato:'',criado_em:new Date().toISOString()};
+  const obj={userId:'shared_ijx',addedBy:user.uid,nome,whatsapp:dados.whatsapp||'',contatos:[],tipo:dados.tipo||'',regiao:'',obs:'',costuma:dados.costuma||'',ultimo_contato:'',criado_em:new Date().toISOString()};
   try{ const r=await addDoc(collection(db,'fornecedores'),obj); fornecedores.push({...obj,id:r.id}); return r.id; }
   catch(e){ const lid='l'+Date.now(); fornecedores.push({...obj,id:lid}); return lid; }
 }
@@ -3722,14 +3794,32 @@ window.pFornPick=(id)=>{
 function fornStats(f){
   const compras=prods.filter(p=>p.fornecedor_id===f.id);
   const total=compras.reduce((s,p)=>s+(p.custo||0),0);
-  return {n:compras.length,total,itens:compras};
+  // Peças compradas deste fornecedor
+  const pcs=(typeof pecas!=='undefined')?pecas.filter(x=>x.fornecedor_id===f.id):[];
+  const qtdPecas=pcs.reduce((s,x)=>s+(x.quantidade||1),0);
+  const totalPecas=pcs.reduce((s,x)=>s+((x.custo||0)*(x.quantidade||1)),0);
+  return {n:compras.length,total,itens:compras,
+          nPecas:pcs.length,qtdPecas,totalPecas,pecasItens:pcs,
+          totalGeral:total+totalPecas};
 }
 function fornComprasHTML(fs){
-  if(!fs.n) return '<div class="cli-nb-empty">Nenhuma máquina vinculada ainda. Ao adicionar um produto, escolha este fornecedor pra montar o histórico.</div>';
-  return fs.itens.slice().sort((a,b)=>(b.data_compra||'').localeCompare(a.data_compra||'')).map(p=>{
-    const stcls=p.status==='Vendido'?'sv':p.status==='Anunciado'?'san':'se';
-    return `<div class="cli-nb"><div class="cli-nb-row"><span class="cli-nb-badge ${stcls}">${esc(p.status||'—')}</span><span class="cli-nb-nome">${esc(p.nome||'—')}</span><span class="cli-nb-val">custo ${fmt(p.custo||0)}</span><span class="cli-nb-data">${p.data_compra||''}${p.canal_compra?' · '+esc(p.canal_compra):''}</span></div></div>`;
-  }).join('');
+  const temNada = !fs.n && !fs.nPecas;
+  if(temNada) return '<div class="cli-nb-empty">Nenhuma compra vinculada ainda. Ao cadastrar uma máquina ou peça, escolha este fornecedor pra montar o histórico.</div>';
+  let html='';
+  if(fs.n){
+    html+=fs.itens.slice().sort((a,b)=>(b.data_compra||'').localeCompare(a.data_compra||'')).map(p=>{
+      const stcls=p.status==='Vendido'?'sv':p.status==='Anunciado'?'san':'se';
+      return `<div class="cli-nb"><div class="cli-nb-row"><span class="cli-nb-badge ${stcls}">${esc(p.status||'—')}</span><span class="cli-nb-nome">${esc(p.nome||'—')}</span><span class="cli-nb-val">custo ${fmt(p.custo||0)}</span><span class="cli-nb-data">${p.data_compra||''}${p.canal_compra?' · '+esc(p.canal_compra):''}</span></div></div>`;
+    }).join('');
+  }
+  if(fs.nPecas){
+    html+=`<div style="font-size:.68rem;font-weight:700;color:var(--mu);margin:8px 0 4px">🔧 PEÇAS COMPRADAS</div>`;
+    html+=fs.pecasItens.map(pc=>{
+      const q=pc.quantidade||1;
+      return `<div class="cli-nb"><div class="cli-nb-row"><span class="cli-nb-badge se">${esc(pc.tipo||'Peça')}</span><span class="cli-nb-nome">${PP_EMOJI[pc.tipo]||'🔧'} ${esc(pc.nome||'—')}${q>1?` <span style="color:var(--li)">×${q}</span>`:''}</span><span class="cli-nb-val">custo ${fmt((pc.custo||0)*q)}</span><span class="cli-nb-data">${esc(pc.status||'')}</span></div></div>`;
+    }).join('');
+  }
+  return html;
 }
 
 function fornDiasSemContato(f){
@@ -3840,8 +3930,8 @@ function renderFornecedores(){
       <div class="cli-card">
         <div class="cli-tag bl">${tag}</div>
         <div class="cli-main" onclick="fornToggle('${f.id}')" style="cursor:pointer">
-          <div class="cli-nome"><span class="cli-chev">${exp?'▾':'▸'}</span>${esc(f.nome)}${fs.n?` <span class="cli-nb-count">🛒 ${fs.n}</span>`:''}${f.costuma?` <span class="cli-nb-count" style="color:var(--mu);background:var(--bg)">💻 ${esc(f.costuma)}</span>`:''}</div>
-          <div class="cli-meta${nudged?' forn-nudge':''}">${fs.n?`${fs.n} máquina${fs.n!==1?'s':''} · ${fmt(fs.total)} investido · `:''}${diasTxt}${nudged?' · vale cutucar!':''}</div>
+          <div class="cli-nome"><span class="cli-chev">${exp?'▾':'▸'}</span>${esc(f.nome)}${fs.n?` <span class="cli-nb-count">🛒 ${fs.n}</span>`:''}${fs.qtdPecas?` <span class="cli-nb-count" style="color:#7c3aed;background:#faf5ff">🔧 ${fs.qtdPecas}</span>`:''}${f.costuma?` <span class="cli-nb-count" style="color:var(--mu);background:var(--bg)">💻 ${esc(f.costuma)}</span>`:''}</div>
+          <div class="cli-meta${nudged?' forn-nudge':''}">${(fs.n||fs.qtdPecas)?`${[fs.n?`${fs.n} máquina${fs.n!==1?'s':''}`:'',fs.qtdPecas?`${fs.qtdPecas} peça${fs.qtdPecas!==1?'s':''}`:''].filter(Boolean).join(' + ')} · ${fmt(fs.totalGeral)} investido · `:''}${diasTxt}${nudged?' · vale cutucar!':''}</div>
         </div>
         <div class="cli-actions">
           <button class="forn-contatei" onclick="event.stopPropagation();fornContatei('${f.id}')" title="Marcar que falei com ele hoje">📞</button>
@@ -5408,10 +5498,17 @@ window.addPeca=async()=>{
   const obs=document.getElementById('pcObs').value.trim();
   const qtd=parseInt(document.getElementById('pcQtd').value)||1;
   if(!nome){alert('Digite o nome da peça!');return;}
-  const obj={userId:'shared_ijx',addedBy:user.uid,nome,tipo,custo,venda,lucro:venda-custo,status,obs,quantidade:qtd,criadoEm:new Date().toISOString()};
+  // Fornecedor (opcional) — cria se for novo
+  let pcFid=document.getElementById('pcFornId')?.value||'';
+  const pcFnome=(document.getElementById('pcForn')?.value||'').trim();
+  const pcFtel=(document.getElementById('pcFornTel')?.value||'').replace(/\D/g,'');
+  if(pcFnome){
+    try{ pcFid=await salvarFornecedor({nome:pcFnome,whatsapp:pcFtel,costuma:'Peças'}); }catch(e){ pcFid=pcFid||''; }
+  }
+  const obj={userId:'shared_ijx',addedBy:user.uid,nome,tipo,custo,venda,lucro:(status==='Vendido'&&venda>0)?(venda-custo):0,status,obs,quantidade:qtd,fornecedor_id:pcFid,fornecedor_nome:pcFnome,criadoEm:new Date().toISOString()};
   try{const r=await addDoc(collection(db,'pecas'),obj);pecas.push({...obj,id:r.id});}
   catch(e){pecas.push({...obj,id:'l'+Date.now()});}
-  document.getElementById('pcNome').value='';document.getElementById('pcCusto').value='';document.getElementById('pcVenda').value='';document.getElementById('pcObs').value='';document.getElementById('pcQtd').value='1';
+  document.getElementById('pcNome').value='';document.getElementById('pcCusto').value='';document.getElementById('pcVenda').value='';document.getElementById('pcObs').value='';document.getElementById('pcQtd').value='1';const _pf=document.getElementById('pcForn');if(_pf)_pf.value='';const _pfi=document.getElementById('pcFornId');if(_pfi)_pfi.value='';const _pft=document.getElementById('pcFornTel');if(_pft)_pft.value='';
   criarAviso('peca_adicionada', nome);
   renderPecas();
 };
@@ -5427,6 +5524,146 @@ window.updPecaStatus=async(id,val)=>{
   if(!id.startsWith('l')){try{await updateDoc(doc(db,'pecas',id),{status:val});}catch(e){}}
   const p=pecas.find(x=>x.id===id);if(p)p.status=val;
   renderPecas();
+  // Marcou como "Usado" sem máquina vinculada? Abre a edição pra escolher qual.
+  if(val==='Usado' && p && !p.produto_id){
+    openPecaEdit(id);
+  }
+};
+
+// ── EDIÇÃO DE PEÇA ──
+const PK_TIPOS=['RAM','SSD/HD','Processador','Tela','Bateria','Teclado','Placa-mãe','Carregador','Plug/Tomada','Carcaça','Outro'];
+window.pcFornBusca=(val)=>{
+  const drop=document.getElementById('pcFornDrop');
+  const q=(val||'').trim().toLowerCase();
+  document.getElementById('pcFornId').value='';
+  if(!q){drop.style.display='none';return;}
+  const matches=fornecedores.filter(f=>(f.nome||'').toLowerCase().includes(q)).slice(0,6);
+  if(matches.length){
+    drop.innerHTML=matches.map(f=>`<div onclick="pcFornPick('${f.id}')" style="padding:8px 10px;cursor:pointer;border-bottom:1px solid var(--b);font-size:.82rem" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''"><strong>${esc(f.nome)}</strong></div>`).join('');
+    drop.style.display='block';
+  } else { drop.style.display='none'; }
+};
+window.pcFornPick=(id)=>{
+  const f=fornecedores.find(x=>x.id===id); if(!f)return;
+  document.getElementById('pcForn').value=f.nome;
+  document.getElementById('pcFornId').value=id;
+  const t=document.getElementById('pcFornTel'); if(t) t.value=f.whatsapp||'';
+  document.getElementById('pcFornDrop').style.display='none';
+};
+window.pkFornBusca=(val)=>{
+  const drop=document.getElementById('pkFornDrop');
+  const q=(val||'').trim().toLowerCase();
+  document.getElementById('pkFornId').value='';
+  if(!q){drop.style.display='none';return;}
+  const matches=fornecedores.filter(f=>(f.nome||'').toLowerCase().includes(q)).slice(0,6);
+  if(matches.length){
+    drop.innerHTML=matches.map(f=>`<div onclick="pkFornPick('${f.id}')" style="padding:8px 10px;cursor:pointer;border-bottom:1px solid var(--b);font-size:.82rem" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''"><strong>${esc(f.nome)}</strong>${f.costuma?` <span style="color:var(--li);font-size:.72rem">${esc(f.costuma)}</span>`:''}</div>`).join('');
+    drop.style.display='block';
+  } else { drop.style.display='none'; }
+};
+window.pkFornPick=(id)=>{
+  const f=fornecedores.find(x=>x.id===id); if(!f)return;
+  document.getElementById('pkForn').value=f.nome;
+  document.getElementById('pkFornId').value=id;
+  const t=document.getElementById('pkFornTel'); if(t) t.value=f.whatsapp||'';
+  document.getElementById('pkFornDrop').style.display='none';
+  pkFornLinkShow(id);
+};
+// Mostra atalho para o fornecedor na aba Fornecedores
+function pkFornLinkShow(id){
+  const el=document.getElementById('pkFornLink'); if(!el)return;
+  const f=fornecedores.find(x=>x.id===id);
+  if(!f){ el.innerHTML=''; return; }
+  const wpp=f.whatsapp?`<a href="https://wa.me/55${String(f.whatsapp).replace(/\D/g,'')}" target="_blank" style="color:#16a34a;font-weight:700;text-decoration:none">💬 WhatsApp</a> · `:'';
+  el.innerHTML=`${wpp}<a href="#" onclick="event.preventDefault();closePecaEdit();sp2('clientes');setTimeout(()=>{if(typeof cliTrocarAba==='function')cliTrocarAba('fornecedores');},80);" style="color:#7c3aed;font-weight:700;text-decoration:none">🔧 Ver na aba Fornecedores →</a>`;
+}
+// Monta o seletor de máquinas (estoque/anunciadas primeiro, depois vendidas)
+function pkMontarMaquinas(selId){
+  const sel=document.getElementById('pkMaquina'); if(!sel)return;
+  const emMao=prods.filter(p=>p.status!=='Vendido').sort((a,b)=>(a.nome||'').localeCompare(b.nome||''));
+  const vend=prods.filter(p=>p.status==='Vendido').sort((a,b)=>(b.data_venda||'').localeCompare(a.data_venda||''));
+  let html='<option value="">— Escolha a máquina —</option>';
+  if(emMao.length){
+    html+='<optgroup label="Em estoque / anunciadas">'+emMao.map(p=>`<option value="${p.id}"${p.id===selId?' selected':''}>${esc(p.nome||'—')}</option>`).join('')+'</optgroup>';
+  }
+  if(vend.length){
+    html+='<optgroup label="Já vendidas">'+vend.slice(0,40).map(p=>`<option value="${p.id}"${p.id===selId?' selected':''}>${esc(p.nome||'—')}</option>`).join('')+'</optgroup>';
+  }
+  sel.innerHTML=html;
+}
+// Mostra o seletor só quando o status é "Usado"
+window.pkVincToggle=()=>{
+  const st=document.getElementById('pkStatus'), wrap=document.getElementById('pkVincWrap');
+  if(!st||!wrap)return;
+  wrap.style.display = st.value==='Usado' ? '' : 'none';
+};
+
+window.openPecaEdit=(id)=>{
+  const p=pecas.find(x=>x.id===id); if(!p)return;
+  document.getElementById('pkId').value=id;
+  document.getElementById('pkNome').value=p.nome||'';
+  const sel=document.getElementById('pkTipo');
+  const tipos=[...new Set([...PK_TIPOS, p.tipo].filter(Boolean))];
+  sel.innerHTML=tipos.map(t=>`<option value="${t}"${t===p.tipo?' selected':''}>${PP_EMOJI[t]||'🔧'} ${t}</option>`).join('');
+  document.getElementById('pkQtd').value=p.quantidade||1;
+  document.getElementById('pkCusto').value=p.custo||'';
+  document.getElementById('pkVenda').value=p.venda||'';
+  document.getElementById('pkStatus').value=p.status||'Estoque';
+  document.getElementById('pkForn').value=p.fornecedor_nome||p.origem||'';
+  document.getElementById('pkFornId').value=p.fornecedor_id||'';
+  document.getElementById('pkFornDrop').style.display='none';
+  const _fEx=fornecedores.find(x=>x.id===p.fornecedor_id);
+  const _pkt=document.getElementById('pkFornTel'); if(_pkt) _pkt.value=_fEx?.whatsapp||'';
+  pkFornLinkShow(p.fornecedor_id||'');
+  document.getElementById('pkObs').value=p.obs||'';
+  // Seletor de máquina (aparece quando status = Usado)
+  pkMontarMaquinas(p.produto_id||'');
+  pkVincToggle();
+  document.getElementById('PECO').classList.remove('h');
+};
+window.closePecaEdit=()=>{ document.getElementById('PECO').classList.add('h'); };
+window.savePecaEdit=async()=>{
+  const id=document.getElementById('pkId').value;
+  const p=pecas.find(x=>x.id===id); if(!p)return;
+  const custoAntigo=p.custo||0;
+  const custo=parseFloat(document.getElementById('pkCusto').value)||0;
+  const venda=parseFloat(document.getElementById('pkVenda').value)||0;
+  const status=document.getElementById('pkStatus').value;
+  // Fornecedor: usa o existente ou cria um novo se foi digitado
+  let _fid=document.getElementById('pkFornId').value||'';
+  let _fnome=(document.getElementById('pkForn').value||'').trim();
+  const _ftel=(document.getElementById('pkFornTel')?.value||'').replace(/\D/g,'');
+  if(_fnome){
+    try{ _fid=await salvarFornecedor({nome:_fnome,whatsapp:_ftel,costuma:'Peças'}); }catch(e){ _fid=_fid||''; }
+  }
+  // Máquina vinculada: só quando o status é "Usado"
+  const maqNova = status==='Usado' ? (document.getElementById('pkMaquina')?.value||'') : '';
+  const maqAntiga = p.produto_id||'';
+  const prodNovo = prods.find(x=>x.id===maqNova);
+  const upd={
+    nome:(document.getElementById('pkNome').value||'').trim()||p.nome,
+    tipo:document.getElementById('pkTipo').value,
+    quantidade:parseInt(document.getElementById('pkQtd').value)||1,
+    custo, venda, status,
+    lucro: (status==='Vendido'&&venda>0) ? (venda-custo) : 0,
+    fornecedor_id:_fid, fornecedor_nome:_fnome,
+    produto_id: maqNova,
+    produto_nome: prodNovo?prodNovo.nome:'',
+    obs:(document.getElementById('pkObs').value||'').trim()
+  };
+  try{ if(!String(id).startsWith('l')&&!String(id).startsWith('preset')) await updateDoc(doc(db,'pecas',id),upd); }catch(e){}
+  Object.assign(p,upd);
+  // Ajusta o custo das máquinas envolvidas — o custo SEGUE a peça
+  if(maqAntiga===maqNova){
+    // mesma máquina: só a diferença de custo
+    if(maqNova && custo!==custoAntigo) await ajustaCustoPecas(maqNova, custo-custoAntigo);
+  } else {
+    if(maqAntiga) await ajustaCustoPecas(maqAntiga, -custoAntigo);  // sai da antiga
+    if(maqNova)   await ajustaCustoPecas(maqNova,  +custo);         // entra na nova
+  }
+  closePecaEdit();
+  renderPecas();
+  render();renderSecoes();calcStats();
 };
 
 function renderPecas(){
@@ -5457,17 +5694,17 @@ function renderPecas(){
       const nomeExibido=p.tipo==='Carregador'?esc(p.nome).replace(/^(Dell|Acer|Lenovo|HP|Samsung|Asus|Positivo|Sony|Variado)\s/i,''):esc(p.nome);
       const qtdBadge=p.quantidade&&p.quantidade>1?`<span style="display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;border-radius:5px;background:var(--bbg);border:1px solid var(--bbd);font-size:.72rem;font-weight:700;color:var(--bl);padding:0 4px">${p.quantidade}</span>`:'<span style="font-size:.72rem;color:var(--li)">1</span>';
       return`<tr>
-        <td><div class="pn">${nomeExibido}${atBadge}</div><div style="margin-top:2px">${obsBadge}</div></td>
+        <td><div class="pn">${nomeExibido}${atBadge}</div><div style="margin-top:2px">${obsBadge}${(p.status==='Usado'&&p.produto_nome)?`<span class="peca-maq" title="Aplicada nesta máquina">🔗 ${esc(p.produto_nome)}</span>`:(p.status==='Usado')?`<span class="peca-maq alerta" title="Sem máquina definida">⚠ máquina não definida</span>`:''}${p.fornecedor_nome?`<span class="peca-forn" title="Fornecedor">🔧 ${esc(p.fornecedor_nome)}</span>`:''}</div></td>
         <td style="text-align:center">${qtdBadge}</td>
         <td style="color:var(--mu)">${fmt(p.custo)}${(p.custo_pecas>0)?`<div class="custo-brk"><span title="Pago na máquina">📦 ${fmt(p.custo_base!==undefined?p.custo_base:(p.custo-p.custo_pecas))}</span> <span class="cb-pc" title="Pago em peças">🔧 ${fmt(p.custo_pecas)}</span></div>`:''}</td>
         <td class="ps">${fmt(p.venda)}</td>
-        <td class="pp ${(p.lucro||0)>=0?'pos':'neg'}">${fmt(p.lucro||0)}</td>
+        <td class="pp ${(p.lucro||0)>=0?'pos':'neg'}">${(p.status==='Vendido'&&(p.venda||0)>0)?fmt(p.lucro||0):'<span style="color:var(--li)">—</span>'}</td>
         <td><select class="sel" onchange="updPecaStatus('${p.id}',this.value)">
           <option ${p.status==='Estoque'?'selected':''} value="Estoque">Estoque</option>
           <option ${p.status==='Vendido'?'selected':''} value="Vendido">Vendido</option>
           <option ${p.status==='Usado'?'selected':''} value="Usado">Usado</option>
         </select></td>
-        <td><button class="bdl" onclick="delPeca('${p.id}')">✕</button></td>
+        <td style="white-space:nowrap"><button class="bed" onclick="openPecaEdit('${p.id}')" title="Editar peça">✎</button><button class="bdl" onclick="delPeca('${p.id}')">✕</button></td>
       </tr>`;
     }).join('');
     const valorTotal=fmt(itens.reduce((s,p)=>s+(p.venda||0),0));
