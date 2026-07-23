@@ -265,6 +265,13 @@ input[type=number].inp{padding-left:32px}
 .falta-tag{display:inline-block;font-size:.68rem;color:#a16207;background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:2px 8px;margin-top:4px;font-weight:600}
 .comp-chips{display:flex;flex-wrap:wrap;gap:3px;margin-top:3px}
 .comp-dd{margin-top:3px}
+.marca-busca{display:flex;align-items:center;gap:8px;padding:7px 12px 4px}
+.dias-badge.estimado{background:var(--bg);color:var(--li);border:1px dashed var(--b2)}
+.rk-aviso{font-size:.72rem;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:7px 11px;margin-bottom:8px;line-height:1.45}
+.marca-busca-inp{flex:1;border:1px solid var(--b2);background:var(--w);border-radius:8px;padding:6px 11px;font-size:.78rem;color:var(--tx);font-family:inherit;outline:none;transition:border-color .12s}
+.marca-busca-inp:focus{border-color:var(--tx)}
+.marca-busca-inp::placeholder{color:var(--li)}
+.marca-busca-info{font-size:.7rem;color:var(--li);font-weight:600;white-space:nowrap;min-width:56px;text-align:right}
 .peca-maq{display:inline-block;font-size:.65rem;font-weight:600;color:#1d4ed8;background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:1px 7px;margin-right:4px}
 .peca-maq.alerta{color:#a16207;background:#fffbeb;border-color:#fde68a}
 .peca-forn{display:inline-block;font-size:.65rem;font-weight:600;color:#7c3aed;background:#faf5ff;border:1px solid #e9d5ff;border-radius:6px;padding:1px 7px}
@@ -4321,6 +4328,28 @@ function renderSecoes(){
   if(listVend) listVend.innerHTML = renderTabela(vendidos, 'vendidos');
 }
 
+// Busca dentro de um grupo de marca — filtra as linhas daquela tabela só
+window.filtrarMarca=(inp)=>{
+  const box=inp.closest('div'); if(!box)return;
+  const cont=box.parentElement;                     // container do grupo (bg_ / bg2_)
+  const tabela=cont?cont.querySelector('table.tb'):null;
+  if(!tabela)return;
+  const termos=(inp.value||'').toLowerCase().trim().split(/\s+/).filter(Boolean);
+  const linhas=tabela.querySelectorAll('tbody tr');
+  let achou=0;
+  linhas.forEach(tr=>{
+    const alvo=tr.dataset.busca||'';
+    const ok = !termos.length || termos.every(t=>alvo.includes(t));
+    tr.style.display = ok ? '' : 'none';
+    if(ok) achou++;
+  });
+  const info=box.querySelector('.marca-busca-info');
+  if(info){
+    info.textContent = termos.length ? `${achou} de ${linhas.length}` : '';
+    info.style.color = (termos.length && !achou) ? 'var(--re)' : 'var(--li)';
+  }
+};
+
 function renderTabela(lista, tipo){
   if(!lista.length) return '<div style="text-align:center;padding:32px;font-size:.78rem;color:var(--li)">Nenhum produto</div>';
   const hoje = new Date();
@@ -4363,9 +4392,17 @@ function renderTabela(lista, tipo){
         const dias = Math.round((hoje-new Date(dc))/(86400000));
         const cls = dias<=30?'rapido':dias<=90?'medio':'lento';
         diasBadge = `<span class="dias-badge ${cls}">${dias}d</span>`;
-      } else if(tipo==='vendidos' && p.diasParado!=null){
-        const cls = p.diasParado<=7?'rapido':p.diasParado<=30?'medio':'lento';
-        diasBadge = `<span class="dias-badge ${cls}">${p.diasParado}d</span>`;
+      } else if(tipo==='vendidos'){
+        const _g=diasGiro(p);
+        if(_g && _g.preciso){
+          const cls = _g.dias<=7?'rapido':_g.dias<=30?'medio':'lento';
+          diasBadge = `<span class="dias-badge ${cls}" title="Dias entre compra e venda">${_g.dias}d</span>`;
+        } else if(_g){
+          diasBadge = `<span class="dias-badge estimado" title="Só o mês foi registrado — o dia exato é desconhecido">~${_g.dias}d</span>`;
+        } else if(p.diasParado!=null){
+          const cls = p.diasParado<=7?'rapido':p.diasParado<=30?'medio':'lento';
+          diasBadge = `<span class="dias-badge ${cls}">${p.diasParado}d</span>`;
+        }
       }
 
       const sb = p.status==='Vendido'?'<span class="bv sv">Vendido</span>':p.status==='Anunciado'?'<span class="bv san">Anunciado</span>':'<span class="bv se">Estoque</span>';
@@ -4393,7 +4430,9 @@ function renderTabela(lista, tipo){
       const autorTag=p.addedByName?`<span title="Cadastrado por ${esc(p.addedByName)}" style="font-size:.62rem;color:var(--li);margin-left:3px">· ${esc(p.addedByName)}</span>`:'';
       const custoTag = tipo!=='vendidos' ? `<span class="custo-tag">${fmt(p.custo)}</span>` : '';
 
-      return`<tr>
+      const _busca=[p.nome,p.cliente_nome,p.fornecedor_nome,p.investidor,p.plataforma,p.canal_compra,p.num]
+        .filter(Boolean).join(' ').toLowerCase().replace(/"/g,'');
+      return`<tr data-busca="${_busca}">
         <td><span class="nb">${p.num||'?'}</span></td>
         <td><div class="pn">${esc(p.nome)}</div>${compChips}<div style="display:flex;gap:4px;margin-top:3px;flex-wrap:wrap">${diasBadge}${custoTag}</div></td>
         <td>${invBadge}</td>
@@ -4417,7 +4456,12 @@ function renderTabela(lista, tipo){
         <div class="bghl"><span class="bdo" style="background:${col}"></span><span class="bnm">${br}</span><span class="bct">${ct}</span></div>
         <div class="bghr"><div class="bst"><div class="bsl">${resumoLbl}</div><div class="bsv">${resumoVal}</div></div><span class="barr" id="arr2_${tipo}_${br}">▾</span></div>
       </div>
-      <div id="bg2_${tipo}_${br}"><table class="tb"><thead><tr>
+      <div id="bg2_${tipo}_${br}">
+        <div class="marca-busca">
+          <input class="marca-busca-inp" type="text" placeholder="🔎 Buscar dentro de ${br}... (modelo, specs, cliente)" oninput="filtrarMarca(this)" onclick="event.stopPropagation()">
+          <span class="marca-busca-info"></span>
+        </div>
+        <table class="tb"><thead><tr>
         <th style="width:36px">#</th><th>Produto</th><th>Investidor</th><th>Compra</th>
         <th>${tipo==='vendidos'?'Venda':'—'}</th><th>Preço</th><th>Lucro</th>
         <th>Status</th><th>Alterar</th><th style="width:30px"></th><th style="width:30px"></th>
@@ -4489,7 +4533,9 @@ function render(){
       // Exibe data de compra com dia se disponível
       const dcDisplay=p.data_compra?(p.data_compra.length>7?new Date(p.data_compra+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'2-digit'}):fdt(p.data_compra)):'—';
       const autorTag=p.addedByName?`<span title="Cadastrado por ${esc(p.addedByName)}" style="font-size:.62rem;color:var(--li);margin-left:3px">· ${esc(p.addedByName)}</span>`:'';
-      return`<tr>
+      const _busca=[p.nome,p.cliente_nome,p.fornecedor_nome,p.investidor,p.plataforma,p.canal_compra,p.num]
+        .filter(Boolean).join(' ').toLowerCase().replace(/"/g,'');
+      return`<tr data-busca="${_busca}">
         <td><span class="nb">${p.num||'?'}</span></td>
         <td><div class="pn">${esc(p.nome)}</div>${compChips}</td>
         <td>${invBadge}</td>
@@ -4512,7 +4558,12 @@ function render(){
       <div class="bghl"><span class="bdo" style="background:${col}"></span><span class="bnm">${br}</span><span class="bct">${ct}</span></div>
       <div class="bghr"><div class="bst"><div class="bsl">Lucro</div><div class="bsv">${fmt(lv)}</div></div><span class="barr" id="arr_${br}">▾</span></div>
     </div>
-    <div id="bg_${br}"><table class="tb"><thead><tr>
+    <div id="bg_${br}">
+      <div class="marca-busca">
+        <input class="marca-busca-inp" type="text" placeholder="🔎 Buscar dentro de ${br}..." oninput="filtrarMarca(this)" onclick="event.stopPropagation()">
+        <span class="marca-busca-info"></span>
+      </div>
+      <table class="tb"><thead><tr>
       <th style="width:36px">#</th><th>Produto</th><th>Investidor</th><th>Compra</th><th>Venda</th>
       <th>Custo</th><th>Preço</th><th>Lucro</th><th>Status</th><th>Alterar</th><th style="width:30px"></th><th style="width:30px"></th>
     </tr></thead><tbody>${rows}</tbody></table></div></div>`;
@@ -5100,13 +5151,13 @@ function renderAlertas(){
     }
   }
   const giros={};
-  prods.filter(p=>p.status==='Vendido'&&p.data_compra&&p.data_venda).forEach(p=>{
+  let giroEstimados=0;
+  prods.filter(p=>p.status==='Vendido').forEach(p=>{
+    const g=diasGiro(p); if(!g) return;
+    if(!g.preciso){ giroEstimados++; return; }   // média só com dado exato
     const b=brand(p.nome);
-    const dcRaw=p.data_compra||'';
-    const dc=dcRaw.length===7?dcRaw+'-01':dcRaw;
-    const dv=p.data_venda.length===7?p.data_venda+'-01':p.data_venda;
-    const dias=Math.round((new Date(dv)-new Date(dc))/(86400000));
-    if(dias>=0){if(!giros[b])giros[b]=[];giros[b].push(dias);}
+    if(!giros[b])giros[b]=[];
+    giros[b].push(g.dias);
   });
   const medGiros=Object.entries(giros).filter(([,v])=>v.length>=3).map(([b,v])=>({b,med:Math.round(v.reduce((a,c)=>a+c,0)/v.length)})).sort((a,b)=>a.med-b.med);
   if(medGiros.length>=2){
@@ -5124,6 +5175,29 @@ function renderAlertas(){
 // ── RANKING ──
 let rkMode='lucro';
 window.swRk=(mode,btn)=>{rkMode=mode;document.querySelectorAll('.rk-tab').forEach(t=>t.classList.remove('on'));btn.classList.add('on');renderRanking();};
+// Dias entre compra e venda, distinguindo dado PRECISO de ESTIMADO.
+// Registros antigos só têm o mês (YYYY-MM) — nesses, o dia é desconhecido.
+// Retorna null se faltar data; senão {dias, preciso, mesmoMes}.
+let rkGiroExcluidos=0;
+function diasGiro(p){
+  const dc=(p.data_compra||'').trim(), dv=(p.data_venda||'').trim();
+  if(!dc||!dv) return null;
+  const precC = dc.length>=10, precV = dv.length>=10;
+  const preciso = precC && precV;
+  const mesC = dc.slice(0,7), mesV = dv.slice(0,7);
+  const mesmoMes = mesC===mesV;
+  if(preciso){
+    const dias=Math.round((new Date(dv+'T12:00:00') - new Date(dc+'T12:00:00'))/86400000);
+    return {dias:Math.max(dias,0), preciso:true, mesmoMes};
+  }
+  // Sem o dia: estima usando o meio do mês (dia 15) como convenção.
+  // Mesmo mês sem dia = não dá pra saber; assume ~10 dias (média esperada dentro de um mês).
+  if(mesmoMes) return {dias:10, preciso:false, mesmoMes:true};
+  const dcF=precC?dc:mesC+'-15', dvF=precV?dv:mesV+'-15';
+  const dias=Math.round((new Date(dvF+'T12:00:00') - new Date(dcF+'T12:00:00'))/86400000);
+  return {dias:Math.max(dias,0), preciso:false, mesmoMes:false};
+}
+
 function renderRanking(){
   const body=document.getElementById('rkBody');
   if(!body)return;
@@ -5131,13 +5205,15 @@ function renderRanking(){
   if(rkMode==='lucro'){
     lista=prods.filter(p=>p.status==='Vendido').map(p=>({nome:p.nome,sub:fdt(p.data_venda),val:p.lucro!==undefined?p.lucro:p.venda-p.custo,cls:'g'})).sort((a,b)=>b.val-a.val).slice(0,10);
   } else if(rkMode==='giro'){
-    lista=prods.filter(p=>p.status==='Vendido'&&p.data_compra&&p.data_venda).map(p=>{
-      const dcRaw=p.data_compra||'';
-      const dc=dcRaw.length===7?dcRaw+'-01':dcRaw;
-      const dv=p.data_venda.length===7?p.data_venda+'-01':p.data_venda;
-      const dias=Math.round((new Date(dv)-new Date(dc))/(86400000));
-      return{nome:p.nome,sub:dias+'d parado',val:dias,cls:dias<=7?'g':dias<=30?'am':'re',inv:true};
-    }).filter(p=>p.val>=0).sort((a,b)=>a.val-b.val).slice(0,10);
+    // Só entram vendas com data EXATA (dia) nos dois lados — senão o ranking vira chute.
+    const todos=prods.filter(p=>p.status==='Vendido').map(p=>({p,g:diasGiro(p)})).filter(x=>x.g);
+    const precisos=todos.filter(x=>x.g.preciso);
+    rkGiroExcluidos=todos.length-precisos.length;
+    lista=precisos.map(({p,g})=>({
+      nome:p.nome,
+      sub:g.dias===0?'vendido no mesmo dia 🚀':g.dias+(g.dias===1?' dia parado':' dias parados'),
+      val:g.dias, cls:g.dias<=7?'g':g.dias<=30?'am':'re'
+    })).sort((a,b)=>a.val-b.val).slice(0,10);
   } else {
     lista=prods.filter(p=>p.status!=='Vendido'&&p.data_compra).map(p=>{
       const dcRaw=p.data_compra||'';
@@ -5147,7 +5223,15 @@ function renderRanking(){
     }).sort((a,b)=>b.val-a.val).slice(0,10);
   }
   const maxVal=lista.length?Math.max(...lista.map(x=>x.val)):1;
-  body.innerHTML=lista.map((x,i)=>{
+  // Aviso quando vendas antigas ficaram de fora por não ter o dia registrado
+  const avisoGiro = (rkMode==='giro' && rkGiroExcluidos>0)
+    ? `<div class="rk-aviso">📅 ${rkGiroExcluidos} venda${rkGiroExcluidos!==1?'s':''} antiga${rkGiroExcluidos!==1?'s':''} fora do ranking — só tinha${rkGiroExcluidos!==1?'m':''} o mês registrado, sem o dia exato.</div>`
+    : '';
+  if(rkMode==='giro' && !lista.length){
+    body.innerHTML=`<div style="padding:24px;text-align:center;color:var(--li);font-size:.8rem">Nenhuma venda com data exata ainda.<br><span style="font-size:.72rem">Ao registrar vendas com dia certo, elas aparecem aqui.</span></div>${avisoGiro}`;
+    return;
+  }
+  body.innerHTML=avisoGiro+lista.map((x,i)=>{
     const pos=i===0?'gold':i===1?'silver':i===2?'bronze':'';
     const label=rkMode==='lucro'?fmt(x.val):(x.val+'d');
     const barPct=Math.round(x.val/maxVal*100);
@@ -5161,13 +5245,13 @@ function renderGiro(){
   if(!grid)return;
   const BC2={Dell:'#2563eb',Lenovo:'#dc2626',Acer:'#16a34a',HP:'#0891b2',Samsung:'#7c3aed',Asus:'#0284c7',Outros:'#9ca3af'};
   const giros={};
-  prods.filter(p=>p.status==='Vendido'&&p.data_compra&&p.data_venda).forEach(p=>{
+  let giroEstimados=0;
+  prods.filter(p=>p.status==='Vendido').forEach(p=>{
+    const g=diasGiro(p); if(!g) return;
+    if(!g.preciso){ giroEstimados++; return; }   // média só com dado exato
     const b=brand(p.nome);
-    const dcRaw=p.data_compra||'';
-    const dc=dcRaw.length===7?dcRaw+'-01':dcRaw;
-    const dv=p.data_venda.length===7?p.data_venda+'-01':p.data_venda;
-    const dias=Math.round((new Date(dv)-new Date(dc))/(86400000));
-    if(dias>=0){if(!giros[b])giros[b]=[];giros[b].push(dias);}
+    if(!giros[b])giros[b]=[];
+    giros[b].push(g.dias);
   });
   const itens=Object.entries(giros).filter(([,v])=>v.length>=2).map(([b,v])=>({b,med:Math.round(v.reduce((a,c)=>a+c,0)/v.length),cnt:v.length})).sort((a,b)=>a.med-b.med);
   grid.innerHTML=itens.map(x=>{
@@ -5175,6 +5259,9 @@ function renderGiro(){
     const sub=x.med<=15?'Giro rápido 🚀':x.med<=35?'Giro médio':'Giro lento ⚠️';
     return`<div class="giro-card"><div class="giro-brand"><span class="giro-dot" style="background:${BC2[x.b]||'#9ca3af'}"></span><span class="giro-nm">${x.b}</span></div><div class="giro-dias ${cls}">${x.med}d</div><div class="giro-sub">${sub} · ${x.cnt} vendas</div></div>`;
   }).join('');
+  if(giroEstimados>0){
+    grid.innerHTML+=`<div class="giro-card" style="background:var(--bg);border-style:dashed"><div class="giro-sub" style="margin:0;line-height:1.5">📅 <strong>${giroEstimados} venda${giroEstimados!==1?'s':''}</strong> fora da média — só tinha${giroEstimados!==1?'m':''} o mês registrado, sem o dia.</div></div>`;
+  }
 }
 
 // ── AJUSTE MANUAL DE SALDO ──
