@@ -1013,6 +1013,8 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
         <button class="tab-btn" onclick="swTab('pecas',this)">🔧 Peças</button>
       </div>
       <div class="tab-pg on" id="tab-notebooks">
+      <!-- INTRO — só aparece na aba inicial "Na mão hoje" -->
+      <div id="vendas-intro">
       <div class="banner">📊 <strong>333 produtos</strong> importados da planilha — 250 vendidos · 46 em estoque · 37 anunciados · <span style="color:#1d4ed8">🔄 estoque compartilhado entre sócios</span></div>
       <!-- META DO MILHÃO (marco acumulado) -->
       <div class="milhao-wrap" id="milhaoWrap">
@@ -1088,6 +1090,9 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
         <div class="sb"><div class="sbl">Na mão hoje</div><div class="sbv" id="sEst">—</div><div class="sbs" id="sEstV">—</div></div>
         <div class="sb"><div class="sbl">Potencial</div><div class="sbv a" id="sPot">—</div><div class="sbs">se vender tudo</div></div>
       </div>
+      </div><!-- /vendas-intro -->
+      <!-- ADICIONAR PRODUTO — só aparece na aba inicial "Na mão hoje" -->
+      <div id="vendas-addprod">
       <div class="cd">
         <div class="cdh"><span class="cdht">Adicionar produto</span></div>
         <div class="cdb">
@@ -1180,6 +1185,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
           </div>
         </div>
       </div>
+      </div><!-- /vendas-addprod -->
       <!-- SEÇÃO: NA MÃO HOJE (Anunciados + Estoque) -->
       <div id="sec-hoje">
         <!-- ANUNCIADOS -->
@@ -4253,6 +4259,12 @@ window.setVendaSection = (sec, btn) => {
   document.getElementById('sec-hoje').style.display    = sec==='hoje'    ? 'block' : 'none';
   document.getElementById('sec-vendidos').style.display = sec==='vendidos' ? 'block' : 'none';
   document.getElementById('sec-tudo').style.display    = sec==='tudo'    ? 'block' : 'none';
+  // Intro (banner, metas, alertas, resumo) e "Adicionar produto" só na aba inicial
+  const inicial = sec==='hoje';
+  const elIntro = document.getElementById('vendas-intro');
+  const elAdd   = document.getElementById('vendas-addprod');
+  if(elIntro) elIntro.style.display = inicial ? 'block' : 'none';
+  if(elAdd)   elAdd.style.display   = inicial ? 'block' : 'none';
   if(sec==='tudo') render();
 };
 
