@@ -1826,6 +1826,23 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
         <div id="syncList"><div class="sync-empty">Nenhuma pendência no momento ✅</div></div>
       </div>
 
+      <!-- AUDITORIA DE VALORES (somente leitura) -->
+      <div class="cd" style="border-left:3px solid #b45309">
+        <div class="cdh"><span class="cdht">🔍 Auditoria de valores gravados</span></div>
+        <div class="cdb">
+          <div style="font-size:.74rem;color:var(--li);line-height:1.55;margin-bottom:10px">
+            Mostra exatamente o que está gravado no banco para as vendas de um mês, para comparar com a planilha
+            e achar registros que ficaram com o valor pela metade. <strong>Não altera nada</strong> — é só leitura.
+          </div>
+          <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:12px">
+            <div class="fc" style="max-width:190px"><span class="fla">Mês</span><input class="inp" type="month" id="audMes"></div>
+            <button class="bsg" onclick="auditarMes()">🔍 Auditar</button>
+            <button class="bcan" onclick="auditarCopiar()" id="audCopyBtn" style="display:none">📋 Copiar como texto</button>
+          </div>
+          <div id="audOut"></div>
+        </div>
+      </div>
+
       <!-- IMPORTAR PLANILHA (FONTE DA VERDADE) -->
       <div class="cd" style="border-left:3px solid #15803d">
         <div class="cdh">
@@ -6146,6 +6163,64 @@ window.limparAvisos = async () => {
 
 // Recarregar avisos quando abrir Admin
 // ════════════════════════════════════════
+// ── AUDITORIA DE VALORES GRAVADOS (somente leitura, não escreve nada) ──
+// Existe para comparar o que está no banco com a planilha e identificar registros
+// que guardaram metade do valor. Nenhuma correção acontece aqui.
+let audTexto='';
+window.auditarMes=()=>{
+  const el=document.getElementById('audOut'); if(!el) return;
+  const btn=document.getElementById('audCopyBtn');
+  const mes=(document.getElementById('audMes')?.value)||new Date().toISOString().slice(0,7);
+  const mi=document.getElementById('audMes'); if(mi && !mi.value) mi.value=mes;   // prefill do mês corrente
+  const lista=prods.filter(p=>p.status==='Vendido'&&getMesVenda(p)===mes)
+                   .sort((a,b)=>getLucro(b)-getLucro(a));
+  if(!lista.length){
+    el.innerHTML=`<div style="padding:16px;color:var(--li);font-size:.8rem">Nenhuma venda registrada em ${esc(mes)}.</div>`;
+    audTexto=''; if(btn) btn.style.display='none'; return;
+  }
+  let totV=0,totC=0,totL=0,divergentes=0;
+  const linhas=lista.map(p=>{
+    const v=p.venda||0, c=p.custo||0, l=getLucro(p), calc=v-c;
+    totV+=v; totC+=c; totL+=l;
+    const bate=Math.abs(l-calc)<0.01; if(!bate) divergentes++;
+    return {nome:p.nome||'', v, c, pe:p.custo_pecas||0, ga:p.custo_gasolina||0, l, calc, bate,
+            id:String(p.id||''), inv:p.investidor||'', dv:p.data_venda||''};
+  });
+  const th=(t,r)=>`<th style="text-align:${r?'right':'left'};padding:6px 8px;font-size:.68rem;color:var(--li);font-weight:600;border-bottom:1px solid var(--b);white-space:nowrap">${t}</th>`;
+  const td=(t,r,extra='')=>`<td style="text-align:${r?'right':'left'};padding:6px 8px;font-size:.72rem;border-bottom:1px solid var(--b);white-space:nowrap;${extra}">${t}</td>`;
+  el.innerHTML=`
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;min-width:620px">
+        <thead><tr>${th('Produto')}${th('Venda',1)}${th('Custo',1)}${th('Peças',1)}${th('Gasol.',1)}${th('Lucro gravado',1)}${th('Venda−Custo',1)}${th('Investidor')}</tr></thead>
+        <tbody>${linhas.map(x=>`<tr>
+          ${td(esc(x.nome))}
+          ${td(fmt(x.v),1)}${td(fmt(x.c),1)}${td(x.pe?fmt(x.pe):'—',1)}${td(x.ga?fmt(x.ga):'—',1)}
+          ${td('<strong>'+fmt(x.l)+'</strong>',1)}
+          ${td(fmt(x.calc),1, x.bate?'':'color:var(--re);font-weight:600')}
+          ${td(esc(x.inv))}
+        </tr>`).join('')}</tbody>
+        <tfoot><tr>
+          ${td('<strong>TOTAL — '+linhas.length+' vendas</strong>')}
+          ${td('<strong>'+fmt(totV)+'</strong>',1)}${td('<strong>'+fmt(totC)+'</strong>',1)}${td('',1)}${td('',1)}
+          ${td('<strong>'+fmt(totL)+'</strong>',1)}${td('<strong>'+fmt(totV-totC)+'</strong>',1)}${td('')}
+        </tr></tfoot>
+      </table>
+    </div>
+    ${divergentes?`<div class="rk-aviso" style="margin-top:10px">⚠️ ${divergentes} registro${divergentes!==1?'s':''} com lucro gravado diferente de venda − custo.</div>`:''}`;
+  // versão em texto, para colar em qualquer lugar
+  audTexto=[`Vendas de ${mes} — ${linhas.length} registros`,
+    'produto\tvenda\tcusto\tpecas\tgasolina\tlucro_gravado\tvenda-custo\tinvestidor']
+    .concat(linhas.map(x=>[x.nome,x.v,x.c,x.pe,x.ga,x.l,x.calc,x.inv].join('\t')))
+    .concat([`TOTAL\t${totV}\t${totC}\t\t\t${totL}\t${totV-totC}\t`]).join('\n');
+  if(btn) btn.style.display='';
+};
+window.auditarCopiar=async()=>{
+  if(!audTexto) return;
+  const btn=document.getElementById('audCopyBtn');
+  try{ await navigator.clipboard.writeText(audTexto); if(btn){btn.textContent='✓ Copiado';setTimeout(()=>btn.textContent='📋 Copiar como texto',2000);} }
+  catch(e){ alert('Não consegui copiar automaticamente. Segue o texto:\n\n'+audTexto); }
+};
+
 // IMPORTAR PLANILHA EXCEL (fonte da verdade)
 // ════════════════════════════════════════
 let pendingImport = null;
