@@ -1153,7 +1153,14 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
             </div>
             <!-- FIX 1: Data de compra agora é type="date" (dia exato) -->
             <div class="fc"><span class="fla">Data Compra</span><input class="inp" type="date" id="pDC"></div>
-            <div class="fc"><span class="fla">⛽ Gasolina / busca R$ <span style="font-size:.62rem;color:var(--li)">valor cheio — rachado 50/50</span></span><input class="inp" type="number" id="pGas" placeholder="0" min="0" step="0.01" oninput="ppTotal()"></div>
+            <div class="fc"><span class="fla">⛽ Gasolina / busca R$ <span style="font-size:.62rem;color:var(--li)">valor cheio</span></span><input class="inp" type="number" id="pGas" placeholder="0" min="0" step="0.01" oninput="ppTotal()"></div>
+            <div class="fc"><span class="fla">⛽ Quem pagou a gasolina</span>
+              <select class="inp" id="pGasPag" onchange="ppTotal()">
+                <option value="ambos">🤝 Ambos — rachado 50/50</option>
+                <option value="joao">👤 João pagou tudo</option>
+                <option value="igor">👤 Igor pagou tudo</option>
+              </select>
+            </div>
             <div class="fc"><span class="fla">Canal</span>
               <select class="inp" id="pCanal">
                 <option value="">—</option>
@@ -2259,6 +2266,14 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
         <input class="inp" id="eDV" type="date">
         <div id="eDVHint" style="font-size:.67rem;color:var(--am);margin-top:4px;line-height:1.4;display:none"></div>
       </div>
+      <div class="fc" id="eGasPagWrap">
+        <label class="fl">⛽ Quem pagou a gasolina <span style="font-size:.67rem;color:var(--li);font-weight:400" id="eGasVal"></span></label>
+        <select class="inp" id="eGasPag">
+          <option value="ambos">🤝 Ambos — rachado 50/50</option>
+          <option value="joao">👤 João pagou tudo</option>
+          <option value="igor">👤 Igor pagou tudo</option>
+        </select>
+      </div>
       <div class="fc full" id="eFaltaWrap">
         <label class="fl">📝 O que falta comprar/fazer <span style="font-size:.67rem;color:var(--li);font-weight:400">pra deixar essa máquina pronta pra vender</span></label>
         <input class="inp" type="text" id="eFalta" placeholder="Ex: comprar SSD 256GB · bateria nova · carregador · limpar carcaça">
@@ -2804,7 +2819,11 @@ window.ppTotal=()=>{
   el.style.display='block';
   const partes=[];
   if(rows.length) partes.push(`${rows.length} peça${rows.length!==1?'s':''}: ${fmt(soma)}`);
-  if(gas) partes.push(`⛽ gasolina: ${fmt(gas)}`);
+  if(gas){
+    const qp=document.getElementById('pGasPag')?.value||'ambos';
+    const quem=qp==='joao'?'João paga':qp==='igor'?'Igor paga':'rachado 50/50';
+    partes.push(`⛽ gasolina: ${fmt(gas)} (${quem})`);
+  }
   el.innerHTML=`${partes.join(' · ')} &nbsp;→&nbsp; custo total da máquina: <strong style="color:var(--tx)">${fmt(base+soma+gas)}</strong>`;
 };
 function ppColetar(){
@@ -3001,11 +3020,12 @@ window.addProd=async()=>{
   // Peças aplicadas: entram no custo real da máquina
   const pecasNovas=ppColetar();
   const custoPecas=pecasNovas.reduce((s,x)=>s+x.custo,0);
-  const custoGas=parseFloat(document.getElementById('pGas')?.value)||0;   // valor cheio, rachado 50/50
+  const custoGas=parseFloat(document.getElementById('pGas')?.value)||0;   // valor cheio
+  const gasPag=document.getElementById('pGasPag')?.value||'ambos';        // quem pagou a gasolina
   const custoTotal=custo+custoPecas+custoGas;
   // data_compra armazena data completa YYYY-MM-DD; data_compra_mes extrai só o mês
   const dcMes=dc?dc.slice(0,7):'';
-  const obj={userId:'shared_ijx',addedBy:user.uid,addedByName:user.displayName||user.email.split('@')[0],nome,custo:custoTotal,custo_base:custo,custo_pecas:custoPecas,custo_gasolina:custoGas,venda,lucro:venda-custoTotal,status,investidor,data_compra:dc,data_compra_mes:dcMes,data_venda:'',data:dcMes,canal_compra:canal,fornecedor_id:fornId,fornecedor_nome:fornNome,num,createdAt:new Date().toISOString()};
+  const obj={userId:'shared_ijx',addedBy:user.uid,addedByName:user.displayName||user.email.split('@')[0],nome,custo:custoTotal,custo_base:custo,custo_pecas:custoPecas,custo_gasolina:custoGas,gas_pagante:gasPag,venda,lucro:venda-custoTotal,status,investidor,data_compra:dc,data_compra_mes:dcMes,data_venda:'',data:dcMes,canal_compra:canal,fornecedor_id:fornId,fornecedor_nome:fornNome,num,createdAt:new Date().toISOString()};
   let prodId='l'+Date.now();
   try{const r=await addDoc(collection(db,'products'),obj);prodId=r.id;prods.push({...obj,id:r.id});}catch(e){prods.push({...obj,id:prodId});}
   // Grava as peças na aba Peças, já vinculadas a esta máquina
@@ -3016,6 +3036,7 @@ window.addProd=async()=>{
   }
   document.getElementById('pN').value='';document.getElementById('pC').value='';document.getElementById('pV').value='';document.getElementById('pDC').value='';document.getElementById('pCanal').value='';document.getElementById('pForn').value='';document.getElementById('pFornId').value='';
   const pg=document.getElementById('pGas'); if(pg) pg.value='';
+  const pgp=document.getElementById('pGasPag'); if(pgp) pgp.value='ambos';
   try{ resetSpecBuilder(); }catch(e){}
   ppLimpar();
   // Notificar o sócio sobre o novo produto
@@ -4083,6 +4104,16 @@ window.openEdit=id=>{
     } else eDVHint.style.display='none';
   }
   document.getElementById('eInv').value=p.investidor||'João';
+  // Gasolina: só o pagante é editável aqui — o valor já está embutido no custo.
+  // Máquinas sem gasolina lançada não mostram o campo.
+  const eGasPag=document.getElementById('eGasPag'), eGasWrap=document.getElementById('eGasPagWrap');
+  if(eGasPag&&eGasWrap){
+    const gv=p.custo_gasolina||0;
+    eGasWrap.style.display = gv>0 ? '' : 'none';
+    eGasPag.value=gasPaganteDe(p);
+    const eGasVal=document.getElementById('eGasVal');
+    if(eGasVal) eGasVal.textContent = gv>0 ? '('+fmt(gv)+' lançados)' : '';
+  }
   // Fornecedor vinculado (de quem comprou)
   const eForn=document.getElementById('eForn'); if(eForn) eForn.value=p.fornecedor_nome||'';
   const eFornId=document.getElementById('eFornId'); if(eFornId) eFornId.value=p.fornecedor_id||'';
@@ -4186,7 +4217,7 @@ window.saveEdit=async()=>{
   const custoFinal=baseMaquina+somaJa+somaNovas;
   const totalPecas=somaJa+somaNovas;
 
-  const upd={nome,custo:custoFinal,custo_base:baseMaquina,custo_pecas:totalPecas,venda,lucro:venda-custoFinal,status,investidor,plataforma:(status==='Vendido'?(document.getElementById('ePlat')?.value||''):''),repasse_socio:(status==='Vendido'?(parseFloat(document.getElementById('eRepasse')?.value)||0):0),falta_comprar:(status!=='Vendido'?(document.getElementById('eFalta')?.value.trim()||''):''),fornecedor_id:fornId,fornecedor_nome:fornNome,data_compra:dc,data_compra_mes:dcMes,data_venda:dv,data:(dv?dv.slice(0,7):dcMes),cliente_id:cliId,cliente_nome:cliNome};
+  const upd={nome,custo:custoFinal,custo_base:baseMaquina,custo_pecas:totalPecas,venda,lucro:venda-custoFinal,status,investidor,plataforma:(status==='Vendido'?(document.getElementById('ePlat')?.value||''):''),repasse_socio:(status==='Vendido'?(parseFloat(document.getElementById('eRepasse')?.value)||0):0),falta_comprar:(status!=='Vendido'?(document.getElementById('eFalta')?.value.trim()||''):''),fornecedor_id:fornId,fornecedor_nome:fornNome,data_compra:dc,data_compra_mes:dcMes,data_venda:dv,data:(dv?dv.slice(0,7):dcMes),gas_pagante:(document.getElementById('eGasPag')?.value||'ambos'),cliente_id:cliId,cliente_nome:cliNome};
   if(!editId.startsWith('x')&&!editId.startsWith('l')){try{await updateDoc(doc(db,'products',editId),upd);}catch(e){}}
   // Grava as peças novas na aba Peças, vinculadas a esta máquina
   for(const pc of pecasNovas){
@@ -4242,9 +4273,20 @@ function custoRealDe(p){
   return (p.custo||0) * ((p.id&&String(p.id).startsWith('x'))?2:1);
 }
 
+// Quem pagou a gasolina/busca de um produto: 'ambos' (rachado 50/50), 'joao' ou 'igor'.
+// Registros sem o campo (cadastrados antes desta opção existir) seguem rachados 50/50,
+// que era a regra fixa antiga — assim nenhum número histórico muda.
+function gasPaganteDe(p){
+  const v=(p.gas_pagante||'').toString().toLowerCase();
+  if(v==='joao'||v==='joão') return 'joao';
+  if(v==='igor') return 'igor';
+  return 'ambos';
+}
+
 // Divide o custo de um produto entre os sócios.
 // REGRA: o custo da MÁQUINA segue quem investiu (50/50, só João ou só Igor).
-//        o custo das PEÇAS é SEMPRE rachado 50/50 entre os dois.
+//        as PEÇAS são SEMPRE rachadas 50/50 entre os dois.
+//        a GASOLINA segue quem pagou (50/50, só João ou só Igor).
 function custoSplit(p){
   const total = custoRealDe(p);
   const pecas = Math.min(p.custo_pecas||0, total);   // peças aplicadas nesta máquina
@@ -4253,12 +4295,14 @@ function custoSplit(p){
   const b = investidorDe(p);
   const maqJoao = b==='ambos' ? maquina/2 : b==='joao' ? maquina : 0;
   const maqIgor = b==='ambos' ? maquina/2 : b==='igor' ? maquina : 0;
-  // Peças E gasolina são SEMPRE rachadas 50/50
-  const rachado = (pecas + gas)/2;
+  const gp = gasPaganteDe(p);
+  const gasJoao = gp==='ambos' ? gas/2 : gp==='joao' ? gas : 0;
+  const gasIgor = gp==='ambos' ? gas/2 : gp==='igor' ? gas : 0;
+  const pecasRachadas = pecas/2;                     // peças seguem sempre 50/50
   return {
-    joao: maqJoao + rachado,
-    igor: maqIgor + rachado,
-    maquina, pecas, gas
+    joao: maqJoao + pecasRachadas + gasJoao,
+    igor: maqIgor + pecasRachadas + gasIgor,
+    maquina, pecas, gas, gasJoao, gasIgor
   };
 }
 
