@@ -2255,7 +2255,10 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
       </div>
       <!-- FIX 1: Modal editar também usa date -->
       <div class="fc"><label class="fl">Data de compra</label><input class="inp" id="eDC" type="date"></div>
-      <div class="fc"><label class="fl">Mês de venda</label><input class="inp" id="eDV" type="month"></div>
+      <div class="fc"><label class="fl">Data da venda <span style="font-size:.67rem;color:var(--li);font-weight:400">dia exato — é o que faz entrar no giro</span></label>
+        <input class="inp" id="eDV" type="date">
+        <div id="eDVHint" style="font-size:.67rem;color:var(--am);margin-top:4px;line-height:1.4;display:none"></div>
+      </div>
       <div class="fc full" id="eFaltaWrap">
         <label class="fl">📝 O que falta comprar/fazer <span style="font-size:.67rem;color:var(--li);font-weight:400">pra deixar essa máquina pronta pra vender</span></label>
         <input class="inp" type="text" id="eFalta" placeholder="Ex: comprar SSD 256GB · bateria nova · carregador · limpar carcaça">
@@ -4068,7 +4071,17 @@ window.openEdit=id=>{
   // FIX 1: preenche data de compra — suporta YYYY-MM-DD (novo) e YYYY-MM (legado)
   const dcRaw=p.data_compra||'';
   document.getElementById('eDC').value=dcRaw.length===7?dcRaw+'-01':dcRaw;
-  document.getElementById('eDV').value=p.data_venda||'';
+  // Data de venda: aceita YYYY-MM-DD (dia exato) e YYYY-MM (legado da planilha, sem dia).
+  // No legado o campo fica vazio — o input type=date não aceita mês solto — e avisamos o porquê.
+  const dvRaw=p.data_venda||'';
+  document.getElementById('eDV').value = dvRaw.length>7 ? dvRaw : '';
+  const eDVHint=document.getElementById('eDVHint');
+  if(eDVHint){
+    if(dvRaw.length===7){
+      eDVHint.textContent='⚠️ Só o mês ('+fdt(dvRaw)+') foi registrado nesta venda. Preencha o dia exato para ela entrar no giro. Deixando em branco, o mês é mantido.';
+      eDVHint.style.display='block';
+    } else eDVHint.style.display='none';
+  }
   document.getElementById('eInv').value=p.investidor||'João';
   // Fornecedor vinculado (de quem comprou)
   const eForn=document.getElementById('eForn'); if(eForn) eForn.value=p.fornecedor_nome||'';
@@ -4148,7 +4161,7 @@ window.eRepasseHint=()=>{
 
 window.saveEdit=async()=>{
   if(!editId)return;
-  const nome=g('eN'),custo=parseFloat(document.getElementById('eC').value)||0,venda=parseFloat(document.getElementById('eV').value)||0,status=document.getElementById('eS').value,dc=document.getElementById('eDC').value,dv=document.getElementById('eDV').value,investidor=document.getElementById('eInv').value;
+  const nome=g('eN'),custo=parseFloat(document.getElementById('eC').value)||0,venda=parseFloat(document.getElementById('eV').value)||0,status=document.getElementById('eS').value,dc=document.getElementById('eDC').value,dvInput=document.getElementById('eDV').value,investidor=document.getElementById('eInv').value;
   const dcMes=dc?dc.slice(0,7):'';
   // Fornecedor vinculado (de quem comprou). O cliente NÃO é mexido aqui — só na venda.
   let fornId=document.getElementById('eFornId')?.value||'';
@@ -4161,6 +4174,9 @@ window.saveEdit=async()=>{
   const _pAtual=prods.find(x=>x.id===editId);
   const cliId=_pAtual?.cliente_id||'';
   const cliNome=_pAtual?.cliente_nome||'';
+  // Campo de data vazio numa venda que já tinha data (legado só com mês): mantém a antiga.
+  // Sem isso, abrir e salvar a edição apagaria o mês da venda e ela sairia dos relatórios.
+  const dv = dvInput || _pAtual?.data_venda || '';
   // Peças: as já existentes continuam; as novas somam no custo
   const pecasJa=pecas.filter(pc=>pc.produto_id===editId);
   const somaJa=pecasJa.reduce((s,pc)=>s+(pc.custo||0),0);
@@ -4170,7 +4186,7 @@ window.saveEdit=async()=>{
   const custoFinal=baseMaquina+somaJa+somaNovas;
   const totalPecas=somaJa+somaNovas;
 
-  const upd={nome,custo:custoFinal,custo_base:baseMaquina,custo_pecas:totalPecas,venda,lucro:venda-custoFinal,status,investidor,plataforma:(status==='Vendido'?(document.getElementById('ePlat')?.value||''):''),repasse_socio:(status==='Vendido'?(parseFloat(document.getElementById('eRepasse')?.value)||0):0),falta_comprar:(status!=='Vendido'?(document.getElementById('eFalta')?.value.trim()||''):''),fornecedor_id:fornId,fornecedor_nome:fornNome,data_compra:dc,data_compra_mes:dcMes,data_venda:dv,data:dv||dcMes,cliente_id:cliId,cliente_nome:cliNome};
+  const upd={nome,custo:custoFinal,custo_base:baseMaquina,custo_pecas:totalPecas,venda,lucro:venda-custoFinal,status,investidor,plataforma:(status==='Vendido'?(document.getElementById('ePlat')?.value||''):''),repasse_socio:(status==='Vendido'?(parseFloat(document.getElementById('eRepasse')?.value)||0):0),falta_comprar:(status!=='Vendido'?(document.getElementById('eFalta')?.value.trim()||''):''),fornecedor_id:fornId,fornecedor_nome:fornNome,data_compra:dc,data_compra_mes:dcMes,data_venda:dv,data:(dv?dv.slice(0,7):dcMes),cliente_id:cliId,cliente_nome:cliNome};
   if(!editId.startsWith('x')&&!editId.startsWith('l')){try{await updateDoc(doc(db,'products',editId),upd);}catch(e){}}
   // Grava as peças novas na aba Peças, vinculadas a esta máquina
   for(const pc of pecasNovas){
