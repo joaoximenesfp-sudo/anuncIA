@@ -434,10 +434,12 @@ input[type=number].inp{padding-left:32px}
 .rk-wrap{background:var(--w);border:1px solid var(--b);border-radius:var(--rad);box-shadow:var(--sh);overflow:hidden;margin-bottom:12px}
 .rk-head{padding:14px 18px 0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
 .rk-title{font-size:.84rem;font-weight:600;color:var(--tx)}
-.rk-tabs{display:flex;gap:4px}
+.rk-tabs{display:flex;gap:4px;flex-wrap:wrap}
 .rk-tab{padding:4px 11px;border-radius:6px;border:1px solid var(--b2);background:transparent;font-size:.73rem;font-weight:600;color:var(--mu);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
 .rk-tab.on{background:var(--tx);border-color:var(--tx);color:#fff}
 .rk-body{padding:8px 0 4px}
+.rk-body.scroll{max-height:420px;overflow-y:auto}
+.rk-resumo{font-size:.72rem;color:#15803d;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:7px 11px;margin:0 18px 8px;line-height:1.45}
 .rk-row{display:flex;align-items:center;gap:10px;padding:7px 18px;transition:background .1s}
 .rk-row:hover{background:var(--bg)}
 .rk-pos{width:22px;font-size:.7rem;font-weight:700;color:var(--li);flex-shrink:0;text-align:center}
@@ -1351,6 +1353,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
           <span class="rk-title">Ranking de produtos</span>
           <div class="rk-tabs">
             <button class="rk-tab on" onclick="swRk('lucro',this)">Maior lucro</button>
+            <button class="rk-tab" onclick="swRk('mes',this)">✅ Vendidos do mês</button>
             <button class="rk-tab" onclick="swRk('giro',this)">Giro rápido</button>
             <button class="rk-tab" onclick="swRk('parado',this)">Mais parados</button>
           </div>
@@ -5210,12 +5213,36 @@ function diasGiro(p){
   return {dias:Math.max(dias,0), preciso:false, mesmoMes:false};
 }
 
+// Texto do dia da venda — usa o dia exato quando existe, senão avisa que só tem o mês
+function fdtVendaDia(d){
+  if(!d) return 'sem data registrada';
+  if(d.length>7) return 'vendido '+new Date(d+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
+  return 'vendido em '+fdt(d)+' · sem dia registrado';
+}
+
 function renderRanking(){
   const body=document.getElementById('rkBody');
   if(!body)return;
-  let lista=[];
+  let lista=[], resumo='';
   if(rkMode==='lucro'){
     lista=prods.filter(p=>p.status==='Vendido').map(p=>({nome:p.nome,sub:fdt(p.data_venda),val:p.lucro!==undefined?p.lucro:p.venda-p.custo,cls:'g'})).sort((a,b)=>b.val-a.val).slice(0,10);
+  } else if(rkMode==='mes'){
+    // Só as vendas do mês corrente — lista completa, sem cortar no top 10
+    const mesRef=new Date().toISOString().slice(0,7);
+    const nomeMes=new Date(mesRef+'-01T12:00:00').toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+    const doMes=prods.filter(p=>p.status==='Vendido'&&getMesVenda(p)===mesRef);
+    if(!doMes.length){
+      body.classList.remove('scroll');
+      body.innerHTML=`<div style="padding:24px;text-align:center;color:var(--li);font-size:.8rem">Nenhuma venda registrada em ${nomeMes} ainda.<br><span style="font-size:.72rem">As vendas deste mês aparecem aqui automaticamente.</span></div>`;
+      return;
+    }
+    lista=doMes.map(p=>{
+      const l=getLucro(p);
+      return {nome:p.nome, sub:fdtVendaDia(p.data_venda), val:l, cls:l>=0?'g':'re'};
+    }).sort((a,b)=>b.val-a.val);
+    const totLuc=doMes.reduce((s,p)=>s+getLucro(p),0);
+    const totFat=doMes.reduce((s,p)=>s+(p.venda||0),0);
+    resumo=`<div class="rk-resumo"><strong>${doMes.length} venda${doMes.length!==1?'s':''}</strong> em ${nomeMes} · faturamento ${fmt(totFat)} · lucro ${fmt(totLuc)}</div>`;
   } else if(rkMode==='giro'){
     // Só entram vendas com data EXATA (dia) nos dois lados — senão o ranking vira chute.
     const todos=prods.filter(p=>p.status==='Vendido').map(p=>({p,g:diasGiro(p)})).filter(x=>x.g);
@@ -5235,6 +5262,8 @@ function renderRanking(){
     }).sort((a,b)=>b.val-a.val).slice(0,10);
   }
   const maxVal=lista.length?Math.max(...lista.map(x=>x.val)):1;
+  // Lista do mês pode passar de 10 itens — rola dentro da box em vez de esticar a página
+  body.classList.toggle('scroll', rkMode==='mes' && lista.length>10);
   // Aviso quando vendas antigas ficaram de fora por não ter o dia registrado
   const avisoGiro = (rkMode==='giro' && rkGiroExcluidos>0)
     ? `<div class="rk-aviso">📅 ${rkGiroExcluidos} venda${rkGiroExcluidos!==1?'s':''} antiga${rkGiroExcluidos!==1?'s':''} fora do ranking — só tinha${rkGiroExcluidos!==1?'m':''} o mês registrado, sem o dia exato.</div>`
@@ -5243,10 +5272,10 @@ function renderRanking(){
     body.innerHTML=`<div style="padding:24px;text-align:center;color:var(--li);font-size:.8rem">Nenhuma venda com data exata ainda.<br><span style="font-size:.72rem">Ao registrar vendas com dia certo, elas aparecem aqui.</span></div>${avisoGiro}`;
     return;
   }
-  body.innerHTML=avisoGiro+lista.map((x,i)=>{
+  body.innerHTML=avisoGiro+resumo+lista.map((x,i)=>{
     const pos=i===0?'gold':i===1?'silver':i===2?'bronze':'';
-    const label=rkMode==='lucro'?fmt(x.val):(x.val+'d');
-    const barPct=Math.round(x.val/maxVal*100);
+    const label=(rkMode==='lucro'||rkMode==='mes')?fmt(x.val):(x.val+'d');
+    const barPct=Math.max(0,Math.min(100,Math.round(x.val/maxVal*100)));
     return`<div class="rk-row"><span class="rk-pos ${pos}">${i+1}</span><div style="flex:1;overflow:hidden"><div class="rk-nm">${esc(x.nome)}</div><div class="rk-sub">${x.sub}</div></div><div class="rk-bar"><div class="rk-bar-fill ${x.cls}" style="width:${barPct}%"></div></div><span class="rk-val ${x.cls}">${label}</span></div>`;
   }).join('');
 }
