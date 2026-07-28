@@ -2124,6 +2124,11 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
 
       <div id="cliChips" class="cli-chips"></div>
 
+      <!-- DE ONDE VÊM OS CLIENTES -->
+      <div class="cd" id="cliOrigemCard" style="margin-bottom:14px">
+        <div class="cdh"><span class="cdht">📍 De onde vêm meus clientes</span><span style="font-size:.72rem;color:var(--li)">por canal que trouxe a pessoa</span></div>
+        <div class="cdb" id="cliOrigemBox"></div>
+      </div>
       <div id="cliLista"></div>
       </div><!-- /cliView -->
 
@@ -2295,17 +2300,18 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
         <input class="inp" type="text" id="eFalta" placeholder="Ex: comprar SSD 256GB · bateria nova · carregador · limpar carcaça">
       </div>
       <div class="fc full" id="ePlatWrap">
-        <label class="fl">🛒 Onde vendeu? <span style="font-size:.67rem;color:var(--li);font-weight:400">alimenta o ranking de plataformas no Painel</span></label>
+        <label class="fl">📍 De onde veio esse cliente? <span style="font-size:.67rem;color:var(--li);font-weight:400">o anúncio ou contato que trouxe a pessoa — não onde a conversa terminou</span></label>
         <select class="inp" id="ePlat">
           <option value="">— Não informado —</option>
-          <option value="Marketplace">📘 Marketplace</option>
+          <option value="Marketplace">📘 Facebook Marketplace</option>
           <option value="OLX">🟠 OLX</option>
           <option value="Mercado Livre">🟡 Mercado Livre</option>
-          <option value="WhatsApp">💬 WhatsApp</option>
           <option value="Instagram">📸 Instagram</option>
           <option value="Indicação">🤝 Indicação</option>
           <option value="Shopee">🛍️ Shopee</option>
-          <option value="Presencial">🤝 Presencial / Loja</option>
+          <option value="Presencial">🏠 Presencial / conhecido</option>
+          <option value="Contato direto">💬 Já tinha meu contato</option>
+          <option value="WhatsApp">💬 WhatsApp (registro antigo)</option>
           <option value="Outro">Outro</option>
         </select>
       </div>
@@ -2360,15 +2366,17 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
     <div class="smcp" id="smProdNome">—</div>
     <div class="smcb">
       <div class="fc full">
-        <label class="fl">Onde vendeu?</label>
+        <label class="fl">📍 De onde veio esse cliente? <span style="font-size:.67rem;color:var(--li);font-weight:400">o anúncio ou contato que trouxe a pessoa — não onde a conversa terminou</span></label>
         <select class="inp" id="smPlat">
-          <option value="">— Selecione a plataforma —</option>
-          <option value="Marketplace">📘 Marketplace</option>
+          <option value="">— Selecione a origem —</option>
+          <option value="Marketplace">📘 Facebook Marketplace</option>
           <option value="OLX">🟠 OLX</option>
           <option value="Mercado Livre">🟡 Mercado Livre</option>
-          <option value="WhatsApp">💬 WhatsApp</option>
           <option value="Instagram">📸 Instagram</option>
           <option value="Indicação">🤝 Indicação</option>
+          <option value="Shopee">🛍️ Shopee</option>
+          <option value="Presencial">🏠 Presencial / conhecido</option>
+          <option value="Contato direto">💬 Já tinha meu contato</option>
           <option value="Outro">Outro</option>
         </select>
       </div>
@@ -3999,7 +4007,66 @@ function renderFornecedores(){
   }).join('');
 }
 
+// ── DE ONDE VÊM OS CLIENTES (agregado por origem) ──
+// A origem sai do campo do modal de venda. Registros antigos gravaram 'WhatsApp'
+// quando aquele campo perguntava onde a venda FOI FECHADA — e como praticamente
+// tudo fecha no WhatsApp, esses não dizem de onde a pessoa veio. Vão para um balde
+// próprio, senão o WhatsApp apareceria como "melhor canal" sem significar nada.
+function renderCliOrigem(){
+  const box=document.getElementById('cliOrigemBox');
+  if(!box)return;
+  const NR='__nao_registrada__';
+  const g={};
+  const balde=(k,label)=>{ if(!g[k]) g[k]={label,cli:new Set(),maq:0,fat:0,luc:0}; return g[k]; };
+  // Agrupa por COMPRA: a plataforma fica em cada produto, então um cliente que voltou
+  // por outro canal é contado no canal certo de cada vez.
+  prods.filter(p=>p.status==='Vendido').forEach(p=>{
+    const raw=(p.plataforma||'').trim();
+    const semOrigem = raw==='' || raw==='WhatsApp';   // WhatsApp era "onde fechou", não origem
+    const b = balde(semOrigem?NR:raw, semOrigem?'Origem não registrada':raw);
+    b.maq++; b.fat+=(p.venda||0); b.luc+=getLucro(p);
+    if(p.cliente_id) b.cli.add(p.cliente_id);
+  });
+  const linhas=Object.entries(g).map(([k,v])=>({k,...v,cli:v.cli.size}))
+                                .sort((a,b)=>b.luc-a.luc || b.maq-a.maq);
+  if(!linhas.length){
+    box.innerHTML='<div style="padding:18px;text-align:center;color:var(--li);font-size:.8rem">Nenhuma venda registrada ainda.</div>';
+    return;
+  }
+  // Clientes cadastrados que ainda não compraram, por origem: é o contato que não fechou.
+  const semCompra={};
+  clientes.forEach(c=>{
+    if(prods.some(p=>p.cliente_id===c.id && p.status==='Vendido')) return;
+    const o=(c.origem||'').trim()||'sem origem';
+    semCompra[o]=(semCompra[o]||0)+1;
+  });
+  const soltas=prods.filter(p=>p.status==='Vendido' && !p.cliente_id);
+  const maxLuc=Math.max(...linhas.map(l=>l.luc), 1);
+  const th=(t,r)=>`<th style="text-align:${r?'right':'left'};padding:6px 8px;font-size:.68rem;color:var(--li);font-weight:600;border-bottom:1px solid var(--b);white-space:nowrap">${t}</th>`;
+  const td=(t,r,ex='')=>`<td style="text-align:${r?'right':'left'};padding:7px 8px;font-size:.76rem;border-bottom:1px solid var(--b);${ex}">${t}</td>`;
+  box.innerHTML=`
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;min-width:520px">
+        <thead><tr>${th('Origem')}${th('Compras',1)}${th('Clientes',1)}${th('Faturamento',1)}${th('Lucro',1)}</tr></thead>
+        <tbody>${linhas.map(l=>{
+          const pct=Math.max(0,Math.min(100,Math.round(l.luc/maxLuc*100)));
+          const nome = l.k===NR
+            ? `<span style="color:var(--li)">${l.label}</span>`
+            : `<strong>${esc(l.label)}</strong>`;
+          return `<tr>
+            ${td(nome+`<div style="height:3px;border-radius:2px;background:var(--b);margin-top:5px;max-width:180px"><div style="height:100%;border-radius:2px;background:${l.k===NR?'var(--li)':'var(--gr)'};width:${pct}%"></div></div>`)}
+            ${td(l.maq,1)}${td(l.cli,1)}${td(fmt(l.fat),1)}${td('<strong>'+fmt(l.luc)+'</strong>',1)}
+          </tr>`;
+        }).join('')}</tbody>
+      </table>
+    </div>
+    ${g[NR]?`<div class="rk-aviso" style="margin-top:10px">📍 <strong>${g[NR].maq} compra${g[NR].maq!==1?'s':''}</strong> sem origem preenchida — ou marcadas como WhatsApp, que era onde a conversa fechava e não de onde a pessoa veio. Preenchendo a origem nas próximas, este balde para de crescer.</div>`:''}
+    ${Object.keys(semCompra).length?`<div style="font-size:.72rem;color:var(--li);margin-top:10px;line-height:1.5">👤 Cadastrados que ainda não compraram: ${Object.entries(semCompra).sort((a,b)=>b[1]-a[1]).map(([o,n])=>`<strong>${n}</strong> via ${esc(o)}`).join(' · ')}</div>`:''}
+    ${soltas.length?`<div style="font-size:.7rem;color:var(--li);margin-top:6px">Fora deste quadro: ${soltas.length} venda${soltas.length!==1?'s':''} sem cliente vinculado.</div>`:''}`;
+}
+
 function renderClientes(){
+  renderCliOrigem();
   const lista=document.getElementById('cliLista');
   if(!lista)return;
   const q=(document.getElementById('cliBusca')?.value||'').trim().toLowerCase();
@@ -4037,7 +4104,10 @@ function renderClientes(){
       ? `<a href="${wl}" target="_blank" class="cli-wa">💬 WhatsApp</a>`
       : `<span class="cli-wa off" title="Cliente sem WhatsApp cadastrado">📱 sem contato</span>`;
     const exp=cliExpandido.has(c.id);
-    const nNb=st.itensTodos.length;
+    // Conta só compras concluídas: o selo ficava ao lado de "N compras" contando
+    // também máquina reservada/anunciada, e os dois números se contradiziam na mesma linha.
+    const nNb=st.nCompras;
+    const nReserv=st.itensTodos.length-st.nCompras;
     const chev=`<span class="cli-chev">${exp?'▾':'▸'}</span>`;
     // Selo da garantia legal mais próxima de vencer (entre as vendas ativas)
     let garBadge='';
@@ -4086,7 +4156,7 @@ function renderClientes(){
       <div class="cli-card">
         <div class="cli-tag ${op.cls}">${op.tag}</div>
         <div class="cli-main" onclick="cliToggle('${c.id}')" style="cursor:pointer">
-          <div class="cli-nome">${chev}${esc(c.nome)}${nNb?` <span class="cli-nb-count">${nNb} 💻</span>`:''}${garBadge}</div>
+          <div class="cli-nome">${chev}${esc(c.nome)}${nNb?` <span class="cli-nb-count" title="Máquinas já compradas">${nNb} 💻</span>`:''}${nReserv?` <span class="cli-nb-count" style="color:var(--am);background:var(--abg)" title="Vinculadas a este cliente mas ainda não vendidas">${nReserv} reservada${nReserv!==1?'s':''}</span>`:''}${garBadge}</div>
           <div class="cli-meta">${st.nCompras} compra${st.nCompras!==1?'s':''} · ${fmt(st.totalGasto)} · última ${ultimaFmt} (${mesesTxt})${perfilLbl?' · '+perfilLbl:''}${c.origem?' · via '+esc(c.origem):''}</div>
           ${c.procurando&&c.procurando.trim()?`<div class="cli-proc">🔍 Procura: ${esc(c.procurando)}</div>`:''}
         </div>
