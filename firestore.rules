@@ -1,0 +1,86 @@
+rules_version = '2';
+
+// Regras de acesso ao banco do Business IJX.
+//
+// Modelo:
+//   - Dados da EMPRESA (produtos, peças, clientes, fornecedores, config, avisos):
+//     os dois sócios têm acesso total. É o combinado da sociedade.
+//   - FINANÇAS PESSOAIS (financas_fixas, financas_var, extrato): cada sócio
+//     enxerga e altera apenas as próprias. Nem um vê as do outro.
+//   - Qualquer outra coleção: negado.
+//
+// Por que isto importa: a configuração do Firebase fica visível no index.html
+// (é assim que o Firebase web funciona), então o banco é alcançável pela
+// internet sem passar pela nossa tela. A lista de e-mails que existe no
+// index.html roda no navegador e serve de conveniência, não de barreira —
+// quem decide de fato é este arquivo.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Sócios autorizados. Mesma lista do app (index.html:2532).
+    // Para dar acesso a alguém novo, some o e-mail aqui E publique de novo.
+    function socio() {
+      return request.auth != null
+          && request.auth.token.email != null
+          && request.auth.token.email.lower() in [
+               'joaoximenesfp@gmail.com',
+               'joaoximenes11@hotmail.com',
+               'joaoximenesfp+ijx@gmail.com',
+               'i155757@dac.unicamp.br'
+             ];
+    }
+
+    // ── DADOS DA EMPRESA — compartilhados entre os sócios ──
+    // Os documentos usam userId:'shared_ijx', e os registros antigos ainda
+    // trazem o uid de quem cadastrou. Como a coleção inteira é da sociedade,
+    // liberamos por sócio e não por dono do documento — assim as duas formas
+    // de consulta que o app faz continuam funcionando.
+    match /products/{doc}     { allow read, write: if socio(); }
+    match /pecas/{doc}        { allow read, write: if socio(); }
+    match /clientes/{doc}     { allow read, write: if socio(); }
+    match /fornecedores/{doc} { allow read, write: if socio(); }
+    match /config/{doc}       { allow read, write: if socio(); }
+    // avisos é consultado por where('lido','==',false), sem filtro de usuário:
+    // é justamente o canal de recado entre os dois, então é compartilhado.
+    match /avisos/{doc}       { allow read, write: if socio(); }
+
+    // ── FINANÇAS PESSOAIS — isoladas por sócio ──
+    // O app já consulta com where('userId','==',user.uid), então as consultas
+    // atuais passam. A regra garante que continue assim mesmo que alguém
+    // tente pedir os dados do outro por fora da tela.
+    function donoDoDoc() {
+      return socio() && resource.data.userId == request.auth.uid;
+    }
+    // Na criação o documento ainda não existe: valida o que está sendo gravado.
+    function criandoParaSi() {
+      return socio() && request.resource.data.userId == request.auth.uid;
+    }
+    // Impede também que um update troque o dono do lançamento.
+    function seguePropio() {
+      return donoDoDoc() && request.resource.data.userId == request.auth.uid;
+    }
+
+    match /financas_fixas/{doc} {
+      allow read, delete: if donoDoDoc();
+      allow create:       if criandoParaSi();
+      allow update:       if seguePropio();
+    }
+    match /financas_var/{doc} {
+      allow read, delete: if donoDoDoc();
+      allow create:       if criandoParaSi();
+      allow update:       if seguePropio();
+    }
+    match /extrato/{doc} {
+      allow read, delete: if donoDoDoc();
+      allow create:       if criandoParaSi();
+      allow update:       if seguePropio();
+    }
+
+    // ── PADRÃO: nega o resto ──
+    // Coleção que não estiver listada acima fica inacessível.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
