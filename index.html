@@ -2307,6 +2307,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
           <option value="OLX">🟠 OLX</option>
           <option value="Mercado Livre">🟡 Mercado Livre</option>
           <option value="Instagram">📸 Instagram</option>
+          <option value="Recompra">🔁 Recompra — cliente que voltou</option>
           <option value="Indicação">🤝 Indicação</option>
           <option value="Shopee">🛍️ Shopee</option>
           <option value="Presencial">🏠 Presencial / conhecido</option>
@@ -2373,12 +2374,14 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
           <option value="OLX">🟠 OLX</option>
           <option value="Mercado Livre">🟡 Mercado Livre</option>
           <option value="Instagram">📸 Instagram</option>
+          <option value="Recompra">🔁 Recompra — cliente que voltou</option>
           <option value="Indicação">🤝 Indicação</option>
           <option value="Shopee">🛍️ Shopee</option>
           <option value="Presencial">🏠 Presencial / conhecido</option>
           <option value="Contato direto">💬 Já tinha meu contato</option>
           <option value="Outro">Outro</option>
         </select>
+        <div id="smPlatHint" style="font-size:.68rem;color:var(--gr);margin-top:4px;display:none"></div>
       </div>
       <div class="fc full">
         <label class="fl">👤 Cliente <span style="font-size:.67rem;color:var(--li);font-weight:400">opcional — vira base de recompra</span></label>
@@ -3584,6 +3587,15 @@ window.cliSellPick=(id)=>{
   document.getElementById('smCliId').value=id;
   document.getElementById('smCliDrop').style.display='none';
   document.getElementById('smCliNovo').style.display='none';
+  // Cliente que já comprou antes: a origem desta venda é a recompra, não o anúncio
+  // que o trouxe da primeira vez — senão o canal leva crédito por atendimento nosso.
+  const jaComprou=prods.some(p=>p.cliente_id===id && p.status==='Vendido');
+  const sel=document.getElementById('smPlat');
+  const hint=document.getElementById('smPlatHint');
+  if(jaComprou && sel && !sel.value){
+    sel.value='Recompra';
+    if(hint){ hint.textContent='🔁 Sugerido: este cliente já comprou antes. Troque se ele voltou por outro caminho.'; hint.style.display='block'; }
+  } else if(hint){ hint.style.display='none'; }
 };
 
 // ── Busca de cliente dentro do modal de EDIÇÃO de produto ──
@@ -4041,6 +4053,13 @@ function renderCliOrigem(){
     semCompra[o]=(semCompra[o]||0)+1;
   });
   const soltas=prods.filter(p=>p.status==='Vendido' && !p.cliente_id);
+  // Recompra e indicação não são canal de anúncio: vêm de atendimento e reputação.
+  // Separar os dois mostra quanto do resultado é mérito do trabalho e não da vitrine.
+  const RELACAO=['Recompra','Indicação'];
+  const lucroRel=linhas.filter(l=>RELACAO.includes(l.k)).reduce((s,l)=>s+l.luc,0);
+  const lucroAq =linhas.filter(l=>!RELACAO.includes(l.k) && l.k!==NR).reduce((s,l)=>s+l.luc,0);
+  const baseRel=lucroRel+lucroAq;
+  const pctRel=baseRel>0?Math.round(lucroRel/baseRel*100):0;
   const maxLuc=Math.max(...linhas.map(l=>l.luc), 1);
   const th=(t,r)=>`<th style="text-align:${r?'right':'left'};padding:6px 8px;font-size:.68rem;color:var(--li);font-weight:600;border-bottom:1px solid var(--b);white-space:nowrap">${t}</th>`;
   const td=(t,r,ex='')=>`<td style="text-align:${r?'right':'left'};padding:7px 8px;font-size:.76rem;border-bottom:1px solid var(--b);${ex}">${t}</td>`;
@@ -4060,6 +4079,7 @@ function renderCliOrigem(){
         }).join('')}</tbody>
       </table>
     </div>
+    ${baseRel>0?`<div class="rk-resumo" style="margin:10px 0 0">🤝 <strong>${pctRel}% do lucro</strong> veio de recompra e indicação — ${fmt(lucroRel)} de relacionamento contra ${fmt(lucroAq)} de anúncio. Essa parte é atendimento, não vitrine.</div>`:''}
     ${g[NR]?`<div class="rk-aviso" style="margin-top:10px">📍 <strong>${g[NR].maq} compra${g[NR].maq!==1?'s':''}</strong> sem origem preenchida — ou marcadas como WhatsApp, que era onde a conversa fechava e não de onde a pessoa veio. Preenchendo a origem nas próximas, este balde para de crescer.</div>`:''}
     ${Object.keys(semCompra).length?`<div style="font-size:.72rem;color:var(--li);margin-top:10px;line-height:1.5">👤 Cadastrados que ainda não compraram: ${Object.entries(semCompra).sort((a,b)=>b[1]-a[1]).map(([o,n])=>`<strong>${n}</strong> via ${esc(o)}`).join(' · ')}</div>`:''}
     ${soltas.length?`<div style="font-size:.7rem;color:var(--li);margin-top:6px">Fora deste quadro: ${soltas.length} venda${soltas.length!==1?'s':''} sem cliente vinculado.</div>`:''}`;
