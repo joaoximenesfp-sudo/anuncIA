@@ -1854,11 +1854,19 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
         <div class="cdh"><span class="cdht">🔍 Auditoria de valores gravados</span></div>
         <div class="cdb">
           <div style="font-size:.74rem;color:var(--li);line-height:1.55;margin-bottom:10px">
-            Mostra exatamente o que está gravado no banco para as vendas de um mês, para comparar com a planilha
-            e achar registros que ficaram com o valor pela metade. <strong>Não altera nada</strong> — é só leitura.
+            Mostra exatamente o que está gravado no banco para as vendas de um período, para comparar com a planilha
+            e achar registros com valor divergente. <strong>Não altera nada</strong> — é só leitura.
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+            <button class="fc2" onclick="audPeriodo('mes')">Este mês</button>
+            <button class="fc2" onclick="audPeriodo('3m')">Últimos 3 meses</button>
+            <button class="fc2" onclick="audPeriodo('12m')">Últimos 12 meses</button>
+            <button class="fc2" onclick="audPeriodo('ano')">Este ano</button>
+            <button class="fc2" onclick="audPeriodo('tudo')">Tudo</button>
           </div>
           <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:12px">
-            <div class="fc" style="max-width:190px"><span class="fla">Mês</span><input class="inp" type="month" id="audMes"></div>
+            <div class="fc" style="max-width:170px"><span class="fla">De</span><input class="inp" type="month" id="audDe"></div>
+            <div class="fc" style="max-width:170px"><span class="fla">Até</span><input class="inp" type="month" id="audAte"></div>
             <button class="bsg" onclick="auditarMes()">🔍 Auditar</button>
             <button class="bcan" onclick="auditarCopiar()" id="audCopyBtn" style="display:none">📋 Copiar como texto</button>
           </div>
@@ -6403,15 +6411,47 @@ window.limparAvisos = async () => {
 // Existe para comparar o que está no banco com a planilha e identificar registros
 // que guardaram metade do valor. Nenhuma correção acontece aqui.
 let audTexto='';
+function nomeMesAud(m){
+  if(!m) return '—';
+  const ms=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  const [a,mm]=m.split('-');
+  return (ms[parseInt(mm)-1]||mm)+'/'+a.slice(2);
+}
+// Atalhos de período. 'tudo' varre as vendas existentes para achar o mês mais antigo.
+window.audPeriodo=(tipo)=>{
+  const hoje=new Date(), fim=hoje.toISOString().slice(0,7);
+  const recua=n=>new Date(hoje.getFullYear(),hoje.getMonth()-n,1).toISOString().slice(0,7);
+  let de=fim, ate=fim;
+  if(tipo==='3m') de=recua(2);
+  else if(tipo==='12m') de=recua(11);
+  else if(tipo==='ano') de=hoje.getFullYear()+'-01';
+  else if(tipo==='tudo'){
+    const meses=prods.filter(p=>p.status==='Vendido').map(getMesVenda).filter(Boolean).sort();
+    de=meses[0]||fim; ate=meses[meses.length-1]||fim;
+  }
+  const iDe=document.getElementById('audDe'), iAte=document.getElementById('audAte');
+  if(iDe) iDe.value=de;
+  if(iAte) iAte.value=ate;
+  window.auditarMes();
+};
 window.auditarMes=()=>{
   const el=document.getElementById('audOut'); if(!el) return;
   const btn=document.getElementById('audCopyBtn');
-  const mes=(document.getElementById('audMes')?.value)||new Date().toISOString().slice(0,7);
-  const mi=document.getElementById('audMes'); if(mi && !mi.value) mi.value=mes;   // prefill do mês corrente
-  const lista=prods.filter(p=>p.status==='Vendido'&&getMesVenda(p)===mes)
-                   .sort((a,b)=>getLucro(b)-getLucro(a));
+  // Período: 'YYYY-MM' compara certo como texto, então basta de <= mês <= ate.
+  const hoje=new Date().toISOString().slice(0,7);
+  const iDe=document.getElementById('audDe'), iAte=document.getElementById('audAte');
+  if(iDe && !iDe.value) iDe.value=hoje;
+  if(iAte && !iAte.value) iAte.value=hoje;
+  let de=iDe?.value||hoje, ate=iAte?.value||hoje;
+  if(de>ate){ const t=de; de=ate; ate=t; }              // datas trocadas: inverte em vez de dar vazio
+  const rotulo = de===ate ? nomeMesAud(de) : nomeMesAud(de)+' a '+nomeMesAud(ate);
+  const lista=prods.filter(p=>{
+    if(p.status!=='Vendido') return false;
+    const m=getMesVenda(p);
+    return m && m>=de && m<=ate;
+  }).sort((a,b)=>getLucro(b)-getLucro(a));
   if(!lista.length){
-    el.innerHTML=`<div style="padding:16px;color:var(--li);font-size:.8rem">Nenhuma venda registrada em ${esc(mes)}.</div>`;
+    el.innerHTML=`<div style="padding:16px;color:var(--li);font-size:.8rem">Nenhuma venda registrada em ${esc(rotulo)}.</div>`;
     audTexto=''; if(btn) btn.style.display='none'; return;
   }
   let totV=0,totC=0,totL=0,divergentes=0;
@@ -6420,23 +6460,40 @@ window.auditarMes=()=>{
     totV+=v; totC+=c; totL+=l;
     const bate=Math.abs(l-calc)<0.01; if(!bate) divergentes++;
     return {nome:p.nome||'', v, c, pe:p.custo_pecas||0, ga:p.custo_gasolina||0, l, calc, bate,
-            id:String(p.id||''), inv:p.investidor||'', dv:p.data_venda||''};
+            id:String(p.id||''), inv:p.investidor||'', dv:p.data_venda||'', mes:getMesVenda(p)};
   });
+  // Resumo por mês: num período longo o total sozinho esconde o comportamento de cada mês
+  const porMes={};
+  linhas.forEach(x=>{
+    if(!porMes[x.mes]) porMes[x.mes]={n:0,v:0,l:0};
+    porMes[x.mes].n++; porMes[x.mes].v+=x.v; porMes[x.mes].l+=x.l;
+  });
+  const mesesOrd=Object.keys(porMes).sort();
+  const multiMes=mesesOrd.length>1;
   const th=(t,r)=>`<th style="text-align:${r?'right':'left'};padding:6px 8px;font-size:.68rem;color:var(--li);font-weight:600;border-bottom:1px solid var(--b);white-space:nowrap">${t}</th>`;
   const td=(t,r,extra='')=>`<td style="text-align:${r?'right':'left'};padding:6px 8px;font-size:.72rem;border-bottom:1px solid var(--b);white-space:nowrap;${extra}">${t}</td>`;
   el.innerHTML=`
+    <div class="rk-resumo" style="margin:0 0 10px">📅 <strong>${esc(rotulo)}</strong> · ${linhas.length} venda${linhas.length!==1?'s':''} · faturamento ${fmt(totV)} · lucro ${fmt(totL)}</div>
+    ${multiMes?`<div style="overflow-x:auto;margin-bottom:12px">
+      <table style="width:100%;border-collapse:collapse;min-width:360px">
+        <thead><tr>${th('Mês')}${th('Vendas',1)}${th('Faturamento',1)}${th('Lucro',1)}</tr></thead>
+        <tbody>${mesesOrd.map(m=>`<tr>
+          ${td('<strong>'+nomeMesAud(m)+'</strong>')}${td(porMes[m].n,1)}${td(fmt(porMes[m].v),1)}${td('<strong>'+fmt(porMes[m].l)+'</strong>',1)}
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>`:''}
     <div style="overflow-x:auto">
-      <table style="width:100%;border-collapse:collapse;min-width:620px">
-        <thead><tr>${th('Produto')}${th('Venda',1)}${th('Custo',1)}${th('Peças',1)}${th('Gasol.',1)}${th('Lucro gravado',1)}${th('Venda−Custo',1)}${th('Investidor')}</tr></thead>
+      <table style="width:100%;border-collapse:collapse;min-width:680px">
+        <thead><tr>${th('Produto')}${multiMes?th('Mês'):''}${th('Venda',1)}${th('Custo',1)}${th('Peças',1)}${th('Gasol.',1)}${th('Lucro gravado',1)}${th('Venda−Custo',1)}${th('Investidor')}</tr></thead>
         <tbody>${linhas.map(x=>`<tr>
-          ${td(esc(x.nome))}
+          ${td(esc(x.nome))}${multiMes?td(nomeMesAud(x.mes)):''}
           ${td(fmt(x.v),1)}${td(fmt(x.c),1)}${td(x.pe?fmt(x.pe):'—',1)}${td(x.ga?fmt(x.ga):'—',1)}
           ${td('<strong>'+fmt(x.l)+'</strong>',1)}
           ${td(fmt(x.calc),1, x.bate?'':'color:var(--re);font-weight:600')}
           ${td(esc(x.inv))}
         </tr>`).join('')}</tbody>
         <tfoot><tr>
-          ${td('<strong>TOTAL — '+linhas.length+' vendas</strong>')}
+          ${td('<strong>TOTAL — '+linhas.length+' vendas</strong>')}${multiMes?td(''):''}
           ${td('<strong>'+fmt(totV)+'</strong>',1)}${td('<strong>'+fmt(totC)+'</strong>',1)}${td('',1)}${td('',1)}
           ${td('<strong>'+fmt(totL)+'</strong>',1)}${td('<strong>'+fmt(totV-totC)+'</strong>',1)}${td('')}
         </tr></tfoot>
@@ -6444,10 +6501,12 @@ window.auditarMes=()=>{
     </div>
     ${divergentes?`<div class="rk-aviso" style="margin-top:10px">⚠️ ${divergentes} registro${divergentes!==1?'s':''} com lucro gravado diferente de venda − custo.</div>`:''}`;
   // versão em texto, para colar em qualquer lugar
-  audTexto=[`Vendas de ${mes} — ${linhas.length} registros`,
-    'produto\tvenda\tcusto\tpecas\tgasolina\tlucro_gravado\tvenda-custo\tinvestidor']
-    .concat(linhas.map(x=>[x.nome,x.v,x.c,x.pe,x.ga,x.l,x.calc,x.inv].join('\t')))
-    .concat([`TOTAL\t${totV}\t${totC}\t\t\t${totL}\t${totV-totC}\t`]).join('\n');
+  audTexto=[`Vendas de ${rotulo} (${de} a ${ate}) — ${linhas.length} registros`,
+    'produto\tmes\tvenda\tcusto\tpecas\tgasolina\tlucro_gravado\tvenda-custo\tinvestidor']
+    .concat(linhas.map(x=>[x.nome,x.mes,x.v,x.c,x.pe,x.ga,x.l,x.calc,x.inv].join('\t')))
+    .concat([`TOTAL\t\t${totV}\t${totC}\t\t\t${totL}\t${totV-totC}\t`])
+    .concat(multiMes?['','mes\tvendas\tfaturamento\tlucro'].concat(mesesOrd.map(m=>[m,porMes[m].n,porMes[m].v,porMes[m].l].join('\t'))):[])
+    .join('\n');
   if(btn) btn.style.display='';
 };
 window.auditarCopiar=async()=>{
