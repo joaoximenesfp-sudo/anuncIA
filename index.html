@@ -1147,6 +1147,10 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
               <select class="inp" id="pInv">
                 <option value="João">👤 João</option>
                 <option value="Igor">👤 Igor</option>
+                <!-- valor 'Compartilhado' é o que o importador já grava para as máquinas
+                     marcadas com * na planilha — mantendo igual, os registros antigos
+                     casam com esta opção em vez de cair na primeira da lista -->
+                <option value="Compartilhado">🤝 Ambos — 50/50</option>
                 <option value="Externo">💼 Externo</option>
               </select>
             </div>
@@ -2278,6 +2282,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
         <select class="inp" id="eInv">
           <option value="João">👤 João</option>
           <option value="Igor">👤 Igor</option>
+          <option value="Compartilhado">🤝 Ambos — 50/50</option>
           <option value="Externo">💼 Externo</option>
         </select>
       </div>
