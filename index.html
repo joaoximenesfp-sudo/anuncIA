@@ -451,6 +451,12 @@ input[type=number].inp{padding-left:32px}
 .rk-bar-fill{height:100%;border-radius:2px;background:var(--gr)}
 .rk-bar-fill.re{background:var(--re)}.rk-bar-fill.am{background:var(--am)}
 
+/* ── PUXAR PEÇA DO ESTOQUE NO CADASTRO ── */
+.pp-wrap{margin-bottom:5px}
+.pp-estoque{font-size:.7rem;color:#15803d;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:7px;padding:5px 8px;margin:0 0 4px;line-height:1.8}
+.pp-est-chip{background:var(--w);border:1px solid #bbf7d0;border-radius:6px;padding:3px 8px;font-size:.7rem;font-weight:600;color:#15803d;cursor:pointer;margin-right:4px;font-family:'DM Sans',sans-serif}
+.pp-est-chip:hover{background:#dcfce7}
+
 /* ── CONTADOR DE PEÇAS EM ESTOQUE ── */
 .pe-estoque{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:11px 14px;margin:0 0 12px}
 .pe-estoque-top{font-size:.78rem;color:#15803d;margin-bottom:8px}
@@ -1189,6 +1195,10 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
               <input class="inp" type="text" id="pForn" placeholder="Buscar fornecedor existente ou digitar um novo..." autocomplete="off" oninput="pFornBusca(this.value)" onfocus="pFornBusca(this.value)">
               <input type="hidden" id="pFornId">
               <div id="pFornDrop" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:30;background:var(--w);border:1px solid var(--b2);border-radius:8px;max-height:170px;overflow:auto;box-shadow:0 6px 18px rgba(0,0,0,.09)"></div>
+            </div>
+            <div class="fc" style="grid-column:1/-1">
+              <span class="fla">📱 WhatsApp do fornecedor <span style="font-size:.62rem;color:var(--li)">fornecedor novo já nasce com o contato; existente tem o número atualizado</span></span>
+              <input class="inp" type="text" id="pFornWpp" placeholder="Ex: 19991730377" autocomplete="off">
             </div>
             <div class="fc" style="grid-column:1/-1">
               <div class="pecaprod-box">
@@ -2840,13 +2850,73 @@ window.ppAddLinha=()=>{
   const box=document.getElementById('ppLista'); if(!box)return;
   const id='pp'+(++ppSeq);
   const div=document.createElement('div');
-  div.className='pecaprod-row'; div.id=id;
+  // Invólucro: a faixa de estoque fica FORA do .pecaprod-row, que é um grid de 4 colunas.
+  // O campo oculto do vínculo fica dentro da linha porque o ppColetar lê a partir dela.
+  div.className='pp-wrap'; div.id=id;
   div.innerHTML=`
-    <select class="inp pp-tipo">${PP_TIPOS.map(t=>`<option value="${t}">${PP_EMOJI[t]} ${t}</option>`).join('')}</select>
-    <input class="inp pp-nome" type="text" placeholder="Descrição (ex: SSD 256GB Kingston)">
-    <input class="inp pp-custo" type="number" min="0" placeholder="Custo R$" oninput="ppTotal()">
-    <button type="button" class="pp-rem" onclick="ppRemLinha('${id}')" title="Remover">✕</button>`;
+    <div class="pecaprod-row">
+      <select class="inp pp-tipo" onchange="ppTipoMudou('${id}')">${PP_TIPOS.map(t=>`<option value="${t}">${PP_EMOJI[t]} ${t}</option>`).join('')}</select>
+      <input class="inp pp-nome" type="text" placeholder="Descrição (ex: SSD 256GB Kingston)">
+      <input class="inp pp-custo" type="number" min="0" placeholder="Custo R$" oninput="ppTotal()">
+      <button type="button" class="pp-rem" onclick="ppRemLinha('${id}')" title="Remover">✕</button>
+      <input type="hidden" class="pp-estid" value="">
+    </div>
+    <div class="pp-estoque" style="display:none"></div>`;
   box.appendChild(div);
+  ppRenderEstoque(id);
+  ppTotal();
+};
+
+// ── PUXAR PEÇA DO ESTOQUE AO MONTAR A MÁQUINA ──
+// Sem isso, a peça aplicada nasce do nada no custo e a que estava em estoque
+// continua contando como disponível. Puxando, o pente sai do estoque e vira
+// "Usado" nesta máquina — um registro só, sem duplicata.
+// O cadastro usa 'SSD/HD' e a aba Peças usa 'HD/SSD': normaliza para os dois casarem.
+function ppTipoNorm(t){
+  const s=(t||'').toString().toLowerCase().replace(/\s/g,'');
+  return (s==='ssd/hd'||s==='hd/ssd') ? 'hd/ssd' : s;
+}
+function ppEstoqueDe(tipo){
+  const alvo=ppTipoNorm(tipo);
+  return pecas.filter(p=>p.status==='Estoque' && ppTipoNorm(p.tipo)===alvo && (p.quantidade||1)>0);
+}
+function ppJaEscolhidos(exceto){
+  return [...document.querySelectorAll('#ppLista .pp-estid')]
+    .filter(i=>!exceto||i.closest('.pp-wrap')?.id!==exceto)
+    .map(i=>i.value).filter(Boolean);
+}
+function ppRenderEstoque(wrapId){
+  const w=document.getElementById(wrapId); if(!w)return;
+  const box=w.querySelector('.pp-estoque'); if(!box)return;
+  if(w.querySelector('.pp-estid').value) return;   // já puxou: mantém o aviso de vínculo
+  const usados=ppJaEscolhidos(wrapId);
+  const disp=ppEstoqueDe(w.querySelector('.pp-tipo').value).filter(p=>!usados.includes(p.id));
+  if(!disp.length){ box.style.display='none'; box.innerHTML=''; return; }
+  box.style.display='block';
+  box.innerHTML=`📦 <strong>${disp.length} em estoque</strong>: `+disp.map(p=>
+    `<button type="button" class="pp-est-chip" onclick="ppUsarEstoque('${wrapId}','${p.id}')">${esc(p.nome||p.tipo)} · ${fmt(p.custo||0)}${(p.quantidade||1)>1?' ('+p.quantidade+'un)':''}</button>`
+  ).join('');
+}
+window.ppTipoMudou=(wrapId)=>{ ppSoltarEstoque(wrapId,true); };
+window.ppUsarEstoque=(wrapId,pecaId)=>{
+  const w=document.getElementById(wrapId); if(!w)return;
+  const pc=pecas.find(x=>x.id===pecaId); if(!pc)return;
+  w.querySelector('.pp-nome').value=pc.nome||'';
+  const c=w.querySelector('.pp-custo');
+  c.value=pc.custo||0; c.readOnly=true; c.style.background='var(--bg)';   // o valor é o que já foi pago
+  w.querySelector('.pp-estid').value=pecaId;
+  w.querySelector('.pp-estoque').innerHTML=`✅ Puxado do estoque: <strong>${esc(pc.nome||pc.tipo)}</strong> · ${fmt(pc.custo||0)} <button type="button" class="pp-est-chip" onclick="ppSoltarEstoque('${wrapId}')">desfazer</button>`;
+  ppTotal();
+  // as outras linhas não podem mais oferecer este mesmo pente
+  document.querySelectorAll('#ppLista .pp-wrap').forEach(o=>{ if(o.id!==wrapId) ppRenderEstoque(o.id); });
+};
+window.ppSoltarEstoque=(wrapId,trocouTipo)=>{
+  const w=document.getElementById(wrapId); if(!w)return;
+  w.querySelector('.pp-estid').value='';
+  const c=w.querySelector('.pp-custo');
+  if(c){ c.readOnly=false; c.style.background=''; if(!trocouTipo) c.value=''; }
+  if(!trocouTipo) w.querySelector('.pp-nome').value='';
+  document.querySelectorAll('#ppLista .pp-wrap').forEach(o=>ppRenderEstoque(o.id));
   ppTotal();
 };
 window.ppRemLinha=(id)=>{ const el=document.getElementById(id); if(el)el.remove(); ppTotal(); };
@@ -2873,7 +2943,8 @@ function ppColetar(){
     const tipo=r.querySelector('.pp-tipo').value;
     const nome=(r.querySelector('.pp-nome').value||'').trim()||tipo;
     const custo=parseFloat(r.querySelector('.pp-custo').value)||0;
-    out.push({tipo,nome,custo});
+    const estoqueId=(r.querySelector('.pp-estid')?.value||'');   // vínculo com o pente que veio do estoque
+    out.push({tipo,nome,custo,estoqueId});
   });
   return out;
 }
@@ -3056,7 +3127,10 @@ window.addProd=async()=>{
   // Vincular fornecedor (existente ou novo)
   let fornId=document.getElementById('pFornId').value||'';
   let fornNome=(document.getElementById('pForn').value||'').trim();
-  if(fornNome && !fornId){ fornId=await salvarFornecedor({nome:fornNome}); }
+  // salvarFornecedor cria o novo ou, se o nome já existe, devolve o mesmo id
+  // atualizando o telefone quando ele mudou. Por isso vale também para o já vinculado.
+  const fornWpp=(document.getElementById('pFornWpp')?.value||'').replace(/\D/g,'');
+  if(fornNome){ const fid=await salvarFornecedor({nome:fornNome,whatsapp:fornWpp}); if(fid) fornId=fid; }
   const num=prods.length>0?Math.max(...prods.map(p=>p.num||0))+1:1;
   // Peças aplicadas: entram no custo real da máquina
   const pecasNovas=ppColetar();
@@ -3069,15 +3143,36 @@ window.addProd=async()=>{
   const obj={userId:'shared_ijx',addedBy:user.uid,addedByName:user.displayName||user.email.split('@')[0],nome,custo:custoTotal,custo_base:custo,custo_pecas:custoPecas,custo_gasolina:custoGas,gas_pagante:gasPag,venda,lucro:venda-custoTotal,status,investidor,data_compra:dc,data_compra_mes:dcMes,data_venda:'',data:dcMes,canal_compra:canal,fornecedor_id:fornId,fornecedor_nome:fornNome,num,createdAt:new Date().toISOString()};
   let prodId='l'+Date.now();
   try{const r=await addDoc(collection(db,'products'),obj);prodId=r.id;prods.push({...obj,id:r.id});}catch(e){prods.push({...obj,id:prodId});}
-  // Grava as peças na aba Peças, já vinculadas a esta máquina
+  // Grava as peças na aba Peças, já vinculadas a esta máquina.
+  // Peça puxada do estoque dá BAIXA no registro existente em vez de criar outro —
+  // senão o mesmo pente ficaria contado duas vezes, um usado e um disponível.
   for(const pc of pecasNovas){
     const pobj={userId:'shared_ijx',addedBy:user.uid,nome:pc.nome,tipo:pc.tipo,custo:pc.custo,venda:0,lucro:0,status:'Usado',obs:'Aplicada em: '+nome,quantidade:1,produto_id:prodId,produto_nome:nome,criadoEm:new Date().toISOString()};
+    const orig=pc.estoqueId?pecas.find(x=>x.id===pc.estoqueId):null;
+    if(orig){
+      const q=orig.quantidade||1;
+      if(q>1){
+        // Registro com várias unidades: tira uma do estoque e cria o usado dela
+        const resta=q-1;
+        if(!String(orig.id).startsWith('lp')){ try{await updateDoc(doc(db,'pecas',orig.id),{quantidade:resta});}catch(e){} }
+        orig.quantidade=resta;
+        try{const pr=await addDoc(collection(db,'pecas'),pobj);pecas.push({...pobj,id:pr.id});}
+        catch(e){pecas.push({...pobj,id:'lp'+Date.now()+Math.random()});}
+      } else {
+        // Unidade única: o próprio registro vira usado, sem duplicar
+        const upd={status:'Usado',obs:'Aplicada em: '+nome,produto_id:prodId,produto_nome:nome};
+        if(!String(orig.id).startsWith('lp')){ try{await updateDoc(doc(db,'pecas',orig.id),upd);}catch(e){} }
+        Object.assign(orig,upd);
+      }
+      continue;
+    }
     try{const pr=await addDoc(collection(db,'pecas'),pobj);pecas.push({...pobj,id:pr.id});}
     catch(e){pecas.push({...pobj,id:'lp'+Date.now()+Math.random()});}
   }
   document.getElementById('pN').value='';document.getElementById('pC').value='';document.getElementById('pV').value='';document.getElementById('pDC').value='';document.getElementById('pCanal').value='';document.getElementById('pForn').value='';document.getElementById('pFornId').value='';
   const pg=document.getElementById('pGas'); if(pg) pg.value='';
   const pgp=document.getElementById('pGasPag'); if(pgp) pgp.value='ambos';
+  const pfw=document.getElementById('pFornWpp'); if(pfw) pfw.value='';
   try{ resetSpecBuilder(); }catch(e){}
   ppLimpar();
   // Notificar o sócio sobre o novo produto
@@ -3878,6 +3973,9 @@ window.pFornPick=(id)=>{
   document.getElementById('pForn').value=f.nome;
   document.getElementById('pFornId').value=id;
   document.getElementById('pFornDrop').style.display='none';
+  // Traz o telefone que já está no cadastro; digitar outro atualiza o fornecedor ao salvar
+  const w=document.getElementById('pFornWpp');
+  if(w) w.value=f.whatsapp||'';
 };
 
 // Estatísticas de sourcing por fornecedor (derivado dos produtos)
