@@ -451,6 +451,13 @@ input[type=number].inp{padding-left:32px}
 .rk-bar-fill{height:100%;border-radius:2px;background:var(--gr)}
 .rk-bar-fill.re{background:var(--re)}.rk-bar-fill.am{background:var(--am)}
 
+/* ── CONTADOR DE PEÇAS EM ESTOQUE ── */
+.pe-estoque{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:11px 14px;margin:0 0 12px}
+.pe-estoque-top{font-size:.78rem;color:#15803d;margin-bottom:8px}
+.pe-chips{display:flex;flex-wrap:wrap;gap:6px}
+.pe-chip{display:inline-flex;align-items:center;gap:5px;background:var(--w);border:1px solid var(--b2);border-radius:8px;padding:4px 9px;font-size:.73rem;color:var(--tx)}
+.pe-chip-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+
 /* ── GIRO POR MARCA ── */
 .giro-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin-bottom:12px}
 .giro-card{background:var(--w);border:1px solid var(--b);border-radius:var(--rad);padding:12px 14px;box-shadow:var(--sh)}
@@ -1312,6 +1319,8 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
               <button class="fc2" onclick="setPF('Plug',this)">🔌 Plugs</button>
             </div>
           </div>
+          <!-- CONTADOR DE ESTOQUE POR TIPO -->
+          <div id="pecasEstoqueBox" style="display:none"></div>
           <div id="pecasList"><div style="text-align:center;padding:48px;color:var(--li)">Nenhuma peça cadastrada</div></div>
         </div>
       </div><!-- /tab-pecas -->
@@ -5962,7 +5971,41 @@ window.savePecaEdit=async()=>{
   render();renderSecoes();calcStats();
 };
 
+// ── CONTADOR DE PEÇAS EM ESTOQUE, POR TIPO ──
+// Responde "quanto tenho parado em peça, e de quê?". Só entra status 'Estoque':
+// peça já aplicada numa máquina ou vendida não é capital disponível.
+// Usa o CUSTO (o que foi investido), não a venda — diferente do card "Valor total".
+const TIPO_EMOJI={'RAM':'🧠','HD/SSD':'💾','Tela':'🖥️','Bateria':'🔋','Teclado':'⌨️',
+  'Placa-mãe':'🧩','Carregador':'🔌','Carcaça':'📦','Plug/Tomada':'🔌','Outro':'🔧'};
+function renderPecasEstoque(){
+  const box=document.getElementById('pecasEstoqueBox');
+  if(!box)return;
+  const emEstoque=pecas.filter(p=>p.status==='Estoque');
+  if(!emEstoque.length){ box.style.display='none'; return; }
+  const porTipo={};
+  let qtdTotal=0, investidoTotal=0;
+  emEstoque.forEach(p=>{
+    const t=p.tipo||'Outro';
+    const q=p.quantidade||1, inv=(p.custo||0)*q;
+    if(!porTipo[t]) porTipo[t]={qtd:0,inv:0};
+    porTipo[t].qtd+=q; porTipo[t].inv+=inv;
+    qtdTotal+=q; investidoTotal+=inv;
+  });
+  const chips=Object.entries(porTipo)
+    .sort((a,b)=>b[1].qtd-a[1].qtd || b[1].inv-a[1].inv)
+    .map(([t,v])=>{
+      const cor=TIPO_CORES[t]||'#9ca3af';
+      return `<span class="pe-chip" style="border-color:${cor}40"><span class="pe-chip-dot" style="background:${cor}"></span>${TIPO_EMOJI[t]||'🔧'} <strong>${esc(t)}</strong> · ${v.qtd} · ${fmt(v.inv)}</span>`;
+    }).join('');
+  box.style.display='block';
+  box.innerHTML=`<div class="pe-estoque">
+      <div class="pe-estoque-top">📦 <strong>Em estoque, prontas pra usar</strong> · ${qtdTotal} peça${qtdTotal!==1?'s':''} · ${fmt(investidoTotal)} investido</div>
+      <div class="pe-chips">${chips}</div>
+    </div>`;
+}
+
 function renderPecas(){
+  renderPecasEstoque();
   const total=pecas.length;
   const emEstoque=pecas.filter(p=>p.status==='Estoque');
   const vendidas=pecas.filter(p=>p.status==='Vendido');
