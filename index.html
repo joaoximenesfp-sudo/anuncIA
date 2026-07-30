@@ -1364,7 +1364,17 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
         <div class="ib"><div class="ii">🎯</div><div><div class="il">Potencial</div><div class="iv am" id="iPot">—</div><div class="in" id="iPotN">—</div></div></div>
       </div>
       <div class="cg">
-        <div class="cc full"><div class="ch"><div class="ct">Receita vs Gasto em compras por mês (R$)</div><div class="cs">Cinza = receita (vendas do mês) · Barras = gasto em notebooks comprados no mês, por sócio · Linha = lucro</div></div><div class="cw tall"><canvas id="cRL"></canvas></div></div>
+        <div class="cc full"><div class="ch"><div class="ct">Receita vs Gasto em compras por mês (R$)</div><div class="cs">Cinza = receita (vendas do mês) · Barras = gasto em notebooks comprados no mês, por sócio · Linha = lucro</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end;margin-top:8px" id="chGrafBtns">
+            <button class="fc2 on" data-p="tudo" onclick="chGrafPeriodo('tudo')">Tudo</button>
+            <button class="fc2" data-p="6m" onclick="chGrafPeriodo('6m')">6 meses</button>
+            <button class="fc2" data-p="12m" onclick="chGrafPeriodo('12m')">12 meses</button>
+            <button class="fc2" data-p="ano" onclick="chGrafPeriodo('ano')">Este ano</button>
+            <input class="inp" type="month" id="chGrafDe" onchange="chGrafAplicar()" title="De" style="max-width:135px;font-size:.75rem;padding:4px 8px">
+            <input class="inp" type="month" id="chGrafAte" onchange="chGrafAplicar()" title="Até" style="max-width:135px;font-size:.75rem;padding:4px 8px">
+          </div>
+          <div style="font-size:.66rem;color:var(--li);margin-top:5px">Vale também para "Unidades vendidas por mês" — os dois compartilham o eixo.</div>
+        </div><div class="cw tall"><canvas id="cRL"></canvas></div></div>
         <div class="cc"><div class="ch"><div class="ct">Unidades vendidas por mês</div><div class="cs">Volume de notebooks</div></div><div class="cw"><canvas id="cQ"></canvas></div></div>
         <div class="cc"><div class="ch"><div class="ct">Lucro médio por marca (R$)</div><div class="cs">Qual marca rende mais por venda</div></div><div class="cw"><canvas id="cLM"></canvas></div></div>
         <div class="cc full"><div class="ch"><div class="ct">Distribuição do estoque por marca</div><div class="cs">Total histórico de produtos</div></div><div class="cw"><canvas id="cMarca"></canvas></div></div>
@@ -4963,6 +4973,36 @@ function getMesVenda(p){
   return '';
 }
 
+// ── PERÍODO DOS GRÁFICOS POR MÊS ──
+// Vazio = histórico inteiro. Afeta as séries mensais (receita vs gasto, unidades
+// vendidas e o indicador de melhor mês); os gráficos por marca não têm eixo de mês.
+let chGrafDe='', chGrafAte='';
+window.chGrafPeriodo=(tipo)=>{
+  const hoje=new Date(), fim=hoje.toISOString().slice(0,7);
+  const recua=n=>new Date(hoje.getFullYear(),hoje.getMonth()-n,1).toISOString().slice(0,7);
+  if(tipo==='tudo'){ chGrafDe=''; chGrafAte=''; }
+  else if(tipo==='6m'){ chGrafDe=recua(5); chGrafAte=fim; }
+  else if(tipo==='12m'){ chGrafDe=recua(11); chGrafAte=fim; }
+  else if(tipo==='ano'){ chGrafDe=hoje.getFullYear()+'-01'; chGrafAte=fim; }
+  const iDe=document.getElementById('chGrafDe'), iAte=document.getElementById('chGrafAte');
+  if(iDe) iDe.value=chGrafDe;
+  if(iAte) iAte.value=chGrafAte;
+  chGrafMarcarAtivo(tipo);
+  buildCharts();
+};
+window.chGrafAplicar=()=>{
+  let de=document.getElementById('chGrafDe')?.value||'';
+  let ate=document.getElementById('chGrafAte')?.value||'';
+  if(de&&ate&&de>ate){ const t=de; de=ate; ate=t;
+    document.getElementById('chGrafDe').value=de; document.getElementById('chGrafAte').value=ate; }
+  chGrafDe=de; chGrafAte=ate;
+  chGrafMarcarAtivo('');
+  buildCharts();
+};
+function chGrafMarcarAtivo(tipo){
+  document.querySelectorAll('#chGrafBtns .fc2').forEach(b=>b.classList.toggle('on', b.dataset.p===tipo));
+}
+
 function calcChartsData(){
   // Gera dados dos gráficos 100% a partir do array prods (tempo real)
   const vendidos = prods.filter(p=>p.status==='Vendido');
@@ -4973,8 +5013,11 @@ function calcChartsData(){
   vendidos.forEach(p=>{ const m=getMesVenda(p); if(m) mesesSet.add(m); });
   prods.forEach(p=>{ const m=getMesCompra(p); if(m) mesesSet.add(m); });
 
-  // Ordenar meses cronologicamente
-  const mesesOrdenados = [...mesesSet].sort();
+  // Ordenar cronologicamente e recortar pelo período escolhido.
+  // Todas as séries mensais (receita, gasto por sócio, lucro, unidades) são
+  // derivadas desta lista, então recortar aqui filtra o gráfico inteiro de uma vez.
+  const mesesOrdenados = [...mesesSet].sort()
+    .filter(m => (!chGrafDe || m>=chGrafDe) && (!chGrafAte || m<=chGrafAte));
 
   const labelMap = {
     '01':'Jan','02':'Fev','03':'Mar','04':'Abr','05':'Mai','06':'Jun',
