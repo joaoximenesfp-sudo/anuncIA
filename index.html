@@ -168,13 +168,12 @@ nav{position:sticky;top:0;z-index:50;background:rgba(249,248,246,.93);backdrop-f
 /* ── INSIGHTS ── */
 .ig{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:12px}
 .ib{background:var(--w);border:1px solid var(--b);border-radius:var(--rad);padding:16px 18px;box-shadow:var(--sh);display:flex;align-items:flex-start;gap:12px}
-/* Rentabilidade tem dois números lado a lado: numa coluna só o rótulo quebra */
-.ib.wide{grid-column:span 2}
-@media(max-width:720px){.ib.wide{grid-column:auto}}
-.ii{font-size:1.4rem;flex-shrink:0;margin-top:2px}
-.il{font-size:.7rem;font-weight:600;color:var(--li);text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px}
-.iv{font-family:'Instrument Serif',serif;font-size:1.3rem;color:var(--tx);line-height:1}
-.in{font-size:.72rem;color:var(--mu);margin-top:3px}
+/* largura fixa no emoji: sem isso cada card começa o texto numa posição */
+.ii{font-size:1.4rem;flex-shrink:0;margin-top:2px;width:26px;text-align:center}
+.ib>div:last-child{min-width:0}   /* deixa o texto encolher em vez de estourar o card */
+.il{font-size:.7rem;font-weight:600;color:var(--li);text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.iv{font-family:'Instrument Serif',serif;font-size:1.3rem;color:var(--tx);line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.in{font-size:.72rem;color:var(--mu);margin-top:3px;line-height:1.35}
 .cg{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
 .cc{background:var(--w);border:1px solid var(--b);border-radius:var(--rad);box-shadow:var(--sh);overflow:hidden}
 .cc.full{grid-column:1/-1}
@@ -258,7 +257,6 @@ input[type=number].inp{padding-left:32px}
 .meta-btn:hover{border-color:var(--tx);color:var(--tx)}
 .pecaprod-box{border:1px dashed var(--b2);border-radius:10px;padding:10px 12px;background:var(--bg)}
 .spec-builder{border:1px solid var(--b2);border-radius:10px;padding:12px 14px;background:var(--w)}
-.dual-metric{display:flex;align-items:center;gap:10px;margin-top:2px}
 .pgto-tabs{display:flex;gap:6px;margin-top:4px}
 .pgto-tab{flex:1;border:1px solid var(--b2);background:var(--w);color:var(--mu);font-size:.8rem;font-weight:700;padding:8px 0;border-radius:8px;cursor:pointer;transition:.12s}
 .pgto-tab:hover{border-color:var(--tx)}
@@ -309,14 +307,6 @@ input[type=number].inp{padding-left:32px}
 .parc-btn{border:1px solid var(--b2);background:var(--w);color:var(--mu);font-size:.72rem;font-weight:700;padding:6px 11px;border-radius:7px;cursor:pointer;white-space:nowrap}
 .parc-btn:hover{border-color:var(--tx);color:var(--tx)}
 .parc-btn.on{background:#15803d;color:#fff;border-color:#15803d}
-.dm-item{display:flex;flex-direction:column;cursor:help}
-.dm-val{font-size:1.35rem;font-weight:800;color:var(--tx);line-height:1.1}
-.dm-val.mk{color:#7c3aed}
-.dm-lbl{font-size:.66rem;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.02em}
-.dm-sub{display:block;font-weight:400;font-size:.6rem;color:var(--li);text-transform:none;letter-spacing:0}
-.dm-sep{width:1px;align-self:stretch;background:var(--b);margin:2px 0}
-.metric-help{display:inline-block;width:14px;height:14px;line-height:14px;text-align:center;border-radius:50%;background:var(--bg);color:var(--li);font-size:.62rem;cursor:help;font-weight:700}
-.metric-help:hover{background:var(--tx);color:var(--w)}
 .spec-row{display:grid;grid-template-columns:130px 1fr;gap:10px;margin-bottom:10px}
 .spec-field{display:flex;flex-direction:column;gap:3px}
 .spec-lbl{font-size:.68rem;font-weight:700;color:var(--mu)}
@@ -1337,28 +1327,16 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
       <div class="ig">
         <div class="ib"><div class="ii">📈</div><div><div class="il">Melhor mês</div><div class="iv" id="iBM">—</div><div class="in" id="iBMN">—</div></div></div>
         <div class="ib"><div class="ii">💰</div><div><div class="il">Lucro total</div><div class="iv" id="iLT">—</div><div class="in" id="iLTN">—</div></div></div>
-        <div class="ib wide"><div class="ii">📊</div><div style="flex:1">
-          <div class="il">Rentabilidade <span class="metric-help" title="Duas formas de medir o mesmo lucro. Passe o mouse em cada número.">ⓘ</span></div>
-          <div class="dual-metric">
-            <div class="dm-item" title="MARGEM = lucro ÷ venda. De cada R$100 que entra na venda, quanto sobra de lucro. É o padrão do varejo.">
-              <span class="dm-val" id="iMG">—</span>
-              <span class="dm-lbl">margem <span class="dm-sub">lucro ÷ venda</span></span>
-            </div>
-            <div class="dm-sep"></div>
-            <div class="dm-item" title="MARKUP = lucro ÷ custo. Quanto o lucro representa em cima do que você pagou. 100% = dobrou o dinheiro.">
-              <span class="dm-val mk" id="iMK">—</span>
-              <span class="dm-lbl">markup <span class="dm-sub">lucro ÷ custo</span></span>
-            </div>
-          </div>
-        </div></div>
+        <div class="ib" title="MARGEM = lucro ÷ venda. De cada R$ 100 que entra na venda, quanto sobra de lucro. É o padrão do varejo."><div class="ii">📊</div><div><div class="il">Margem</div><div class="iv" id="iMG">—</div><div class="in">lucro ÷ venda</div></div></div>
+        <div class="ib" title="MARKUP = lucro ÷ custo. Quanto o lucro representa em cima do que você pagou. 100% = dobrou o dinheiro."><div class="ii">🧮</div><div><div class="il">Markup</div><div class="iv" id="iMK">—</div><div class="in">lucro ÷ custo</div></div></div>
         <div class="ib"><div class="ii">🏆</div><div><div class="il">Marca líder</div><div class="iv" id="iMarca">—</div><div class="in" id="iMarcaN">—</div></div></div>
         <div class="ib"><div class="ii">🎯</div><div><div class="il">Ticket médio</div><div class="iv" id="iTk">—</div><div class="in">por notebook vendido</div></div></div>
         <div class="ib"><div class="ii">📦</div><div><div class="il">Na mão hoje</div><div class="iv b" id="iEst">—</div><div class="in" id="iEstN">—</div></div></div>
         <div class="ib"><div class="ii">🔮</div><div><div class="il">Potencial</div><div class="iv am" id="iPot">—</div><div class="in" id="iPotN">—</div></div></div>
-        <div class="ib"><div class="ii">💵</div><div><div class="il">Capital em giro</div><div class="iv g" id="pCapGiro">—</div><div class="in" id="pCapGiroSub">investido no estoque atual</div></div></div>
+        <div class="ib"><div class="ii">💼</div><div><div class="il">Capital em giro</div><div class="iv g" id="pCapGiro">—</div><div class="in" id="pCapGiroSub">investido no estoque atual</div></div></div>
         <div class="ib"><div class="ii">⏳</div><div><div class="il">Capital parado</div><div class="iv re" id="pCapParado">—</div><div class="in" id="pCapParadoSub">média de dias em estoque</div></div></div>
         <div class="ib"><div class="ii">📍</div><div><div class="il">Melhor origem</div><div class="iv b" id="pMelhorPlat">—</div><div class="in" id="pMelhorPlatSub">mais vendas no período</div></div></div>
-        <div class="ib"><div class="ii">💹</div><div><div class="il">ROI médio</div><div class="iv am" id="pRoiMedio">—</div><div class="in">retorno sobre custo</div></div></div>
+        <div class="ib"><div class="ii">🪙</div><div><div class="il">ROI médio</div><div class="iv am" id="pRoiMedio">—</div><div class="in">retorno sobre custo</div></div></div>
       </div>
 
       <div class="cg">
