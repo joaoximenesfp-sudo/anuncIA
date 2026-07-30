@@ -168,6 +168,9 @@ nav{position:sticky;top:0;z-index:50;background:rgba(249,248,246,.93);backdrop-f
 /* ── INSIGHTS ── */
 .ig{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:12px}
 .ib{background:var(--w);border:1px solid var(--b);border-radius:var(--rad);padding:16px 18px;box-shadow:var(--sh);display:flex;align-items:flex-start;gap:12px}
+/* Rentabilidade tem dois números lado a lado: numa coluna só o rótulo quebra */
+.ib.wide{grid-column:span 2}
+@media(max-width:720px){.ib.wide{grid-column:auto}}
 .ii{font-size:1.4rem;flex-shrink:0;margin-top:2px}
 .il{font-size:.7rem;font-weight:600;color:var(--li);text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px}
 .iv{font-family:'Instrument Serif',serif;font-size:1.3rem;color:var(--tx);line-height:1}
@@ -628,18 +631,8 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
 .obs-tag{font-size:.67rem;color:var(--mu);margin-left:4px}
 
 
-/* ── PAINEL ── */
-.painel-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:18px}
-.painel-card{background:var(--w);border:1px solid var(--b);border-radius:var(--rad);padding:16px 18px;box-shadow:var(--sh);position:relative;overflow:hidden}
-.painel-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
-.painel-card.plat::before{background:#2563eb}
-.painel-card.cap::before{background:#b45309}
-.painel-card.roi::before{background:#15803d}
-.painel-card.parado::before{background:#b91c1c}
-.painel-lbl{font-size:.68rem;font-weight:600;color:var(--li);text-transform:uppercase;letter-spacing:.09em;margin-bottom:5px}
-.painel-val{font-family:'Instrument Serif',serif;font-size:1.5rem;color:var(--tx);line-height:1}
-.painel-val.g{color:var(--gr)}.painel-val.re{color:var(--re)}.painel-val.am{color:var(--am)}.painel-val.b{color:var(--bl)}
-.painel-sub{font-size:.7rem;color:var(--li);margin-top:4px}
+/* Os cards .painel-* foram absorvidos pelos indicadores .ib da aba Insights:
+   dois estilos de card lado a lado, em grids separados, desalinhavam a tela. */
 
 /* ── PLATAFORMAS ── */
 .plat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin-bottom:12px}
@@ -1344,7 +1337,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
       <div class="ig">
         <div class="ib"><div class="ii">📈</div><div><div class="il">Melhor mês</div><div class="iv" id="iBM">—</div><div class="in" id="iBMN">—</div></div></div>
         <div class="ib"><div class="ii">💰</div><div><div class="il">Lucro total</div><div class="iv" id="iLT">—</div><div class="in" id="iLTN">—</div></div></div>
-        <div class="ib"><div class="ii">📊</div><div style="flex:1">
+        <div class="ib wide"><div class="ii">📊</div><div style="flex:1">
           <div class="il">Rentabilidade <span class="metric-help" title="Duas formas de medir o mesmo lucro. Passe o mouse em cada número.">ⓘ</span></div>
           <div class="dual-metric">
             <div class="dm-item" title="MARGEM = lucro ÷ venda. De cada R$100 que entra na venda, quanto sobra de lucro. É o padrão do varejo.">
@@ -1361,31 +1354,11 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
         <div class="ib"><div class="ii">🏆</div><div><div class="il">Marca líder</div><div class="iv" id="iMarca">—</div><div class="in" id="iMarcaN">—</div></div></div>
         <div class="ib"><div class="ii">🎯</div><div><div class="il">Ticket médio</div><div class="iv" id="iTk">—</div><div class="in">por notebook vendido</div></div></div>
         <div class="ib"><div class="ii">📦</div><div><div class="il">Na mão hoje</div><div class="iv b" id="iEst">—</div><div class="in" id="iEstN">—</div></div></div>
-        <div class="ib"><div class="ii">🎯</div><div><div class="il">Potencial</div><div class="iv am" id="iPot">—</div><div class="in" id="iPotN">—</div></div></div>
-      </div>
-
-      <!-- CARDS DE CAPITAL -->
-      <div class="painel-grid">
-        <div class="painel-card roi">
-          <div class="painel-lbl">Capital em giro</div>
-          <div class="painel-val g" id="pCapGiro">—</div>
-          <div class="painel-sub" id="pCapGiroSub">investido no estoque atual</div>
-        </div>
-        <div class="painel-card parado">
-          <div class="painel-lbl">Capital parado (dias)</div>
-          <div class="painel-val re" id="pCapParado">—</div>
-          <div class="painel-sub" id="pCapParadoSub">média de dias em estoque</div>
-        </div>
-        <div class="painel-card plat">
-          <div class="painel-lbl">Melhor plataforma</div>
-          <div class="painel-val b" id="pMelhorPlat">—</div>
-          <div class="painel-sub" id="pMelhorPlatSub">mais vendas no período</div>
-        </div>
-        <div class="painel-card cap">
-          <div class="painel-lbl">ROI médio</div>
-          <div class="painel-val am" id="pRoiMedio">—</div>
-          <div class="painel-sub">retorno sobre custo</div>
-        </div>
+        <div class="ib"><div class="ii">🔮</div><div><div class="il">Potencial</div><div class="iv am" id="iPot">—</div><div class="in" id="iPotN">—</div></div></div>
+        <div class="ib"><div class="ii">💵</div><div><div class="il">Capital em giro</div><div class="iv g" id="pCapGiro">—</div><div class="in" id="pCapGiroSub">investido no estoque atual</div></div></div>
+        <div class="ib"><div class="ii">⏳</div><div><div class="il">Capital parado</div><div class="iv re" id="pCapParado">—</div><div class="in" id="pCapParadoSub">média de dias em estoque</div></div></div>
+        <div class="ib"><div class="ii">📍</div><div><div class="il">Melhor origem</div><div class="iv b" id="pMelhorPlat">—</div><div class="in" id="pMelhorPlatSub">mais vendas no período</div></div></div>
+        <div class="ib"><div class="ii">💹</div><div><div class="il">ROI médio</div><div class="iv am" id="pRoiMedio">—</div><div class="in">retorno sobre custo</div></div></div>
       </div>
 
       <div class="cg">
@@ -5012,18 +4985,20 @@ function chGrafMarcarAtivo(tipo){
 // senão o card contradiria a barra que está logo abaixo dele.
 function buildCardsCapital(){
   const hoje=new Date();
-  const sub=(el,txt)=>{ const s=el&&el.parentElement&&el.parentElement.querySelector('.painel-sub'); if(s) s.textContent=txt; };
+  // Legendas por id: os cards usam o mesmo padrão dos demais indicadores da aba,
+  // então o subtítulo é um elemento próprio em vez de ser buscado pelo pai.
+  const sub=(id,txt)=>{ const s=document.getElementById(id); if(s) s.textContent=txt; };
   const estoqueAtual=prods.filter(p=>p.status==='Estoque'||p.status==='Anunciado');
   const capitalGiro=estoqueAtual.reduce((s,p)=>s+(p.custo||0),0);
   const cg=document.getElementById('pCapGiro');
-  if(cg){ cg.textContent=fmt(capitalGiro); sub(cg, estoqueAtual.length+' produtos no estoque/anunciados'); }
+  if(cg){ cg.textContent=fmt(capitalGiro); sub('pCapGiroSub', estoqueAtual.length+' produtos no estoque/anunciados'); }
   const dias=estoqueAtual.filter(p=>p.data_compra).map(p=>{
     const dc=p.data_compra.length===7?p.data_compra+'-01':p.data_compra;
     return Math.round((hoje-new Date(dc))/86400000);
   });
   const media=dias.length?Math.round(dias.reduce((a,b)=>a+b,0)/dias.length):0;
   const cp=document.getElementById('pCapParado');
-  if(cp){ cp.textContent=media+'d'; sub(cp, fmt(capitalGiro)+' imobilizados'); }
+  if(cp){ cp.textContent=media+'d'; sub('pCapParadoSub', fmt(capitalGiro)+' imobilizados'); }
   // dentro do período escolhido nos gráficos
   const vend=prods.filter(p=>{
     if(p.status!=='Vendido') return false;
@@ -5034,7 +5009,7 @@ function buildCardsCapital(){
   vend.filter(p=>p.plataforma).forEach(p=>{ porPlat[p.plataforma]=(porPlat[p.plataforma]||0)+1; });
   const melhor=Object.entries(porPlat).sort((a,b)=>b[1]-a[1])[0];
   const mp=document.getElementById('pMelhorPlat');
-  if(mp){ mp.textContent=melhor?melhor[0]:'—'; sub(mp, melhor?melhor[1]+' vendas no período':'sem origem registrada no período'); }
+  if(mp){ mp.textContent=melhor?melhor[0]:'—'; sub('pMelhorPlatSub', melhor?melhor[1]+' vendas no período':'sem origem registrada no período'); }
   const comCusto=vend.filter(p=>(p.custo||0)>0);
   const roi=comCusto.length?Math.round(comCusto.reduce((s,p)=>s+(getLucro(p)/p.custo*100),0)/comCusto.length):0;
   const roiEl=document.getElementById('pRoiMedio');
