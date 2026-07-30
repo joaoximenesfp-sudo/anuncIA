@@ -1363,13 +1363,38 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
         <div class="ib"><div class="ii">📦</div><div><div class="il">Na mão hoje</div><div class="iv b" id="iEst">—</div><div class="in" id="iEstN">—</div></div></div>
         <div class="ib"><div class="ii">🎯</div><div><div class="il">Potencial</div><div class="iv am" id="iPot">—</div><div class="in" id="iPotN">—</div></div></div>
       </div>
+
+      <!-- CARDS DE CAPITAL -->
+      <div class="painel-grid">
+        <div class="painel-card roi">
+          <div class="painel-lbl">Capital em giro</div>
+          <div class="painel-val g" id="pCapGiro">—</div>
+          <div class="painel-sub" id="pCapGiroSub">investido no estoque atual</div>
+        </div>
+        <div class="painel-card parado">
+          <div class="painel-lbl">Capital parado (dias)</div>
+          <div class="painel-val re" id="pCapParado">—</div>
+          <div class="painel-sub" id="pCapParadoSub">média de dias em estoque</div>
+        </div>
+        <div class="painel-card plat">
+          <div class="painel-lbl">Melhor plataforma</div>
+          <div class="painel-val b" id="pMelhorPlat">—</div>
+          <div class="painel-sub" id="pMelhorPlatSub">mais vendas no período</div>
+        </div>
+        <div class="painel-card cap">
+          <div class="painel-lbl">ROI médio</div>
+          <div class="painel-val am" id="pRoiMedio">—</div>
+          <div class="painel-sub">retorno sobre custo</div>
+        </div>
+      </div>
+
       <div class="cg">
         <div class="cc full"><div class="ch"><div class="ct">Receita vs Gasto em compras por mês (R$)</div><div class="cs">Cinza = receita (vendas do mês) · Barras = gasto em notebooks comprados no mês, por sócio · Linha = lucro</div>
           <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end;margin-top:8px" id="chGrafBtns">
-            <button class="fc2 on" data-p="tudo" onclick="chGrafPeriodo('tudo')">Tudo</button>
+            <button class="fc2" data-p="tudo" onclick="chGrafPeriodo('tudo')">Tudo</button>
             <button class="fc2" data-p="6m" onclick="chGrafPeriodo('6m')">6 meses</button>
             <button class="fc2" data-p="12m" onclick="chGrafPeriodo('12m')">12 meses</button>
-            <button class="fc2" data-p="ano" onclick="chGrafPeriodo('ano')">Este ano</button>
+            <button class="fc2 on" data-p="ano" onclick="chGrafPeriodo('ano')">Este ano</button>
             <input class="inp" type="month" id="chGrafDe" onchange="chGrafAplicar()" title="De" style="max-width:135px;font-size:.75rem;padding:4px 8px">
             <input class="inp" type="month" id="chGrafAte" onchange="chGrafAplicar()" title="Até" style="max-width:135px;font-size:.75rem;padding:4px 8px">
           </div>
@@ -1630,30 +1655,6 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
         <div class="proj-tab-desc" id="projCenDesc"></div>
         <div class="proj-tabela" id="projTabela"></div>
         <div class="proj-milhao" id="projMilhao"></div>
-      </div>
-
-      <!-- CARDS RÁPIDOS -->
-      <div class="painel-grid">
-        <div class="painel-card roi">
-          <div class="painel-lbl">Capital em giro</div>
-          <div class="painel-val g" id="pCapGiro">—</div>
-          <div class="painel-sub" id="pCapGiroSub">investido no estoque atual</div>
-        </div>
-        <div class="painel-card parado">
-          <div class="painel-lbl">Capital parado (dias)</div>
-          <div class="painel-val re" id="pCapParado">—</div>
-          <div class="painel-sub" id="pCapParadoSub">média de dias em estoque</div>
-        </div>
-        <div class="painel-card plat">
-          <div class="painel-lbl">Melhor plataforma</div>
-          <div class="painel-val b" id="pMelhorPlat">—</div>
-          <div class="painel-sub" id="pMelhorPlatSub">mais vendas no período</div>
-        </div>
-        <div class="painel-card cap">
-          <div class="painel-lbl">ROI médio</div>
-          <div class="painel-val am" id="pRoiMedio">—</div>
-          <div class="painel-sub">retorno sobre custo</div>
-        </div>
       </div>
 
       <!-- PLATAFORMAS -->
@@ -4976,7 +4977,9 @@ function getMesVenda(p){
 // ── PERÍODO DOS GRÁFICOS POR MÊS ──
 // Vazio = histórico inteiro. Afeta as séries mensais (receita vs gasto, unidades
 // vendidas e o indicador de melhor mês); os gráficos por marca não têm eixo de mês.
-let chGrafDe='', chGrafAte='';
+// Padrão: o ano corrente. Histórico inteiro mistura anos e achata o gráfico —
+// o ano dá uma base de comparação estável mês a mês.
+let chGrafDe=new Date().getFullYear()+'-01', chGrafAte=new Date().toISOString().slice(0,7);
 window.chGrafPeriodo=(tipo)=>{
   const hoje=new Date(), fim=hoje.toISOString().slice(0,7);
   const recua=n=>new Date(hoje.getFullYear(),hoje.getMonth()-n,1).toISOString().slice(0,7);
@@ -5001,6 +5004,41 @@ window.chGrafAplicar=()=>{
 };
 function chGrafMarcarAtivo(tipo){
   document.querySelectorAll('#chGrafBtns .fc2').forEach(b=>b.classList.toggle('on', b.dataset.p===tipo));
+}
+
+// ── CARDS DE CAPITAL (aba Insights) ──
+// Capital em giro e capital parado são fotografia do estoque de HOJE, então
+// ignoram o período. Melhor plataforma e ROI seguem o período dos gráficos —
+// senão o card contradiria a barra que está logo abaixo dele.
+function buildCardsCapital(){
+  const hoje=new Date();
+  const sub=(el,txt)=>{ const s=el&&el.parentElement&&el.parentElement.querySelector('.painel-sub'); if(s) s.textContent=txt; };
+  const estoqueAtual=prods.filter(p=>p.status==='Estoque'||p.status==='Anunciado');
+  const capitalGiro=estoqueAtual.reduce((s,p)=>s+(p.custo||0),0);
+  const cg=document.getElementById('pCapGiro');
+  if(cg){ cg.textContent=fmt(capitalGiro); sub(cg, estoqueAtual.length+' produtos no estoque/anunciados'); }
+  const dias=estoqueAtual.filter(p=>p.data_compra).map(p=>{
+    const dc=p.data_compra.length===7?p.data_compra+'-01':p.data_compra;
+    return Math.round((hoje-new Date(dc))/86400000);
+  });
+  const media=dias.length?Math.round(dias.reduce((a,b)=>a+b,0)/dias.length):0;
+  const cp=document.getElementById('pCapParado');
+  if(cp){ cp.textContent=media+'d'; sub(cp, fmt(capitalGiro)+' imobilizados'); }
+  // dentro do período escolhido nos gráficos
+  const vend=prods.filter(p=>{
+    if(p.status!=='Vendido') return false;
+    const m=getMesVenda(p);
+    return m && (!chGrafDe||m>=chGrafDe) && (!chGrafAte||m<=chGrafAte);
+  });
+  const porPlat={};
+  vend.filter(p=>p.plataforma).forEach(p=>{ porPlat[p.plataforma]=(porPlat[p.plataforma]||0)+1; });
+  const melhor=Object.entries(porPlat).sort((a,b)=>b[1]-a[1])[0];
+  const mp=document.getElementById('pMelhorPlat');
+  if(mp){ mp.textContent=melhor?melhor[0]:'—'; sub(mp, melhor?melhor[1]+' vendas no período':'sem origem registrada no período'); }
+  const comCusto=vend.filter(p=>(p.custo||0)>0);
+  const roi=comCusto.length?Math.round(comCusto.reduce((s,p)=>s+(getLucro(p)/p.custo*100),0)/comCusto.length):0;
+  const roiEl=document.getElementById('pRoiMedio');
+  if(roiEl) roiEl.textContent=roi+'%';
 }
 
 function calcChartsData(){
@@ -5074,6 +5112,13 @@ function buildCharts(){
   Object.values(chartsInstances).forEach(c=>{try{c.destroy();}catch(e){}});
   chartsInstances = {};
   chartsOk = true;
+
+  // Espelha o período nos campos De/Até e atualiza os cards de capital,
+  // que vivem nesta aba e seguem o mesmo recorte dos gráficos.
+  const iDe=document.getElementById('chGrafDe'), iAte=document.getElementById('chGrafAte');
+  if(iDe && iDe.value!==chGrafDe) iDe.value=chGrafDe;
+  if(iAte && iAte.value!==chGrafAte) iAte.value=chGrafAte;
+  buildCardsCapital();
 
   const d = calcChartsData();
   const font={family:"'DM Sans',sans-serif",size:11},tc='#78716c',gc='rgba(0,0,0,0.05)';
@@ -7645,40 +7690,11 @@ function buildPainel(){
   const elLabel = document.getElementById('painelMesLabel');
   if(elLabel) elLabel.textContent = mesNome;
   
-  const vendMes = prods.filter(p=>p.status==='Vendido'&&(p.data_venda||'').startsWith(painelMes));
   const hoje = new Date();
 
-  // ── Capital em giro (custo do estoque) ──
-  const estoqueAtual = prods.filter(p=>p.status==='Estoque'||p.status==='Anunciado');
-  const capitalGiro = estoqueAtual.reduce((s,p)=>s+p.custo,0);
-  const el_cg = document.getElementById('pCapGiro');
-  if(el_cg){ el_cg.textContent=fmt(capitalGiro); el_cg.parentElement.querySelector('.painel-sub').textContent = estoqueAtual.length+' produtos no estoque/anunciados'; }
-
-  // ── Capital parado (dias médios) ──
-  const diasMedios = estoqueAtual.filter(p=>p.data_compra).map(p=>{
-    const dc = p.data_compra.length===7?p.data_compra+'-01':p.data_compra;
-    return Math.round((hoje-new Date(dc))/(86400000));
-  });
-  const mediaDias = diasMedios.length ? Math.round(diasMedios.reduce((a,b)=>a+b,0)/diasMedios.length) : 0;
-  const el_cp = document.getElementById('pCapParado');
-  if(el_cp){ el_cp.textContent=mediaDias+'d'; el_cp.parentElement.querySelector('.painel-sub').textContent = fmt(capitalGiro)+' imobilizados'; }
-
-  // ── Melhor plataforma ──
-  const porPlat = {};
-  prods.filter(p=>p.status==='Vendido'&&p.plataforma&&(p.data_venda||'').startsWith(painelMes))
-    .forEach(p=>{ if(!porPlat[p.plataforma])porPlat[p.plataforma]=0; porPlat[p.plataforma]++; });
-  const todasVendas = prods.filter(p=>p.status==='Vendido'&&p.plataforma);
-  const porPlatTotal = {};
-  todasVendas.forEach(p=>{ if(!porPlatTotal[p.plataforma])porPlatTotal[p.plataforma]=0; porPlatTotal[p.plataforma]++; });
-  const melhorPlat = Object.entries(Object.keys(porPlat).length?porPlat:porPlatTotal).sort((a,b)=>b[1]-a[1])[0];
-  const el_mp = document.getElementById('pMelhorPlat');
-  if(el_mp && melhorPlat){ el_mp.textContent=melhorPlat[0]; el_mp.parentElement.querySelector('.painel-sub').textContent=melhorPlat[1]+' vendas'; }
-
-  // ── ROI médio ──
-  const vendComCusto = vendMes.filter(p=>p.custo>0);
-  const roiMedio = vendComCusto.length ? Math.round(vendComCusto.reduce((s,p)=>s+(p.lucro/p.custo*100),0)/vendComCusto.length) : 0;
-  const el_roi = document.getElementById('pRoiMedio');
-  if(el_roi){ el_roi.textContent=roiMedio+'%'; }
+  // Capital em giro, capital parado, melhor plataforma e ROI saíram daqui:
+  // moraram no Painel por engano e agora vivem na aba Insights, preenchidos
+  // por buildCardsCapital() a partir do período escolhido lá.
 
   // ── Grid de plataformas ──
   const platGrid = document.getElementById('platGrid');
