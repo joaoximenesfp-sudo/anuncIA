@@ -2725,13 +2725,14 @@ function em(c){return({
 // mesmo jeito e nada tinha sido salvo. Você só descobria ao recarregar, com o
 // trabalho voltando atrás sozinho e sem explicação nenhuma.
 // Agora a falha aparece: uma faixa vermelha fica no topo até você recarregar.
-let falhasGravacao=[];
+let falhasGravacao=[], modoDemo=false;
 async function gravar(promessa, oque){
   try{ await promessa; return true; }
   catch(e){
     falhasGravacao.push({oque, erro:(e&&e.message)||String(e), quando:new Date()});
+    // Em modo demonstração o aviso maior já está no ar; não sobrepor.
     const av=document.getElementById('salvaAviso');
-    if(av){
+    if(av && !modoDemo){
       const n=falhasGravacao.length;
       av.innerHTML=`⚠️ ${n} alteraç${n===1?'ão não foi salva':'ões não foram salvas'} no banco — o que está na tela vai sumir ao recarregar. <u>Toque para ver o motivo</u>`;
       av.style.display='block';
@@ -2739,11 +2740,26 @@ async function gravar(promessa, oque){
     return false;
   }
 }
+// A lista de demonstração é um catálogo antigo embutido no código. Ela existe
+// para a tela não nascer vazia, mas se aparecer no lugar dos dados reais você
+// PRECISA saber: as máquinas recentes não estão nela, e nada do que você fizer
+// vai ser salvo.
+function avisarDemo(porque){
+  modoDemo=true;
+  const av=document.getElementById('salvaAviso');
+  if(av){
+    av.innerHTML=`⚠️ Estes NÃO são os seus dados — é a lista de exemplo do código. Nada do que você fizer aqui será salvo. <u>Toque para ver o motivo</u>`;
+    av.style.display='block';
+  }
+  falhasGravacao.push({oque:'Ler os produtos do banco', erro:porque, quando:new Date()});
+}
 window.verFalhasGravacao=()=>{
   if(!falhasGravacao.length) return;
-  alert('Não foi salvo no banco:\n\n'+falhasGravacao.map((f,i)=>
-    `${i+1}. ${f.oque}\n   ${f.erro}`).join('\n\n')+
-    '\n\nO que aparece na tela é só local. Recarregue a página para ver o que realmente está salvo.');
+  alert((modoDemo?'A tela está mostrando a lista de exemplo, não o seu banco.\n\n':'Não foi salvo no banco:\n\n')
+    +falhasGravacao.map((f,i)=>`${i+1}. ${f.oque}\n   ${f.erro}`).join('\n\n')
+    +(modoDemo
+      ? '\n\nNenhuma máquina sua foi apagada — o app só não conseguiu ler o banco. Resolvendo o acesso, tudo volta.'
+      : '\n\nO que aparece na tela é só local. Recarregue a página para ver o que realmente está salvo.'));
 };
 
 async function loadProds(){
@@ -2760,10 +2776,17 @@ async function loadProds(){
     const sharedIds = new Set(sharedProds.map(p=>p.id));
     const extras    = ownProds.filter(p=>!sharedIds.has(p.id));
     const allProds  = [...sharedProds, ...extras];
-    prods = allProds.length > 0
-      ? allProds
-      : SEED_PRODS.map((p,i)=>({...p,userId:'shared_ijx',id:'x'+(i+1)}));
-  }catch(e){prods=SEED_PRODS.map((p,i)=>({...p,userId:'shared_ijx',id:'x'+(i+1)}));}
+    // Banco vazio de verdade (conta nova) é o único caso em que a lista de
+    // demonstração faz sentido. E mesmo assim, dito com todas as letras.
+    if(allProds.length > 0) prods = allProds;
+    else { prods = SEED_PRODS.map((p,i)=>({...p,userId:'shared_ijx',id:'x'+(i+1)})); avisarDemo('O banco respondeu sem nenhum produto'); }
+  }catch(e){
+    // Antes a leitura que falhava caía calada na lista de demonstração: você via
+    // um catálogo de 2025 achando que era o seu, não encontrava as máquinas
+    // recentes, e nada do que fizesse era salvo (os ids 'x' nem chegam ao banco).
+    prods = SEED_PRODS.map((p,i)=>({...p,userId:'shared_ijx',id:'x'+(i+1)}));
+    avisarDemo('Não consegui ler o banco: '+((e&&e.message)||e));
+  }
   prods.forEach((p,i)=>{if(!p.num)p.num=i+1;});
   // (Removido) A normalização de status pela lista SEED_PRODS foi retirada:
   // ela sobrescrevia o status salvo no Firestore a cada load, revertendo
