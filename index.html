@@ -444,6 +444,13 @@ input[type=number].inp{padding-left:32px}
 .rk-bar-fill{height:100%;border-radius:2px;background:var(--gr)}
 .rk-bar-fill.re{background:var(--re)}.rk-bar-fill.am{background:var(--am)}
 
+/* ── DEVOLUÇÃO / TROCA ── */
+.bdev{background:#fff7ed;color:#c2410c;border:1px solid #fed7aa;border-radius:7px;padding:3px 7px;font-size:.8rem;cursor:pointer;margin-left:4px;line-height:1}
+.bdev:hover{background:#ffedd5}
+.dev-alvo{font-size:.85rem;font-weight:600;color:var(--tx);background:var(--bg);border:1px solid var(--b);border-radius:8px;padding:9px 12px;margin-bottom:12px}
+.dev-aviso{font-size:.72rem;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:8px 11px;margin-top:10px;line-height:1.5}
+.dev-badge{font-size:.62rem;font-weight:700;background:#fff7ed;color:#c2410c;border:1px solid #fed7aa;padding:1px 6px;border-radius:6px}
+
 /* ── PUXAR PEÇA DO ESTOQUE NO CADASTRO ── */
 .pp-wrap{margin-bottom:5px}
 .pp-estoque{font-size:.7rem;color:#15803d;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:7px;padding:5px 8px;margin:0 0 4px;line-height:1.8}
@@ -2481,6 +2488,51 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
   </div>
 </div>
 
+<!-- MODAL DEVOLUÇÃO / TROCA -->
+<div class="smo h" id="DVO">
+  <div class="smoo" onclick="cancelDevolucao()"></div>
+  <div class="smc">
+    <div class="smch">
+      <span class="smct">↩️ Devolução ou troca</span>
+      <button class="smcx" onclick="cancelDevolucao()">✕</button>
+    </div>
+    <div class="smcb">
+      <div class="dev-alvo" id="dvNome">—</div>
+      <div class="fr">
+        <div class="fc full">
+          <label class="fl">O que aconteceu?</label>
+          <select class="inp" id="dvTipo" onchange="dvTipoMudou()">
+            <option value="devolucao">↩️ Devolução — cliente devolveu e o dinheiro voltou</option>
+            <option value="troca">🔄 Troca — cliente levou outra máquina no lugar</option>
+          </select>
+        </div>
+        <div class="fc"><label class="fl">Data</label><input class="inp" type="date" id="dvData"></div>
+        <div class="fc"><label class="fl">Volta como</label>
+          <select class="inp" id="dvVoltaComo">
+            <option value="Estoque">📦 Estoque — vou revisar antes</option>
+            <option value="Anunciado">📢 Anunciado — já volta pra venda</option>
+          </select>
+        </div>
+        <div class="fc full" id="dvTrocaWrap" style="display:none">
+          <label class="fl">🔄 Qual máquina o cliente levou no lugar <span style="font-size:.67rem;color:var(--li);font-weight:400">a venda dela você registra normalmente depois</span></label>
+          <input class="inp" type="text" id="dvTrocaBusca" placeholder="Buscar entre as máquinas não vendidas..." autocomplete="off" oninput="dvBuscaTroca(this.value)">
+          <input type="hidden" id="dvTrocaId">
+          <div id="dvTrocaDrop" style="display:none;background:var(--w);border:1px solid var(--b2);border-radius:8px;max-height:160px;overflow:auto;margin-top:4px"></div>
+        </div>
+        <div class="fc full">
+          <label class="fl">Motivo <span style="font-size:.67rem;color:var(--li);font-weight:400">o que deu errado — é isso que evita repetir</span></label>
+          <input class="inp" type="text" id="dvMotivo" placeholder="Ex: bateria não segurava carga · cliente achou pesado · defeito na tela">
+        </div>
+      </div>
+      <div class="dev-aviso" id="dvAviso"></div>
+    </div>
+    <div class="smcf">
+      <button class="bcan" onclick="cancelDevolucao()">Cancelar</button>
+      <button class="bvnd" onclick="confirmarDevolucao()">Confirmar</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL PAGAR CONTA -->
 <div class="wmo h" id="WMO">
   <div class="wmoo" onclick="closePayModal()"></div>
@@ -4501,6 +4553,82 @@ function getLucro(p){
   return p.lucro || 0;
 }
 
+// ── DEVOLUÇÃO / TROCA ──
+// Máquina devolvida VOLTA para o estoque — ela está fisicamente com você de novo.
+// Por isso não vira um status "Devolvido", que a faria sumir do estoque e do capital
+// em giro. A venda é desfeita e o que aconteceu fica gravado no campo devolucao,
+// preservando valor, cliente e data da venda que existiu.
+let dvId=null;
+window.abrirDevolucao=(id)=>{
+  const p=prods.find(x=>x.id===id); if(!p) return;
+  dvId=id;
+  document.getElementById('dvNome').textContent=p.nome||'—';
+  document.getElementById('dvTipo').value='devolucao';
+  document.getElementById('dvData').value=new Date().toISOString().split('T')[0];
+  document.getElementById('dvVoltaComo').value='Estoque';
+  document.getElementById('dvMotivo').value='';
+  document.getElementById('dvTrocaId').value='';
+  document.getElementById('dvTrocaBusca').value='';
+  document.getElementById('dvTrocaDrop').style.display='none';
+  dvTipoMudou();
+  document.getElementById('DVO').classList.remove('h');
+};
+window.cancelDevolucao=()=>{ dvId=null; document.getElementById('DVO').classList.add('h'); };
+window.dvTipoMudou=()=>{
+  const t=document.getElementById('dvTipo').value;
+  document.getElementById('dvTrocaWrap').style.display = t==='troca' ? '' : 'none';
+  const p=prods.find(x=>x.id===dvId);
+  const av=document.getElementById('dvAviso');
+  if(av&&p){
+    av.innerHTML=`⚠️ A venda de <strong>${fmt(p.venda||0)}</strong>`+
+      (p.data_venda?` (${fdt(p.data_venda)})`:'')+
+      ` sai das contas: o lucro de <strong>${fmt(getLucro(p))}</strong> deixa de contar no mês, e a máquina volta pro capital em giro. O registro do que aconteceu fica guardado nela.`;
+  }
+};
+window.dvBuscaTroca=(val)=>{
+  const drop=document.getElementById('dvTrocaDrop');
+  const q=(val||'').trim().toLowerCase();
+  document.getElementById('dvTrocaId').value='';
+  if(q.length<2){ drop.style.display='none'; return; }
+  const cand=prods.filter(p=>p.status!=='Vendido'&&p.id!==dvId&&(p.nome||'').toLowerCase().includes(q)).slice(0,8);
+  if(!cand.length){ drop.innerHTML='<div style="padding:8px 10px;font-size:.75rem;color:var(--li)">Nenhuma máquina disponível com esse nome</div>'; drop.style.display='block'; return; }
+  drop.innerHTML=cand.map(p=>`<div style="padding:7px 10px;font-size:.76rem;cursor:pointer;border-bottom:1px solid var(--b)" onclick="dvPickTroca('${p.id}')">${esc(p.nome)} <span style="color:var(--li)">· ${esc(p.status)}</span></div>`).join('');
+  drop.style.display='block';
+};
+window.dvPickTroca=(id)=>{
+  const p=prods.find(x=>x.id===id); if(!p) return;
+  document.getElementById('dvTrocaBusca').value=p.nome||'';
+  document.getElementById('dvTrocaId').value=id;
+  document.getElementById('dvTrocaDrop').style.display='none';
+};
+window.confirmarDevolucao=async()=>{
+  const p=prods.find(x=>x.id===dvId); if(!p) return;
+  const tipo=document.getElementById('dvTipo').value;
+  const data=document.getElementById('dvData').value||new Date().toISOString().split('T')[0];
+  const motivo=(document.getElementById('dvMotivo').value||'').trim();
+  const volta=document.getElementById('dvVoltaComo').value||'Estoque';
+  const trocaId=document.getElementById('dvTrocaId').value||'';
+  if(tipo==='troca'&&!trocaId){ alert('Escolha qual máquina o cliente levou no lugar, ou troque para "Devolução".'); return; }
+  const troca=trocaId?prods.find(x=>x.id===trocaId):null;
+  const registro={
+    tipo, data, motivo,
+    venda_anterior:p.venda||0, lucro_anterior:getLucro(p),
+    data_venda_anterior:p.data_venda||p.data||'',
+    plataforma_anterior:p.plataforma||'',
+    cliente_id_anterior:p.cliente_id||'', cliente_nome_anterior:p.cliente_nome||'',
+    trocado_por_id:trocaId, trocado_por_nome:troca?(troca.nome||''):''
+  };
+  // Desfaz a venda: zera os valores para ela parar de contar, e devolve ao estoque.
+  const upd={ status:volta, venda:0, lucro:0, data_venda:'', data:getMesCompra(p)||'',
+              plataforma:'', cliente_id:'', cliente_nome:'',
+              devolvido:true, devolucao:registro };
+  await doSaveStatus(dvId, upd);
+  cancelDevolucao();
+  alert(tipo==='troca'
+    ? 'Troca registrada. A máquina voltou pro estoque — agora registre a venda da que o cliente levou.'
+    : 'Devolução registrada. A máquina voltou pro estoque.');
+};
+
 // ── VENDAS SECTIONS ──
 let vendaSection = 'hoje';
 window.setVendaSection = (sec, btn) => {
@@ -4697,7 +4825,7 @@ function renderTabela(lista, tipo){
         .filter(Boolean).join(' ').toLowerCase().replace(/"/g,'');
       return`<tr data-busca="${_busca}">
         <td><span class="nb">${p.num||'?'}</span></td>
-        <td><div class="pn">${esc(p.nome)}</div>${compChips}<div style="display:flex;gap:4px;margin-top:3px;flex-wrap:wrap">${diasBadge}${custoTag}</div></td>
+        <td><div class="pn">${esc(p.nome)}</div>${compChips}<div style="display:flex;gap:4px;margin-top:3px;flex-wrap:wrap">${diasBadge}${custoTag}${p.devolucao?`<span class="dev-badge" title="${esc((p.devolucao.tipo==='troca'?'Trocada':'Devolvida')+' em '+(p.devolucao.data||'')+' · venda anterior '+fmt(p.devolucao.venda_anterior||0)+(p.devolucao.motivo?' · '+p.devolucao.motivo:''))}">↩ ${p.devolucao.tipo==='troca'?'trocada':'devolvida'}</span>`:''}</div></td>
         <td>${invBadge}</td>
         <td style="color:var(--li);font-size:.75rem">${dcDisplay}${autorTag}</td>
         <td style="color:var(--li);font-size:.75rem">${tipo==='vendidos'?fdt(p.data_venda):'—'}</td>
@@ -4709,7 +4837,7 @@ function renderTabela(lista, tipo){
           <option ${p.status==='Estoque'?'selected':''} value="Estoque">Estoque</option>
           <option ${p.status==='Vendido'?'selected':''} value="Vendido">Vendido</option>
         </select></td>
-        <td><button class="bed" onclick="openEdit('${p.id}')" title="Editar">✎</button></td>
+        <td><button class="bed" onclick="openEdit('${p.id}')" title="Editar">✎</button>${p.status==='Vendido'?`<button class="bdev" onclick="abrirDevolucao('${p.id}')" title="Registrar devolução ou troca">↩</button>`:''}</td>
         <td><button class="bdl" onclick="delProd('${p.id}')" title="Excluir">✕</button></td>
       </tr>`;
     }).join('');
@@ -4813,7 +4941,7 @@ function render(){
           <option ${p.status==='Estoque'?'selected':''} value="Estoque">Estoque</option>
           <option ${p.status==='Vendido'?'selected':''} value="Vendido">Vendido</option>
         </select></td>
-        <td><button class="bed" onclick="openEdit('${p.id}')" title="Editar">✎</button></td>
+        <td><button class="bed" onclick="openEdit('${p.id}')" title="Editar">✎</button>${p.status==='Vendido'?`<button class="bdev" onclick="abrirDevolucao('${p.id}')" title="Registrar devolução ou troca">↩</button>`:''}</td>
         <td><button class="bdl" onclick="delProd('${p.id}')" title="Excluir">✕</button></td>
       </tr>`;
     }).join('');
