@@ -454,6 +454,14 @@ input[type=number].inp{padding-left:32px}
 .dev-dif{font-size:.8rem;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:9px 12px;color:#15803d;line-height:1.5}
 .dev-dif.neg{background:#fef2f2;border-color:#fecaca;color:#b91c1c}
 
+/* Faixa de alerta quando uma gravação no banco falha. Fica no topo, acima de
+   tudo, porque o risco é justamente você continuar trabalhando achando que
+   salvou. */
+.salva-aviso{position:fixed;top:0;left:0;right:0;z-index:9999;background:#b91c1c;color:#fff;
+  font-size:.76rem;font-weight:600;text-align:center;padding:9px 14px;cursor:pointer;
+  box-shadow:0 2px 10px rgba(0,0,0,.25);line-height:1.4}
+.salva-aviso u{text-underline-offset:2px}
+
 /* ── PUXAR PEÇA DO ESTOQUE NO CADASTRO ── */
 .pp-wrap{margin-bottom:5px}
 .pp-estoque{font-size:.7rem;color:#15803d;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:7px;padding:5px 8px;margin:0 0 4px;line-height:1.8}
@@ -928,6 +936,9 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
 </style>
 </head>
 <body>
+
+<!-- AVISO DE GRAVAÇÃO QUE FALHOU -->
+<div id="salvaAviso" class="salva-aviso" style="display:none" onclick="verFalhasGravacao()"></div>
 
 <!-- AUTH -->
 <div class="as" id="AS">
@@ -2708,6 +2719,33 @@ function em(c){return({
   'auth/network-request-failed':'Sem conexão. Confira sua internet.'
 }[c])||'Erro ao autenticar.';}
 
+// ── GRAVAÇÕES QUE FALHAM ──
+// Todo write no Firestore vivia dentro de um catch vazio. Quando falhava — regra
+// do banco negando, internet caindo, campo inválido — a tela era atualizada do
+// mesmo jeito e nada tinha sido salvo. Você só descobria ao recarregar, com o
+// trabalho voltando atrás sozinho e sem explicação nenhuma.
+// Agora a falha aparece: uma faixa vermelha fica no topo até você recarregar.
+let falhasGravacao=[];
+async function gravar(promessa, oque){
+  try{ await promessa; return true; }
+  catch(e){
+    falhasGravacao.push({oque, erro:(e&&e.message)||String(e), quando:new Date()});
+    const av=document.getElementById('salvaAviso');
+    if(av){
+      const n=falhasGravacao.length;
+      av.innerHTML=`⚠️ ${n} alteraç${n===1?'ão não foi salva':'ões não foram salvas'} no banco — o que está na tela vai sumir ao recarregar. <u>Toque para ver o motivo</u>`;
+      av.style.display='block';
+    }
+    return false;
+  }
+}
+window.verFalhasGravacao=()=>{
+  if(!falhasGravacao.length) return;
+  alert('Não foi salvo no banco:\n\n'+falhasGravacao.map((f,i)=>
+    `${i+1}. ${f.oque}\n   ${f.erro}`).join('\n\n')+
+    '\n\nO que aparece na tela é só local. Recarregue a página para ver o que realmente está salvo.');
+};
+
 async function loadProds(){
   if(!user)return;
   try{
@@ -3033,7 +3071,7 @@ window.peLimparDups=async(prodId)=>{
     const base=p.custo_base!==undefined?p.custo_base:((p.custo||0)-(p.custo_pecas||0));
     const novoCusto=base+somaPecas;
     const upd={custo:novoCusto,custo_base:base,custo_pecas:somaPecas,lucro:(p.venda||0)-novoCusto};
-    try{ if(!String(p.id).startsWith('l')&&!String(p.id).startsWith('x')) await updateDoc(doc(db,'products',p.id),upd); }catch(e){}
+    if(!String(p.id).startsWith('l')&&!String(p.id).startsWith('x')) await gravar(updateDoc(doc(db,'products',p.id),upd), 'Custo de peças de "'+(p.nome||p.id)+'"');
     Object.assign(p,upd);
     const eC=document.getElementById('eC'); if(eC) eC.value=novoCusto;
   }
@@ -3054,7 +3092,7 @@ window.peRemExistente=async(pecaId)=>{
     const base=p.custo_base!==undefined?p.custo_base:(p.custo-(p.custo_pecas||0));
     const novoCusto=base+novoPecas;
     const upd={custo:novoCusto,custo_base:base,custo_pecas:novoPecas,lucro:(p.venda||0)-novoCusto};
-    try{ if(!String(p.id).startsWith('l')&&!String(p.id).startsWith('x')) await updateDoc(doc(db,'products',p.id),upd); }catch(e){}
+    if(!String(p.id).startsWith('l')&&!String(p.id).startsWith('x')) await gravar(updateDoc(doc(db,'products',p.id),upd), 'Custo de peças de "'+(p.nome||p.id)+'"');
     Object.assign(p,upd);
     document.getElementById('eC').value=novoCusto;
   }
@@ -3112,7 +3150,7 @@ async function ajustaCustoPecas(prodId, delta){
   const base=p.custo_base!==undefined?p.custo_base:((p.custo||0)-(p.custo_pecas||0));
   const novoCusto=Math.max(0, base+pecasAtual);
   const upd={custo:novoCusto, custo_base:base, custo_pecas:pecasAtual, lucro:(p.venda||0)-novoCusto};
-  try{ if(!String(prodId).startsWith('l')&&!String(prodId).startsWith('x')) await updateDoc(doc(db,'products',prodId),upd); }catch(e){}
+  if(!String(prodId).startsWith('l')&&!String(prodId).startsWith('x')) await gravar(updateDoc(doc(db,'products',prodId),upd), 'Custo de peças da máquina');
   Object.assign(p,upd);
 }
 
@@ -3180,7 +3218,8 @@ window.addProd=async()=>{
   const dcMes=dc?dc.slice(0,7):'';
   const obj={userId:'shared_ijx',addedBy:user.uid,addedByName:user.displayName||user.email.split('@')[0],nome,custo:custoTotal,custo_base:custo,custo_pecas:custoPecas,custo_gasolina:custoGas,gas_pagante:gasPag,venda,lucro:venda-custoTotal,status,investidor,data_compra:dc,data_compra_mes:dcMes,data_venda:'',data:dcMes,canal_compra:canal,fornecedor_id:fornId,fornecedor_nome:fornNome,num,createdAt:new Date().toISOString()};
   let prodId='l'+Date.now();
-  try{const r=await addDoc(collection(db,'products'),obj);prodId=r.id;prods.push({...obj,id:r.id});}catch(e){prods.push({...obj,id:prodId});}
+  try{const r=await addDoc(collection(db,'products'),obj);prodId=r.id;prods.push({...obj,id:r.id});}
+  catch(e){ await gravar(Promise.reject(e), 'Cadastrar "'+nome+'"'); prods.push({...obj,id:prodId}); }
   // Grava as peças na aba Peças, já vinculadas a esta máquina.
   // Peça puxada do estoque dá BAIXA no registro existente em vez de criar outro —
   // senão o mesmo pente ficaria contado duas vezes, um usado e um disponível.
@@ -3222,7 +3261,8 @@ window.addProd=async()=>{
 
 window.delProd=async id=>{
   if(!confirm('Excluir este produto?'))return;
-  if(!id.startsWith('x')&&!id.startsWith('l')){try{await deleteDoc(doc(db,'products',id));}catch(e){}}
+  const alvoDel=prods.find(p=>p.id===id);
+  if(!id.startsWith('x')&&!id.startsWith('l')) await gravar(deleteDoc(doc(db,'products',id)), 'Excluir "'+((alvoDel&&alvoDel.nome)||id)+'"');
   prods=prods.filter(p=>p.id!==id);render();renderSecoes();calcStats();
 };
 
@@ -3516,7 +3556,7 @@ window.fecharParcelas=()=>{ document.getElementById('PARCO').classList.add('h');
 window.togglePar=async(i)=>{
   const p=prods.find(x=>x.id===parcProdId); if(!p||!p.parcelas[i])return;
   p.parcelas[i].pago=!p.parcelas[i].pago;
-  try{ if(!String(p.id).startsWith('l')&&!String(p.id).startsWith('x')) await updateDoc(doc(db,'products',p.id),{parcelas:p.parcelas}); }catch(e){}
+  if(!String(p.id).startsWith('l')&&!String(p.id).startsWith('x')) await gravar(updateDoc(doc(db,'products',p.id),{parcelas:p.parcelas}), 'Parcelas de "'+(p.nome||p.id)+'"');
   abrirParcelas(parcProdId);   // re-renderiza
   renderSecoes();
 };
@@ -3597,8 +3637,9 @@ window.updSplitVenda=()=>{
 };
 
 async function doSaveStatus(id,upd){
-  if(!id.startsWith('x')&&!id.startsWith('l')){try{await updateDoc(doc(db,'products',id),upd);}catch(e){}}
-  const p=prods.find(x=>x.id===id);if(p)Object.assign(p,upd);
+  const alvo=prods.find(x=>x.id===id);
+  if(!id.startsWith('x')&&!id.startsWith('l')) await gravar(updateDoc(doc(db,'products',id),upd), 'Alterar "'+((alvo&&alvo.nome)||id)+'"');
+  const p=alvo;if(p)Object.assign(p,upd);
   render();renderSecoes();calcStats();
   if(document.getElementById('pg-insights')&&document.getElementById('pg-insights').classList.contains('on'))buildCharts();
 }
@@ -4476,7 +4517,7 @@ window.saveEdit=async()=>{
   const totalPecas=somaJa+somaNovas;
 
   const upd={nome,custo:custoFinal,custo_base:baseMaquina,custo_pecas:totalPecas,venda,lucro:venda-custoFinal,status,investidor,plataforma:(status==='Vendido'?(document.getElementById('ePlat')?.value||''):''),repasse_socio:(status==='Vendido'?(parseFloat(document.getElementById('eRepasse')?.value)||0):0),falta_comprar:(status!=='Vendido'?(document.getElementById('eFalta')?.value.trim()||''):''),fornecedor_id:fornId,fornecedor_nome:fornNome,data_compra:dc,data_compra_mes:dcMes,data_venda:dv,data:(dv?dv.slice(0,7):dcMes),gas_pagante:(document.getElementById('eGasPag')?.value||'ambos'),cliente_id:cliId,cliente_nome:cliNome};
-  if(!editId.startsWith('x')&&!editId.startsWith('l')){try{await updateDoc(doc(db,'products',editId),upd);}catch(e){}}
+  if(!editId.startsWith('x')&&!editId.startsWith('l')) await gravar(updateDoc(doc(db,'products',editId),upd), 'Editar "'+nome+'"');
   // Grava as peças novas na aba Peças, vinculadas a esta máquina
   for(const pc of pecasNovas){
     const pobj={userId:'shared_ijx',addedBy:user.uid,nome:pc.nome,tipo:pc.tipo,custo:pc.custo,venda:0,lucro:0,status:'Usado',obs:'Aplicada em: '+nome,quantidade:1,produto_id:editId,produto_nome:nome,criadoEm:new Date().toISOString()};
@@ -6997,7 +7038,8 @@ window.confirmarImportacao = async () => {
     logMig('impLog', `🗑️ Removendo ${snap.size} produtos antigos...`, '#fbbf24');
     let del=0;
     for(const d of snap.docs){
-      try{ await deleteDoc(doc(db,'products', d.id)); del++; }catch(e){}
+      try{ await deleteDoc(doc(db,'products', d.id)); del++; }
+      catch(e){ logMig('impLog', `✗ Não apagou "${(d.data()||{}).nome||d.id}": ${e.message}`, '#f87171'); }
       if(del % 20 === 0) await new Promise(r=>setTimeout(r,150));
     }
     logMig('impLog', `✓ ${del} produtos antigos removidos.`, '#4ade80');
