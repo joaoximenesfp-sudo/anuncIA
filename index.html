@@ -4759,9 +4759,14 @@ window.setVendaSection = (sec, btn) => {
 };
 
 function renderSecoes(){
+  // "Na mão hoje" = tudo que NÃO está vendido. Antes as listas casavam o status
+  // exato ('Anunciado' / 'Estoque' / 'Vendido'), então uma máquina com o status
+  // em branco ou escrito de outro jeito não caía em lista nenhuma: sumia da
+  // aba inicial e só aparecia em "Tudo". Agora o que não é Anunciado nem
+  // Vendido cai no estoque — que é a verdade física: a máquina está com você.
   const anunciados = prods.filter(p=>p.status==='Anunciado');
-  const estoque    = prods.filter(p=>p.status==='Estoque');
   const vendidos   = prods.filter(p=>p.status==='Vendido');
+  const estoque    = prods.filter(p=>p.status!=='Anunciado' && p.status!=='Vendido');
   const hoje       = new Date();
 
   // Update tab counts
@@ -4851,6 +4856,16 @@ window.filtrarMarca=(inp)=>{
     info.style.color = (termos.length && !achou) ? 'var(--re)' : 'var(--li)';
   }
 };
+
+// Se o status gravado não for nenhum dos três, o <select> mostraria a primeira
+// opção como se fosse a verdade. Esta opção extra revela o valor real — assim
+// dá pra ver que está errado e corrigir ali mesmo, em vez de a máquina parecer
+// anunciada quando não está.
+function statusEstranho(p){
+  const st=p.status||'';
+  if(st==='Anunciado'||st==='Estoque'||st==='Vendido') return '';
+  return `<option selected value="${esc(st)}">⚠️ ${esc(st||'sem status')}</option>`;
+}
 
 function renderTabela(lista, tipo){
   if(!lista.length) return '<div style="text-align:center;padding:32px;font-size:.78rem;color:var(--li)">Nenhum produto</div>';
@@ -4944,6 +4959,7 @@ function renderTabela(lista, tipo){
         <td class="pp ${lp>=0?'pos':'neg'}">${fmt(lp)}${splitLucro}</td>
         <td>${sb}${platInfo}${parcInfo}${faltaInfo}</td>
         <td><select class="sel" data-id="${p.id}" onchange="updStatus('${p.id}',this.value)">
+          ${statusEstranho(p)}
           <option ${p.status==='Anunciado'?'selected':''} value="Anunciado">Anunciado</option>
           <option ${p.status==='Estoque'?'selected':''} value="Estoque">Estoque</option>
           <option ${p.status==='Vendido'?'selected':''} value="Vendido">Vendido</option>
@@ -5048,6 +5064,7 @@ function render(){
         <td class="pp ${lp>=0?'pos':'neg'}">${fmt(lp)}${diasInfo}${splitLucro}</td>
         <td>${sb}${platInfo}${parcInfo}${faltaInfo}</td>
         <td><select class="sel" data-id="${p.id}" onchange="updStatus('${p.id}',this.value)">
+          ${statusEstranho(p)}
           <option ${p.status==='Anunciado'?'selected':''} value="Anunciado">Anunciado</option>
           <option ${p.status==='Estoque'?'selected':''} value="Estoque">Estoque</option>
           <option ${p.status==='Vendido'?'selected':''} value="Vendido">Vendido</option>
