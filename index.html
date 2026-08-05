@@ -1832,8 +1832,26 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
         <div id="syncList"><div class="sync-empty">Nenhuma pendência no momento ✅</div></div>
       </div>
 
+      <!-- PROCURAR MÁQUINA NO BANCO (somente leitura) -->
+      <div class="cd" style="border-left:3px solid #1d4ed8">
+        <div class="cdh"><span class="cdht">🔦 Cadê essa máquina?</span></div>
+        <div class="cdb">
+          <div style="font-size:.74rem;color:var(--li);line-height:1.55;margin-bottom:10px">
+            Lê a coleção <code style="background:var(--bg);padding:1px 5px;border-radius:4px">products</code> <strong>inteira</strong>,
+            sem nenhum filtro — inclusive o que o app não está mostrando na tela. Use quando uma máquina
+            some: aqui dá pra ver se ela existe no banco, com que status, e por que sumiu da listagem.
+            <strong>Não altera nada</strong> — é só leitura.
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+            <input class="inp" type="text" id="cadeBusca" placeholder="Parte do nome — ex: thinkpad, dell latitude" style="flex:1;min-width:200px" onkeydown="if(event.key==='Enter')procurarNoBanco()">
+            <button class="bsg" onclick="procurarNoBanco()" id="btnCade">🔦 Procurar no banco</button>
+          </div>
+          <div id="cadeOut" style="font-size:.78rem;color:var(--li)">Digite parte do nome, ou deixe em branco para listar tudo.</div>
+        </div>
+      </div>
+
       <!-- AUDITORIA DE VALORES (somente leitura) -->
-      <div class="cd" style="border-left:3px solid #b45309">
+      <div class="cd" style="border-left:3px solid #b45309;margin-top:12px">
         <div class="cdh"><span class="cdht">🔍 Auditoria de valores gravados</span></div>
         <div class="cdb">
           <div style="font-size:.74rem;color:var(--li);line-height:1.55;margin-bottom:10px">
@@ -6795,6 +6813,77 @@ window.audPeriodo=(tipo)=>{
   if(iAte) iAte.value=ate;
   window.auditarMes();
 };
+// ── CADÊ ESSA MÁQUINA? ──
+// O app só carrega produtos com userId 'shared_ijx' ou o uid de quem está
+// logado. Uma máquina gravada com outro dono — cadastrada pelo sócio antes da
+// conta compartilhada, ou por uma migração pela metade — existe no banco e é
+// invisível na tela, em todas as abas, para sempre. Nenhuma busca do app acha,
+// porque ela nunca entrou na lista.
+// Esta ferramenta lê a coleção crua, sem filtro de dono, e diz onde cada
+// registro está e por que aparece (ou não).
+window.procurarNoBanco=async()=>{
+  const out=document.getElementById('cadeOut');
+  const btn=document.getElementById('btnCade');
+  const termo=(document.getElementById('cadeBusca').value||'').trim().toLowerCase();
+  out.innerHTML='Lendo o banco...'; if(btn) btn.disabled=true;
+  let docs;
+  try{
+    const snap=await getDocs(collection(db,'products'));
+    docs=snap.docs.map(d=>({id:d.id,...d.data()}));
+  }catch(e){
+    out.innerHTML=`<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:11px 13px;color:#b91c1c;line-height:1.6">
+      <strong>Não consegui ler a coleção.</strong><br>${esc(e.message||String(e))}<br>
+      <span style="font-size:.72rem">Se fala em permissão, são as regras do Firestore — é o mesmo motivo que faria a máquina sumir da tela.</span></div>`;
+    if(btn) btn.disabled=false; return;
+  }
+  if(btn) btn.disabled=false;
+
+  const naTela=new Set(prods.map(p=>p.id));
+  const achados=termo ? docs.filter(d=>(d.nome||'').toLowerCase().includes(termo)) : docs;
+  const invisiveis=docs.filter(d=>!naTela.has(d.id));
+  const donos={};
+  docs.forEach(d=>{ const u=d.userId||'(sem userId)'; donos[u]=(donos[u]||0)+1; });
+
+  const resumo=`<div style="background:var(--bg);border:1px solid var(--b);border-radius:8px;padding:11px 13px;margin-bottom:10px;line-height:1.7;color:var(--tx)">
+    <strong>${docs.length}</strong> registro${docs.length!==1?'s':''} no banco · <strong>${prods.length}</strong> carregado${prods.length!==1?'s':''} pelo app
+    ${invisiveis.length?`<br><span style="color:#b91c1c;font-weight:600">⚠️ ${invisiveis.length} registro${invisiveis.length!==1?'s estão':' está'} no banco e não aparece${invisiveis.length!==1?'m':''} em lugar nenhum da tela</span>`:'<br><span style="color:var(--gr)">✓ Tudo que está no banco está na tela</span>'}
+    <div style="font-size:.72rem;color:var(--li);margin-top:6px">Donos: ${Object.entries(donos).map(([u,n])=>`${esc(u)} (${n})`).join(' · ')}</div>
+  </div>`;
+
+  if(!achados.length){ out.innerHTML=resumo+`<div style="padding:14px;text-align:center">Nenhum registro com "${esc(termo)}" no nome.</div>`; return; }
+
+  const linhas=achados.slice(0,60).map(d=>{
+    const vis=naTela.has(d.id);
+    const motivo = vis ? '' :
+      (d.userId && d.userId!=='shared_ijx' ? `dono é <code>${esc(d.userId)}</code>, o app só carrega <code>shared_ijx</code> e o seu uid` : 'sem userId — o app não consegue encontrá-la');
+    return `<tr style="border-top:1px solid var(--b)">
+      <td style="padding:7px 8px"><div style="font-weight:600;color:var(--tx)">${esc(d.nome||'(sem nome)')}</div>
+        <div style="font-size:.68rem;color:var(--li)">id ${esc(d.id)}</div>
+        ${vis?'':`<div style="font-size:.68rem;color:#b91c1c;margin-top:2px">invisível: ${motivo}</div>`}</td>
+      <td style="padding:7px 8px;white-space:nowrap">${esc(d.status||'(sem status)')}</td>
+      <td style="padding:7px 8px;white-space:nowrap">${fmt(d.venda||0)}</td>
+      <td style="padding:7px 8px;white-space:nowrap;color:var(--li)">${esc(d.data_venda||d.data||'—')}</td>
+      <td style="padding:7px 8px;white-space:nowrap">${vis?'<span style="color:var(--gr);font-weight:600">na tela</span>':`<button class="bsg" style="font-size:.68rem;padding:3px 8px" onclick="trazerParaTela('${d.id}')">Trazer</button>`}</td>
+    </tr>`;
+  }).join('');
+
+  out.innerHTML=resumo+`<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:.76rem">
+    <thead><tr style="text-align:left;color:var(--li);font-size:.7rem">
+      <th style="padding:6px 8px">Máquina</th><th style="padding:6px 8px">Status</th><th style="padding:6px 8px">Venda</th><th style="padding:6px 8px">Data</th><th style="padding:6px 8px"></th>
+    </tr></thead><tbody>${linhas}</tbody></table></div>`
+    +(achados.length>60?`<div style="font-size:.72rem;color:var(--li);margin-top:8px">Mostrando 60 de ${achados.length}. Refine a busca.</div>`:'');
+};
+
+// Passa o registro para o dono compartilhado, que é o que o app carrega.
+// É a mesma coisa que a migração faz, só que numa máquina por vez.
+window.trazerParaTela=async(id)=>{
+  if(!confirm('Trazer esta máquina para a conta compartilhada? Ela vai passar a aparecer na tela para você e para o seu sócio.')) return;
+  const okGrav=await gravar(updateDoc(doc(db,'products',id),{userId:'shared_ijx'}), 'Trazer máquina '+id+' para a conta compartilhada');
+  if(!okGrav) return;
+  await loadProds();
+  procurarNoBanco();
+};
+
 window.auditarMes=()=>{
   const el=document.getElementById('audOut'); if(!el) return;
   const btn=document.getElementById('audCopyBtn');
