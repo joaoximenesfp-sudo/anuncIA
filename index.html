@@ -450,6 +450,9 @@ input[type=number].inp{padding-left:32px}
 .dev-alvo{font-size:.85rem;font-weight:600;color:var(--tx);background:var(--bg);border:1px solid var(--b);border-radius:8px;padding:9px 12px;margin-bottom:12px}
 .dev-aviso{font-size:.72rem;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:8px 11px;margin-top:10px;line-height:1.5}
 .dev-badge{font-size:.62rem;font-weight:700;background:#fff7ed;color:#c2410c;border:1px solid #fed7aa;padding:1px 6px;border-radius:6px}
+.dev-badge.tr{background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe}
+.dev-dif{font-size:.8rem;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:9px 12px;color:#15803d;line-height:1.5}
+.dev-dif.neg{background:#fef2f2;border-color:#fecaca;color:#b91c1c}
 
 /* ── PUXAR PEÇA DO ESTOQUE NO CADASTRO ── */
 .pp-wrap{margin-bottom:5px}
@@ -2310,6 +2313,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
           <option value="Instagram">📸 Instagram</option>
           <option value="Recompra">🔁 Recompra — cliente que voltou</option>
           <option value="Indicação">🤝 Indicação</option>
+          <option value="Troca">🔄 Troca — levou no lugar de outra</option>
           <option value="Shopee">🛍️ Shopee</option>
           <option value="Presencial">🏠 Presencial / conhecido</option>
           <option value="Contato direto">💬 Já tinha meu contato</option>
@@ -2377,6 +2381,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
           <option value="Instagram">📸 Instagram</option>
           <option value="Recompra">🔁 Recompra — cliente que voltou</option>
           <option value="Indicação">🤝 Indicação</option>
+          <option value="Troca">🔄 Troca — levou no lugar de outra</option>
           <option value="Shopee">🛍️ Shopee</option>
           <option value="Presencial">🏠 Presencial / conhecido</option>
           <option value="Contato direto">💬 Já tinha meu contato</option>
@@ -2514,11 +2519,22 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
           </select>
         </div>
         <div class="fc full" id="dvTrocaWrap" style="display:none">
-          <label class="fl">🔄 Qual máquina o cliente levou no lugar <span style="font-size:.67rem;color:var(--li);font-weight:400">a venda dela você registra normalmente depois</span></label>
+          <label class="fl">🔄 Qual máquina o cliente levou no lugar <span style="font-size:.67rem;color:var(--li);font-weight:400">a venda dela é registrada aqui mesmo</span></label>
           <input class="inp" type="text" id="dvTrocaBusca" placeholder="Buscar entre as máquinas não vendidas..." autocomplete="off" oninput="dvBuscaTroca(this.value)">
           <input type="hidden" id="dvTrocaId">
           <div id="dvTrocaDrop" style="display:none;background:var(--w);border:1px solid var(--b2);border-radius:8px;max-height:160px;overflow:auto;margin-top:4px"></div>
         </div>
+        <div class="fc" id="dvValorWrap" style="display:none"><label class="fl">Valor da nova máquina</label>
+          <input class="inp" type="number" id="dvValorNovo" min="0" step="0.01" placeholder="0" oninput="dvCalcDif()"></div>
+        <div class="fc" id="dvDeslocWrap" style="display:none"><label class="fl">⛽ Deslocamento da troca <span style="font-size:.62rem;color:var(--li)">deixe 0 se não teve</span></label>
+          <input class="inp" type="number" id="dvDesloc" min="0" step="0.01" placeholder="0" value="0" oninput="dvCalcDif()"></div>
+        <div class="fc" id="dvDeslocPagWrap" style="display:none"><label class="fl">Quem pagou o deslocamento</label>
+          <select class="inp" id="dvDeslocPag">
+            <option value="ambos">🤝 Ambos — 50/50</option>
+            <option value="joao">👤 João</option>
+            <option value="igor">👤 Igor</option>
+          </select></div>
+        <div class="fc full" id="dvDifWrap" style="display:none"><div class="dev-dif" id="dvDif">—</div></div>
         <div class="fc full">
           <label class="fl">Motivo <span style="font-size:.67rem;color:var(--li);font-weight:400">o que deu errado — é isso que evita repetir</span></label>
           <input class="inp" type="text" id="dvMotivo" placeholder="Ex: bateria não segurava carga · cliente achou pesado · defeito na tela">
@@ -4187,9 +4203,11 @@ function renderCliOrigem(){
     semCompra[o]=(semCompra[o]||0)+1;
   });
   const soltas=prods.filter(p=>p.status==='Vendido' && !p.cliente_id);
-  // Recompra e indicação não são canal de anúncio: vêm de atendimento e reputação.
-  // Separar os dois mostra quanto do resultado é mérito do trabalho e não da vitrine.
-  const RELACAO=['Recompra','Indicação'];
+  // Recompra, indicação e troca não são canal de anúncio: vêm de atendimento e
+  // reputação. Separar os dois mostra quanto do resultado é mérito do trabalho
+  // e não da vitrine. A troca entra aqui porque o cliente já era seu — ele só
+  // não desistiu da compra quando a primeira máquina não serviu.
+  const RELACAO=['Recompra','Indicação','Troca'];
   const lucroRel=linhas.filter(l=>RELACAO.includes(l.k)).reduce((s,l)=>s+l.luc,0);
   const lucroAq =linhas.filter(l=>!RELACAO.includes(l.k) && l.k!==NR).reduce((s,l)=>s+l.luc,0);
   const baseRel=lucroRel+lucroAq;
@@ -4559,31 +4577,82 @@ function getLucro(p){
 // em giro. A venda é desfeita e o que aconteceu fica gravado no campo devolucao,
 // preservando valor, cliente e data da venda que existiu.
 let dvId=null;
+// Selo que acompanha a máquina em qualquer lista: a devolvida carrega o que
+// aconteceu, e a que entrou no lugar carrega de onde veio. Os dois lados da
+// troca ficam visíveis onde quer que a máquina apareça.
+function badgeDevTroca(p){
+  let h='';
+  if(p.devolucao){
+    const d=p.devolucao, tr=d.tipo==='troca';
+    const tit=(tr?'Trocada':'Devolvida')+' em '+(d.data||'')+' · venda anterior '+fmt(d.venda_anterior||0)
+      +(tr&&d.trocado_por_nome?' · cliente levou '+d.trocado_por_nome:'')
+      +(d.motivo?' · '+d.motivo:'');
+    h+=`<span class="dev-badge" title="${esc(tit)}">↩ ${tr?'trocada':'devolvida'}</span>`;
+  }
+  if(p.troca_de){
+    const t=p.troca_de;
+    const dif=t.diferenca||0;
+    const tit='Entrou no lugar de '+(t.de_nome||'outra máquina')+' em '+(t.data||'')
+      +' · devolvido '+fmt(t.valor_devolvido||0)
+      +(dif>0?' · cliente pagou +'+fmt(dif):dif<0?' · devolvido '+fmt(-dif)+' ao cliente':' · sem diferença')
+      +(t.deslocamento>0?' · deslocamento '+fmt(t.deslocamento):'')
+      +(t.motivo?' · '+t.motivo:'');
+    h+=`<span class="dev-badge tr" title="${esc(tit)}">🔄 veio de troca</span>`;
+  }
+  return h;
+}
 window.abrirDevolucao=(id)=>{
   const p=prods.find(x=>x.id===id); if(!p) return;
   dvId=id;
   document.getElementById('dvNome').textContent=p.nome||'—';
   document.getElementById('dvTipo').value='devolucao';
   document.getElementById('dvData').value=new Date().toISOString().split('T')[0];
-  document.getElementById('dvVoltaComo').value='Estoque';
+  // Máquina que volta de uma venda já foi revisada uma vez: o padrão é voltar
+  // pro anúncio. Quem quiser reavaliar antes muda para Estoque na mão.
+  document.getElementById('dvVoltaComo').value='Anunciado';
   document.getElementById('dvMotivo').value='';
   document.getElementById('dvTrocaId').value='';
   document.getElementById('dvTrocaBusca').value='';
   document.getElementById('dvTrocaDrop').style.display='none';
+  document.getElementById('dvValorNovo').value='';
+  document.getElementById('dvDesloc').value='0';
+  document.getElementById('dvDeslocPag').value='ambos';
   dvTipoMudou();
   document.getElementById('DVO').classList.remove('h');
 };
 window.cancelDevolucao=()=>{ dvId=null; document.getElementById('DVO').classList.add('h'); };
 window.dvTipoMudou=()=>{
   const t=document.getElementById('dvTipo').value;
-  document.getElementById('dvTrocaWrap').style.display = t==='troca' ? '' : 'none';
+  const troca = t==='troca';
+  ['dvTrocaWrap','dvValorWrap','dvDeslocWrap','dvDeslocPagWrap','dvDifWrap']
+    .forEach(k=>{ const e=document.getElementById(k); if(e) e.style.display = troca ? '' : 'none'; });
   const p=prods.find(x=>x.id===dvId);
   const av=document.getElementById('dvAviso');
   if(av&&p){
     av.innerHTML=`⚠️ A venda de <strong>${fmt(p.venda||0)}</strong>`+
       (p.data_venda?` (${fdt(p.data_venda)})`:'')+
-      ` sai das contas: o lucro de <strong>${fmt(getLucro(p))}</strong> deixa de contar no mês, e a máquina volta pro capital em giro. O registro do que aconteceu fica guardado nela.`;
+      ` sai das contas: o lucro de <strong>${fmt(getLucro(p))}</strong> deixa de contar no mês, e a máquina volta pro capital em giro. O registro do que aconteceu fica guardado nela.`+
+      (troca?` A venda da máquina nova entra no lugar, na data desta troca.`:'');
   }
+  dvCalcDif();
+};
+// Mostra o que o cliente ainda paga (ou recebe de volta) na troca, e o que o
+// deslocamento come do resultado. É a conta que ele faz na frente de você.
+window.dvCalcDif=()=>{
+  const box=document.getElementById('dvDif'); if(!box) return;
+  if(document.getElementById('dvTipo').value!=='troca'){ box.textContent='—'; return; }
+  const p=prods.find(x=>x.id===dvId);
+  const antes=p?(p.venda||0):0;
+  const novo=parseFloat(document.getElementById('dvValorNovo').value)||0;
+  const desl=parseFloat(document.getElementById('dvDesloc').value)||0;
+  const dif=novo-antes;
+  box.classList.toggle('neg', dif<0);
+  if(!novo){ box.textContent='Preencha o valor da nova máquina para ver a diferença.'; box.classList.remove('neg'); return; }
+  box.innerHTML = (dif>0 ? `O cliente ainda paga <strong>${fmt(dif)}</strong>`
+                 : dif<0 ? `Você devolve <strong>${fmt(-dif)}</strong> pro cliente`
+                         : `Troca sem diferença de valor`)
+    + ` <span style="opacity:.75">(${fmt(novo)} − ${fmt(antes)})</span>`
+    + (desl>0?`<br>⛽ ${fmt(desl)} de deslocamento entram no custo da nova máquina.`:'');
 };
 window.dvBuscaTroca=(val)=>{
   const drop=document.getElementById('dvTrocaDrop');
@@ -4610,23 +4679,65 @@ window.confirmarDevolucao=async()=>{
   const trocaId=document.getElementById('dvTrocaId').value||'';
   if(tipo==='troca'&&!trocaId){ alert('Escolha qual máquina o cliente levou no lugar, ou troque para "Devolução".'); return; }
   const troca=trocaId?prods.find(x=>x.id===trocaId):null;
+  if(tipo==='troca'&&!troca){ alert('Não encontrei a máquina escolhida. Busque de novo.'); return; }
+
+  const vendaAnterior=p.venda||0;
+  const valorNovo = tipo==='troca' ? (parseFloat(document.getElementById('dvValorNovo').value)||0) : 0;
+  const desloc    = tipo==='troca' ? (parseFloat(document.getElementById('dvDesloc').value)||0) : 0;
+  const deslocPag = document.getElementById('dvDeslocPag')?.value||'ambos';
+  if(tipo==='troca'&&valorNovo<=0){ alert('Informe por quanto saiu a máquina nova. É essa venda que entra no lugar da anterior.'); return; }
+
   const registro={
     tipo, data, motivo,
-    venda_anterior:p.venda||0, lucro_anterior:getLucro(p),
+    venda_anterior:vendaAnterior, lucro_anterior:getLucro(p),
     data_venda_anterior:p.data_venda||p.data||'',
     plataforma_anterior:p.plataforma||'',
     cliente_id_anterior:p.cliente_id||'', cliente_nome_anterior:p.cliente_nome||'',
-    trocado_por_id:trocaId, trocado_por_nome:troca?(troca.nome||''):''
+    trocado_por_id:trocaId, trocado_por_nome:troca?(troca.nome||''):'',
+    valor_novo:valorNovo, diferenca:valorNovo-vendaAnterior, deslocamento:desloc
   };
-  // Desfaz a venda: zera os valores para ela parar de contar, e devolve ao estoque.
+  // Desfaz a venda da máquina que voltou: zera os valores para ela parar de contar.
+  // Ela volta pro status escolhido (padrão Anunciado) e o histórico fica no campo devolucao.
   const upd={ status:volta, venda:0, lucro:0, data_venda:'', data:getMesCompra(p)||'',
               plataforma:'', cliente_id:'', cliente_nome:'',
               devolvido:true, devolucao:registro };
+
+  // Numa TROCA a venda não deixou de existir — ela mudou de máquina. Por isso a
+  // máquina nova é vendida aqui mesmo, na data da troca, herdando o cliente.
+  // Sem isso o mês perderia um faturamento que de fato aconteceu.
+  if(tipo==='troca'&&troca){
+    const custoAntes = troca.custo||0;
+    const custoNovo  = custoAntes + desloc;
+    const baseB = troca.custo_base!==undefined ? troca.custo_base : (custoAntes-(troca.custo_pecas||0)-(troca.custo_gasolina||0));
+    const updB={
+      status:'Vendido', venda:valorNovo,
+      custo:custoNovo, custo_base:baseB,
+      custo_pecas:troca.custo_pecas||0,
+      custo_gasolina:(troca.custo_gasolina||0)+desloc,
+      gas_pagante: desloc>0 ? deslocPag : (troca.gas_pagante||'ambos'),
+      lucro:valorNovo-custoNovo,
+      data_venda:data, data:data.slice(0,7),
+      plataforma:'Troca',
+      cliente_id:p.cliente_id||'', cliente_nome:p.cliente_nome||'',
+      veio_de_troca:true,
+      troca_de:{ data, de_id:dvId, de_nome:p.nome||'',
+                 valor_devolvido:vendaAnterior, diferenca:valorNovo-vendaAnterior,
+                 deslocamento:desloc, motivo }
+    };
+    await doSaveStatus(trocaId, updB);
+  }
+
   await doSaveStatus(dvId, upd);
   cancelDevolucao();
-  alert(tipo==='troca'
-    ? 'Troca registrada. A máquina voltou pro estoque — agora registre a venda da que o cliente levou.'
-    : 'Devolução registrada. A máquina voltou pro estoque.');
+  if(tipo==='troca'){
+    const dif=valorNovo-vendaAnterior;
+    alert(`Troca registrada.\n\n${p.nome||'A máquina devolvida'} voltou como ${volta}.\n${troca.nome||'A máquina nova'} foi vendida por ${fmt(valorNovo)} em ${fdt(data)}.\n`+
+      (dif>0?`O cliente ainda paga ${fmt(dif)} de diferença.`
+       :dif<0?`Você devolve ${fmt(-dif)} pro cliente.`
+             :'Sem diferença de valor.'));
+  } else {
+    alert('Devolução registrada. A máquina voltou como '+volta+'.');
+  }
 };
 
 // ── VENDAS SECTIONS ──
@@ -4825,7 +4936,7 @@ function renderTabela(lista, tipo){
         .filter(Boolean).join(' ').toLowerCase().replace(/"/g,'');
       return`<tr data-busca="${_busca}">
         <td><span class="nb">${p.num||'?'}</span></td>
-        <td><div class="pn">${esc(p.nome)}</div>${compChips}<div style="display:flex;gap:4px;margin-top:3px;flex-wrap:wrap">${diasBadge}${custoTag}${p.devolucao?`<span class="dev-badge" title="${esc((p.devolucao.tipo==='troca'?'Trocada':'Devolvida')+' em '+(p.devolucao.data||'')+' · venda anterior '+fmt(p.devolucao.venda_anterior||0)+(p.devolucao.motivo?' · '+p.devolucao.motivo:''))}">↩ ${p.devolucao.tipo==='troca'?'trocada':'devolvida'}</span>`:''}</div></td>
+        <td><div class="pn">${esc(p.nome)}</div>${compChips}<div style="display:flex;gap:4px;margin-top:3px;flex-wrap:wrap">${diasBadge}${custoTag}${badgeDevTroca(p)}</div></td>
         <td>${invBadge}</td>
         <td style="color:var(--li);font-size:.75rem">${dcDisplay}${autorTag}</td>
         <td style="color:var(--li);font-size:.75rem">${tipo==='vendidos'?fdt(p.data_venda):'—'}</td>
@@ -4928,7 +5039,7 @@ function render(){
         .filter(Boolean).join(' ').toLowerCase().replace(/"/g,'');
       return`<tr data-busca="${_busca}">
         <td><span class="nb">${p.num||'?'}</span></td>
-        <td><div class="pn">${esc(p.nome)}</div>${compChips}</td>
+        <td><div class="pn">${esc(p.nome)}</div>${compChips}${badgeDevTroca(p)?`<div style="display:flex;gap:4px;margin-top:3px;flex-wrap:wrap">${badgeDevTroca(p)}</div>`:''}</td>
         <td>${invBadge}</td>
         <td style="color:var(--li);font-size:.75rem">${dcDisplay}${autorTag}</td>
         <td style="color:var(--li);font-size:.75rem">${fdt(p.data_venda)}</td>
