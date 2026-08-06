@@ -41,6 +41,9 @@ service cloud.firestore {
     match /clientes/{doc}     { allow read, write: if socio(); }
     match /fornecedores/{doc} { allow read, write: if socio(); }
     match /config/{doc}       { allow read, write: if socio(); }
+    // Fotos das máquinas: ficam fora de products de propósito, para a lista
+    // principal não carregar imagem nenhuma. Mesma regra da sociedade.
+    match /fotos/{doc}        { allow read, write: if socio(); }
     // avisos é consultado por where('lido','==',false), sem filtro de usuário:
     // é justamente o canal de recado entre os dois, então é compartilhado.
     match /avisos/{doc}       { allow read, write: if socio(); }

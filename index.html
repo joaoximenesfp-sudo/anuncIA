@@ -466,6 +466,23 @@ input[type=number].inp{padding-left:32px}
 .amiga-resumo{font-size:.74rem;background:#faf5ff;border:1px solid #e9d5ff;border-radius:9px;
   padding:9px 12px;margin-top:10px;color:#6b21a8;line-height:1.6}
 
+/* ── FOTOS DA MÁQUINA ── */
+.fotos-box{background:var(--bg);border:1px solid var(--b);border-radius:10px;padding:11px 12px}
+.fotos-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:9px;flex-wrap:wrap}
+.fotos-add{background:#0e7490;color:#fff;border:none;border-radius:7px;font-size:.72rem;font-weight:700;
+  padding:5px 11px;cursor:pointer;white-space:nowrap}
+.fotos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:7px}
+.foto-item{position:relative;aspect-ratio:4/3;border-radius:8px;overflow:hidden;border:1px solid var(--b2);background:var(--w)}
+.foto-item img{width:100%;height:100%;object-fit:cover;display:block}
+.foto-del{position:absolute;top:3px;right:3px;background:rgba(185,28,28,.92);color:#fff;border:none;
+  width:20px;height:20px;border-radius:50%;font-size:.7rem;line-height:1;cursor:pointer;padding:0}
+.foto-capa{position:absolute;bottom:0;left:0;right:0;background:rgba(14,116,144,.9);color:#fff;
+  font-size:.58rem;font-weight:700;text-align:center;padding:1px 0}
+.fotos-status{font-size:.71rem;color:var(--li);margin-top:8px;line-height:1.5}
+.fotos-vazio{grid-column:1/-1;text-align:center;padding:14px;font-size:.74rem;color:var(--li)}
+.foto-badge{font-size:.62rem;font-weight:700;background:#ecfeff;color:#0e7490;border:1px solid #a5f3fc;padding:1px 6px;border-radius:6px}
+.foto-badge.zero{background:#fff7ed;color:#c2410c;border-color:#fed7aa}
+
 /* Faixa de alerta quando uma gravação no banco falha. Fica no topo, acima de
    tudo, porque o risco é justamente você continuar trabalhando achando que
    salvou. */
@@ -2383,6 +2400,18 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
           <input class="inp" type="text" id="eForn" placeholder="Buscar fornecedor existente ou digitar um novo..." autocomplete="off" oninput="eFornBusca(this.value)" onfocus="eFornBusca(this.value)">
           <input type="hidden" id="eFornId">
           <div id="eFornDrop" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:30;background:var(--w);border:1px solid var(--b2);border-radius:8px;margin-top:2px;max-height:170px;overflow:auto;box-shadow:0 6px 18px rgba(0,0,0,.09)"></div>
+        </div>
+      </div>
+      <div class="fc full">
+        <div class="fotos-box">
+          <div class="fotos-head">
+            <span class="fl" style="margin:0">📷 Fotos <span style="font-weight:400;color:var(--li);text-transform:none">— ficam prontas pro anúncio e vão no aviso do Telegram</span></span>
+            <label class="fotos-add">+ Foto
+              <input type="file" id="foInput" accept="image/*" multiple onchange="foSubir(this)" style="display:none">
+            </label>
+          </div>
+          <div id="foLista" class="fotos-grid"></div>
+          <div id="foStatus" class="fotos-status"></div>
         </div>
       </div>
       <div class="fc full">
@@ -4510,6 +4539,7 @@ window.openEdit=id=>{
   const peL=document.getElementById('peLista'); if(peL) peL.innerHTML='';
   peRenderExistentes(id);
   peTotal();
+  foCarregar(id);
   document.getElementById('moSucesso').classList.remove('on');
   document.getElementById('MO').classList.remove('h');
 };
@@ -4698,6 +4728,113 @@ function getLucro(p){
 // Por isso não vira um status "Devolvido", que a faria sumir do estoque e do capital
 // em giro. A venda é desfeita e o que aconteceu fica gravado no campo devolucao,
 // preservando valor, cliente e data da venda que existiu.
+// ── FOTOS DA MÁQUINA ──
+// Ficam numa coleção própria (fotos), nunca dentro do produto: assim a lista
+// de 400+ máquinas continua carregando leve, e a imagem só é buscada quando
+// você abre aquela máquina. O produto guarda só a contagem (fotos_n), que é
+// o que a tela e o vigia precisam saber sem baixar nada.
+let fotosDoProduto=[];   // fotos da máquina aberta no modal
+
+// Reduz a foto antes de gravar. Documento do Firestore tem teto de 1 MiB, e
+// foto de celular passa de 3 MB — sem apertar, a gravação falharia sempre.
+function comprimirFoto(file, maxLado=1100, q=0.72){
+  return new Promise((resolve,reject)=>{
+    const url=URL.createObjectURL(file);
+    const img=new Image();
+    img.onload=()=>{
+      URL.revokeObjectURL(url);
+      const escala=Math.min(1, maxLado/Math.max(img.width,img.height));
+      const w=Math.round(img.width*escala), h=Math.round(img.height*escala);
+      const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+      cv.getContext('2d').drawImage(img,0,0,w,h);
+      let qual=q, out=cv.toDataURL('image/jpeg',qual), voltas=0;
+      while(out.length>680000 && voltas<5){ qual=Math.max(0.28,qual-0.12); out=cv.toDataURL('image/jpeg',qual); voltas++; }
+      resolve({dataUrl:out, w, h, bytes:out.length});
+    };
+    img.onerror=()=>{ URL.revokeObjectURL(url); reject(new Error('arquivo não é uma imagem que eu consiga abrir')); };
+    img.src=url;
+  });
+}
+
+async function foCarregar(prodId){
+  fotosDoProduto=[];
+  foRender('Carregando fotos...');
+  if(!prodId || String(prodId).startsWith('x') || String(prodId).startsWith('l')){ foRender(); return; }
+  try{
+    const snap=await getDocs(query(collection(db,'fotos'),where('produto_id','==',prodId)));
+    fotosDoProduto=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.ordem||0)-(b.ordem||0));
+  }catch(e){ foRender('Não consegui carregar as fotos: '+(e.message||e)); return; }
+  foRender();
+}
+
+function foRender(msg){
+  const lista=document.getElementById('foLista'), st=document.getElementById('foStatus');
+  if(!lista) return;
+  if(msg){ lista.innerHTML=`<div class="fotos-vazio">${esc(msg)}</div>`; if(st) st.textContent=''; return; }
+  lista.innerHTML = fotosDoProduto.length
+    ? fotosDoProduto.map((f,i)=>`<div class="foto-item">
+        <img src="${f.dataUrl}" alt="Foto ${i+1}">
+        <button type="button" class="foto-del" onclick="foApagar('${f.id}')" title="Remover">✕</button>
+        ${i===0?'<div class="foto-capa">capa</div>':''}
+      </div>`).join('')
+    : '<div class="fotos-vazio">Nenhuma foto ainda. A primeira vira a capa do anúncio.</div>';
+  if(st){
+    const kb=Math.round(fotosDoProduto.reduce((s,f)=>s+((f.dataUrl||'').length),0)/1024);
+    st.textContent = fotosDoProduto.length
+      ? `${fotosDoProduto.length} foto${fotosDoProduto.length!==1?'s':''} · ${kb} KB guardados`
+      : '';
+  }
+}
+
+// Mantém a contagem no próprio produto: a lista e o vigia precisam saber
+// quantas fotos existem sem baixar nenhuma.
+async function foAtualizarContagem(prodId){
+  const p=prods.find(x=>x.id===prodId); if(!p) return;
+  const n=fotosDoProduto.length;
+  if((p.fotos_n||0)===n) return;
+  p.fotos_n=n;
+  if(!String(prodId).startsWith('x')&&!String(prodId).startsWith('l'))
+    await gravar(updateDoc(doc(db,'products',prodId),{fotos_n:n}), 'Contagem de fotos de "'+(p.nome||prodId)+'"');
+  render();renderSecoes();
+}
+
+window.foSubir=async(input)=>{
+  const arquivos=[...(input.files||[])];
+  input.value='';
+  if(!arquivos.length || !editId) return;
+  const st=document.getElementById('foStatus');
+  let feitas=0;
+  for(const arq of arquivos){
+    if(st) st.textContent=`Preparando foto ${feitas+1} de ${arquivos.length}...`;
+    let img;
+    try{ img=await comprimirFoto(arq); }
+    catch(e){ if(st) st.textContent='Pulei "'+arq.name+'": '+(e.message||e); continue; }
+    const obj={userId:'shared_ijx',produto_id:editId,produto_nome:(prods.find(x=>x.id===editId)||{}).nome||'',
+               ordem:fotosDoProduto.length,dataUrl:img.dataUrl,largura:img.w,altura:img.h,
+               criadoEm:new Date().toISOString(),addedBy:user?user.uid:''};
+    try{
+      const r=await addDoc(collection(db,'fotos'),obj);
+      fotosDoProduto.push({...obj,id:r.id});
+      feitas++;
+    }catch(e){
+      await gravar(Promise.reject(e), 'Salvar foto de "'+(obj.produto_nome||editId)+'"');
+    }
+  }
+  foRender();
+  await foAtualizarContagem(editId);
+  if(st&&feitas) st.textContent=`${feitas} foto${feitas!==1?'s':''} salva${feitas!==1?'s':''}. `+st.textContent;
+};
+
+window.foApagar=async(fotoId)=>{
+  if(!confirm('Remover esta foto?')) return;
+  try{ await deleteDoc(doc(db,'fotos',fotoId)); }
+  catch(e){ await gravar(Promise.reject(e), 'Remover foto'); return; }
+  fotosDoProduto=fotosDoProduto.filter(f=>f.id!==fotoId);
+  fotosDoProduto.forEach((f,i)=>{ f.ordem=i; });
+  foRender();
+  await foAtualizarContagem(editId);
+};
+
 // ── VENDA A PREÇO DE AMIGO ──
 // Vender abaixo do que valia pra ajudar alguém é decisão de negócio, não erro.
 // Guardando o preço cheio junto do cobrado, o desconto vira número: dá pra ver
@@ -4746,6 +4883,11 @@ let dvId=null;
 // troca ficam visíveis onde quer que a máquina apareça.
 function badgeDevTroca(p){
   let h='';
+  if(p.status!=='Vendido'){
+    const n=Number(p.fotos_n)||0;
+    if(n>0) h+=`<span class="foto-badge" title="${n} foto${n!==1?'s':''} guardada${n!==1?'s':''}">📷 ${n}</span>`;
+    else if(p.status==='Anunciado') h+=`<span class="foto-badge zero" title="Anunciada sem nenhuma foto no sistema">📷 sem foto</span>`;
+  }
   if(ehVendaAmiga(p)){
     const d=descontoDe(p), nota=(p.nota_venda||'').trim();
     const tit=(d>0?'Saiu por '+fmt(p.venda||0)+' em vez de '+fmt(p.preco_cheio||0)+' — '+fmt(d)+' a menos':'Venda com observação')
