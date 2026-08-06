@@ -4671,8 +4671,12 @@ function badgeDevTroca(p){
     const tit=(tr?'Trocada':'Devolvida')+' em '+(d.data||'')+' · venda anterior '+fmt(d.venda_anterior||0)
       +(tr&&d.trocado_por_nome?' · cliente levou '+d.trocado_por_nome:'')
       +(tr&&d.valor_novo?' · saiu por '+fmt(d.valor_novo):'')
-      +(d.motivo?' · '+d.motivo:'');
-    h+=`<span class="dev-badge" title="${esc(tit)}">↩ ${tr?'trocada':'devolvida'}</span>`;
+      +(d.motivo?' · '+d.motivo:'')
+      +(tr&&d.trocado_por_id?' · TOQUE para ajustar o valor da troca':'');
+    // Numa troca o selo é também a porta de ajuste: clicar nele deixa corrigir
+    // por quanto a outra máquina saiu, sem caçar a outra linha na lista.
+    const click=(tr&&d.trocado_por_id)?` onclick="event.stopPropagation();ajustarTroca('${p.id}')" style="cursor:pointer;text-decoration:underline;text-underline-offset:2px"`:'';
+    h+=`<span class="dev-badge"${click} title="${esc(tit)}">↩ ${tr?'trocada':'devolvida'}</span>`;
   }
   if(p.troca_de){
     const t=p.troca_de;
@@ -4709,6 +4713,36 @@ async function vincularTroca(id, upd){
     await gravar(updateDoc(doc(db,'products',pai.id),{devolucao:regNovo}), 'Fechar a troca de "'+(pai.nome||pai.id)+'"');
   pai.devolucao=regNovo;
 }
+
+// Clique no selo "↩ trocada" da máquina devolvida: ajusta por quanto a outra
+// máquina saiu. Corrige a venda, o lucro e a diferença nas duas pontas de uma
+// vez — é o "quero mexer no valor da troca" sem procurar a outra linha.
+window.ajustarTroca=async(paiId)=>{
+  const pai=prods.find(x=>x.id===paiId); if(!pai||!pai.devolucao) return;
+  const d=pai.devolucao;
+  const alvo=d.trocado_por_id?prods.find(x=>x.id===d.trocado_por_id):null;
+  if(!alvo){ alert('Não achei mais a máquina que o cliente levou ('+(d.trocado_por_nome||'?')+'). Ela pode ter sido excluída — procure na 🔦 da aba Administração.'); return; }
+  if(alvo.status!=='Vendido'){
+    alert('"'+(alvo.nome||'A máquina que saiu')+'" ainda não está registrada como vendida.\n\nMarca ela como Vendido com origem "🔄 Troca" — o vínculo e o selo fecham sozinhos. Depois disso o valor pode ser ajustado por aqui.');
+    return;
+  }
+  const atual=alvo.venda||d.valor_novo||0;
+  const resp=prompt('Por quanto saiu "'+(alvo.nome||'a máquina')+'" nessa troca?\n\n(venda anterior: '+fmt(d.venda_anterior||0)+' — a diferença recalcula sozinha)', atual||'');
+  if(resp===null) return;
+  const v=parseFloat(String(resp).replace(/\./g,'').replace(',','.'));
+  if(!(v>0)){ alert('Não entendi esse valor. Digite só o número, ex: 2400'); return; }
+  const updB={venda:v, lucro:v-(alvo.custo||0)};
+  if(alvo.troca_de) updB.troca_de={...alvo.troca_de, diferenca:v-(d.venda_anterior||0)};
+  await doSaveStatus(alvo.id, updB);
+  const regNovo={...d, valor_novo:v, diferenca:v-(d.venda_anterior||0)};
+  if(!String(pai.id).startsWith('x')&&!String(pai.id).startsWith('l'))
+    await gravar(updateDoc(doc(db,'products',pai.id),{devolucao:regNovo}), 'Ajustar troca de "'+(pai.nome||pai.id)+'"');
+  pai.devolucao=regNovo;
+  render();renderSecoes();calcStats();
+  const dif=v-(d.venda_anterior||0);
+  alert('Troca ajustada: "'+(alvo.nome||'')+'" saiu por '+fmt(v)+'.\n'+
+    (dif>0?'O cliente completa '+fmt(dif)+'.':dif<0?'Você devolve '+fmt(-dif)+'.':'Sem diferença.'));
+};
 
 window.abrirDevolucao=(id)=>{
   const p=prods.find(x=>x.id===id); if(!p) return;
