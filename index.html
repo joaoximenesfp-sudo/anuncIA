@@ -476,8 +476,13 @@ input[type=number].inp{padding-left:32px}
 .foto-item img{width:100%;height:100%;object-fit:cover;display:block}
 .foto-del{position:absolute;top:3px;right:3px;background:rgba(185,28,28,.92);color:#fff;border:none;
   width:20px;height:20px;border-radius:50%;font-size:.7rem;line-height:1;cursor:pointer;padding:0}
-.foto-capa{position:absolute;bottom:0;left:0;right:0;background:rgba(14,116,144,.9);color:#fff;
-  font-size:.58rem;font-weight:700;text-align:center;padding:1px 0}
+.foto-barra{position:absolute;bottom:0;left:0;right:0;display:flex;align-items:center;
+  background:rgba(15,23,42,.72);backdrop-filter:blur(2px)}
+.foto-mv{flex:none;background:none;border:none;color:#fff;font-size:.78rem;line-height:1;
+  padding:4px 7px;cursor:pointer;opacity:.95}
+.foto-mv:disabled{opacity:.25;cursor:default}
+.foto-pos{flex:1;text-align:center;color:#fff;font-size:.58rem;font-weight:700;letter-spacing:.03em}
+.foto-pos.capa{color:#67e8f9}
 .fotos-status{font-size:.71rem;color:var(--li);margin-top:8px;line-height:1.5}
 .fotos-vazio{grid-column:1/-1;text-align:center;padding:14px;font-size:.74rem;color:var(--li)}
 .foto-badge{font-size:.62rem;font-weight:700;background:#ecfeff;color:#0e7490;border:1px solid #a5f3fc;padding:1px 6px;border-radius:6px}
@@ -4771,11 +4776,16 @@ function foRender(msg){
   const lista=document.getElementById('foLista'), st=document.getElementById('foStatus');
   if(!lista) return;
   if(msg){ lista.innerHTML=`<div class="fotos-vazio">${esc(msg)}</div>`; if(st) st.textContent=''; return; }
+  const ult=fotosDoProduto.length-1;
   lista.innerHTML = fotosDoProduto.length
     ? fotosDoProduto.map((f,i)=>`<div class="foto-item">
         <img src="${f.dataUrl}" alt="Foto ${i+1}">
         <button type="button" class="foto-del" onclick="foApagar('${f.id}')" title="Remover">✕</button>
-        ${i===0?'<div class="foto-capa">capa</div>':''}
+        <div class="foto-barra">
+          <button type="button" class="foto-mv" onclick="foMover(${i},-1)" ${i===0?'disabled':''} title="Mover para trás">◀</button>
+          <span class="foto-pos${i===0?' capa':''}">${i===0?'CAPA':i+1}</span>
+          <button type="button" class="foto-mv" onclick="foMover(${i},1)" ${i===ult?'disabled':''} title="Mover para frente">▶</button>
+        </div>
       </div>`).join('')
     : '<div class="fotos-vazio">Nenhuma foto ainda. A primeira vira a capa do anúncio.</div>';
   if(st){
@@ -4823,6 +4833,22 @@ window.foSubir=async(input)=>{
   foRender();
   await foAtualizarContagem(editId);
   if(st&&feitas) st.textContent=`${feitas} foto${feitas!==1?'s':''} salva${feitas!==1?'s':''}. `+st.textContent;
+};
+
+// Trocar a ordem das fotos. A da frente é a capa do anúncio, então mover é
+// escolher com qual foto a máquina se apresenta — não é enfeite.
+// A tela muda na hora e a gravação vai atrás; se falhar, a faixa vermelha avisa.
+window.foMover=async(i, passo)=>{
+  const j=i+passo;
+  if(i<0||j<0||i>=fotosDoProduto.length||j>=fotosDoProduto.length) return;
+  const a=fotosDoProduto[i], b=fotosDoProduto[j];
+  fotosDoProduto[i]=b; fotosDoProduto[j]=a;
+  fotosDoProduto.forEach((f,k)=>{ f.ordem=k; });
+  foRender();
+  for(const f of [a,b]){
+    if(String(f.id).startsWith('l')) continue;
+    await gravar(updateDoc(doc(db,'fotos',f.id),{ordem:f.ordem}), 'Reordenar fotos de "'+((prods.find(x=>x.id===editId)||{}).nome||editId)+'"');
+  }
 };
 
 window.foApagar=async(fotoId)=>{
