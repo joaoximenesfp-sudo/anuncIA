@@ -4731,8 +4731,12 @@ window.ajustarTroca=async(paiId)=>{
   if(resp===null) return;
   const v=parseFloat(String(resp).replace(/\./g,'').replace(',','.'));
   if(!(v>0)){ alert('Não entendi esse valor. Digite só o número, ex: 2400'); return; }
-  const updB={venda:v, lucro:v-(alvo.custo||0)};
-  if(alvo.troca_de) updB.troca_de={...alvo.troca_de, diferenca:v-(d.venda_anterior||0)};
+  // Completa o vínculo mesmo quando a venda foi gravada sem ele (página antiga,
+  // origem trocada depois): o ajuste deixa as duas pontas no estado pleno.
+  const updB={venda:v, lucro:v-(alvo.custo||0), veio_de_troca:true,
+    troca_de:{...(alvo.troca_de||{data:d.data||'', de_id:pai.id, de_nome:pai.nome||'',
+               valor_devolvido:d.venda_anterior||0, deslocamento:d.deslocamento||0, motivo:d.motivo||''}),
+              diferenca:v-(d.venda_anterior||0)}};
   await doSaveStatus(alvo.id, updB);
   const regNovo={...d, valor_novo:v, diferenca:v-(d.venda_anterior||0)};
   if(!String(pai.id).startsWith('x')&&!String(pai.id).startsWith('l'))
