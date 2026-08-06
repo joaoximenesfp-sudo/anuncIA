@@ -3508,6 +3508,7 @@ window.confirmSell=async()=>{
     pagamento='parcelado';
   }
   const upd={status:'Vendido',plataforma:plat,venda:preco,lucro:preco-(p?.custo||0),data_venda:dataVenda||'',data:mesVenda,diasParado:dias>=0?dias:null,cliente_id:cliId,cliente_nome:cliNome,repasse_socio:socioVal,pagamento,parcelas};
+  await vincularTroca(sellId, upd);
   await doSaveStatus(sellId,upd);
   if(c6val>0||mpval>0){
     const entBase={userId:user.uid,tipo:'entrada',descricao:'Venda: '+(p?.nome||'Produto'),data:dataVenda||new Date().toISOString().split('T')[0],prodId:sellId};
@@ -4558,6 +4559,7 @@ window.saveEdit=async()=>{
   const totalPecas=somaJa+somaNovas;
 
   const upd={nome,custo:custoFinal,custo_base:baseMaquina,custo_pecas:totalPecas,venda,lucro:venda-custoFinal,status,investidor,plataforma:(status==='Vendido'?(document.getElementById('ePlat')?.value||''):''),repasse_socio:(status==='Vendido'?(parseFloat(document.getElementById('eRepasse')?.value)||0):0),falta_comprar:(status!=='Vendido'?(document.getElementById('eFalta')?.value.trim()||''):''),fornecedor_id:fornId,fornecedor_nome:fornNome,data_compra:dc,data_compra_mes:dcMes,data_venda:dv,data:(dv?dv.slice(0,7):dcMes),gas_pagante:(document.getElementById('eGasPag')?.value||'ambos'),cliente_id:cliId,cliente_nome:cliNome};
+  await vincularTroca(editId, upd);
   if(!editId.startsWith('x')&&!editId.startsWith('l')) await gravar(updateDoc(doc(db,'products',editId),upd), 'Editar "'+nome+'"');
   // Grava as peças novas na aba Peças, vinculadas a esta máquina
   for(const pc of pecasNovas){
@@ -4668,12 +4670,15 @@ function badgeDevTroca(p){
     const d=p.devolucao, tr=d.tipo==='troca';
     const tit=(tr?'Trocada':'Devolvida')+' em '+(d.data||'')+' · venda anterior '+fmt(d.venda_anterior||0)
       +(tr&&d.trocado_por_nome?' · cliente levou '+d.trocado_por_nome:'')
+      +(tr&&d.valor_novo?' · saiu por '+fmt(d.valor_novo):'')
       +(d.motivo?' · '+d.motivo:'');
     h+=`<span class="dev-badge" title="${esc(tit)}">↩ ${tr?'trocada':'devolvida'}</span>`;
   }
   if(p.troca_de){
     const t=p.troca_de;
-    const dif=t.diferenca||0;
+    // A diferença acompanha o valor de venda atual: se a venda for corrigida
+    // no ✎, o selo conta a versão corrigida, não a da hora do registro.
+    const dif=(p.venda>0 && t.valor_devolvido!=null) ? (p.venda-(t.valor_devolvido||0)) : (t.diferenca||0);
     const tit='Entrou no lugar de '+(t.de_nome||'outra máquina')+' em '+(t.data||'')
       +' · devolvido '+fmt(t.valor_devolvido||0)
       +(dif>0?' · cliente pagou +'+fmt(dif):dif<0?' · devolvido '+fmt(-dif)+' ao cliente':' · sem diferença')
@@ -4683,6 +4688,28 @@ function badgeDevTroca(p){
   }
   return h;
 }
+// Costura uma venda com origem "Troca" à máquina devolvida que aponta pra ela.
+// Troca completada na mão (ou feita no modal antigo, que só cuidava de um lado)
+// ganha o mesmo registro que o modal novo criaria: o selo "veio de troca" na
+// máquina vendida e o valor de saída gravado no histórico da devolvida.
+async function vincularTroca(id, upd){
+  if((upd.plataforma||'')!=='Troca' || upd.status!=='Vendido') return;
+  const pai=prods.find(q=>q.id!==id && q.devolucao && q.devolucao.tipo==='troca' && q.devolucao.trocado_por_id===id);
+  if(!pai) return;
+  const d=pai.devolucao;
+  const dif=(upd.venda||0)-(d.venda_anterior||0);
+  if(!upd.troca_de){
+    upd.troca_de={ data:d.data||'', de_id:pai.id, de_nome:pai.nome||'',
+                   valor_devolvido:d.venda_anterior||0, diferenca:dif,
+                   deslocamento:d.deslocamento||0, motivo:d.motivo||'' };
+    upd.veio_de_troca=true;
+  }
+  const regNovo={...d, valor_novo:upd.venda||0, diferenca:dif};
+  if(!String(pai.id).startsWith('x')&&!String(pai.id).startsWith('l'))
+    await gravar(updateDoc(doc(db,'products',pai.id),{devolucao:regNovo}), 'Fechar a troca de "'+(pai.nome||pai.id)+'"');
+  pai.devolucao=regNovo;
+}
+
 window.abrirDevolucao=(id)=>{
   const p=prods.find(x=>x.id===id); if(!p) return;
   dvId=id;
