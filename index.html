@@ -4683,9 +4683,14 @@ function badgeDevTroca(p){
     // A diferença acompanha o valor de venda atual: se a venda for corrigida
     // no ✎, o selo conta a versão corrigida, não a da hora do registro.
     const dif=(p.venda>0 && t.valor_devolvido!=null) ? (p.venda-(t.valor_devolvido||0)) : (t.diferenca||0);
+    // O lucro desta linha soma o que JÁ tinha sido realizado na venda anterior
+    // (a troca desfez aquela venda e empurrou tudo pra cá). Separar os dois é o
+    // que evita retirar duas vezes a mesma parte.
+    const lucroTot=getLucro(p), jaPego=t.lucro_anterior||0;
     const tit='Entrou no lugar de '+(t.de_nome||'outra máquina')+' em '+(t.data||'')
       +' · devolvido '+fmt(t.valor_devolvido||0)
       +(dif>0?' · cliente pagou +'+fmt(dif):dif<0?' · devolvido '+fmt(-dif)+' ao cliente':' · sem diferença')
+      +(jaPego&&p.status==='Vendido'?' · LUCRO: '+fmt(lucroTot)+' no total, mas '+fmt(jaPego)+' já tinha sido realizado na venda anterior — novo desta troca: '+fmt(lucroTot-jaPego):'')
       +(t.deslocamento>0?' · deslocamento '+fmt(t.deslocamento):'')
       +(t.motivo?' · '+t.motivo:'');
     h+=`<span class="dev-badge tr" title="${esc(tit)}">🔄 veio de troca</span>`;
@@ -4705,6 +4710,7 @@ async function vincularTroca(id, upd){
   if(!upd.troca_de){
     upd.troca_de={ data:d.data||'', de_id:pai.id, de_nome:pai.nome||'',
                    valor_devolvido:d.venda_anterior||0, diferenca:dif,
+                   lucro_anterior:d.lucro_anterior||0,
                    deslocamento:d.deslocamento||0, motivo:d.motivo||'' };
     upd.veio_de_troca=true;
   }
@@ -4735,7 +4741,8 @@ window.ajustarTroca=async(paiId)=>{
   // origem trocada depois): o ajuste deixa as duas pontas no estado pleno.
   const updB={venda:v, lucro:v-(alvo.custo||0), veio_de_troca:true,
     troca_de:{...(alvo.troca_de||{data:d.data||'', de_id:pai.id, de_nome:pai.nome||'',
-               valor_devolvido:d.venda_anterior||0, deslocamento:d.deslocamento||0, motivo:d.motivo||''}),
+               valor_devolvido:d.venda_anterior||0, lucro_anterior:d.lucro_anterior||0,
+               deslocamento:d.deslocamento||0, motivo:d.motivo||''}),
               diferenca:v-(d.venda_anterior||0)}};
   await doSaveStatus(alvo.id, updB);
   const regNovo={...d, valor_novo:v, diferenca:v-(d.venda_anterior||0)};
@@ -4795,10 +4802,20 @@ window.dvCalcDif=()=>{
   const dif=novo-antes;
   box.classList.toggle('neg', dif<0);
   if(!novo){ box.textContent='Preencha o valor da nova máquina para ver a diferença.'; box.classList.remove('neg'); return; }
+  const tSel=document.getElementById('dvTrocaId').value||'';
+  const maqB=tSel?prods.find(x=>x.id===tSel):null;
+  let linhaLucro='';
+  if(maqB){
+    const lucroTot=novo-(maqB.custo||0)-desl;
+    const jaPego=p?getLucro(p):0;
+    linhaLucro=`<br>💰 Lucro da nova: <strong>${fmt(lucroTot)}</strong>`
+      +(jaPego?` — ${fmt(jaPego)} já tinham sido realizados na venda anterior; esta troca adiciona <strong>${fmt(lucroTot-jaPego)}</strong> novos.`:'.');
+  }
   box.innerHTML = (dif>0 ? `O cliente ainda paga <strong>${fmt(dif)}</strong>`
                  : dif<0 ? `Você devolve <strong>${fmt(-dif)}</strong> pro cliente`
                          : `Troca sem diferença de valor`)
     + ` <span style="opacity:.75">(${fmt(novo)} − ${fmt(antes)})</span>`
+    + linhaLucro
     + (desl>0?`<br>⛽ ${fmt(desl)} de deslocamento entram no custo da nova máquina.`:'');
 };
 window.dvBuscaTroca=(val)=>{
@@ -4869,6 +4886,7 @@ window.confirmarDevolucao=async()=>{
       veio_de_troca:true,
       troca_de:{ data, de_id:dvId, de_nome:p.nome||'',
                  valor_devolvido:vendaAnterior, diferenca:valorNovo-vendaAnterior,
+                 lucro_anterior:registro.lucro_anterior||0,
                  deslocamento:desloc, motivo }
     };
     await doSaveStatus(trocaId, updB);
