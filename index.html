@@ -1248,6 +1248,18 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
                 <div class="pecaprod-total" id="ppTotal" style="display:none"></div>
               </div>
             </div>
+            <div class="fc" style="grid-column:1/-1">
+              <div class="fotos-box">
+                <div class="fotos-head">
+                  <span class="fla" style="margin:0">📷 Fotos desta máquina <span style="font-weight:400;color:var(--li);text-transform:none">— já entram junto no cadastro; a primeira é a capa</span></span>
+                  <label class="fotos-add">+ Foto
+                    <input type="file" id="pFotoInput" accept="image/*" multiple onchange="fpSubir(this,'prod')" style="display:none">
+                  </label>
+                </div>
+                <div id="pFotoLista" class="fotos-grid"></div>
+                <div id="pFotoStatus" class="fotos-status"></div>
+              </div>
+            </div>
             <div class="fc"><span class="fla" style="opacity:0">.</span><button class="ba" onclick="addProd()">+ Adicionar</button></div>
           </div>
         </div>
@@ -1349,6 +1361,18 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
                     <div id="pcFornDrop" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:30;background:var(--w);border:1px solid var(--b2);border-radius:8px;margin-top:2px;max-height:160px;overflow:auto;box-shadow:0 6px 18px rgba(0,0,0,.09)"></div>
                   </div>
                   <input class="inp" type="tel" id="pcFornTel" placeholder="WhatsApp" autocomplete="off">
+                </div>
+              </div>
+              <div class="fc" style="grid-column:1/-1">
+                <div class="fotos-box">
+                  <div class="fotos-head">
+                    <span class="fla" style="margin:0">📷 Fotos desta peça <span style="font-weight:400;color:var(--li);text-transform:none">— já entram junto no cadastro; a primeira é a capa</span></span>
+                    <label class="fotos-add">+ Foto
+                      <input type="file" id="pcFotoInput" accept="image/*" multiple onchange="fpSubir(this,'peca')" style="display:none">
+                    </label>
+                  </div>
+                  <div id="pcFotoLista" class="fotos-grid"></div>
+                  <div id="pcFotoStatus" class="fotos-status"></div>
                 </div>
               </div>
               <div class="fc"><span class="fla" style="opacity:0">.</span><button class="ba" onclick="addPeca()">+ Add</button></div>
@@ -3319,10 +3343,12 @@ window.addProd=async()=>{
   const custoTotal=custo+custoPecas+custoGas;
   // data_compra armazena data completa YYYY-MM-DD; data_compra_mes extrai só o mês
   const dcMes=dc?dc.slice(0,7):'';
-  const obj={userId:'shared_ijx',addedBy:user.uid,addedByName:user.displayName||user.email.split('@')[0],nome,custo:custoTotal,custo_base:custo,custo_pecas:custoPecas,custo_gasolina:custoGas,gas_pagante:gasPag,venda,lucro:venda-custoTotal,status,investidor,data_compra:dc,data_compra_mes:dcMes,data_venda:'',data:dcMes,canal_compra:canal,fornecedor_id:fornId,fornecedor_nome:fornNome,num,createdAt:new Date().toISOString()};
+  const obj={userId:'shared_ijx',addedBy:user.uid,addedByName:user.displayName||user.email.split('@')[0],nome,custo:custoTotal,custo_base:custo,custo_pecas:custoPecas,custo_gasolina:custoGas,gas_pagante:gasPag,venda,lucro:venda-custoTotal,status,investidor,data_compra:dc,data_compra_mes:dcMes,data_venda:'',data:dcMes,canal_compra:canal,fornecedor_id:fornId,fornecedor_nome:fornNome,num,fotos_n:fotosPend.prod.length,createdAt:new Date().toISOString()};
   let prodId='l'+Date.now();
   try{const r=await addDoc(collection(db,'products'),obj);prodId=r.id;prods.push({...obj,id:r.id});}
   catch(e){ await gravar(Promise.reject(e), 'Cadastrar "'+nome+'"'); prods.push({...obj,id:prodId}); }
+  // Fotos escolhidas no formulário entram junto com a máquina recém-cadastrada
+  await fpGravar('prod', prodId, nome);
   // Grava as peças na aba Peças, já vinculadas a esta máquina.
   // Peça puxada do estoque dá BAIXA no registro existente em vez de criar outro —
   // senão o mesmo pente ficaria contado duas vezes, um usado e um disponível.
@@ -4733,6 +4759,71 @@ function getLucro(p){
 // Por isso não vira um status "Devolvido", que a faria sumir do estoque e do capital
 // em giro. A venda é desfeita e o que aconteceu fica gravado no campo devolucao,
 // preservando valor, cliente e data da venda que existiu.
+// ── FOTOS NO CADASTRO (antes do registro existir) ──
+// Nos formulários de "adicionar", a máquina/peça ainda não tem id — então as
+// fotos ficam guardadas aqui, já comprimidas, e são gravadas junto no momento
+// do cadastro. Assim a foto entra com o item, sem ter que abrir a edição depois.
+const FP={
+  prod:{input:'pFotoInput', lista:'pFotoLista', status:'pFotoStatus', campo:'produto_id'},
+  peca:{input:'pcFotoInput',lista:'pcFotoLista',status:'pcFotoStatus',campo:'peca_id'}
+};
+let fotosPend={prod:[],peca:[]};
+
+function fpRender(chave){
+  const cfg=FP[chave]; if(!cfg) return;
+  const lista=document.getElementById(cfg.lista), st=document.getElementById(cfg.status);
+  if(!lista) return;
+  const arr=fotosPend[chave], ult=arr.length-1;
+  lista.innerHTML = arr.length
+    ? arr.map((f,i)=>`<div class="foto-item">
+        <img src="${f.dataUrl}" alt="Foto ${i+1}">
+        <button type="button" class="foto-del" onclick="fpRemover('${chave}',${i})" title="Remover">✕</button>
+        <div class="foto-barra">
+          <button type="button" class="foto-mv" onclick="fpMover('${chave}',${i},-1)" ${i===0?'disabled':''} title="Mover para trás">◀</button>
+          <span class="foto-pos${i===0?' capa':''}">${i===0?'CAPA':i+1}</span>
+          <button type="button" class="foto-mv" onclick="fpMover('${chave}',${i},1)" ${i===ult?'disabled':''} title="Mover para frente">▶</button>
+        </div>
+      </div>`).join('')
+    : '';
+  if(st) st.textContent = arr.length ? `${arr.length} foto${arr.length!==1?'s':''} prontas — entram junto no cadastro.` : '';
+}
+
+window.fpSubir=async(input, chave)=>{
+  const arquivos=[...(input.files||[])]; input.value='';
+  const st=document.getElementById(FP[chave].status);
+  for(const arq of arquivos){
+    if(st) st.textContent='Preparando '+arq.name+'...';
+    try{ fotosPend[chave].push(await comprimirFoto(arq)); }
+    catch(e){ if(st) st.textContent='Pulei "'+arq.name+'": '+(e.message||e); }
+  }
+  fpRender(chave);
+};
+window.fpRemover=(chave,i)=>{ fotosPend[chave].splice(i,1); fpRender(chave); };
+window.fpMover=(chave,i,passo)=>{
+  const arr=fotosPend[chave], j=i+passo;
+  if(j<0||j>=arr.length) return;
+  [arr[i],arr[j]]=[arr[j],arr[i]];
+  fpRender(chave);
+};
+window.fpLimpar=(chave)=>{ fotosPend[chave]=[]; fpRender(chave); };
+
+// Grava as fotos guardadas assim que o item ganha um id no banco.
+async function fpGravar(chave, alvoId, alvoNome){
+  const cfg=FP[chave], arr=fotosPend[chave];
+  if(!arr.length || !alvoId) return 0;
+  let n=0;
+  for(let i=0;i<arr.length;i++){
+    const obj={userId:'shared_ijx', [cfg.campo]:alvoId,
+               produto_nome:alvoNome||'', ordem:i, dataUrl:arr[i].dataUrl,
+               largura:arr[i].w, altura:arr[i].h,
+               criadoEm:new Date().toISOString(), addedBy:user?user.uid:''};
+    try{ await addDoc(collection(db,'fotos'),obj); n++; }
+    catch(e){ await gravar(Promise.reject(e), 'Salvar foto de "'+(alvoNome||alvoId)+'"'); }
+  }
+  fpLimpar(chave);
+  return n;
+}
+
 // ── FOTOS DA MÁQUINA ──
 // Ficam numa coleção própria (fotos), nunca dentro do produto: assim a lista
 // de 400+ máquinas continua carregando leve, e a imagem só é buscada quando
@@ -6643,9 +6734,11 @@ window.addPeca=async()=>{
   if(pcFnome){
     try{ pcFid=await salvarFornecedor({nome:pcFnome,whatsapp:pcFtel,costuma:'Peças'}); }catch(e){ pcFid=pcFid||''; }
   }
-  const obj={userId:'shared_ijx',addedBy:user.uid,nome,tipo,custo,venda,lucro:(status==='Vendido'&&venda>0)?(venda-custo):0,status,obs,quantidade:qtd,fornecedor_id:pcFid,fornecedor_nome:pcFnome,criadoEm:new Date().toISOString()};
-  try{const r=await addDoc(collection(db,'pecas'),obj);pecas.push({...obj,id:r.id});}
-  catch(e){pecas.push({...obj,id:'l'+Date.now()});}
+  const obj={userId:'shared_ijx',addedBy:user.uid,nome,tipo,custo,venda,lucro:(status==='Vendido'&&venda>0)?(venda-custo):0,status,obs,quantidade:qtd,fornecedor_id:pcFid,fornecedor_nome:pcFnome,fotos_n:fotosPend.peca.length,criadoEm:new Date().toISOString()};
+  let pecaId='l'+Date.now();
+  try{const r=await addDoc(collection(db,'pecas'),obj);pecaId=r.id;pecas.push({...obj,id:r.id});}
+  catch(e){ await gravar(Promise.reject(e), 'Cadastrar peça "'+nome+'"'); pecas.push({...obj,id:pecaId}); }
+  await fpGravar('peca', pecaId, nome);
   document.getElementById('pcNome').value='';document.getElementById('pcCusto').value='';document.getElementById('pcVenda').value='';document.getElementById('pcObs').value='';document.getElementById('pcQtd').value='1';const _pf=document.getElementById('pcForn');if(_pf)_pf.value='';const _pfi=document.getElementById('pcFornId');if(_pfi)_pfi.value='';const _pft=document.getElementById('pcFornTel');if(_pft)_pft.value='';
   criarAviso('peca_adicionada', nome);
   renderPecas();
