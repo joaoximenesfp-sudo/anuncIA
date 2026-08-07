@@ -483,6 +483,28 @@ input[type=number].inp{padding-left:32px}
 .foto-mv:disabled{opacity:.25;cursor:default}
 .foto-pos{flex:1;text-align:center;color:#fff;font-size:.58rem;font-weight:700;letter-spacing:.03em}
 .foto-pos.capa{color:#67e8f9}
+.foto-item img{cursor:zoom-in}
+
+/* ── FOTO AMPLIADA ──
+   Acima de tudo (z-index 200): abre a partir do modal de edição, que é 100. */
+.lbx{position:fixed;inset:0;z-index:200;background:rgba(8,12,16,.95);
+  display:flex;align-items:center;justify-content:center;padding:60px 16px}
+.lbx.h{display:none}
+.lbx-img{max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;
+  box-shadow:0 12px 44px rgba(0,0,0,.55);cursor:zoom-out}
+.lbx-top{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;
+  justify-content:space-between;gap:10px;padding:12px 16px}
+.lbx-cont{color:#fff;font-size:.8rem;font-weight:700;letter-spacing:.05em;
+  font-variant-numeric:tabular-nums}
+.lbx-x{background:rgba(255,255,255,.16);border:none;color:#fff;width:34px;height:34px;
+  border-radius:50%;font-size:1rem;line-height:1;cursor:pointer;flex:none}
+.lbx-nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.16);
+  border:none;color:#fff;width:44px;height:44px;border-radius:50%;font-size:1.1rem;
+  line-height:1;cursor:pointer}
+.lbx-nav.esq{left:10px} .lbx-nav.dir{right:10px}
+.lbx-nav:disabled{opacity:.18;cursor:default}
+.lbx-pe{position:absolute;bottom:0;left:0;right:0;text-align:center;color:#94a3b8;
+  font-size:.72rem;padding:14px 16px}
 .fotos-status{font-size:.71rem;color:var(--li);margin-top:8px;line-height:1.5}
 .fotos-vazio{grid-column:1/-1;text-align:center;padding:14px;font-size:.74rem;color:var(--li)}
 .foto-badge{font-size:.62rem;font-weight:700;background:#ecfeff;color:#0e7490;border:1px solid #a5f3fc;padding:1px 6px;border-radius:6px}
@@ -970,6 +992,18 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
 </style>
 </head>
 <body>
+
+<!-- FOTO AMPLIADA -->
+<div class="lbx h" id="LBX" onclick="lbFechar(event)">
+  <div class="lbx-top">
+    <span class="lbx-cont" id="lbxCont"></span>
+    <button type="button" class="lbx-x" onclick="lbFechar()" title="Fechar">✕</button>
+  </div>
+  <img class="lbx-img" id="lbxImg" alt="Foto ampliada" onclick="lbFechar()">
+  <button type="button" class="lbx-nav esq" id="lbxEsq" onclick="lbIr(event,-1)" title="Anterior">◀</button>
+  <button type="button" class="lbx-nav dir" id="lbxDir" onclick="lbIr(event,1)" title="Próxima">▶</button>
+  <div class="lbx-pe" id="lbxPe"></div>
+</div>
 
 <!-- AVISO DE GRAVAÇÃO QUE FALHOU -->
 <div id="salvaAviso" class="salva-aviso" style="display:none" onclick="verFalhasGravacao()"></div>
@@ -4759,6 +4793,60 @@ function getLucro(p){
 // Por isso não vira um status "Devolvido", que a faria sumir do estoque e do capital
 // em giro. A venda é desfeita e o que aconteceu fica gravado no campo devolucao,
 // preservando valor, cliente e data da venda que existiu.
+// ── FOTO AMPLIADA ──
+// A miniatura de 84px serve pra organizar, não pra conferir. Ampliar é o que
+// deixa ver risco na tampa, tecla faltando, marca de uso — o que decide se a
+// foto presta pro anúncio. Serve as duas galerias: a da edição e a do cadastro.
+let lbLista=[], lbIdx=0;
+window.foAmpliar=(qual, i)=>{
+  lbLista = (qual==='edit') ? fotosDoProduto : (fotosPend[qual] || []);
+  if(!lbLista.length) return;
+  lbIdx = Math.max(0, Math.min(i, lbLista.length-1));
+  lbPintar();
+  document.getElementById('LBX').classList.remove('h');
+  document.body.style.overflow='hidden';
+};
+function lbPintar(){
+  const f=lbLista[lbIdx]; if(!f) return;
+  document.getElementById('lbxImg').src=f.dataUrl;
+  document.getElementById('lbxCont').textContent=(lbIdx+1)+' / '+lbLista.length;
+  document.getElementById('lbxEsq').disabled = lbIdx===0;
+  document.getElementById('lbxDir').disabled = lbIdx===lbLista.length-1;
+  const pe=document.getElementById('lbxPe');
+  if(pe) pe.textContent = (lbIdx===0 ? 'Capa do anúncio' : 'Foto '+(lbIdx+1))
+    + (f.largura ? ' · '+f.largura+'×'+f.altura+'px' : '');
+}
+window.lbIr=(ev, passo)=>{
+  if(ev) ev.stopPropagation();
+  const j=lbIdx+passo;
+  if(j<0 || j>=lbLista.length) return;
+  lbIdx=j; lbPintar();
+};
+// Clique no fundo ou na própria imagem fecha; nos botões, não.
+window.lbFechar=(ev)=>{
+  if(ev && ev.currentTarget && ev.target!==ev.currentTarget) return;
+  document.getElementById('LBX').classList.add('h');
+  document.body.style.overflow='';
+};
+document.addEventListener('keydown', (e)=>{
+  const lbx=document.getElementById('LBX');
+  if(!lbx || lbx.classList.contains('h')) return;
+  if(e.key==='Escape'){ lbFechar(); }
+  else if(e.key==='ArrowLeft'){ lbIr(null,-1); }
+  else if(e.key==='ArrowRight'){ lbIr(null,1); }
+});
+// Arrastar pro lado no celular troca de foto.
+(()=>{
+  const lbx=document.getElementById('LBX'); if(!lbx) return;
+  let x0=null;
+  lbx.addEventListener('touchstart', e=>{ x0 = e.touches[0] ? e.touches[0].clientX : null; }, {passive:true});
+  lbx.addEventListener('touchend', e=>{
+    if(x0===null || !e.changedTouches[0]) return;
+    const dx = e.changedTouches[0].clientX - x0; x0=null;
+    if(Math.abs(dx) > 40) lbIr(null, dx < 0 ? 1 : -1);
+  }, {passive:true});
+})();
+
 // ── FOTOS NO CADASTRO (antes do registro existir) ──
 // Nos formulários de "adicionar", a máquina/peça ainda não tem id — então as
 // fotos ficam guardadas aqui, já comprimidas, e são gravadas junto no momento
@@ -4776,7 +4864,7 @@ function fpRender(chave){
   const arr=fotosPend[chave], ult=arr.length-1;
   lista.innerHTML = arr.length
     ? arr.map((f,i)=>`<div class="foto-item">
-        <img src="${f.dataUrl}" alt="Foto ${i+1}">
+        <img src="${f.dataUrl}" alt="Foto ${i+1}" onclick="foAmpliar('${chave}',${i})" title="Toque para ampliar">
         <button type="button" class="foto-del" onclick="fpRemover('${chave}',${i})" title="Remover">✕</button>
         <div class="foto-barra">
           <button type="button" class="foto-mv" onclick="fpMover('${chave}',${i},-1)" ${i===0?'disabled':''} title="Mover para trás">◀</button>
@@ -4870,7 +4958,7 @@ function foRender(msg){
   const ult=fotosDoProduto.length-1;
   lista.innerHTML = fotosDoProduto.length
     ? fotosDoProduto.map((f,i)=>`<div class="foto-item">
-        <img src="${f.dataUrl}" alt="Foto ${i+1}">
+        <img src="${f.dataUrl}" alt="Foto ${i+1}" onclick="foAmpliar('edit',${i})" title="Toque para ampliar">
         <button type="button" class="foto-del" onclick="foApagar('${f.id}')" title="Remover">✕</button>
         <div class="foto-barra">
           <button type="button" class="foto-mv" onclick="foMover(${i},-1)" ${i===0?'disabled':''} title="Mover para trás">◀</button>
