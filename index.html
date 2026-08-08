@@ -466,6 +466,12 @@ input[type=number].inp{padding-left:32px}
 .amiga-resumo{font-size:.74rem;background:#faf5ff;border:1px solid #e9d5ff;border-radius:9px;
   padding:9px 12px;margin-top:10px;color:#6b21a8;line-height:1.6}
 
+/* ── SELETOR DE MÊS NO RANKING ── */
+.rk-mespicker{display:flex;align-items:center;gap:9px;margin-bottom:10px;flex-wrap:wrap}
+.rk-mespicker-lbl{font-size:.68rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--li)}
+.rk-mespicker-sel{flex:1;min-width:150px;background:var(--w);border:1px solid var(--b2);border-radius:8px;
+  padding:6px 10px;font:inherit;font-size:.8rem;font-weight:600;color:var(--tx);cursor:pointer}
+
 /* ── FOTOS DA MÁQUINA ── */
 .fotos-box{background:var(--bg);border:1px solid var(--b);border-radius:10px;padding:11px 12px}
 .fotos-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:9px;flex-wrap:wrap}
@@ -6370,6 +6376,16 @@ function renderAlertas(){
 
 // ── RANKING ──
 let rkMode='lucro';
+// Mês escolhido na aba "vendidos do mês". Vazio = mês corrente.
+let rkMesRef='';
+function nomeDoMes(m){
+  if(!m || m.length<7) return m||'';
+  const d=new Date(m+'-01T12:00:00');
+  if(isNaN(d)) return m;
+  const t=d.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+  return t.charAt(0).toUpperCase()+t.slice(1);
+}
+window.rkTrocarMes=(m)=>{ rkMesRef=m||''; renderRanking(); };
 window.swRk=(mode,btn)=>{rkMode=mode;document.querySelectorAll('.rk-tab').forEach(t=>t.classList.remove('on'));btn.classList.add('on');renderRanking();};
 // Dias entre compra e venda, distinguindo dado PRECISO de ESTIMADO.
 // Registros antigos só têm o mês (YYYY-MM) — nesses, o dia é desconhecido.
@@ -6408,12 +6424,24 @@ function renderRanking(){
   if(rkMode==='lucro'){
     lista=prods.filter(p=>p.status==='Vendido').map(p=>({nome:p.nome,sub:fdt(p.data_venda),val:p.lucro!==undefined?p.lucro:p.venda-p.custo,cls:'g'})).sort((a,b)=>b.val-a.val).slice(0,10);
   } else if(rkMode==='mes'){
-    // Só as vendas do mês corrente — lista completa, sem cortar no top 10
-    const mesRef=new Date().toISOString().slice(0,7);
-    const nomeMes=new Date(mesRef+'-01T12:00:00').toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+    // Lista completa das vendas de UM mês, escolhido no seletor. O padrão é o mês
+    // corrente, mas comparar com o fechado anterior é o uso mais frequente —
+    // então os meses com venda ficam à mão, do mais recente pro mais antigo.
+    const mesesComVenda=[...new Set(prods.filter(p=>p.status==='Vendido').map(p=>getMesVenda(p)).filter(Boolean))].sort().reverse();
+    const mesAtual=new Date().toISOString().slice(0,7);
+    if(!rkMesRef || (rkMesRef!==mesAtual && mesesComVenda.indexOf(rkMesRef)<0)) rkMesRef = mesAtual;
+    const mesRef=rkMesRef;
+    const nomeMes=nomeDoMes(mesRef);
+    const opcoes=[...new Set([mesAtual, ...mesesComVenda])].sort().reverse();
+    const seletor=`<div class="rk-mespicker">
+      <label class="rk-mespicker-lbl">📅 Mês</label>
+      <select class="rk-mespicker-sel" onchange="rkTrocarMes(this.value)">
+        ${opcoes.map(m=>`<option value="${m}"${m===mesRef?' selected':''}>${nomeDoMes(m)}${m===mesAtual?' (em curso)':''}</option>`).join('')}
+      </select>
+    </div>`;
     const doMes=prods.filter(p=>p.status==='Vendido'&&getMesVenda(p)===mesRef);
     if(!doMes.length){
-      body.innerHTML=`<div style="padding:24px;text-align:center;color:var(--li);font-size:.8rem">Nenhuma venda registrada em ${nomeMes} ainda.<br><span style="font-size:.72rem">As vendas deste mês aparecem aqui automaticamente.</span></div>`;
+      body.innerHTML=seletor+`<div style="padding:24px;text-align:center;color:var(--li);font-size:.8rem">Nenhuma venda registrada em ${nomeMes}.<br><span style="font-size:.72rem">Escolha outro mês no seletor acima.</span></div>`;
       return;
     }
     lista=doMes.map(p=>{
@@ -6433,7 +6461,7 @@ function renderRanking(){
     const margemReal=totFat>0?Math.round(totLuc/totFat*100):0;
     const margemCheia=(totFat+totDesc)>0?Math.round((totLuc+totDesc)/(totFat+totDesc)*100):0;
     const blocoAmiga=amigas.length?`<div class="amiga-resumo">🤝 <strong>${amigas.length} venda${amigas.length!==1?'s':''} a preço de amigo</strong> — ${fmt(totDesc)} concedidos.<br>Margem do mês: <strong>${margemReal}%</strong>. Sem esses descontos teria sido ${margemCheia}%. O dinheiro entrou de verdade; a diferença é investimento em relacionamento.</div>`:'';
-    resumo=`<div class="rk-resumo"><strong>${doMes.length} venda${doMes.length!==1?'s':''}</strong> em ${nomeMes} · faturamento ${fmt(totFat)} · lucro ${fmt(totLuc)}<br><span style="color:var(--li)">Lista completa, do maior lucro para o menor.</span></div>${blocoAmiga}`;
+    resumo=seletor+`<div class="rk-resumo"><strong>${doMes.length} venda${doMes.length!==1?'s':''}</strong> em ${nomeMes} · faturamento ${fmt(totFat)} · lucro ${fmt(totLuc)}<br><span style="color:var(--li)">Lista completa, do maior lucro para o menor.</span></div>${blocoAmiga}`;
   } else if(rkMode==='giro'){
     // Só entram vendas com data EXATA (dia) nos dois lados — senão o ranking vira chute.
     const todos=prods.filter(p=>p.status==='Vendido').map(p=>({p,g:diasGiro(p)})).filter(x=>x.g);
