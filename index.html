@@ -471,6 +471,9 @@ input[type=number].inp{padding-left:32px}
 .rk-mespicker-lbl{font-size:.68rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--li)}
 .rk-mespicker-sel{flex:1;min-width:150px;background:var(--w);border:1px solid var(--b2);border-radius:8px;
   padding:6px 10px;font:inherit;font-size:.8rem;font-weight:600;color:var(--tx);cursor:pointer}
+.rk-mespicker-volta{background:var(--bg);border:1px solid var(--b2);border-radius:8px;padding:6px 10px;
+  font:inherit;font-size:.72rem;font-weight:700;color:var(--li);cursor:pointer;white-space:nowrap}
+.rk-mespicker-volta:active{background:var(--b)}
 
 /* ── FOTOS DA MÁQUINA ── */
 .fotos-box{background:var(--bg);border:1px solid var(--b);border-radius:10px;padding:11px 12px}
@@ -6090,7 +6093,7 @@ window.sp2=p=>{
        (p==='financas'&&t.textContent.includes('Finan'))||
        (p==='clientes'&&t.textContent.includes('Clientes')))t.classList.add('on');
   });
-  if(p==='insights')buildCharts();
+  if(p==='insights'){rkMesPadrao();buildCharts();}
   if(p==='painel'){buildPainel();buildPainelCharts();}
   if(p==='financas'){renderFinLabel();checkNotificacoes();}
   if(p==='admin'){carregarAvisos();}
@@ -6377,7 +6380,11 @@ function renderAlertas(){
 // ── RANKING ──
 let rkMode='lucro';
 // Mês escolhido na aba "vendidos do mês". Vazio = mês corrente.
+// É filtro de passagem, não estado salvo: sempre que se entra na aba (ou em
+// Insights) volta pro mês em curso — olhar o mês passado é consulta, o padrão
+// é o que está acontecendo agora.
 let rkMesRef='';
+function rkMesPadrao(){ rkMesRef=''; }
 function nomeDoMes(m){
   if(!m || m.length<7) return m||'';
   const d=new Date(m+'-01T12:00:00');
@@ -6386,7 +6393,7 @@ function nomeDoMes(m){
   return t.charAt(0).toUpperCase()+t.slice(1);
 }
 window.rkTrocarMes=(m)=>{ rkMesRef=m||''; renderRanking(); };
-window.swRk=(mode,btn)=>{rkMode=mode;document.querySelectorAll('.rk-tab').forEach(t=>t.classList.remove('on'));btn.classList.add('on');renderRanking();};
+window.swRk=(mode,btn)=>{rkMode=mode;rkMesPadrao();document.querySelectorAll('.rk-tab').forEach(t=>t.classList.remove('on'));btn.classList.add('on');renderRanking();};
 // Dias entre compra e venda, distinguindo dado PRECISO de ESTIMADO.
 // Registros antigos só têm o mês (YYYY-MM) — nesses, o dia é desconhecido.
 // Retorna null se faltar data; senão {dias, preciso, mesmoMes}.
@@ -6433,11 +6440,13 @@ function renderRanking(){
     const mesRef=rkMesRef;
     const nomeMes=nomeDoMes(mesRef);
     const opcoes=[...new Set([mesAtual, ...mesesComVenda])].sort().reverse();
+    const olhandoPassado = mesRef!==mesAtual;
     const seletor=`<div class="rk-mespicker">
       <label class="rk-mespicker-lbl">📅 Mês</label>
       <select class="rk-mespicker-sel" onchange="rkTrocarMes(this.value)">
         ${opcoes.map(m=>`<option value="${m}"${m===mesRef?' selected':''}>${nomeDoMes(m)}${m===mesAtual?' (em curso)':''}</option>`).join('')}
       </select>
+      ${olhandoPassado?`<button class="rk-mespicker-volta" onclick="rkTrocarMes('')">↩ mês atual</button>`:''}
     </div>`;
     const doMes=prods.filter(p=>p.status==='Vendido'&&getMesVenda(p)===mesRef);
     if(!doMes.length){
