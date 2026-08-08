@@ -273,6 +273,15 @@ input[type=number].inp{padding-left:32px}
 .marca-busca-inp:focus{border-color:var(--tx)}
 .marca-busca-inp::placeholder{color:var(--li)}
 .marca-busca-info{font-size:.7rem;color:var(--li);font-weight:600;white-space:nowrap;min-width:56px;text-align:right}
+.marca-busca-dica{display:none;margin:0 12px 8px;padding:9px 11px;background:#fffbeb;border:1px solid #fde68a;
+  border-radius:9px;font-size:.74rem;color:#92400e;line-height:1.45}
+.mbd-bloco+.mbd-bloco{margin-top:9px;padding-top:9px;border-top:1px solid #fde68a}
+.mbd-itens{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px}
+.mbd-item{background:var(--w);border:1px solid #fde68a;border-radius:7px;padding:2px 7px;font-size:.72rem;font-weight:600;color:var(--tx)}
+.mbd-item em{font-style:normal;font-weight:600;color:var(--li);font-size:.68rem;margin-left:3px}
+.mbd-ir{margin-top:7px;background:#92400e;color:#fff;border:0;border-radius:7px;padding:5px 11px;
+  font:inherit;font-size:.73rem;font-weight:700;cursor:pointer}
+.mbd-ir:active{opacity:.8}
 .peca-maq{display:inline-block;font-size:.65rem;font-weight:600;color:#1d4ed8;background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:1px 7px;margin-right:4px}
 .peca-maq.alerta{color:#a16207;background:#fffbeb;border-color:#fde68a}
 .peca-forn{display:inline-block;font-size:.65rem;font-weight:600;color:#7c3aed;background:#faf5ff;border:1px solid #e9d5ff;border-radius:6px;padding:1px 7px}
@@ -4730,7 +4739,31 @@ window.concluirEdit=()=>{
 window.setF=(f,btn)=>{filt=f;document.querySelectorAll('.fc2').forEach(c=>c.classList.remove('on'));btn.classList.add('on');render();};
 
 const BC={Dell:'#2563eb',Lenovo:'#dc2626',Acer:'#16a34a',HP:'#0891b2',Samsung:'#7c3aed',Asus:'#0284c7',Outros:'#9ca3af'};
-function brand(n){for(const b of Object.keys(BC)){if((n||'').toLowerCase().includes(b.toLowerCase()))return b;}return'Outros';}
+// Boa parte das máquinas é cadastrada só pelo modelo — "ThinkPad T14",
+// "Latitude 3420", "Aspire 5" — sem escrever a marca. Só olhando o nome da
+// marca, todas essas caíam em "Outros": a busca dentro de Lenovo devolvia zero
+// e a máquina parecia não existir. As famílias abaixo dizem a marca pelo modelo.
+const FAMILIAS=[
+  ['Lenovo', /\b(think\s?pad|think\s?book|idea\s?pad|idea\s?centre|legion|yoga|loq)\b/],
+  ['Dell',   /\b(latitude|vostro|inspiron|optiplex|precision|xps|alienware)\b/],
+  ['HP',     /\b(pavilion|elite\s?book|pro\s?book|elite\s?desk|envy|omen|victus|zbook|compaq)\b/],
+  ['Acer',   /\b(aspire|nitro|predator|travel\s?mate|extensa|swift)\b/],
+  ['Asus',   /\b(vivo\s?book|zen\s?book|expert\s?book|rog|tuf)\b/],
+  ['Samsung',/\b(galaxy\s?book|odyssey|np\d{3})\b/],
+];
+function brand(n){
+  const s=(n||'').toLowerCase();
+  for(const b of Object.keys(BC)){ if(b!=='Outros' && s.includes(b.toLowerCase())) return b; }
+  for(const [b,re] of FAMILIAS){ if(re.test(s)) return b; }
+  return 'Outros';
+}
+// Texto onde toda busca de produto procura. Um lugar só, pra busca da tela,
+// busca dentro do grupo e contagem nunca discordarem entre si.
+function alvoBusca(p){
+  return [p.nome,p.cliente_nome,p.fornecedor_nome,p.investidor,p.status,p.plataforma,p.canal_compra,p.num]
+    .filter(Boolean).join(' ').toLowerCase();
+}
+function casaBusca(p,termos){ const a=alvoBusca(p); return termos.every(t=>a.includes(t)); }
 function fmt(v){return'R$ '+Math.round(v||0).toLocaleString('pt-BR');}
 function fdt(d){if(!d)return'—';const parts=d.split('-');if(parts.length<2)return'—';const[y,m]=parts;const ms=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];return(ms[parseInt(m)-1]||m)+'/'+y.slice(2);}
 function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
@@ -5462,6 +5495,77 @@ window.filtrarMarca=(inp)=>{
     info.textContent = termos.length ? `${achou} de ${linhas.length}` : '';
     info.style.color = (termos.length && !achou) ? 'var(--re)' : 'var(--li)';
   }
+  dicaDeBusca(box, cont, termos, achou);
+};
+
+// "0 de 77" sozinho engana: dá a entender que a máquina não existe, quando na
+// verdade ela está em outro grupo (ou em outra aba). Esta dica confere direto no
+// prods — a mesma fonte do "Cadê essa máquina?" — e diz onde ela está.
+function dicaDeBusca(box, cont, termos, achou){
+  let dica = box.nextElementSibling;
+  if(!dica || !dica.classList || !dica.classList.contains('marca-busca-dica')){
+    dica = document.createElement('div');
+    dica.className='marca-busca-dica';
+    cont.insertBefore(dica, box.nextSibling);
+  }
+  const limpar=()=>{ dica.style.display='none'; dica.innerHTML=''; };
+  if(!termos.length || achou) return limpar();
+
+  const grupo = box.closest('.bg');
+  const marcaAqui = ((grupo&&grupo.querySelector('.bnm'))||{}).textContent || '';
+  const achados = (typeof prods!=='undefined'?prods:[]).filter(p=>casaBusca(p,termos));
+  if(!achados.length){
+    dica.style.display='block';
+    dica.innerHTML=`Nenhuma máquina do banco bate com esse texto — nem neste grupo, nem em outro.`;
+    return;
+  }
+
+  const noutroGrupo={}, mesmaMarca=[];
+  achados.forEach(p=>{
+    const b=brand(p.nome);
+    if(b===marcaAqui) mesmaMarca.push(p);
+    else (noutroGrupo[b]=noutroGrupo[b]||[]).push(p);
+  });
+
+  const termo=termos.join(' ');
+  const linha=p=>`<span class="mbd-item">${esc(p.nome||'sem nome')} <em>${esc(p.status||'sem status')}</em></span>`;
+  const partes=[];
+  Object.keys(noutroGrupo).forEach(b=>{
+    const g=noutroGrupo[b];
+    partes.push(`<div class="mbd-bloco">
+      <div class="mbd-txt">Está no grupo <strong>${esc(b)}</strong> — ${g.length} máquina${g.length>1?'s':''}:</div>
+      <div class="mbd-itens">${g.slice(0,4).map(linha).join('')}${g.length>4?`<span class="mbd-item">+${g.length-4}</span>`:''}</div>
+      <button class="mbd-ir" data-marca="${esc(b)}" data-termo="${esc(termo)}" onclick="irParaGrupo(this)">Ver em ${esc(b)} →</button>
+    </div>`);
+  });
+  if(mesmaMarca.length){
+    partes.push(`<div class="mbd-bloco">
+      <div class="mbd-txt">${mesmaMarca.length} em <strong>${esc(marcaAqui)}</strong>, mas fora do que esta lista mostra agora — confira o filtro de status ou a busca do topo:</div>
+      <div class="mbd-itens">${mesmaMarca.slice(0,4).map(linha).join('')}${mesmaMarca.length>4?`<span class="mbd-item">+${mesmaMarca.length-4}</span>`:''}</div>
+    </div>`);
+  }
+  dica.style.display='block';
+  dica.innerHTML=partes.join('');
+}
+
+// Abre o grupo certo, repete a busca lá dentro e leva a tela até ele.
+window.irParaGrupo=(btn)=>{
+  const marca=btn.dataset.marca||'', termo=btn.dataset.termo||'';
+  const grupo=btn.closest('.bg'), lista=grupo?grupo.parentElement:null;
+  if(!lista) return;
+  const alvo=[...lista.querySelectorAll('.bg')].find(g=>{
+    const nm=g.querySelector('.bnm');
+    return nm && nm.textContent.trim()===marca.trim();
+  });
+  if(!alvo) return;
+  const corpo=alvo.querySelector('.bgh + div');
+  if(corpo && corpo.style.display==='none'){
+    corpo.style.display='block';
+    const arr=alvo.querySelector('.barr'); if(arr) arr.textContent='▾';
+  }
+  const inp=alvo.querySelector('.marca-busca-inp');
+  if(inp){ inp.value=termo; window.filtrarMarca(inp); }
+  alvo.scrollIntoView({behavior:'smooth', block:'start'});
 };
 
 // Se o status gravado não for nenhum dos três, o <select> mostraria a primeira
@@ -5554,8 +5658,7 @@ function renderTabela(lista, tipo){
       const autorTag=p.addedByName?`<span title="Cadastrado por ${esc(p.addedByName)}" style="font-size:.62rem;color:var(--li);margin-left:3px">· ${esc(p.addedByName)}</span>`:'';
       const custoTag = tipo!=='vendidos' ? `<span class="custo-tag">${fmt(p.custo)}</span>` : '';
 
-      const _busca=[p.nome,p.cliente_nome,p.fornecedor_nome,p.investidor,p.plataforma,p.canal_compra,p.num]
-        .filter(Boolean).join(' ').toLowerCase().replace(/"/g,'');
+      const _busca=alvoBusca(p).replace(/"/g,'');
       return`<tr data-busca="${_busca}">
         <td><span class="nb">${p.num||'?'}</span></td>
         <td><div class="pn">${esc(p.nome)}</div>${compChips}<div style="display:flex;gap:4px;margin-top:3px;flex-wrap:wrap">${diasBadge}${custoTag}${badgeDevTroca(p)}</div></td>
@@ -5603,9 +5706,7 @@ function render(){
   const termos=q.split(/\s+/).filter(Boolean);
   const filtered = termos.length
     ? porStatus.filter(p=>{
-        const alvo=[p.nome,p.cliente_nome,p.fornecedor_nome,p.investidor,p.status,p.plataforma,p.canal_compra]
-          .filter(Boolean).join(' ').toLowerCase();
-        return termos.every(t=>alvo.includes(t));
+        return casaBusca(p,termos);
       })
     : porStatus;
   // Info da busca
@@ -5658,8 +5759,7 @@ function render(){
       // Exibe data de compra com dia se disponível
       const dcDisplay=p.data_compra?(p.data_compra.length>7?new Date(p.data_compra+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'2-digit'}):fdt(p.data_compra)):'—';
       const autorTag=p.addedByName?`<span title="Cadastrado por ${esc(p.addedByName)}" style="font-size:.62rem;color:var(--li);margin-left:3px">· ${esc(p.addedByName)}</span>`:'';
-      const _busca=[p.nome,p.cliente_nome,p.fornecedor_nome,p.investidor,p.plataforma,p.canal_compra,p.num]
-        .filter(Boolean).join(' ').toLowerCase().replace(/"/g,'');
+      const _busca=alvoBusca(p).replace(/"/g,'');
       return`<tr data-busca="${_busca}">
         <td><span class="nb">${p.num||'?'}</span></td>
         <td><div class="pn">${esc(p.nome)}</div>${compChips}${badgeDevTroca(p)?`<div style="display:flex;gap:4px;margin-top:3px;flex-wrap:wrap">${badgeDevTroca(p)}</div>`:''}</td>
