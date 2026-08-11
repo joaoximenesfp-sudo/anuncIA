@@ -1,0 +1,203 @@
+{
+  "name": "Finanças por Telegram — anuncIA",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "id": "a1000000-0000-4000-8000-000000000001",
+      "name": "Mensagem no Telegram",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -220,
+        300
+      ],
+      "webhookId": "b2000000-0000-4000-8000-000000000001",
+      "credentials": {
+        "telegramApi": {
+          "id": "EHXulqZ0rbtdMJp1",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// ╔══════════════════════════════════════════════════════════════════╗\n// ║  GERADO POR bot/build-workflow.js — NÃO EDITE AQUI.              ║\n// ║  Mexa em bot/parser.js, rode os testes e gere de novo.           ║\n// ╚══════════════════════════════════════════════════════════════════╝\n\n// ── CONFIGURE ESTAS DUAS LINHAS ANTES DE ATIVAR ────────────────────────\n// UID do Firebase Auth. Sem ele o gasto grava num limbo que o site não lê.\n// Como descobrir: veja o README (seção \"Descobrir seu UID\").\nconst USER_ID = 'PREENCHA_SEU_FIREBASE_UID';\n\n// Seu chat id no Telegram. Enquanto estiver vazio o bot responde a QUALQUER\n// pessoa que achar ele — e aí um estranho escreve na sua planilha.\nconst CHAT_ID_PERMITIDO = '';\n// ───────────────────────────────────────────────────────────────────────\n\n// ══════════════════════════════════════════════════════════════════════\n//  PARSER DE GASTOS — texto solto do Telegram → documento financas_var\n// ══════════════════════════════════════════════════════════════════════\n//\n// Este arquivo é a FONTE DA VERDADE. O nó \"Code\" do workflow n8n é gerado\n// a partir daqui por `build-workflow.js` — nunca edite o JSON na mão, senão\n// os dois desencontram.\n//\n// Objetivo: você manda \"almoço 32\" e acabou. Nada de formulário, nada de\n// escolher mês. Se der pra escrever no WhatsApp, dá pra lançar aqui.\n//\n// O documento gerado tem exatamente o mesmo formato que `addVar()` grava\n// (index.html:5797), pra que o gasto apareça no site como qualquer outro:\n//   { userId, nome, valor, categoria, pagamento, mes, parcelas, parcelaAtual, criadoEm }\n\n// Valores que o app aceita nos selects (index.html:1536 e 1545).\n// Escrever qualquer coisa fora desta lista faz o gasto sumir dos filtros.\nconst CATEGORIAS = ['Alimentação', 'Transporte', 'Lazer', 'Saúde', 'Vestuário', 'Casa', 'Outro'];\nconst PAGAMENTOS = ['Pix', 'Débito', 'Crédito', 'Crédito Parcelado', 'Cartão Carina', 'Dinheiro'];\n\n// Na dúvida, Pix — é como a maioria das compras do dia a dia sai hoje.\nconst PAGAMENTO_PADRAO = 'Pix';\n\n// Ordem importa: a primeira categoria que casar vence. Por isso \"cerveja\"\n// mora em Lazer e não em Alimentação — bar é rolê, não é rancho.\nconst CATEGORIA_KEYWORDS = [\n  ['Casa', ['aluguel', 'luz', 'energia', 'agua', 'internet', 'wifi', 'gas', 'condominio', 'iptu',\n            'faxina', 'faxineira', 'limpeza', 'reforma', 'movel', 'moveis', 'sofa', 'geladeira',\n            'fogao', 'colchao', 'panela', 'vassoura', 'detergente', 'sabao']],\n  ['Saúde', ['farmacia', 'remedio', 'medico', 'dentista', 'consulta', 'exame', 'academia',\n             'psicologo', 'terapia', 'vacina', 'oculos', 'lente', 'dermato', 'fisioterapia',\n             'suplemento', 'whey']],\n  ['Transporte', ['uber', 'gasolina', 'combustivel', 'alcool', 'etanol', 'diesel', 'onibus',\n                  'metro', 'trem', 'estacionamento', 'pedagio', 'ipva', 'mecanico', 'pneu',\n                  'oleo', 'lavagem', 'taxi', 'passagem', 'moto', 'bike', 'patinete',\n                  'licenciamento', 'revisao']],\n  ['Lazer', ['cinema', 'netflix', 'spotify', 'jogo', 'game', 'steam', 'viagem', 'festa', 'show',\n             'bar', 'cerveja', 'balada', 'role', 'streaming', 'hbo', 'disney', 'prime', 'youtube',\n             'livro', 'parque', 'ingresso', 'boliche', 'praia', 'hotel', 'airbnb']],\n  ['Vestuário', ['roupa', 'camisa', 'camiseta', 'calca', 'bermuda', 'tenis', 'sapato', 'chinelo',\n                 'blusa', 'moletom', 'jaqueta', 'meia', 'cueca', 'bone', 'relogio', 'mochila',\n                 'shopping']],\n  ['Alimentação', ['mercado', 'supermercado', 'almoco', 'janta', 'jantar', 'lanche', 'padaria',\n                   'ifood', 'rappi', 'restaurante', 'cafe', 'pizza', 'hamburguer', 'burger',\n                   'acougue', 'feira', 'hortifruti', 'marmita', 'sorvete', 'churrasco', 'pao',\n                   'doce', 'chocolate', 'refrigerante', 'suco', 'coxinha', 'salgado', 'esfiha',\n                   'sushi', 'japones', 'comida']],\n];\n\n// Cada forma de pagamento e como você provavelmente vai escrever ela às pressas.\nconst PAGAMENTO_KEYWORDS = [\n  ['Cartão Carina', ['cartao da carina', 'cartao carina', 'carina']],\n  ['Crédito', ['cartao de credito', 'credito', 'cred', 'cartao']],\n  ['Débito', ['cartao de debito', 'debito', 'deb']],\n  ['Dinheiro', ['dinheiro', 'especie', 'cash']],\n  ['Pix', ['pix']],\n];\n\n// Palavras de ligação que não merecem virar nome de gasto.\n// \"hoje\"/\"ontem\" entram aqui só pra limpar o nome — o dia é descartado de\n// qualquer jeito, porque financas_var guarda mês (`mes`), não data. Ver README.\nconst RUIDO = new Set([\n  'gastei', 'paguei', 'comprei', 'gasto', 'foi', 'de', 'do', 'da', 'no', 'na',\n  'em', 'com', 'reais', 'real', 'pra', 'para', 'por', 'e', 'o', 'a', 'um', 'uma',\n  'meu', 'minha', 'meus', 'minhas', 'hoje', 'ontem',\n  'os', 'as', 'ao', 'aos', 'dos', 'das', 'nos', 'nas',\n]);\n\n// Baixa a caixa e tira acento, SEM mexer no comprimento: cada acento vira\n// base + marca combinante e só a marca some, então todo caractere acentuado\n// continua ocupando 1 posição. Assim o índice i do texto normalizado é o\n// índice i do texto original — é isso que permite casar palavras sem acento\n// e ainda montar o nome com a acentuação digitada (\"almoço\" continua\n// \"Almoço\" no extrato, e não \"Almoco\").\nfunction alinhado(s) {\n  return String(s || '')\n    .toLowerCase()\n    .normalize('NFD')\n    .replace(/[̀-ͯ]/g, '');\n}\n\nfunction normalizar(s) {\n  return alinhado(s).trim();\n}\n\n// Mês corrente em São Paulo. Usar UTC aqui jogaria toda compra feita depois\n// das 21h do dia 31 para o mês seguinte — e o gasto sumiria da tela do mês.\nfunction mesAtual(agora) {\n  return new Intl.DateTimeFormat('en-CA', {\n    timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit',\n  }).format(agora || new Date());\n}\n\n// \"1.234,56\" (brasileiro) e \"1234.56\" (digitado rápido) precisam virar o mesmo número.\nfunction paraNumero(bruto) {\n  let s = String(bruto).replace(/\\s|r\\$/gi, '');\n  if (s.includes(',')) {\n    // Vírgula presente ⇒ ela é o decimal e o ponto é separador de milhar.\n    s = s.replace(/\\./g, '').replace(',', '.');\n  } else if (/\\.\\d{3}$/.test(s)) {\n    // \"1.500\" sem centavos é mil e quinhentos, não um e meio.\n    s = s.replace(/\\./g, '');\n  }\n  const n = parseFloat(s);\n  return Number.isFinite(n) ? n : null;\n}\n\nfunction capitalizar(s) {\n  if (!s) return '';\n  return s.charAt(0).toUpperCase() + s.slice(1);\n}\n\n/**\n * Interpreta uma mensagem de gasto.\n *\n * @param {string} texto      O que você mandou. Ex: \"almoço 32 credito 3x\"\n * @param {object} [opcoes]\n * @param {Date}   [opcoes.agora]  Injetável para os testes não dependerem do relógio.\n * @returns {{ok: true, doc: object, resumo: object} | {ok: false, erro: string}}\n */\nfunction parseGasto(texto, opcoes) {\n  const opts = opcoes || {};\n  const original = String(texto || '').trim();\n  if (!original) return { ok: false, erro: 'vazio' };\n\n  // `norm` é o texto de trabalho: cada pedaço já interpretado (parcelas,\n  // pagamento, valor) é apagado dele. `manter` marca, posição a posição, o\n  // que ainda pertence ao nome — e como os índices batem com `original`,\n  // o nome sai acentuado no fim.\n  let norm = alinhado(original);\n  const manter = new Array(original.length).fill(true);\n  const indicesBatem = norm.length === original.length;\n\n  const consumir = (ini, fim) => {\n    for (let i = ini; i < fim; i++) manter[i] = false;\n    norm = norm.slice(0, ini) + ' '.repeat(fim - ini) + norm.slice(fim);\n  };\n\n  // ── 1. Parcelas ──────────────────────────────────────────────────────\n  // Antes do valor, de propósito: em \"netflix 55 3x\" o \"3\" viraria o valor\n  // se a gente varresse números primeiro.\n  let parcelas = 0;\n  const mParc = /(\\d{1,2})\\s*x(?![a-z0-9])/.exec(norm);\n  if (mParc) {\n    const n = parseInt(mParc[1], 10);\n    if (n >= 2 && n <= 24) parcelas = n;\n    consumir(mParc.index, mParc.index + mParc[0].length);\n  }\n\n  // ── 2. Forma de pagamento ────────────────────────────────────────────\n  let pagamento = null;\n  for (const [nome, chaves] of PAGAMENTO_KEYWORDS) {\n    // Chaves já vêm da mais específica pra mais genérica dentro de cada\n    // forma (\"cartao de credito\" antes de \"cartao\").\n    for (const k of chaves) {\n      const m = new RegExp(`(^|\\\\s)(${k})(?=\\\\s|$)`).exec(norm);\n      if (m) {\n        pagamento = nome;\n        const ini = m.index + m[1].length;\n        consumir(ini, ini + m[2].length);\n        break;\n      }\n    }\n    if (pagamento) break;\n  }\n  // Parcelou mas não disse como? Só existe uma forma de parcelar.\n  if (parcelas > 0 && (!pagamento || pagamento === 'Crédito')) pagamento = 'Crédito Parcelado';\n  if (!pagamento) pagamento = PAGAMENTO_PADRAO;\n\n  // ── 3. Valor ─────────────────────────────────────────────────────────\n  // Pega o ÚLTIMO número que sobrou: em \"99 uber 18\", 18 é a corrida.\n  const reNum = /\\d+(?:[.,]\\d+)*/g;\n  let mNum = null;\n  let ultimo = null;\n  while ((mNum = reNum.exec(norm)) !== null) ultimo = mNum;\n  if (!ultimo) return { ok: false, erro: 'sem_valor' };\n  const valor = paraNumero(ultimo[0]);\n  if (valor === null || valor <= 0) return { ok: false, erro: 'sem_valor' };\n  // Come também um \"R$\" colado antes do número, pra não sobrar no nome.\n  const reCifrao = /r\\$\\s*$/.exec(norm.slice(0, ultimo.index));\n  consumir(ultimo.index - (reCifrao ? reCifrao[0].length : 0), ultimo.index + ultimo[0].length);\n\n  // ── 4. Nome ──────────────────────────────────────────────────────────\n  const fonte = indicesBatem ? original : norm;\n  const nome = fonte\n    .split('')\n    .map((ch, i) => (manter[i] ? ch : ' '))\n    .join('')\n    .split(/\\s+/)\n    .filter((p) => p && !RUIDO.has(normalizar(p)))\n    .join(' ')\n    .trim();\n  if (!nome) return { ok: false, erro: 'sem_nome' };\n\n  // ── 5. Categoria ─────────────────────────────────────────────────────\n  // Casa contra o texto ORIGINAL inteiro: \"uber\" sai do nome quando você\n  // escreve só \"uber 18\", mas a categoria ainda precisa enxergar a palavra.\n  const alvo = normalizar(original);\n  let categoria = 'Outro';\n  for (const [cat, chaves] of CATEGORIA_KEYWORDS) {\n    if (chaves.some((k) => new RegExp(`(^|\\\\s)${k}s?(?=\\\\s|$)`).test(alvo))) {\n      categoria = cat;\n      break;\n    }\n  }\n\n  const nomeFinal = capitalizar(nome);\n  const agora = opts.agora || new Date();\n\n  return {\n    ok: true,\n    // Vai direto pro Firestore. O userId é preenchido pelo workflow.\n    doc: {\n      nome: nomeFinal,\n      valor,\n      categoria,\n      pagamento,\n      mes: mesAtual(agora),\n      parcelas,\n      parcelaAtual: parcelas > 0 ? 1 : 0,\n      criadoEm: agora.toISOString(),\n    },\n    resumo: {\n      nome: nomeFinal, valor, categoria, pagamento, parcelas, mes: mesAtual(agora),\n    },\n  };\n}\n\n// ── Cola com o Telegram ────────────────────────────────────────────────\nconst real = (v) => 'R$ ' + v.toLocaleString('pt-BR', {\n  minimumFractionDigits: 2, maximumFractionDigits: 2,\n});\n\nconst EMOJI_CAT = {\n  'Alimentação': '🍽️', 'Transporte': '🚗', 'Lazer': '🎮', 'Saúde': '💊',\n  'Vestuário': '👕', 'Casa': '🏠', 'Outro': '📦',\n};\nconst EMOJI_PGTO = {\n  'Pix': '💠', 'Débito': '💳', 'Crédito': '💳', 'Crédito Parcelado': '💳',\n  'Cartão Carina': '🟣', 'Dinheiro': '💵',\n};\nconst MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun',\n  'jul', 'ago', 'set', 'out', 'nov', 'dez'];\n\nconst AJUDA = [\n  '💸 *Como lançar um gasto*',\n  '',\n  'Escreve do jeito que vier na cabeça:',\n  '• `almoço 32`',\n  '• `mercado 342,90 debito`',\n  '• `tênis 459,90 10x`',\n  '• `gastei 25 no lanche`',\n  '',\n  '*Formas de pagamento:* pix, debito, credito, dinheiro, carina',\n  '_Sem dizer nada, vai como Pix._',\n  '',\n  '*Parcelas:* escreva `3x`, `10x` — vira Crédito Parcelado sozinho.',\n  '',\n  'A categoria sai da própria palavra (uber → Transporte,',\n  'farmácia → Saúde). O que não bater vai pra Outro.',\n].join('\\n');\n\nconst msg = ($input.first().json || {}).message || {};\nconst texto = String(msg.text || '').trim();\nconst chatId = String((msg.chat || {}).id || '');\n\n// Sem chat id travado o bot é público. Melhor não responder nada a estranho\n// do que confirmar que existe algo aqui.\nif (CHAT_ID_PERMITIDO && chatId !== String(CHAT_ID_PERMITIDO)) return [];\nif (!texto) return [];\n\nconst responder = (t) => [{ json: { acao: 'responder', chatId, resposta: t } }];\n\nif (/^\\/(start|ajuda|help)\\b/i.test(texto)) return responder(AJUDA);\n\nif (USER_ID === 'PREENCHA_SEU_FIREBASE_UID') {\n  return responder(\n    '⚠️ Falta configurar o bot.\\n\\nAbra o nó *Interpretar gasto* no n8n e '\n    + 'preencha `USER_ID` com seu UID do Firebase. O README explica como pegar.'\n    + (chatId ? '\\n\\nAproveitando: seu chat id é `' + chatId + '`.' : '')\n  );\n}\n\nconst r = parseGasto(texto);\n\nif (!r.ok) {\n  const motivo = {\n    sem_valor: 'Não achei o valor nessa mensagem.',\n    sem_nome: 'Achei o valor, mas não o que foi o gasto.',\n    vazio: 'Mensagem vazia.',\n  }[r.erro] || 'Não consegui entender.';\n  return responder(\n    '🤔 ' + motivo + '\\n\\nTenta assim:\\n• `almoço 32`\\n• `mercado 120,50 debito`'\n    + '\\n\\nManda /ajuda pra ver tudo.'\n  );\n}\n\nconst d = r.doc;\nconst [ano, mm] = d.mes.split('-');\nconst confirmacao = [\n  '✅ *' + real(d.valor) + '* · ' + d.nome,\n  (EMOJI_CAT[d.categoria] || '📦') + ' ' + d.categoria\n    + ' · ' + (EMOJI_PGTO[d.pagamento] || '💳') + ' ' + d.pagamento\n    + (d.parcelas > 0 ? ' ' + d.parcelas + 'x de ' + real(d.valor / d.parcelas) : ''),\n  '📅 ' + MESES[parseInt(mm, 10) - 1] + '/' + ano,\n].join('\\n');\n\n// Campos do doc ficam no topo porque é assim que o nó do Firestore lê.\nreturn [{\n  json: {\n    acao: 'gravar',\n    chatId,\n    confirmacao,\n    userId: USER_ID,\n    nome: d.nome,\n    valor: d.valor,\n    categoria: d.categoria,\n    pagamento: d.pagamento,\n    mes: d.mes,\n    parcelas: d.parcelas,\n    parcelaAtual: d.parcelaAtual,\n    criadoEm: d.criadoEm,\n  },\n}];\n"
+      },
+      "id": "a1000000-0000-4000-8000-000000000002",
+      "name": "Interpretar gasto",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1000000-0000-4000-8000-000000000001",
+              "leftValue": "={{ $json.acao }}",
+              "rightValue": "gravar",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a1000000-0000-4000-8000-000000000003",
+      "name": "Entendeu o gasto?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        220,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "projectId": "anuncia-70b88",
+        "database": "(default)",
+        "collection": "financas_var",
+        "columns": "userId,nome,valor,categoria,pagamento,mes,parcelas,parcelaAtual,criadoEm",
+        "options": {}
+      },
+      "id": "a1000000-0000-4000-8000-000000000004",
+      "name": "Gravar em financas_var",
+      "type": "n8n-nodes-base.googleFirebaseCloudFirestore",
+      "typeVersion": 1.1,
+      "position": [
+        460,
+        200
+      ],
+      "credentials": {
+        "googleApi": {
+          "id": "cnQky7PHBmau96KW",
+          "name": "Google Service Account account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Interpretar gasto').first().json.chatId }}",
+        "text": "={{ $('Interpretar gasto').first().json.confirmacao }}",
+        "additionalFields": {
+          "parse_mode": "Markdown",
+          "appendAttribution": false
+        }
+      },
+      "id": "a1000000-0000-4000-8000-000000000005",
+      "name": "Confirmar no chat",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        700,
+        200
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "EHXulqZ0rbtdMJp1",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chatId }}",
+        "text": "={{ $json.resposta }}",
+        "additionalFields": {
+          "parse_mode": "Markdown",
+          "appendAttribution": false
+        }
+      },
+      "id": "a1000000-0000-4000-8000-000000000006",
+      "name": "Responder ajuda ou erro",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        460,
+        420
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "EHXulqZ0rbtdMJp1",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Mensagem no Telegram": {
+      "main": [
+        [
+          {
+            "node": "Interpretar gasto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Interpretar gasto": {
+      "main": [
+        [
+          {
+            "node": "Entendeu o gasto?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Entendeu o gasto?": {
+      "main": [
+        [
+          {
+            "node": "Gravar em financas_var",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder ajuda ou erro",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gravar em financas_var": {
+      "main": [
+        [
+          {
+            "node": "Confirmar no chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
