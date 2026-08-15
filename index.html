@@ -494,6 +494,7 @@ input[type=number].inp{padding-left:32px}
   padding:7px 11px;margin:0 18px 8px;color:#1e40af;line-height:1.5}
 
 /* ── APORTE EXATO POR SÓCIO ── */
+.aporte-box{background:var(--bg);border:1px solid var(--b);border-radius:10px;padding:11px 12px}
 .aporte-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .aporte-campo{display:flex;flex-direction:column;gap:3px}
 .aporte-lbl{font-size:.67rem;font-weight:700;color:var(--li);text-transform:uppercase;letter-spacing:.04em}
@@ -1299,7 +1300,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
               </select>
             </div>
             <div class="fc"><span class="fla">Investidor</span>
-              <select class="inp" id="pInv">
+              <select class="inp" id="pInv" onchange="pAporteHint()">
                 <option value="João">👤 João</option>
                 <option value="Igor">👤 Igor</option>
                 <!-- valor 'Compartilhado' é o que o importador já grava para as máquinas
@@ -1308,6 +1309,25 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
                 <option value="Compartilhado">🤝 Ambos — 50/50</option>
                 <option value="Externo">💼 Externo</option>
               </select>
+            </div>
+            <!-- Só abre quando a compra é dividida: em máquina de um sócio só não há o que ratear -->
+            <div class="fc" style="grid-column:1/-1;display:none" id="pAporteWrap">
+              <div class="aporte-box">
+                <span class="fla" style="margin:0">💰 Quanto cada um colocou <span style="font-weight:400;color:var(--li);text-transform:none">— deixe em branco para rachar no meio</span></span>
+                <div class="aporte-grid" style="margin-top:7px">
+                  <div class="aporte-campo"><span class="aporte-lbl">João R$</span>
+                    <input class="inp" type="number" id="pApJoao" placeholder="0" min="0" step="0.01" oninput="pAporteHint()"></div>
+                  <div class="aporte-campo"><span class="aporte-lbl">Igor R$</span>
+                    <input class="inp" type="number" id="pApIgor" placeholder="0" min="0" step="0.01" oninput="pAporteHint()"></div>
+                </div>
+                <div class="aporte-acoes">
+                  <button type="button" class="aporte-bt" onclick="pAportePreset('meio')">50/50</button>
+                  <button type="button" class="aporte-bt" onclick="pAportePreset('joao')">tudo João</button>
+                  <button type="button" class="aporte-bt" onclick="pAportePreset('igor')">tudo Igor</button>
+                  <button type="button" class="aporte-bt" onclick="pAportePreset('limpar')">limpar</button>
+                </div>
+                <div class="aporte-hint" id="pAporteHintTxt"></div>
+              </div>
             </div>
             <!-- FIX 1: Data de compra agora é type="date" (dia exato) -->
             <div class="fc"><span class="fla">Data Compra</span><input class="inp" type="date" id="pDC"></div>
@@ -2490,8 +2510,8 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
           <option value="Externo">💼 Externo</option>
         </select>
       </div>
-      <div class="fc full">
-        <label class="fl">💰 Quanto cada um colocou nesta máquina <span style="font-size:.67rem;color:var(--li);font-weight:400">opcional — em branco, vale a regra do investidor acima</span></label>
+      <div class="fc full" id="eAporteWrap">
+        <label class="fl">💰 Quanto cada um colocou nesta máquina <span style="font-size:.67rem;color:var(--li);font-weight:400">deixe em branco para rachar no meio</span></label>
         <div class="aporte-grid">
           <div class="aporte-campo"><span class="aporte-lbl">João R$</span>
             <input class="inp" type="number" id="eApJoao" placeholder="0" min="0" step="0.01" oninput="eAporteHint()"></div>
@@ -3270,8 +3290,9 @@ window.ppTotal=()=>{
   let soma=0; rows.forEach(r=>{ soma+=parseFloat(r.querySelector('.pp-custo').value)||0; });
   const gas=parseFloat(document.getElementById('pGas')?.value)||0;
   const el=document.getElementById('ppTotal'); if(!el)return;
-  if(!rows.length && !gas){ el.style.display='none'; return; }
+  if(!rows.length && !gas){ el.style.display='none'; pAporteHint(); return; }
   const base=parseFloat(document.getElementById('pC').value)||0;
+  pAporteHint();                      // peças e gasolina entram no total rateado
   el.style.display='block';
   const partes=[];
   if(rows.length) partes.push(`${rows.length} peça${rows.length!==1?'s':''}: ${fmt(soma)}`);
@@ -3486,7 +3507,7 @@ window.addProd=async()=>{
   const custoTotal=custo+custoPecas+custoGas;
   // data_compra armazena data completa YYYY-MM-DD; data_compra_mes extrai só o mês
   const dcMes=dc?dc.slice(0,7):'';
-  const obj={userId:'shared_ijx',addedBy:user.uid,addedByName:user.displayName||user.email.split('@')[0],nome,custo:custoTotal,custo_base:custo,custo_pecas:custoPecas,custo_gasolina:custoGas,gas_pagante:gasPag,venda,lucro:venda-custoTotal,status,investidor,data_compra:dc,data_compra_mes:dcMes,data_venda:'',data:dcMes,canal_compra:canal,origem_tag:origem,fornecedor_id:fornId,fornecedor_nome:fornNome,num,fotos_n:fotosPend.prod.length,createdAt:new Date().toISOString()};
+  const obj={userId:'shared_ijx',addedBy:user.uid,addedByName:user.displayName||user.email.split('@')[0],nome,custo:custoTotal,custo_base:custo,custo_pecas:custoPecas,custo_gasolina:custoGas,gas_pagante:gasPag,venda,lucro:venda-custoTotal,status,investidor,data_compra:dc,data_compra_mes:dcMes,data_venda:'',data:dcMes,canal_compra:canal,origem_tag:origem,aporte_joao:(parseFloat(document.getElementById('pApJoao')?.value)||0),aporte_igor:(parseFloat(document.getElementById('pApIgor')?.value)||0),fornecedor_id:fornId,fornecedor_nome:fornNome,num,fotos_n:fotosPend.prod.length,createdAt:new Date().toISOString()};
   let prodId='l'+Date.now();
   try{const r=await addDoc(collection(db,'products'),obj);prodId=r.id;prods.push({...obj,id:r.id});}
   catch(e){ await gravar(Promise.reject(e), 'Cadastrar "'+nome+'"'); prods.push({...obj,id:prodId}); }
@@ -3522,6 +3543,10 @@ window.addProd=async()=>{
   const pg=document.getElementById('pGas'); if(pg) pg.value='';
   const pgp=document.getElementById('pGasPag'); if(pgp) pgp.value='ambos';
   const pfw=document.getElementById('pFornWpp'); if(pfw) pfw.value='';
+  const pot=document.getElementById('pOrigem'); if(pot) pot.value='';
+  const paj=document.getElementById('pApJoao'); if(paj) paj.value='';
+  const pai=document.getElementById('pApIgor'); if(pai) pai.value='';
+  pAporteHint();
   try{ resetSpecBuilder(); }catch(e){}
   ppLimpar();
   // Notificar o sócio sobre o novo produto
@@ -4749,16 +4774,40 @@ window.ePlatToggle=()=>{
 // Aporte exato: confere a soma contra o custo total e explica a diferença em vez
 // de escondê-la. Sobra não é erro — é a parte que saiu do caixa da operação, e
 // não do bolso de nenhum dos dois.
-window.eAporteHint=()=>{
-  const ij=document.getElementById('eApJoao'), ii=document.getElementById('eApIgor');
-  const out=document.getElementById('eAporteHintTxt');
+// Aporte exato por sócio — mesma mecânica nos dois formulários (cadastro 'p' e
+// edição 'e'). Uma implementação só: quando isto viveu duplicado em outros
+// campos, as duas cópias divergiram e passaram a discordar entre si.
+// O custo considerado é o TOTAL da máquina: valor pago + peças aplicadas + gasolina.
+function aporteCusto(pre){
+  const base=parseFloat(document.getElementById(pre+'C')?.value)||0;
+  if(pre==='e') return base;                 // na edição o campo já traz o total
+  let pecas=0;
+  document.querySelectorAll('#ppLista .pecaprod-row .pp-custo').forEach(el=>{ pecas+=parseFloat(el.value)||0; });
+  const gas=parseFloat(document.getElementById('pGas')?.value)||0;
+  return base+pecas+gas;
+}
+// O bloco só aparece quando a compra é dividida — em máquina de um sócio só não
+// há o que ratear. Registro que já tem valor lançado mostra sempre, senão o
+// número ficaria invisível e sem como corrigir.
+function aporteVisivel(pre){
+  const inv=document.getElementById(pre+'Inv')?.value||'';
+  const j=parseFloat(document.getElementById(pre+'ApJoao')?.value)||0;
+  const i=parseFloat(document.getElementById(pre+'ApIgor')?.value)||0;
+  return inv==='Compartilhado' || (j+i)>0;
+}
+function aporteHint(pre){
+  const ij=document.getElementById(pre+'ApJoao'), ii=document.getElementById(pre+'ApIgor');
+  const out=document.getElementById(pre+'AporteHintTxt'), wrap=document.getElementById(pre+'AporteWrap');
   if(!ij||!ii||!out)return;
+  if(wrap) wrap.style.display = aporteVisivel(pre) ? '' : 'none';
   const j=parseFloat(ij.value)||0, i=parseFloat(ii.value)||0, soma=j+i;
-  const custo=parseFloat(document.getElementById('eC')?.value)||0;
+  const custo=aporteCusto(pre);
   if(soma<=0){
-    const inv=(document.getElementById('eInv')?.value||'');
+    const inv=document.getElementById(pre+'Inv')?.value||'';
     out.className='aporte-hint';
-    out.innerHTML=`Sem valor lançado — vale a regra acima (<strong>${esc(inv||'—')}</strong>). Preencha só quando a divisão desta máquina foi diferente do padrão.`;
+    out.innerHTML = inv==='Compartilhado'
+      ? `Em branco = <strong>50/50</strong> sobre ${fmt(custo)} (${fmt(custo/2)} para cada). Preencha só quando a divisão desta máquina foi diferente.`
+      : `Em branco = vale a regra do investidor acima (<strong>${esc(inv||'—')}</strong>).`;
     return;
   }
   const dif=custo-soma;
@@ -4774,17 +4823,21 @@ window.eAporteHint=()=>{
     out.className='aporte-hint erro';
     out.innerHTML=`${linha} — passa <strong>${fmt(-dif)}</strong> do custo de ${fmt(custo)}. Confira os valores.`;
   }
-};
-window.eAportePreset=(qual)=>{
-  const ij=document.getElementById('eApJoao'), ii=document.getElementById('eApIgor');
-  const custo=parseFloat(document.getElementById('eC')?.value)||0;
+}
+function aportePreset(pre, qual){
+  const ij=document.getElementById(pre+'ApJoao'), ii=document.getElementById(pre+'ApIgor');
+  const custo=aporteCusto(pre);
   if(!ij||!ii)return;
   if(qual==='limpar'){ ij.value=''; ii.value=''; }
   else if(qual==='meio'){ ij.value=(custo/2).toFixed(2); ii.value=(custo/2).toFixed(2); }
   else if(qual==='joao'){ ij.value=custo.toFixed(2); ii.value='0'; }
   else if(qual==='igor'){ ij.value='0'; ii.value=custo.toFixed(2); }
-  eAporteHint();
-};
+  aporteHint(pre);
+}
+window.eAporteHint=()=>aporteHint('e');
+window.pAporteHint=()=>aporteHint('p');
+window.eAportePreset=(qual)=>aportePreset('e',qual);
+window.pAportePreset=(qual)=>aportePreset('p',qual);
 
 // O check só aparece quando há pendência escrita — marcar "feito" sem ter o que
 // foi feito não registra nada.
