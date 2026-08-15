@@ -1365,7 +1365,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
               <input class="inp" type="text" id="pFornWpp" placeholder="Ex: 19991730377" autocomplete="off">
             </div>
             <div class="fc" style="grid-column:1/-1">
-              <span class="fla">🏷️ Origem da máquina <span style="font-size:.62rem;color:var(--li)">antes de formatar: etiqueta de patrimônio, nome do PC, domínio, Wi-Fi salvo</span></span>
+              <span class="fla">🏷️ Origem da máquina <span style="font-size:.62rem;color:var(--li)">Asset/Owner Tag da BIOS (sobrevive sem HD) · etiqueta da carcaça</span></span>
               <input class="inp" type="text" id="pOrigem" placeholder="Ex: ACME-NB-0342 · dominio acme.local · wifi ACME_CORP" autocomplete="off">
               <span style="font-size:.62rem;color:var(--li);margin-top:4px">Sozinho não diz nada. Depois de dezenas, mostra de onde as máquinas realmente vêm.</span>
             </div>
@@ -2605,7 +2605,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
         </div>
       </div>
       <div class="fc full">
-        <label class="fl">🏷️ Origem da máquina <span style="font-size:.67rem;color:var(--li);font-weight:400">etiqueta de patrimônio, nome do PC, domínio, Wi-Fi salvo — anote antes de formatar</span></label>
+        <label class="fl">🏷️ Origem da máquina <span style="font-size:.67rem;color:var(--li);font-weight:400">Asset/Owner Tag da BIOS e etiqueta da carcaça — não dependem do HD</span></label>
         <input class="inp" type="text" id="eOrigem" placeholder="Ex: ACME-NB-0342 · dominio acme.local · wifi ACME_CORP" autocomplete="off">
       </div>
       <div class="fc full">
@@ -7029,9 +7029,13 @@ function renderOrigens(){
   if(!comTag.length){
     body.innerHTML=`<div class="orig-vazio">
       Nenhuma máquina com origem anotada ainda.<br>
-      <span>Antes de formatar, anote no cadastro: etiqueta de patrimônio, nome do PC, domínio e Wi-Fi salvo
-      (<code>netsh wlan show profiles</code>). Depois de algumas dezenas, este quadro mostra quais empresas
-      alimentam o seu fornecedor — e quando a próxima leva sai.</span></div>`;
+      <span><strong>1. BIOS</strong> (F2 na Dell, F1 na Lenovo) → System Information → <em>Asset Tag</em> e <em>Owner Tag</em>.
+      Fica gravado na placa, não no disco: sobrevive à formatação e à máquina chegar sem HD.<br>
+      <strong>2. Etiqueta de patrimônio</strong> na carcaça — nome, sigla ou código.<br>
+      <strong>3. Só se a máquina vier com o Windows original:</strong> nome do PC, domínio e Wi-Fi salvo
+      (<code>netsh wlan show profiles</code>). Isso é bônus, não o plano.<br>
+      Depois de algumas dezenas, este quadro mostra quais empresas alimentam o seu fornecedor —
+      e quando a próxima leva sai.</span></div>`;
     return;
   }
   const grupos=mapaOrigens(prods);
