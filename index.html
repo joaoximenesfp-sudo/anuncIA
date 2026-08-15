@@ -5768,7 +5768,9 @@ function renderSecoes(){
     elEstCap.textContent = cap>0?'· '+fmt(cap)+' investidos':'';
   }
   const listEst = document.getElementById('PL-est');
-  // Lista de compras: consolida tudo que falta nas máquinas de estoque/anunciadas
+  // Lista de atividades: consolida tudo que falta nas máquinas de estoque/anunciadas.
+  // Nem toda pendência é compra de peça — "rever fotos", "limpar carcaça" e
+  // "testar bateria" também entram aqui, por isso o nome não fala em compra.
   const compras=document.getElementById('listaCompras');
   if(compras){
     const comFalta=[...estoque,...anunciados].filter(p=>p.falta_comprar&&p.falta_comprar.trim());
@@ -5782,7 +5784,7 @@ function renderSecoes(){
           <span class="ci-falta" onclick="openEdit('${p.id}')">${esc(p.falta_comprar)}${p.falta_feito&&faltaFeitaEm(p)?` · ${esc(faltaFeitaEm(p))}`:''}</span>
         </div>`;
       compras.innerHTML=`<div class="compras-box">
-        <div class="compras-head">🛒 Lista de compras <span>${pend.length?`${pend.length} máquina${pend.length!==1?'s':''} esperando peça pra vender`:'tudo resolvido 🎯'}</span></div>
+        <div class="compras-head">📋 Lista de atividades a serem feitas <span>${pend.length?`${pend.length} máquina${pend.length!==1?'s':''} com pendência pra poder vender`:'tudo resolvido 🎯'}</span></div>
         ${pend.map(linha).join('')}
         ${feitas.length?`<div class="compras-feitas">✔ ${feitas.length} já resolvida${feitas.length!==1?'s':''} — o que foi feito fica registrado</div>${feitas.map(linha).join('')}`:''}
       </div>`;
