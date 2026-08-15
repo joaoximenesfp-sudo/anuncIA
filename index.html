@@ -263,7 +263,13 @@ input[type=number].inp{padding-left:32px}
 .pgto-tab.on{background:var(--tx);color:var(--w);border-color:var(--tx)}
 .parc-info{font-size:.82rem;color:var(--tx);background:var(--bg);border:1px solid var(--b);border-radius:8px;padding:7px 10px;margin-top:7px}
 .parc-resumo{font-size:.82rem;color:var(--mu);background:var(--bg);border:1px solid var(--b);border-radius:8px;padding:9px 12px;margin-bottom:10px}
-.falta-tag{display:inline-block;font-size:.68rem;color:#a16207;background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:2px 8px;margin-top:4px;font-weight:600}
+.falta-tag{display:inline-block;font-size:.68rem;color:#a16207;background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:2px 8px;margin-top:4px;font-weight:600;cursor:pointer;transition:.12s}
+.falta-tag:hover{border-color:#fbbf24}
+.falta-tag.ok{color:#15803d;background:#f0fdf4;border-color:#bbf7d0;text-decoration:line-through}
+.falta-tag.ok .ft-data{text-decoration:none;color:#16a34a;font-weight:700;opacity:.85}
+.falta-check{display:flex;align-items:flex-start;gap:7px;margin-top:7px;cursor:pointer;font-size:.72rem;color:var(--mu);line-height:1.4}
+.falta-check input{margin-top:2px;flex:0 0 auto;width:15px;height:15px;accent-color:#16a34a;cursor:pointer}
+.falta-check span{font-weight:600}
 .comp-chips{display:flex;flex-wrap:wrap;gap:3px;margin-top:3px}
 .comp-dd{margin-top:3px}
 .marca-busca{display:flex;align-items:center;gap:8px;padding:7px 12px 4px}
@@ -306,6 +312,15 @@ input[type=number].inp{padding-left:32px}
 .compras-item:hover{border-color:#fbbf24}
 .ci-nome{font-size:.8rem;color:var(--tx);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
 .ci-falta{font-size:.75rem;color:#a16207;font-weight:700;white-space:nowrap}
+.ci-check{flex:0 0 auto;width:20px;height:20px;border-radius:6px;border:1.5px solid #fbbf24;background:var(--w);
+  cursor:pointer;font-size:.72rem;line-height:1;color:#15803d;font-weight:900;padding:0;display:flex;
+  align-items:center;justify-content:center;transition:.12s}
+.ci-check:hover{background:#fffbeb}
+.ci-check.on{background:#dcfce7;border-color:#86efac}
+.compras-item.feita{opacity:.65;border-color:#e7e5e4}
+.compras-item.feita .ci-nome{text-decoration:line-through;color:var(--li)}
+.compras-item.feita .ci-falta{color:#15803d}
+.compras-feitas{font-size:.7rem;font-weight:700;color:#15803d;margin:10px 0 5px}
 .parc-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--b);border-radius:9px;margin-bottom:6px}
 .parc-row.paga{background:#f0fdf4;border-color:#bbf7d0}
 .parc-row.atrasada{background:#fef2f2;border-color:#fecaca}
@@ -2472,7 +2487,11 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
       </div>
       <div class="fc full" id="eFaltaWrap">
         <label class="fl">📝 O que falta comprar/fazer <span style="font-size:.67rem;color:var(--li);font-weight:400">pra deixar essa máquina pronta pra vender</span></label>
-        <input class="inp" type="text" id="eFalta" placeholder="Ex: comprar SSD 256GB · bateria nova · carregador · limpar carcaça">
+        <input class="inp" type="text" id="eFalta" placeholder="Ex: comprar SSD 256GB · bateria nova · carregador · limpar carcaça" oninput="eFaltaFeitoHint()">
+        <label class="falta-check" id="eFaltaFeitoWrap">
+          <input type="checkbox" id="eFaltaFeito" onchange="eFaltaFeitoHint()">
+          <span>✔ Já foi feito — sai da lista de compras, mas o texto acima fica registrado<span id="eFaltaFeitoQuando"></span></span>
+        </label>
       </div>
       <div class="fc full" id="ePlatWrap">
         <label class="fl">📍 De onde veio esse cliente? <span style="font-size:.67rem;color:var(--li);font-weight:400">o anúncio ou contato que trouxe a pessoa — não onde a conversa terminou</span></label>
@@ -4656,6 +4675,9 @@ window.openEdit=id=>{
   // Nota "o que falta comprar" — só para itens ainda não vendidos
   const eFalta=document.getElementById('eFalta');
   if(eFalta) eFalta.value=p.falta_comprar||'';
+  const eFF=document.getElementById('eFaltaFeito');
+  if(eFF) eFF.checked=!!p.falta_feito;
+  eFaltaFeitoHint();
   eFaltaToggle();
   const peL=document.getElementById('peLista'); if(peL) peL.innerHTML='';
   peRenderExistentes(id);
@@ -4683,6 +4705,20 @@ window.ePlatToggle=()=>{
   if(rw) rw.style.display = vendido ? '' : 'none';
   const aw=document.getElementById('eAmigaWrap');
   if(aw) aw.style.display = vendido ? '' : 'none';
+};
+
+// O check só aparece quando há pendência escrita — marcar "feito" sem ter o que
+// foi feito não registra nada.
+window.eFaltaFeitoHint=()=>{
+  const inp=document.getElementById('eFalta'), wrap=document.getElementById('eFaltaFeitoWrap');
+  const chk=document.getElementById('eFaltaFeito'), quando=document.getElementById('eFaltaFeitoQuando');
+  if(!inp||!wrap||!chk)return;
+  const tem=(inp.value||'').trim().length>0;
+  wrap.style.display = tem ? '' : 'none';
+  if(!tem) chk.checked=false;
+  const p=prods.find(x=>x.id===editId);
+  const d=(p&&chk.checked)?faltaFeitaEm(p):'';
+  if(quando) quando.textContent = d ? ' · marcado em '+d : '';
 };
 
 // Repasse ao sócio na edição — usa a mesma regra do modal de venda
@@ -4747,7 +4783,7 @@ window.saveEdit=async()=>{
   const custoFinal=baseMaquina+somaJa+somaNovas;
   const totalPecas=somaJa+somaNovas;
 
-  const upd={nome,custo:custoFinal,custo_base:baseMaquina,custo_pecas:totalPecas,venda,lucro:venda-custoFinal,status,investidor,plataforma:(status==='Vendido'?(document.getElementById('ePlat')?.value||''):''),repasse_socio:(status==='Vendido'?(parseFloat(document.getElementById('eRepasse')?.value)||0):0),falta_comprar:(status!=='Vendido'?(document.getElementById('eFalta')?.value.trim()||''):''),fornecedor_id:fornId,fornecedor_nome:fornNome,origem_tag:(document.getElementById('eOrigem')?.value||'').trim(),data_compra:dc,data_compra_mes:dcMes,data_venda:dv,data:(dv?dv.slice(0,7):dcMes),gas_pagante:(document.getElementById('eGasPag')?.value||'ambos'),cliente_id:cliId,cliente_nome:cliNome,preco_cheio:(status==='Vendido'?(parseFloat(document.getElementById('ePrecoCheio')?.value)||0):0),nota_venda:(status==='Vendido'?(document.getElementById('eNotaVenda')?.value.trim()||''):'')};
+  const upd={nome,custo:custoFinal,custo_base:baseMaquina,custo_pecas:totalPecas,venda,lucro:venda-custoFinal,status,investidor,plataforma:(status==='Vendido'?(document.getElementById('ePlat')?.value||''):''),repasse_socio:(status==='Vendido'?(parseFloat(document.getElementById('eRepasse')?.value)||0):0),falta_comprar:(status!=='Vendido'?(document.getElementById('eFalta')?.value.trim()||''):''),falta_feito:(status!=='Vendido'&&!!document.getElementById('eFaltaFeito')?.checked),falta_feito_em:((status!=='Vendido'&&document.getElementById('eFaltaFeito')?.checked)?((_pAtual&&_pAtual.falta_feito&&_pAtual.falta_feito_em)||new Date().toISOString().slice(0,10)):''),fornecedor_id:fornId,fornecedor_nome:fornNome,origem_tag:(document.getElementById('eOrigem')?.value||'').trim(),data_compra:dc,data_compra_mes:dcMes,data_venda:dv,data:(dv?dv.slice(0,7):dcMes),gas_pagante:(document.getElementById('eGasPag')?.value||'ambos'),cliente_id:cliId,cliente_nome:cliNome,preco_cheio:(status==='Vendido'?(parseFloat(document.getElementById('ePrecoCheio')?.value)||0):0),nota_venda:(status==='Vendido'?(document.getElementById('eNotaVenda')?.value.trim()||''):'')};
   await vincularTroca(editId, upd);
   if(!editId.startsWith('x')&&!editId.startsWith('l')) await gravar(updateDoc(doc(db,'products',editId),upd), 'Editar "'+nome+'"');
   // Grava as peças novas na aba Peças, vinculadas a esta máquina
@@ -5166,6 +5202,37 @@ let dvId=null;
 // Selo que acompanha a máquina em qualquer lista: a devolvida carrega o que
 // aconteceu, e a que entrou no lugar carrega de onde veio. Os dois lados da
 // troca ficam visíveis onde quer que a máquina apareça.
+// Pendência resolvida não pode sumir. "Precisou de SSD 256GB" é o custo real de
+// recuperação daquela máquina — apagar o texto pra limpar a lista de compras
+// apagaria a história junto. Por isso o check é um campo separado: o que faltava
+// fica registrado, e a máquina sai da fila de pendências.
+function faltaFeitaEm(p){
+  const d=(p.falta_feito_em||'').trim();
+  if(!d) return '';
+  return d.length>7 ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short'}) : d;
+}
+function faltaBadge(p){
+  const txt=(p.falta_comprar||'').trim();
+  if(p.status==='Vendido' || !txt) return '';
+  const feito=!!p.falta_feito;
+  const quando=faltaFeitaEm(p);
+  const tit = feito
+    ? 'Feito'+(quando?' em '+quando:'')+' — toque para reabrir'
+    : 'Falta pra vender — toque para marcar como feito';
+  return `<div class="falta-tag${feito?' ok':''}" title="${esc(tit)}"
+    onclick="event.stopPropagation();faltaFeito('${p.id}',${feito?'false':'true'})">${feito?'✔':'🛒'} ${esc(txt)}${feito&&quando?` <span class="ft-data">${esc(quando)}</span>`:''}</div>`;
+}
+// Marca/desmarca sem abrir a edição — o check é de um toque na própria etiqueta.
+window.faltaFeito=async(id,feito)=>{
+  const p=prods.find(x=>x.id===id); if(!p) return;
+  const marcar=(feito===true||feito==='true');
+  const upd={falta_feito:marcar, falta_feito_em: marcar ? new Date().toISOString().slice(0,10) : ''};
+  Object.assign(p,upd);
+  if(!String(id).startsWith('x')&&!String(id).startsWith('l'))
+    await gravar(updateDoc(doc(db,'products',id),upd), (marcar?'Marcar como feito: ':'Reabrir pendência: ')+(p.nome||id));
+  render(); renderSecoes();
+};
+
 function badgeDevTroca(p){
   let h='';
   if(p.status!=='Vendido'){
@@ -5482,14 +5549,20 @@ function renderSecoes(){
   // Lista de compras: consolida tudo que falta nas máquinas de estoque/anunciadas
   const compras=document.getElementById('listaCompras');
   if(compras){
-    const pend=[...estoque,...anunciados].filter(p=>p.falta_comprar&&p.falta_comprar.trim());
-    if(pend.length){
+    const comFalta=[...estoque,...anunciados].filter(p=>p.falta_comprar&&p.falta_comprar.trim());
+    const pend=comFalta.filter(p=>!p.falta_feito);
+    const feitas=comFalta.filter(p=>p.falta_feito);
+    if(comFalta.length){
+      const linha=(p)=>`<div class="compras-item${p.falta_feito?' feita':''}">
+          <button class="ci-check${p.falta_feito?' on':''}" title="${p.falta_feito?'Reabrir':'Marcar como feito'}"
+            onclick="event.stopPropagation();faltaFeito('${p.id}',${p.falta_feito?'false':'true'})">${p.falta_feito?'✔':''}</button>
+          <span class="ci-nome" onclick="openEdit('${p.id}')">${esc(p.nome||'—')}</span>
+          <span class="ci-falta" onclick="openEdit('${p.id}')">${esc(p.falta_comprar)}${p.falta_feito&&faltaFeitaEm(p)?` · ${esc(faltaFeitaEm(p))}`:''}</span>
+        </div>`;
       compras.innerHTML=`<div class="compras-box">
-        <div class="compras-head">🛒 Lista de compras <span>${pend.length} máquina${pend.length!==1?'s':''} esperando peça pra vender</span></div>
-        ${pend.map(p=>`<div class="compras-item" onclick="openEdit('${p.id}')">
-          <span class="ci-nome">${esc(p.nome||'—')}</span>
-          <span class="ci-falta">${esc(p.falta_comprar)}</span>
-        </div>`).join('')}
+        <div class="compras-head">🛒 Lista de compras <span>${pend.length?`${pend.length} máquina${pend.length!==1?'s':''} esperando peça pra vender`:'tudo resolvido 🎯'}</span></div>
+        ${pend.map(linha).join('')}
+        ${feitas.length?`<div class="compras-feitas">✔ ${feitas.length} já resolvida${feitas.length!==1?'s':''} — o que foi feito fica registrado</div>${feitas.map(linha).join('')}`:''}
       </div>`;
     } else compras.innerHTML='';
   }
@@ -5676,7 +5749,7 @@ function renderTabela(lista, tipo){
       const platBg={'Marketplace':'#eff6ff','OLX':'#fff7ed','Mercado Livre':'#fefce8','WhatsApp':'#f0fdf4','Instagram':'#faf5ff','Indicação':'#e0f2fe','Outro':'#f5f5f5'};
       const platBd={'Marketplace':'#bfdbfe','OLX':'#fed7aa','Mercado Livre':'#fef08a','WhatsApp':'#bbf7d0','Instagram':'#e9d5ff','Indicação':'#bae6fd','Outro':'#d4d4d4'};
       const platInfo=p.status==='Vendido'&&p.plataforma?`<span style="font-size:.67rem;font-weight:600;padding:2px 7px;border-radius:10px;margin-left:4px;background:${platBg[p.plataforma]||'#f5f5f5'};color:${platColors[p.plataforma]||'#78716c'};border:1px solid ${platBd[p.plataforma]||'#d4d4d4'}">${esc(p.plataforma)}</span>`:'';
-      const faltaInfo=(p.status!=='Vendido'&&p.falta_comprar)?`<div class="falta-tag" title="Falta pra vender">🛒 ${esc(p.falta_comprar)}</div>`:'';
+      const faltaInfo=faltaBadge(p);
       let compChips='';
       if(p.status!=='Vendido' && typeof pecas!=='undefined'){
         const comps=pecas.filter(pc=>pc.produto_id===p.id);
@@ -5777,7 +5850,7 @@ function render(){
       const platBg={'Marketplace':'#eff6ff','OLX':'#fff7ed','Mercado Livre':'#fefce8','WhatsApp':'#f0fdf4','Instagram':'#faf5ff','Indicação':'#e0f2fe','Outro':'#f5f5f5'};
       const platBd={'Marketplace':'#bfdbfe','OLX':'#fed7aa','Mercado Livre':'#fef08a','WhatsApp':'#bbf7d0','Instagram':'#e9d5ff','Indicação':'#bae6fd','Outro':'#d4d4d4'};
       const platInfo=p.status==='Vendido'&&p.plataforma?`<span style="font-size:.67rem;font-weight:600;padding:2px 7px;border-radius:10px;margin-left:4px;background:${platBg[p.plataforma]||'#f5f5f5'};color:${platColors[p.plataforma]||'#78716c'};border:1px solid ${platBd[p.plataforma]||'#d4d4d4'}">${esc(p.plataforma)}</span>`:'';
-      const faltaInfo=(p.status!=='Vendido'&&p.falta_comprar)?`<div class="falta-tag" title="Falta pra vender">🛒 ${esc(p.falta_comprar)}</div>`:'';
+      const faltaInfo=faltaBadge(p);
       let compChips='';
       if(p.status!=='Vendido' && typeof pecas!=='undefined'){
         const comps=pecas.filter(pc=>pc.produto_id===p.id);
