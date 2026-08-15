@@ -295,6 +295,7 @@ input[type=number].inp{padding-left:32px}
 .comp-linha{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:3px 0;font-size:.72rem;border-bottom:1px solid var(--b)}
 .comp-linha:last-of-type{border-bottom:none}
 .comp-linha-nome{color:var(--tx);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.comp-inv{font-size:.62rem;font-weight:700;color:var(--li);background:var(--w);border:1px solid var(--b2);border-radius:5px;padding:0 5px;margin-left:5px}
 .comp-linha-custo{color:var(--mu);font-weight:600;white-space:nowrap}
 .comp-total{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 0 2px;margin-top:3px;border-top:1.5px solid var(--b2);font-size:.72rem;color:var(--mu)}
 .comp-total strong{color:var(--tx);font-size:.78rem}
@@ -352,7 +353,8 @@ input[type=number].inp{padding-left:32px}
 .spec-ger-wrap{margin-top:2px}
 .pecaprod-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
 .pecaprod-add{background:var(--tx);color:var(--w);border:none;border-radius:7px;padding:5px 12px;font-size:.73rem;font-weight:700;cursor:pointer}
-.pecaprod-row{display:grid;grid-template-columns:135px 1fr 110px 30px;gap:6px;margin-bottom:5px;align-items:center}
+.pecaprod-row{display:grid;grid-template-columns:130px 1fr 100px 110px 30px;gap:6px;margin-bottom:5px;align-items:center}
+.pp-inv{font-size:.75rem}
 .pecaprod-row .inp{font-size:.8rem}
 .pp-rem{background:var(--rbg);color:var(--re);border:none;border-radius:7px;padding:6px 0;font-size:.78rem;font-weight:700;cursor:pointer}
 .pecaprod-total{font-size:.76rem;color:var(--mu);background:var(--w);border:1px solid var(--b);border-radius:7px;padding:6px 10px;margin-top:6px}
@@ -1478,6 +1480,13 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
                   <option value="Usado">Usado em reparo</option>
                 </select>
               </div>
+              <div class="fc"><span class="fla">Investidor</span>
+                <select class="inp" id="pcInv">
+                  <option value="">🤝 Rachado 50/50</option>
+                  <option value="João">👤 João</option>
+                  <option value="Igor">👤 Igor</option>
+                </select>
+              </div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;grid-column:1/-1">
               <div class="fc"><span class="fla">Observação</span><input class="inp" type="text" id="pcObs" placeholder="Ex: Não funciona, Testar..."></div>
               <div class="fc"><span class="fla">Quantidade</span><input class="inp" type="number" id="pcQtd" placeholder="1" min="1" value="1"></div>
@@ -2418,6 +2427,12 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
             <option value="Vendido">Vendido</option>
             <option value="Usado">Usado em máquina</option>
           </select></div>
+        <div class="fc"><label class="fl">Investidor <span style="font-size:.65rem;color:var(--li);font-weight:400">peça costuma ser rachada</span></label>
+          <select class="inp" id="pkInv">
+            <option value="">🤝 Rachado 50/50</option>
+            <option value="João">👤 João</option>
+            <option value="Igor">👤 Igor</option>
+          </select></div>
         <div class="fc full"><label class="fl">🔧 Fornecedor <span style="font-size:.65rem;color:var(--li);font-weight:400">de quem você comprou esta peça</span></label>
           <div style="display:grid;grid-template-columns:1fr 150px;gap:8px">
             <div style="position:relative">
@@ -3223,6 +3238,9 @@ window.ppAddLinha=()=>{
       <select class="inp pp-tipo" onchange="ppTipoMudou('${id}')">${PP_TIPOS.map(t=>`<option value="${t}">${PP_EMOJI[t]} ${t}</option>`).join('')}</select>
       <input class="inp pp-nome" type="text" placeholder="Descrição (ex: SSD 256GB Kingston)">
       <input class="inp pp-custo" type="number" min="0" placeholder="Custo R$" oninput="ppTotal()">
+      <select class="inp pp-inv" title="Quem investiu nesta peça" onchange="ppTotal()">
+        <option value="">🤝 50/50</option><option value="João">👤 João</option><option value="Igor">👤 Igor</option>
+      </select>
       <button type="button" class="pp-rem" onclick="ppRemLinha('${id}')" title="Remover">✕</button>
       <input type="hidden" class="pp-estid" value="">
     </div>
@@ -3310,7 +3328,8 @@ function ppColetar(){
     const nome=(r.querySelector('.pp-nome').value||'').trim()||tipo;
     const custo=parseFloat(r.querySelector('.pp-custo').value)||0;
     const estoqueId=(r.querySelector('.pp-estid')?.value||'');   // vínculo com o pente que veio do estoque
-    out.push({tipo,nome,custo,estoqueId});
+    const investidor=(r.querySelector('.pp-inv')?.value||'');    // vazio = rachado, como vocês compram peça
+    out.push({tipo,nome,custo,estoqueId,investidor});
   });
   return out;
 }
@@ -3399,6 +3418,9 @@ window.peAddLinha=()=>{
     <select class="inp pe-tipo">${PP_TIPOS.map(t=>`<option value="${t}">${PP_EMOJI[t]} ${t}</option>`).join('')}</select>
     <input class="inp pe-nomein" type="text" placeholder="Descrição (ex: SSD 256GB Kingston)">
     <input class="inp pe-custoin" type="number" min="0" placeholder="Custo R$" oninput="peTotal()">
+    <select class="inp pe-inv" title="Quem investiu nesta peça">
+      <option value="">🤝 50/50</option><option value="João">👤 João</option><option value="Igor">👤 Igor</option>
+    </select>
     <button type="button" class="pp-rem" onclick="peRemLinha('${id}')" title="Remover">✕</button>`;
   box.appendChild(div);
   peTotal();
@@ -3423,7 +3445,8 @@ function peColetar(){
     const tipo=r.querySelector('.pe-tipo').value;
     const nome=(r.querySelector('.pe-nomein').value||'').trim()||tipo;
     const custo=parseFloat(r.querySelector('.pe-custoin').value)||0;
-    out.push({tipo,nome,custo});
+    const investidor=(r.querySelector('.pe-inv')?.value||'');
+    out.push({tipo,nome,custo,investidor});
   });
   return out;
 }
@@ -3517,7 +3540,7 @@ window.addProd=async()=>{
   // Peça puxada do estoque dá BAIXA no registro existente em vez de criar outro —
   // senão o mesmo pente ficaria contado duas vezes, um usado e um disponível.
   for(const pc of pecasNovas){
-    const pobj={userId:'shared_ijx',addedBy:user.uid,nome:pc.nome,tipo:pc.tipo,custo:pc.custo,venda:0,lucro:0,status:'Usado',obs:'Aplicada em: '+nome,quantidade:1,produto_id:prodId,produto_nome:nome,criadoEm:new Date().toISOString()};
+    const pobj={userId:'shared_ijx',addedBy:user.uid,nome:pc.nome,tipo:pc.tipo,custo:pc.custo,venda:0,lucro:0,status:'Usado',obs:'Aplicada em: '+nome,quantidade:1,investidor:(pc.investidor||''),produto_id:prodId,produto_nome:nome,criadoEm:new Date().toISOString()};
     const orig=pc.estoqueId?pecas.find(x=>x.id===pc.estoqueId):null;
     if(orig){
       const q=orig.quantidade||1;
@@ -4920,7 +4943,7 @@ window.saveEdit=async()=>{
   if(!idLocal(editId)) await gravar(updateDoc(doc(db,'products',editId),upd), 'Editar "'+nome+'"');
   // Grava as peças novas na aba Peças, vinculadas a esta máquina
   for(const pc of pecasNovas){
-    const pobj={userId:'shared_ijx',addedBy:user.uid,nome:pc.nome,tipo:pc.tipo,custo:pc.custo,venda:0,lucro:0,status:'Usado',obs:'Aplicada em: '+nome,quantidade:1,produto_id:editId,produto_nome:nome,criadoEm:new Date().toISOString()};
+    const pobj={userId:'shared_ijx',addedBy:user.uid,nome:pc.nome,tipo:pc.tipo,custo:pc.custo,venda:0,lucro:0,status:'Usado',obs:'Aplicada em: '+nome,quantidade:1,investidor:(pc.investidor||''),produto_id:editId,produto_nome:nome,criadoEm:new Date().toISOString()};
     try{const pr=await addDoc(collection(db,'pecas'),pobj);pecas.push({...pobj,id:pr.id});}
     catch(e){pecas.push({...pobj,id:'lp'+Date.now()+Math.random()});}
   }
@@ -5032,6 +5055,30 @@ function gasPaganteDe(p){
 // REGRA: o custo da MÁQUINA segue quem investiu (50/50, só João ou só Igor).
 //        as PEÇAS são SEMPRE rachadas 50/50 entre os dois.
 //        a GASOLINA segue quem pagou (50/50, só João ou só Igor).
+// Peça costuma ser compra rachada — por isso o padrão continua 50/50 e todo
+// registro antigo (que não tem o campo) segue exatamente como antes. Quando a
+// peça diz quem investiu, ela segue o dono.
+// O resultado é escalado para fechar com o total já contabilizado na máquina:
+// assim, mesmo que os registros de peça não somem exatamente o custo_pecas
+// gravado, nenhum centavo aparece nem some do rateio.
+function pecasSplit(p, total){
+  if(!(total>0)) return {joao:0, igor:0};
+  const meio={joao:total/2, igor:total/2};
+  if(typeof pecas==='undefined' || !Array.isArray(pecas)) return meio;
+  const lista=pecas.filter(pc=>pc.produto_id===p.id && (parseFloat(pc.custo)||0)>0);
+  if(!lista.length) return meio;
+  let j=0, i=0;
+  lista.forEach(pc=>{
+    const c=parseFloat(pc.custo)||0;
+    const inv=(pc.investidor||'').toString().toLowerCase();
+    if(inv==='joão'||inv==='joao') j+=c;
+    else if(inv==='igor') i+=c;
+    else { j+=c/2; i+=c/2; }
+  });
+  const soma=j+i;
+  if(!(soma>0)) return meio;
+  return {joao: total*(j/soma), igor: total*(i/soma)};
+}
 function custoSplit(p){
   const total = custoRealDe(p);
   const pecas = Math.min(p.custo_pecas||0, total);   // peças aplicadas nesta máquina
@@ -5049,10 +5096,10 @@ function custoSplit(p){
   const gp = gasPaganteDe(p);
   const gasJoao = gp==='ambos' ? gas/2 : gp==='joao' ? gas : 0;
   const gasIgor = gp==='ambos' ? gas/2 : gp==='igor' ? gas : 0;
-  const pecasRachadas = pecas/2;                     // peças seguem sempre 50/50
+  const pc = pecasSplit(p, pecas);   // rachadas por padrão; seguem o dono quando marcado
   return {
-    joao: maqJoao + pecasRachadas + gasJoao,
-    igor: maqIgor + pecasRachadas + gasIgor,
+    joao: maqJoao + pc.joao + gasJoao,
+    igor: maqIgor + pc.igor + gasIgor,
     maquina, pecas, gas, gasJoao, gasIgor, exato:false, sobra:0
   };
 }
@@ -5930,7 +5977,7 @@ function renderTabela(lista, tipo){
         const comps=pecas.filter(pc=>pc.produto_id===p.id);
         if(comps.length){
           const totalPecas=comps.reduce((s,pc)=>s+(pc.custo||0),0);
-          const itens=comps.map(pc=>`<div class="comp-linha"><span class="comp-linha-nome">${PP_EMOJI[pc.tipo]||'🔧'} ${esc(pc.nome||pc.tipo||'')}</span><span class="comp-linha-custo">${fmt(pc.custo||0)}</span></div>`).join('');
+          const itens=comps.map(pc=>`<div class="comp-linha"><span class="comp-linha-nome">${PP_EMOJI[pc.tipo]||'🔧'} ${esc(pc.nome||pc.tipo||'')}${pc.investidor?`<span class="comp-inv">${esc(pc.investidor)}</span>`:''}</span><span class="comp-linha-custo">${fmt(pc.custo||0)}</span></div>`).join('');
           compChips=`<div class="comp-dd" data-open="0">
             <button type="button" class="comp-dd-btn" onclick="event.stopPropagation();toggleComp(this)">🔧 ${comps.length} peça${comps.length!==1?'s':''}${totalPecas>0?(' · '+fmt(totalPecas)):''} <span class="comp-arrow">▾</span></button>
             <div class="comp-lista" style="display:none">${itens}<div class="comp-total"><span>Total em peças</span><strong>${fmt(totalPecas)}</strong></div></div>
@@ -6031,7 +6078,7 @@ function render(){
         const comps=pecas.filter(pc=>pc.produto_id===p.id);
         if(comps.length){
           const totalPecas=comps.reduce((s,pc)=>s+(pc.custo||0),0);
-          const itens=comps.map(pc=>`<div class="comp-linha"><span class="comp-linha-nome">${PP_EMOJI[pc.tipo]||'🔧'} ${esc(pc.nome||pc.tipo||'')}</span><span class="comp-linha-custo">${fmt(pc.custo||0)}</span></div>`).join('');
+          const itens=comps.map(pc=>`<div class="comp-linha"><span class="comp-linha-nome">${PP_EMOJI[pc.tipo]||'🔧'} ${esc(pc.nome||pc.tipo||'')}${pc.investidor?`<span class="comp-inv">${esc(pc.investidor)}</span>`:''}</span><span class="comp-linha-custo">${fmt(pc.custo||0)}</span></div>`).join('');
           compChips=`<div class="comp-dd" data-open="0">
             <button type="button" class="comp-dd-btn" onclick="event.stopPropagation();toggleComp(this)">🔧 ${comps.length} peça${comps.length!==1?'s':''}${totalPecas>0?(' · '+fmt(totalPecas)):''} <span class="comp-arrow">▾</span></button>
             <div class="comp-lista" style="display:none">${itens}<div class="comp-total"><span>Total em peças</span><strong>${fmt(totalPecas)}</strong></div></div>
@@ -7359,7 +7406,7 @@ window.addPeca=async()=>{
   if(pcFnome){
     try{ pcFid=await salvarFornecedor({nome:pcFnome,whatsapp:pcFtel,costuma:'Peças'}); }catch(e){ pcFid=pcFid||''; }
   }
-  const obj={userId:'shared_ijx',addedBy:user.uid,nome,tipo,custo,venda,lucro:(status==='Vendido'&&venda>0)?(venda-custo):0,status,obs,quantidade:qtd,fornecedor_id:pcFid,fornecedor_nome:pcFnome,fotos_n:fotosPend.peca.length,criadoEm:new Date().toISOString()};
+  const obj={userId:'shared_ijx',addedBy:user.uid,nome,tipo,custo,venda,lucro:(status==='Vendido'&&venda>0)?(venda-custo):0,status,obs,quantidade:qtd,investidor:(document.getElementById('pcInv')?.value||''),fornecedor_id:pcFid,fornecedor_nome:pcFnome,fotos_n:fotosPend.peca.length,criadoEm:new Date().toISOString()};
   let pecaId='l'+Date.now();
   try{const r=await addDoc(collection(db,'pecas'),obj);pecaId=r.id;pecas.push({...obj,id:r.id});}
   catch(e){ await gravar(Promise.reject(e), 'Cadastrar peça "'+nome+'"'); pecas.push({...obj,id:pecaId}); }
@@ -7465,6 +7512,7 @@ window.openPecaEdit=(id)=>{
   document.getElementById('pkCusto').value=p.custo||'';
   document.getElementById('pkVenda').value=p.venda||'';
   document.getElementById('pkStatus').value=p.status||'Estoque';
+  const _pki=document.getElementById('pkInv'); if(_pki) _pki.value=p.investidor||'';
   document.getElementById('pkForn').value=p.fornecedor_nome||p.origem||'';
   document.getElementById('pkFornId').value=p.fornecedor_id||'';
   document.getElementById('pkFornDrop').style.display='none';
@@ -7503,6 +7551,7 @@ window.savePecaEdit=async()=>{
     custo, venda, status,
     lucro: (status==='Vendido'&&venda>0) ? (venda-custo) : 0,
     fornecedor_id:_fid, fornecedor_nome:_fnome,
+    investidor:(document.getElementById('pkInv')?.value||''),
     produto_id: maqNova,
     produto_nome: prodNovo?prodNovo.nome:'',
     obs:(document.getElementById('pkObs').value||'').trim()
