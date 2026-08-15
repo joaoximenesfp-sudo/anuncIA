@@ -7032,8 +7032,11 @@ function renderOrigens(){
       <span><strong>1. BIOS</strong> (F2 na Dell, F1 na Lenovo) → System Information → <em>Asset Tag</em> e <em>Owner Tag</em>.
       Fica gravado na placa, não no disco: sobrevive à formatação e à máquina chegar sem HD.<br>
       <strong>2. Etiqueta de patrimônio</strong> na carcaça — nome, sigla ou código.<br>
-      <strong>3. Só se a máquina vier com o Windows original:</strong> nome do PC, domínio e Wi-Fi salvo
-      (<code>netsh wlan show profiles</code>). Isso é bônus, não o plano.<br>
+      <strong>3. Se o HD ainda tem o Windows da empresa</strong> — mesmo travado por senha: ligue o disco num
+      dock/adaptador USB e leia os arquivos direto, sem precisar entrar no sistema.
+      <code>Users\</code> mostra os logins, e cada XML em
+      <code>ProgramData\Microsoft\Wlansvc\Profiles\Interfaces\</code> traz o nome da rede Wi-Fi em texto puro.
+      Windows reinstalado = essa camada já se perdeu.<br>
       Depois de algumas dezenas, este quadro mostra quais empresas alimentam o seu fornecedor —
       e quando a próxima leva sai.</span></div>`;
     return;
