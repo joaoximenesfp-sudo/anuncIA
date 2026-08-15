@@ -478,6 +478,21 @@ input[type=number].inp{padding-left:32px}
 .rk-compra-volta{font-size:.72rem;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;
   padding:7px 11px;margin:0 18px 8px;color:#1e40af;line-height:1.5}
 
+/* ── DE ONDE VÊM AS MÁQUINAS ── */
+.orig-cab{font-size:.72rem;color:var(--li);font-weight:600;margin:0 18px 8px}
+.orig-vazio{padding:20px 18px;font-size:.8rem;color:var(--tx);line-height:1.55}
+.orig-vazio span{font-size:.73rem;color:var(--li)}
+.orig-vazio code{background:var(--bg);border:1px solid var(--b);border-radius:5px;padding:1px 5px;font-size:.7rem}
+.orig-row{margin:0 18px 8px;padding:9px 11px;background:var(--bg);border:1px solid var(--b);border-radius:9px}
+.orig-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.orig-chave{font-size:.84rem;font-weight:800;color:var(--tx);letter-spacing:.02em}
+.orig-n{font-size:.7rem;font-weight:700;color:var(--w);background:#0891b2;border-radius:20px;padding:2px 9px;white-space:nowrap}
+.orig-sub{font-size:.71rem;color:var(--li);margin-top:3px}
+.orig-nomes{font-size:.71rem;color:var(--mu);margin-top:5px;line-height:1.45}
+.orig-mais{background:var(--w);border:1px solid var(--b2);border-radius:6px;padding:0 5px;font-weight:700}
+.orig-dica{margin:10px 18px 4px;padding:9px 11px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:9px;
+  font-size:.72rem;color:#1e40af;line-height:1.5}
+
 /* ── SELETOR DE MÊS NO RANKING ── */
 .rk-mespicker{display:flex;align-items:center;gap:9px;margin:0 18px 10px;flex-wrap:wrap}
 .rk-mespicker-lbl{font-size:.68rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--li)}
@@ -1294,6 +1309,11 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
               <input class="inp" type="text" id="pFornWpp" placeholder="Ex: 19991730377" autocomplete="off">
             </div>
             <div class="fc" style="grid-column:1/-1">
+              <span class="fla">🏷️ Origem da máquina <span style="font-size:.62rem;color:var(--li)">antes de formatar: etiqueta de patrimônio, nome do PC, domínio, Wi-Fi salvo</span></span>
+              <input class="inp" type="text" id="pOrigem" placeholder="Ex: ACME-NB-0342 · dominio acme.local · wifi ACME_CORP" autocomplete="off">
+              <span style="font-size:.62rem;color:var(--li);margin-top:4px">Sozinho não diz nada. Depois de dezenas, mostra de onde as máquinas realmente vêm.</span>
+            </div>
+            <div class="fc" style="grid-column:1/-1">
               <div class="pecaprod-box">
                 <div class="pecaprod-head">
                   <span class="fla" style="margin:0">🔧 Peças aplicadas nesta máquina <span style="font-weight:400;color:var(--li);text-transform:none">— entram no custo e vão pro estoque de peças</span></span>
@@ -1509,6 +1529,14 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
           </div>
         </div>
         <div class="rk-body" id="rkBody"></div>
+      </div>
+
+      <!-- DE ONDE VÊM AS MÁQUINAS -->
+      <div class="rk-wrap" style="margin-top:14px">
+        <div class="rk-head">
+          <span class="rk-title">🏷️ De onde vêm as máquinas</span>
+        </div>
+        <div class="rk-body" id="origBody"></div>
       </div>
 
     </div>
@@ -2488,6 +2516,10 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
         </div>
       </div>
       <div class="fc full">
+        <label class="fl">🏷️ Origem da máquina <span style="font-size:.67rem;color:var(--li);font-weight:400">etiqueta de patrimônio, nome do PC, domínio, Wi-Fi salvo — anote antes de formatar</span></label>
+        <input class="inp" type="text" id="eOrigem" placeholder="Ex: ACME-NB-0342 · dominio acme.local · wifi ACME_CORP" autocomplete="off">
+      </div>
+      <div class="fc full">
         <div class="fotos-box">
           <div class="fotos-head">
             <span class="fl" style="margin:0">📷 Fotos <span style="font-weight:400;color:var(--li);text-transform:none">— ficam prontas pro anúncio e vão no aviso do Telegram</span></span>
@@ -3382,6 +3414,7 @@ window.peMoverConfirmar=async()=>{
 window.addProd=async()=>{
   const nome=g('pN'),custo=parseFloat(document.getElementById('pC').value)||0,venda=parseFloat(document.getElementById('pV').value)||0,status=document.getElementById('pS').value,dc=document.getElementById('pDC').value,investidor=document.getElementById('pInv').value;
   const canal=document.getElementById('pCanal').value;
+  const origem=(document.getElementById('pOrigem')?.value||'').trim();
   if(!nome){alert('Digite o nome!');return;}
   // Vincular fornecedor (existente ou novo)
   let fornId=document.getElementById('pFornId').value||'';
@@ -3399,7 +3432,7 @@ window.addProd=async()=>{
   const custoTotal=custo+custoPecas+custoGas;
   // data_compra armazena data completa YYYY-MM-DD; data_compra_mes extrai só o mês
   const dcMes=dc?dc.slice(0,7):'';
-  const obj={userId:'shared_ijx',addedBy:user.uid,addedByName:user.displayName||user.email.split('@')[0],nome,custo:custoTotal,custo_base:custo,custo_pecas:custoPecas,custo_gasolina:custoGas,gas_pagante:gasPag,venda,lucro:venda-custoTotal,status,investidor,data_compra:dc,data_compra_mes:dcMes,data_venda:'',data:dcMes,canal_compra:canal,fornecedor_id:fornId,fornecedor_nome:fornNome,num,fotos_n:fotosPend.prod.length,createdAt:new Date().toISOString()};
+  const obj={userId:'shared_ijx',addedBy:user.uid,addedByName:user.displayName||user.email.split('@')[0],nome,custo:custoTotal,custo_base:custo,custo_pecas:custoPecas,custo_gasolina:custoGas,gas_pagante:gasPag,venda,lucro:venda-custoTotal,status,investidor,data_compra:dc,data_compra_mes:dcMes,data_venda:'',data:dcMes,canal_compra:canal,origem_tag:origem,fornecedor_id:fornId,fornecedor_nome:fornNome,num,fotos_n:fotosPend.prod.length,createdAt:new Date().toISOString()};
   let prodId='l'+Date.now();
   try{const r=await addDoc(collection(db,'products'),obj);prodId=r.id;prods.push({...obj,id:r.id});}
   catch(e){ await gravar(Promise.reject(e), 'Cadastrar "'+nome+'"'); prods.push({...obj,id:prodId}); }
@@ -4606,6 +4639,7 @@ window.openEdit=id=>{
   }
   // Fornecedor vinculado (de quem comprou)
   const eForn=document.getElementById('eForn'); if(eForn) eForn.value=p.fornecedor_nome||'';
+  const eOrigem=document.getElementById('eOrigem'); if(eOrigem) eOrigem.value=p.origem_tag||'';
   const eFornId=document.getElementById('eFornId'); if(eFornId) eFornId.value=p.fornecedor_id||'';
   const eFornDrop=document.getElementById('eFornDrop'); if(eFornDrop) eFornDrop.style.display='none';
   // Plataforma de venda — só faz sentido para vendidos
@@ -4713,7 +4747,7 @@ window.saveEdit=async()=>{
   const custoFinal=baseMaquina+somaJa+somaNovas;
   const totalPecas=somaJa+somaNovas;
 
-  const upd={nome,custo:custoFinal,custo_base:baseMaquina,custo_pecas:totalPecas,venda,lucro:venda-custoFinal,status,investidor,plataforma:(status==='Vendido'?(document.getElementById('ePlat')?.value||''):''),repasse_socio:(status==='Vendido'?(parseFloat(document.getElementById('eRepasse')?.value)||0):0),falta_comprar:(status!=='Vendido'?(document.getElementById('eFalta')?.value.trim()||''):''),fornecedor_id:fornId,fornecedor_nome:fornNome,data_compra:dc,data_compra_mes:dcMes,data_venda:dv,data:(dv?dv.slice(0,7):dcMes),gas_pagante:(document.getElementById('eGasPag')?.value||'ambos'),cliente_id:cliId,cliente_nome:cliNome,preco_cheio:(status==='Vendido'?(parseFloat(document.getElementById('ePrecoCheio')?.value)||0):0),nota_venda:(status==='Vendido'?(document.getElementById('eNotaVenda')?.value.trim()||''):'')};
+  const upd={nome,custo:custoFinal,custo_base:baseMaquina,custo_pecas:totalPecas,venda,lucro:venda-custoFinal,status,investidor,plataforma:(status==='Vendido'?(document.getElementById('ePlat')?.value||''):''),repasse_socio:(status==='Vendido'?(parseFloat(document.getElementById('eRepasse')?.value)||0):0),falta_comprar:(status!=='Vendido'?(document.getElementById('eFalta')?.value.trim()||''):''),fornecedor_id:fornId,fornecedor_nome:fornNome,origem_tag:(document.getElementById('eOrigem')?.value||'').trim(),data_compra:dc,data_compra_mes:dcMes,data_venda:dv,data:(dv?dv.slice(0,7):dcMes),gas_pagante:(document.getElementById('eGasPag')?.value||'ambos'),cliente_id:cliId,cliente_nome:cliNome,preco_cheio:(status==='Vendido'?(parseFloat(document.getElementById('ePrecoCheio')?.value)||0):0),nota_venda:(status==='Vendido'?(document.getElementById('eNotaVenda')?.value.trim()||''):'')};
   await vincularTroca(editId, upd);
   if(!editId.startsWith('x')&&!editId.startsWith('l')) await gravar(updateDoc(doc(db,'products',editId),upd), 'Editar "'+nome+'"');
   // Grava as peças novas na aba Peças, vinculadas a esta máquina
@@ -6044,6 +6078,7 @@ function buildCharts(){
   const font={family:"'DM Sans',sans-serif",size:11},tc='#78716c',gc='rgba(0,0,0,0.05)';
 
   renderRanking();
+  renderOrigens();
   renderGiro();
 
   // ── CARDS DE INSIGHTS — calculados direto do prods (mesma fonte que Vendas) ──
@@ -6663,6 +6698,64 @@ function renderRanking(){
     const barPct=Math.max(0,Math.min(100,Math.round(x.val/maxVal*100)));
     return`<div class="rk-row"><span class="rk-pos ${pos}">${i+1}</span><div style="flex:1;overflow:hidden"><div class="rk-nm">${esc(x.nome)}</div><div class="rk-sub">${x.sub}</div></div><div class="rk-bar"><div class="rk-bar-fill ${x.cls}" style="width:${barPct}%"></div></div><span class="rk-val ${x.cls}">${label}</span></div>`;
   }).join('');
+}
+
+// ── DE ONDE VÊM AS MÁQUINAS ──
+// A etiqueta de patrimônio, o nome do PC e o Wi-Fi salvo sobrevivem ao
+// atravessador: são a única pista de origem que não depende de ninguém contar.
+// Um registro isolado não diz nada; o valor está na repetição.
+
+// Palavras que aparecem em qualquer máquina corporativa e não identificam ninguém.
+const ORIGEM_RUIDO=new Set(['DOMINIO','DOMÍNIO','WIFI','NOTE','NOTEBOOK','DESKTOP','LOCAL','CORP',
+  'COM','NET','LTDA','TI','USER','ADMIN','WORKGROUP','ASSET','TAG','PATRIMONIO','PATRIMÔNIO',
+  'SERIAL','MAQUINA','MÁQUINA','REDE','NOME','ETIQUETA','SEM','COMPUTADOR','WIN','WINDOWS']);
+function origemChaves(txt){
+  return [...new Set(String(txt||'').toUpperCase()
+    .split(/[^A-Z0-9ÁÉÍÓÚÂÊÔÃÕÇ]+/)
+    .filter(t=>t.length>=3 && !/^\d+$/.test(t) && !ORIGEM_RUIDO.has(t)))];
+}
+// Agrupa por palavra recorrente. Só entra quem aparece em 2+ máquinas — uma vez
+// é coincidência, duas já é fonte.
+function mapaOrigens(lista){
+  const m={};
+  (lista||[]).forEach(p=>{
+    if(!(p.origem_tag||'').trim()) return;
+    origemChaves(p.origem_tag).forEach(k=>{ (m[k]=m[k]||[]).push(p); });
+  });
+  return Object.keys(m).map(k=>({chave:k, itens:m[k], n:m[k].length}))
+    .filter(x=>x.n>=2).sort((a,b)=>b.n-a.n);
+}
+function renderOrigens(){
+  const body=document.getElementById('origBody');
+  if(!body)return;
+  const comTag=prods.filter(p=>(p.origem_tag||'').trim());
+  if(!comTag.length){
+    body.innerHTML=`<div class="orig-vazio">
+      Nenhuma máquina com origem anotada ainda.<br>
+      <span>Antes de formatar, anote no cadastro: etiqueta de patrimônio, nome do PC, domínio e Wi-Fi salvo
+      (<code>netsh wlan show profiles</code>). Depois de algumas dezenas, este quadro mostra quais empresas
+      alimentam o seu fornecedor — e quando a próxima leva sai.</span></div>`;
+    return;
+  }
+  const grupos=mapaOrigens(prods);
+  const cab=`<div class="orig-cab">${comTag.length} de ${prods.length} máquinas com origem anotada${grupos.length?` · ${grupos.length} pista${grupos.length!==1?'s':''} se repetindo`:''}</div>`;
+  if(!grupos.length){
+    body.innerHTML=cab+`<div class="orig-vazio"><span>Ainda sem repetição. Continue anotando — a pista aparece quando a mesma palavra sai em duas máquinas diferentes.</span></div>`;
+    return;
+  }
+  body.innerHTML=cab+grupos.slice(0,12).map(g=>{
+    const custo=g.itens.reduce((s,p)=>s+custoRealDe(p),0);
+    const datas=g.itens.map(p=>getMesCompra(p)).filter(Boolean).sort();
+    const periodo=datas.length?(datas[0]===datas[datas.length-1]?fdt(datas[0]):fdt(datas[0])+' a '+fdt(datas[datas.length-1])):'sem data';
+    const nomes=g.itens.slice(0,5).map(p=>esc(p.nome||'sem nome')).join(' · ');
+    return `<div class="orig-row">
+      <div class="orig-top"><span class="orig-chave">${esc(g.chave)}</span><span class="orig-n">${g.n} máquinas</span></div>
+      <div class="orig-sub">${fmt(custo)} em custo · comprado ${periodo}</div>
+      <div class="orig-nomes">${nomes}${g.itens.length>5?` <span class="orig-mais">+${g.itens.length-5}</span>`:''}</div>
+    </div>`;
+  }).join('')+`<div class="orig-dica">💡 Palavra que se repete costuma ser a empresa que usava a frota. Busque o nome no Google:
+    se for indústria, clínica ou escritório, é usuário final — a próxima troca você compra direto.
+    Se for empresa de TI ou locação, é a locadora, e é ela que abastece o seu fornecedor.</div>`;
 }
 
 // ── GIRO POR MARCA ──
