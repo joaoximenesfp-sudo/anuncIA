@@ -493,6 +493,25 @@ input[type=number].inp{padding-left:32px}
 .rk-compra-volta{font-size:.72rem;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;
   padding:7px 11px;margin:0 18px 8px;color:#1e40af;line-height:1.5}
 
+/* ── APORTE EXATO POR SÓCIO ── */
+.aporte-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.aporte-campo{display:flex;flex-direction:column;gap:3px}
+.aporte-lbl{font-size:.67rem;font-weight:700;color:var(--li);text-transform:uppercase;letter-spacing:.04em}
+.aporte-acoes{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}
+.aporte-bt{background:var(--bg);border:1px solid var(--b2);border-radius:7px;padding:4px 10px;
+  font:inherit;font-size:.7rem;font-weight:700;color:var(--mu);cursor:pointer}
+.aporte-bt:hover{border-color:var(--tx);color:var(--tx)}
+.aporte-hint{margin-top:7px;font-size:.72rem;color:var(--li);line-height:1.5}
+.aporte-hint.ok{color:#15803d}
+.aporte-hint.aviso{color:#a16207}
+.aporte-hint.aviso span{color:var(--li);font-size:.69rem}
+.aporte-hint.erro{color:#b91c1c}
+.ap-linha{display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+.ap-j,.ap-i,.ap-caixa{font-size:.65rem;font-weight:700;padding:1px 6px;border-radius:5px;white-space:nowrap}
+.ap-j{background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe}
+.ap-i{background:#faf5ff;color:#7c3aed;border:1px solid #e9d5ff}
+.ap-caixa{background:var(--bg);color:var(--li);border:1px solid var(--b2)}
+
 /* ── DE ONDE VÊM AS MÁQUINAS ── */
 .orig-cab{font-size:.72rem;color:var(--li);font-weight:600;margin:0 18px 8px}
 .orig-vazio{padding:20px 18px;font-size:.8rem;color:var(--tx);line-height:1.55}
@@ -2454,7 +2473,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
     </div>
     <div class="mcb">
       <div class="fc full"><label class="fl">Nome do produto</label><input class="inp" id="eN" type="text"></div>
-      <div class="fc"><label class="fl">Custo R$</label><input class="inp" id="eC" type="number" min="0"></div>
+      <div class="fc"><label class="fl">Custo R$</label><input class="inp" id="eC" type="number" min="0" oninput="eAporteHint()"></div>
       <div class="fc"><label class="fl">Preço de venda R$</label><input class="inp" id="eV" type="number" min="0"></div>
       <div class="fc"><label class="fl">Status</label>
         <select class="inp" id="eS" onchange="ePlatToggle();eFaltaToggle()">
@@ -2464,12 +2483,28 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
         </select>
       </div>
       <div class="fc"><label class="fl">Investidor</label>
-        <select class="inp" id="eInv">
+        <select class="inp" id="eInv" onchange="eAporteHint()">
           <option value="João">👤 João</option>
           <option value="Igor">👤 Igor</option>
           <option value="Compartilhado">🤝 Ambos — 50/50</option>
           <option value="Externo">💼 Externo</option>
         </select>
+      </div>
+      <div class="fc full">
+        <label class="fl">💰 Quanto cada um colocou nesta máquina <span style="font-size:.67rem;color:var(--li);font-weight:400">opcional — em branco, vale a regra do investidor acima</span></label>
+        <div class="aporte-grid">
+          <div class="aporte-campo"><span class="aporte-lbl">João R$</span>
+            <input class="inp" type="number" id="eApJoao" placeholder="0" min="0" step="0.01" oninput="eAporteHint()"></div>
+          <div class="aporte-campo"><span class="aporte-lbl">Igor R$</span>
+            <input class="inp" type="number" id="eApIgor" placeholder="0" min="0" step="0.01" oninput="eAporteHint()"></div>
+        </div>
+        <div class="aporte-acoes">
+          <button type="button" class="aporte-bt" onclick="eAportePreset('meio')">50/50</button>
+          <button type="button" class="aporte-bt" onclick="eAportePreset('joao')">tudo João</button>
+          <button type="button" class="aporte-bt" onclick="eAportePreset('igor')">tudo Igor</button>
+          <button type="button" class="aporte-bt" onclick="eAportePreset('limpar')">limpar</button>
+        </div>
+        <div class="aporte-hint" id="eAporteHintTxt"></div>
       </div>
       <!-- FIX 1: Modal editar também usa date -->
       <div class="fc"><label class="fl">Data de compra</label><input class="inp" id="eDC" type="date"></div>
@@ -3295,7 +3330,7 @@ window.peLimparDups=async(prodId)=>{
   if(!remover.length) return;
   if(!confirm(`Remover ${remover.length} peça(s) duplicada(s)? Fica uma de cada tipo.`)) return;
   for(const pc of remover){
-    try{ if(!String(pc.id).startsWith('l')&&!String(pc.id).startsWith('preset')) await deleteDoc(doc(db,'pecas',pc.id)); }catch(e){}
+    try{ if(!idLocal(pc.id)) await deleteDoc(doc(db,'pecas',pc.id)); }catch(e){}
     const i=pecas.findIndex(x=>x.id===pc.id); if(i>=0) pecas.splice(i,1);
   }
   // Recalcula o custo da máquina (peças reais que sobraram)
@@ -3305,7 +3340,7 @@ window.peLimparDups=async(prodId)=>{
     const base=p.custo_base!==undefined?p.custo_base:((p.custo||0)-(p.custo_pecas||0));
     const novoCusto=base+somaPecas;
     const upd={custo:novoCusto,custo_base:base,custo_pecas:somaPecas,lucro:(p.venda||0)-novoCusto};
-    if(!String(p.id).startsWith('l')&&!String(p.id).startsWith('x')) await gravar(updateDoc(doc(db,'products',p.id),upd), 'Custo de peças de "'+(p.nome||p.id)+'"');
+    if(!idLocal(p.id)) await gravar(updateDoc(doc(db,'products',p.id),upd), 'Custo de peças de "'+(p.nome||p.id)+'"');
     Object.assign(p,upd);
     const eC=document.getElementById('eC'); if(eC) eC.value=novoCusto;
   }
@@ -3317,7 +3352,7 @@ window.peRemExistente=async(pecaId)=>{
   if(!confirm('Remover esta peça? O custo dela sai da máquina.'))return;
   const i=pecas.findIndex(x=>x.id===pecaId); if(i<0)return;
   const pc=pecas[i];
-  try{ if(!String(pecaId).startsWith('l')) await deleteDoc(doc(db,'pecas',pecaId)); }catch(e){}
+  try{ if(!idLocal(pecaId)) await deleteDoc(doc(db,'pecas',pecaId)); }catch(e){}
   pecas.splice(i,1);
   // recalcula o custo do produto
   const p=prods.find(x=>x.id===editId);
@@ -3326,7 +3361,7 @@ window.peRemExistente=async(pecaId)=>{
     const base=p.custo_base!==undefined?p.custo_base:(p.custo-(p.custo_pecas||0));
     const novoCusto=base+novoPecas;
     const upd={custo:novoCusto,custo_base:base,custo_pecas:novoPecas,lucro:(p.venda||0)-novoCusto};
-    if(!String(p.id).startsWith('l')&&!String(p.id).startsWith('x')) await gravar(updateDoc(doc(db,'products',p.id),upd), 'Custo de peças de "'+(p.nome||p.id)+'"');
+    if(!idLocal(p.id)) await gravar(updateDoc(doc(db,'products',p.id),upd), 'Custo de peças de "'+(p.nome||p.id)+'"');
     Object.assign(p,upd);
     document.getElementById('eC').value=novoCusto;
   }
@@ -3384,7 +3419,7 @@ async function ajustaCustoPecas(prodId, delta){
   const base=p.custo_base!==undefined?p.custo_base:((p.custo||0)-(p.custo_pecas||0));
   const novoCusto=Math.max(0, base+pecasAtual);
   const upd={custo:novoCusto, custo_base:base, custo_pecas:pecasAtual, lucro:(p.venda||0)-novoCusto};
-  if(!String(prodId).startsWith('l')&&!String(prodId).startsWith('x')) await gravar(updateDoc(doc(db,'products',prodId),upd), 'Custo de peças da máquina');
+  if(!idLocal(prodId)) await gravar(updateDoc(doc(db,'products',prodId),upd), 'Custo de peças da máquina');
   Object.assign(p,upd);
 }
 
@@ -3418,7 +3453,7 @@ window.peMoverConfirmar=async()=>{
   // 3) atualiza o vínculo da peça
   const upd={produto_id:destId||'', produto_nome:dest?dest.nome:'', status:destId?'Usado':'Estoque',
              obs:destId?('Aplicada em: '+dest.nome):'Solta no estoque'};
-  try{ if(!String(pecaId).startsWith('l')) await updateDoc(doc(db,'pecas',pecaId),upd); }catch(e){}
+  try{ if(!idLocal(pecaId)) await updateDoc(doc(db,'pecas',pecaId),upd); }catch(e){}
   Object.assign(pc,upd);
   peMoverFechar();
   if(editId){ peRenderExistentes(editId); peTotal();
@@ -3499,7 +3534,7 @@ window.addProd=async()=>{
 window.delProd=async id=>{
   if(!confirm('Excluir este produto?'))return;
   const alvoDel=prods.find(p=>p.id===id);
-  if(!id.startsWith('x')&&!id.startsWith('l')) await gravar(deleteDoc(doc(db,'products',id)), 'Excluir "'+((alvoDel&&alvoDel.nome)||id)+'"');
+  if(!idLocal(id)) await gravar(deleteDoc(doc(db,'products',id)), 'Excluir "'+((alvoDel&&alvoDel.nome)||id)+'"');
   prods=prods.filter(p=>p.id!==id);render();renderSecoes();calcStats();
 };
 
@@ -3727,7 +3762,7 @@ window.confirmSell=async()=>{
       const conta = fixas.find(x=>x.id===cid);
       if(!conta) continue;
       try{
-        if(!cid.startsWith('l'))
+        if(!idLocal(cid))
           await updateDoc(doc(db,'financas_fixas',cid),{pago:true,pagaEm:new Date().toISOString(),pagaComVenda:p?.nome||''});
         conta.pago=true;
       }catch(e){ console.error('Erro ao pagar conta:',e); }
@@ -3799,7 +3834,7 @@ window.fecharParcelas=()=>{ document.getElementById('PARCO').classList.add('h');
 window.togglePar=async(i)=>{
   const p=prods.find(x=>x.id===parcProdId); if(!p||!p.parcelas[i])return;
   p.parcelas[i].pago=!p.parcelas[i].pago;
-  if(!String(p.id).startsWith('l')&&!String(p.id).startsWith('x')) await gravar(updateDoc(doc(db,'products',p.id),{parcelas:p.parcelas}), 'Parcelas de "'+(p.nome||p.id)+'"');
+  if(!idLocal(p.id)) await gravar(updateDoc(doc(db,'products',p.id),{parcelas:p.parcelas}), 'Parcelas de "'+(p.nome||p.id)+'"');
   abrirParcelas(parcProdId);   // re-renderiza
   renderSecoes();
 };
@@ -3881,7 +3916,7 @@ window.updSplitVenda=()=>{
 
 async function doSaveStatus(id,upd){
   const alvo=prods.find(x=>x.id===id);
-  if(!id.startsWith('x')&&!id.startsWith('l')) await gravar(updateDoc(doc(db,'products',id),upd), 'Alterar "'+((alvo&&alvo.nome)||id)+'"');
+  if(!idLocal(id)) await gravar(updateDoc(doc(db,'products',id),upd), 'Alterar "'+((alvo&&alvo.nome)||id)+'"');
   const p=alvo;if(p)Object.assign(p,upd);
   render();renderSecoes();calcStats();
   if(document.getElementById('pg-insights')&&document.getElementById('pg-insights').classList.contains('on'))buildCharts();
@@ -3912,7 +3947,7 @@ async function salvarCliente(dados){
     if(dados.perfil && !existente.perfil) upd.perfil=dados.perfil;
     if(dados.origem && !existente.origem) upd.origem=dados.origem;
     if(Object.keys(upd).length){
-      try{ if(!existente.id.startsWith('l')) await updateDoc(doc(db,'clientes',existente.id),upd); }catch(e){}
+      try{ if(!idLocal(existente.id)) await updateDoc(doc(db,'clientes',existente.id),upd); }catch(e){}
       Object.assign(existente,upd);
     }
     return existente.id;
@@ -4207,7 +4242,7 @@ window.salvarClienteInfo=async(id)=>{
     });
   }
   const upd={procurando:proc,obs,whatsapp,contatos};
-  try{ if(!id.startsWith('l')) await updateDoc(doc(db,'clientes',id),upd); }catch(e){}
+  try{ if(!idLocal(id)) await updateDoc(doc(db,'clientes',id),upd); }catch(e){}
   Object.assign(c,upd);
   renderClientes();
 };
@@ -4245,7 +4280,7 @@ async function salvarFornecedor(dados){
       if(!atual) upd.costuma=dados.costuma;
       else if(!atual.toLowerCase().includes(dados.costuma.toLowerCase())) upd.costuma=atual+' · '+dados.costuma;
     }
-    if(Object.keys(upd).length){ try{if(!existe.id.startsWith('l'))await updateDoc(doc(db,'fornecedores',existe.id),upd);}catch(e){} Object.assign(existe,upd); }
+    if(Object.keys(upd).length){ try{if(!idLocal(existe.id))await updateDoc(doc(db,'fornecedores',existe.id),upd);}catch(e){} Object.assign(existe,upd); }
     return existe.id;
   }
   const obj={userId:'shared_ijx',addedBy:user.uid,nome,whatsapp:dados.whatsapp||'',contatos:[],tipo:dados.tipo||'',regiao:'',obs:'',costuma:dados.costuma||'',ultimo_contato:'',criado_em:new Date().toISOString()};
@@ -4350,7 +4385,7 @@ window.fornToggle=(id)=>{ if(fornExpandido.has(id))fornExpandido.delete(id); els
 window.fornContatei=async(id)=>{
   const f=fornecedores.find(x=>x.id===id); if(!f)return;
   const hoje=new Date().toISOString(); f.ultimo_contato=hoje;
-  try{ if(!id.startsWith('l')) await updateDoc(doc(db,'fornecedores',id),{ultimo_contato:hoje}); }catch(e){}
+  try{ if(!idLocal(id)) await updateDoc(doc(db,'fornecedores',id),{ultimo_contato:hoje}); }catch(e){}
   renderFornecedores();
 };
 window.fornAddContato=(id)=>{
@@ -4371,7 +4406,7 @@ window.salvarFornecedorInfo=async(id)=>{
     if(numero)contatos.push({nome,numero});
   });
   const upd={whatsapp,tipo,costuma,obs,contatos};
-  try{ if(!id.startsWith('l')) await updateDoc(doc(db,'fornecedores',id),upd); }catch(e){}
+  try{ if(!idLocal(id)) await updateDoc(doc(db,'fornecedores',id),upd); }catch(e){}
   Object.assign(f,upd);
   renderFornecedores();
 };
@@ -4646,6 +4681,10 @@ window.openEdit=id=>{
     } else eDVHint.style.display='none';
   }
   document.getElementById('eInv').value=p.investidor||'João';
+  const _apJ=document.getElementById('eApJoao'), _apI=document.getElementById('eApIgor');
+  if(_apJ) _apJ.value = (parseFloat(p.aporte_joao)||0)>0 ? p.aporte_joao : '';
+  if(_apI) _apI.value = (parseFloat(p.aporte_igor)||0)>0 ? p.aporte_igor : '';
+  eAporteHint();
   // Gasolina: só o pagante é editável aqui — o valor já está embutido no custo.
   // Máquinas sem gasolina lançada não mostram o campo.
   const eGasPag=document.getElementById('eGasPag'), eGasWrap=document.getElementById('eGasPagWrap');
@@ -4705,6 +4744,46 @@ window.ePlatToggle=()=>{
   if(rw) rw.style.display = vendido ? '' : 'none';
   const aw=document.getElementById('eAmigaWrap');
   if(aw) aw.style.display = vendido ? '' : 'none';
+};
+
+// Aporte exato: confere a soma contra o custo total e explica a diferença em vez
+// de escondê-la. Sobra não é erro — é a parte que saiu do caixa da operação, e
+// não do bolso de nenhum dos dois.
+window.eAporteHint=()=>{
+  const ij=document.getElementById('eApJoao'), ii=document.getElementById('eApIgor');
+  const out=document.getElementById('eAporteHintTxt');
+  if(!ij||!ii||!out)return;
+  const j=parseFloat(ij.value)||0, i=parseFloat(ii.value)||0, soma=j+i;
+  const custo=parseFloat(document.getElementById('eC')?.value)||0;
+  if(soma<=0){
+    const inv=(document.getElementById('eInv')?.value||'');
+    out.className='aporte-hint';
+    out.innerHTML=`Sem valor lançado — vale a regra acima (<strong>${esc(inv||'—')}</strong>). Preencha só quando a divisão desta máquina foi diferente do padrão.`;
+    return;
+  }
+  const dif=custo-soma;
+  const linha=`<strong>${fmt(j)}</strong> João + <strong>${fmt(i)}</strong> Igor = <strong>${fmt(soma)}</strong>`;
+  if(Math.abs(dif)<0.01){
+    out.className='aporte-hint ok';
+    out.innerHTML=`${linha} ✓ fecha com o custo de ${fmt(custo)}.`;
+  } else if(dif>0){
+    out.className='aporte-hint aviso';
+    out.innerHTML=`${linha} — faltam <strong>${fmt(dif)}</strong> para o custo de ${fmt(custo)}.<br>
+      <span>Se essa diferença saiu do caixa da operação, pode deixar assim. Se saiu do bolso de um de vocês, some no campo dele.</span>`;
+  } else {
+    out.className='aporte-hint erro';
+    out.innerHTML=`${linha} — passa <strong>${fmt(-dif)}</strong> do custo de ${fmt(custo)}. Confira os valores.`;
+  }
+};
+window.eAportePreset=(qual)=>{
+  const ij=document.getElementById('eApJoao'), ii=document.getElementById('eApIgor');
+  const custo=parseFloat(document.getElementById('eC')?.value)||0;
+  if(!ij||!ii)return;
+  if(qual==='limpar'){ ij.value=''; ii.value=''; }
+  else if(qual==='meio'){ ij.value=(custo/2).toFixed(2); ii.value=(custo/2).toFixed(2); }
+  else if(qual==='joao'){ ij.value=custo.toFixed(2); ii.value='0'; }
+  else if(qual==='igor'){ ij.value='0'; ii.value=custo.toFixed(2); }
+  eAporteHint();
 };
 
 // O check só aparece quando há pendência escrita — marcar "feito" sem ter o que
@@ -4783,9 +4862,9 @@ window.saveEdit=async()=>{
   const custoFinal=baseMaquina+somaJa+somaNovas;
   const totalPecas=somaJa+somaNovas;
 
-  const upd={nome,custo:custoFinal,custo_base:baseMaquina,custo_pecas:totalPecas,venda,lucro:venda-custoFinal,status,investidor,plataforma:(status==='Vendido'?(document.getElementById('ePlat')?.value||''):''),repasse_socio:(status==='Vendido'?(parseFloat(document.getElementById('eRepasse')?.value)||0):0),falta_comprar:(status!=='Vendido'?(document.getElementById('eFalta')?.value.trim()||''):''),falta_feito:(status!=='Vendido'&&!!document.getElementById('eFaltaFeito')?.checked),falta_feito_em:((status!=='Vendido'&&document.getElementById('eFaltaFeito')?.checked)?((_pAtual&&_pAtual.falta_feito&&_pAtual.falta_feito_em)||new Date().toISOString().slice(0,10)):''),fornecedor_id:fornId,fornecedor_nome:fornNome,origem_tag:(document.getElementById('eOrigem')?.value||'').trim(),data_compra:dc,data_compra_mes:dcMes,data_venda:dv,data:(dv?dv.slice(0,7):dcMes),gas_pagante:(document.getElementById('eGasPag')?.value||'ambos'),cliente_id:cliId,cliente_nome:cliNome,preco_cheio:(status==='Vendido'?(parseFloat(document.getElementById('ePrecoCheio')?.value)||0):0),nota_venda:(status==='Vendido'?(document.getElementById('eNotaVenda')?.value.trim()||''):'')};
+  const upd={nome,custo:custoFinal,custo_base:baseMaquina,custo_pecas:totalPecas,venda,lucro:venda-custoFinal,status,investidor,plataforma:(status==='Vendido'?(document.getElementById('ePlat')?.value||''):''),repasse_socio:(status==='Vendido'?(parseFloat(document.getElementById('eRepasse')?.value)||0):0),falta_comprar:(status!=='Vendido'?(document.getElementById('eFalta')?.value.trim()||''):''),falta_feito:(status!=='Vendido'&&!!document.getElementById('eFaltaFeito')?.checked),falta_feito_em:((status!=='Vendido'&&document.getElementById('eFaltaFeito')?.checked)?((_pAtual&&_pAtual.falta_feito&&_pAtual.falta_feito_em)||new Date().toISOString().slice(0,10)):''),fornecedor_id:fornId,fornecedor_nome:fornNome,origem_tag:(document.getElementById('eOrigem')?.value||'').trim(),data_compra:dc,data_compra_mes:dcMes,data_venda:dv,data:(dv?dv.slice(0,7):dcMes),gas_pagante:(document.getElementById('eGasPag')?.value||'ambos'),aporte_joao:(parseFloat(document.getElementById('eApJoao')?.value)||0),aporte_igor:(parseFloat(document.getElementById('eApIgor')?.value)||0),cliente_id:cliId,cliente_nome:cliNome,preco_cheio:(status==='Vendido'?(parseFloat(document.getElementById('ePrecoCheio')?.value)||0):0),nota_venda:(status==='Vendido'?(document.getElementById('eNotaVenda')?.value.trim()||''):'')};
   await vincularTroca(editId, upd);
-  if(!editId.startsWith('x')&&!editId.startsWith('l')) await gravar(updateDoc(doc(db,'products',editId),upd), 'Editar "'+nome+'"');
+  if(!idLocal(editId)) await gravar(updateDoc(doc(db,'products',editId),upd), 'Editar "'+nome+'"');
   // Grava as peças novas na aba Peças, vinculadas a esta máquina
   for(const pc of pecasNovas){
     const pobj={userId:'shared_ijx',addedBy:user.uid,nome:pc.nome,tipo:pc.tipo,custo:pc.custo,venda:0,lucro:0,status:'Usado',obs:'Aplicada em: '+nome,quantidade:1,produto_id:editId,produto_nome:nome,criadoEm:new Date().toISOString()};
@@ -4844,7 +4923,17 @@ function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace
 
 // Decide quem pagou um produto no rateio da parceria: 'joao' (100% João), 'ambos' (50/50) ou 'igor' (100% Igor).
 // Prioriza o campo investidor (definido na importação/cadastro); se vazio, cai no marcador do nome.
+// Quanto cada sócio colocou NESTA máquina, em dinheiro. Vazio (ou zerado) faz o
+// sistema cair na regra antiga do campo "investidor" — por isso os 400+ registros
+// já existentes continuam exatamente como estavam.
+function aporteExato(p){
+  const j=parseFloat(p.aporte_joao)||0, i=parseFloat(p.aporte_igor)||0;
+  return (j+i)>0 ? {joao:j, igor:i, total:j+i} : null;
+}
 function investidorDe(p){
+  // Valor exato manda: se só um pôs dinheiro, a máquina é dele; se os dois, é de ambos.
+  const ex=aporteExato(p);
+  if(ex) return ex.joao>0 ? (ex.igor>0 ? 'ambos' : 'joao') : 'igor';
   const inv=(p.investidor||'').toString().toLowerCase();
   if(inv){
     if(inv==='joão'||inv==='joao') return 'joao';
@@ -4857,11 +4946,23 @@ function investidorDe(p){
   return 'igor';
 }
 
+// Ids provisórios criados pelo próprio app quando o Firestore não respondeu:
+//   'x1', 'x2', ...      catálogo de demonstração (SEED_PRODS)
+//   'l1723456789'        cadastro que não conseguiu gravar
+// Id do Firestore tem 20 caracteres e PODE começar com x ou l. Checar só a
+// primeira letra classificava ~3% dos registros reais como provisórios: eles
+// ficavam silenciosamente sem gravar no banco (edição, status, foto, exclusão
+// não persistiam) e ainda tinham o custo dobrado. Por isso a checagem exige o
+// formato inteiro: letra + só dígitos.
+function idSeed(id){ return /^x\d+$/.test(String(id||'')); }
+function idLocal(id){ const s=String(id||'');
+  return /^[xl]\d+$/.test(s) || /^lp\d+(\.\d+)?$/.test(s) || /^preset_/.test(s); }
+
 // Custo REAL de um produto. Itens novos (importação corrigida / cadastro manual) já
 // guardam o valor real. Apenas o fallback antigo embutido (ids 'x...') guarda metade.
 function custoRealDe(p){
   // Fallback antigo (ids 'x...') guardava metade; itens do Firestore já são o custo da planilha.
-  return (p.custo||0) * ((p.id&&String(p.id).startsWith('x'))?2:1);
+  return (p.custo||0) * (idSeed(p.id)?2:1);
 }
 
 // Quem pagou a gasolina/busca de um produto: 'ambos' (rachado 50/50), 'joao' ou 'igor'.
@@ -4883,6 +4984,12 @@ function custoSplit(p){
   const pecas = Math.min(p.custo_pecas||0, total);   // peças aplicadas nesta máquina
   const gas = Math.min(p.custo_gasolina||0, total-pecas); // gasolina/busca
   const maquina = total - pecas - gas;                // custo da máquina em si
+  // Valor exato lançado à mão vence qualquer regra: quem pôs o dinheiro sabe
+  // melhor que a convenção. O resto do custo (se sobrar) saiu do caixa da
+  // operação, não do bolso de nenhum dos dois — e por isso não é rateado.
+  const ex = aporteExato(p);
+  if(ex) return {joao:ex.joao, igor:ex.igor, maquina, pecas, gas,
+                 gasJoao:0, gasIgor:0, exato:true, sobra: total-ex.total};
   const b = investidorDe(p);
   const maqJoao = b==='ambos' ? maquina/2 : b==='joao' ? maquina : 0;
   const maqIgor = b==='ambos' ? maquina/2 : b==='igor' ? maquina : 0;
@@ -4893,7 +5000,7 @@ function custoSplit(p){
   return {
     joao: maqJoao + pecasRachadas + gasJoao,
     igor: maqIgor + pecasRachadas + gasIgor,
-    maquina, pecas, gas, gasJoao, gasIgor
+    maquina, pecas, gas, gasJoao, gasIgor, exato:false, sobra:0
   };
 }
 
@@ -5059,7 +5166,7 @@ function comprimirFoto(file, maxLado=1100, q=0.72){
 async function foCarregar(prodId){
   fotosDoProduto=[];
   foRender('Carregando fotos...');
-  if(!prodId || String(prodId).startsWith('x') || String(prodId).startsWith('l')){ foRender(); return; }
+  if(!prodId || idLocal(prodId)){ foRender(); return; }
   try{
     const snap=await getDocs(query(collection(db,'fotos'),where('produto_id','==',prodId)));
     fotosDoProduto=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.ordem||0)-(b.ordem||0));
@@ -5098,7 +5205,7 @@ async function foAtualizarContagem(prodId){
   const n=fotosDoProduto.length;
   if((p.fotos_n||0)===n) return;
   p.fotos_n=n;
-  if(!String(prodId).startsWith('x')&&!String(prodId).startsWith('l'))
+  if(!idLocal(prodId))
     await gravar(updateDoc(doc(db,'products',prodId),{fotos_n:n}), 'Contagem de fotos de "'+(p.nome||prodId)+'"');
   render();renderSecoes();
 }
@@ -5141,7 +5248,7 @@ window.foMover=async(i, passo)=>{
   fotosDoProduto.forEach((f,k)=>{ f.ordem=k; });
   foRender();
   for(const f of [a,b]){
-    if(String(f.id).startsWith('l')) continue;
+    if(idLocal(f.id)) continue;
     await gravar(updateDoc(doc(db,'fotos',f.id),{ordem:f.ordem}), 'Reordenar fotos de "'+((prods.find(x=>x.id===editId)||{}).nome||editId)+'"');
   }
 };
@@ -5202,6 +5309,21 @@ let dvId=null;
 // Selo que acompanha a máquina em qualquer lista: a devolvida carrega o que
 // aconteceu, e a que entrou no lugar carrega de onde veio. Os dois lados da
 // troca ficam visíveis onde quer que a máquina apareça.
+// Quando os valores exatos foram lançados, a linha mostra quanto cada um pôs de
+// fato — o rótulo sozinho ("Ambos") esconderia uma divisão que não é meio a meio.
+function badgeInvestidor(p){
+  const ex=aporteExato(p);
+  if(!ex){
+    return p.investidor?`<span class="socio-${p.investidor==='João'?'jo':p.investidor==='Igor'?'ig':'ext'}">${esc(p.investidor)}</span>`:'';
+  }
+  const partes=[];
+  if(ex.joao>0) partes.push(`<span class="ap-j">J ${fmt(ex.joao)}</span>`);
+  if(ex.igor>0) partes.push(`<span class="ap-i">I ${fmt(ex.igor)}</span>`);
+  const sobra=custoRealDe(p)-ex.total;
+  const extra = sobra>0.01 ? `<span class="ap-caixa" title="Diferença entre o custo e o que os sócios puseram — saiu do caixa da operação">caixa ${fmt(sobra)}</span>` : '';
+  return `<div class="ap-linha" title="Valores lançados à mão para esta máquina">${partes.join('')}${extra}</div>`;
+}
+
 // Pendência resolvida não pode sumir. "Precisou de SSD 256GB" é o custo real de
 // recuperação daquela máquina — apagar o texto pra limpar a lista de compras
 // apagaria a história junto. Por isso o check é um campo separado: o que faltava
@@ -5228,7 +5350,7 @@ window.faltaFeito=async(id,feito)=>{
   const marcar=(feito===true||feito==='true');
   const upd={falta_feito:marcar, falta_feito_em: marcar ? new Date().toISOString().slice(0,10) : ''};
   Object.assign(p,upd);
-  if(!String(id).startsWith('x')&&!String(id).startsWith('l'))
+  if(!idLocal(id))
     await gravar(updateDoc(doc(db,'products',id),upd), (marcar?'Marcar como feito: ':'Reabrir pendência: ')+(p.nome||id));
   render(); renderSecoes();
 };
@@ -5295,7 +5417,7 @@ async function vincularTroca(id, upd){
     upd.veio_de_troca=true;
   }
   const regNovo={...d, valor_novo:upd.venda||0, diferenca:dif};
-  if(!String(pai.id).startsWith('x')&&!String(pai.id).startsWith('l'))
+  if(!idLocal(pai.id))
     await gravar(updateDoc(doc(db,'products',pai.id),{devolucao:regNovo}), 'Fechar a troca de "'+(pai.nome||pai.id)+'"');
   pai.devolucao=regNovo;
 }
@@ -5326,7 +5448,7 @@ window.ajustarTroca=async(paiId)=>{
               diferenca:v-(d.venda_anterior||0)}};
   await doSaveStatus(alvo.id, updB);
   const regNovo={...d, valor_novo:v, diferenca:v-(d.venda_anterior||0)};
-  if(!String(pai.id).startsWith('x')&&!String(pai.id).startsWith('l'))
+  if(!idLocal(pai.id))
     await gravar(updateDoc(doc(db,'products',pai.id),{devolucao:regNovo}), 'Ajustar troca de "'+(pai.nome||pai.id)+'"');
   pai.devolucao=regNovo;
   render();renderSecoes();calcStats();
@@ -5763,7 +5885,7 @@ function renderTabela(lista, tipo){
         }
       }
       const parcInfo=(p.pagamento==='parcelado'&&Array.isArray(p.parcelas))?(()=>{const pg=p.parcelas.filter(x=>x.pago).length;const tot=p.parcelas.length;const quit=pg===tot;return `<span onclick="event.stopPropagation();abrirParcelas('${p.id}')" style="cursor:pointer;font-size:.67rem;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;background:${quit?'#dcfce7':'#fef3c7'};color:${quit?'#15803d':'#a16207'};border:1px solid ${quit?'#86efac':'#fde68a'}" title="Ver parcelas">📅 ${pg}/${tot}${quit?' ✓':''}</span>`;})():'';
-      const invBadge=p.investidor?`<span class="socio-${p.investidor==='João'?'jo':p.investidor==='Igor'?'ig':'ext'}">${p.investidor}</span>`:'';
+      const invBadge=badgeInvestidor(p);
       const splitLucro=tipo==='vendidos'&&lp>0?`<div class="lucro-split"><span class="split-pill split-jo">J ${fmt(lp/2)}</span><span class="split-pill split-ig">I ${fmt(lp/2)}</span></div>`:'';
       const dcDisplay=p.data_compra?(p.data_compra.length>7?new Date(p.data_compra+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'2-digit'}):fdt(p.data_compra)):'—';
       const autorTag=p.addedByName?`<span title="Cadastrado por ${esc(p.addedByName)}" style="font-size:.62rem;color:var(--li);margin-left:3px">· ${esc(p.addedByName)}</span>`:'';
@@ -5865,7 +5987,7 @@ function render(){
       }
       const parcInfo=(p.pagamento==='parcelado'&&Array.isArray(p.parcelas))?(()=>{const pg=p.parcelas.filter(x=>x.pago).length;const tot=p.parcelas.length;const quit=pg===tot;return `<span onclick="event.stopPropagation();abrirParcelas('${p.id}')" style="cursor:pointer;font-size:.67rem;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;background:${quit?'#dcfce7':'#fef3c7'};color:${quit?'#15803d':'#a16207'};border:1px solid ${quit?'#86efac':'#fde68a'}" title="Ver parcelas">📅 ${pg}/${tot}${quit?' ✓':''}</span>`;})():'';
       const diasInfo=p.diasParado!=null?`<span style="font-size:.68rem;color:${p.diasParado<=7?'var(--gr)':p.diasParado<=30?'var(--am)':'var(--re)'};margin-left:4px">${p.diasParado}d</span>`:'';
-      const invBadge=p.investidor?`<span class="socio-${p.investidor==='João'?'jo':p.investidor==='Igor'?'ig':'ext'}">${p.investidor}</span>`:'';
+      const invBadge=badgeInvestidor(p);
       const splitLucro=lp>0?`<div class="lucro-split"><span class="split-pill split-jo">João ${fmt(lp/2)}</span><span class="split-pill split-ig">Igor ${fmt(lp/2)}</span></div>`:'';
       // Exibe data de compra com dia se disponível
       const dcDisplay=p.data_compra?(p.data_compra.length>7?new Date(p.data_compra+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'2-digit'}):fdt(p.data_compra)):'—';
@@ -6365,7 +6487,7 @@ window.avancarParcela=async(id,tipo)=>{
   const prox=(item.parcelaAtual||1)+1;
   const terminado=prox>item.parcelas;
   const upd=terminado?{parcelaAtual:item.parcelas,pago:true,pagoEm:new Date().toISOString().split('T')[0]}:{parcelaAtual:prox};
-  if(!id.startsWith('l')){try{await updateDoc(doc(db,col,id),upd);}catch(e){}}
+  if(!idLocal(id)){try{await updateDoc(doc(db,col,id),upd);}catch(e){}}
   Object.assign(item,upd);
   renderFinancas();
 };
@@ -6947,12 +7069,12 @@ window.confirmPay=async()=>{
   if(!item){closePayModal();return;}
   const col=payContaTipo==='fixa'?'financas_fixas':'financas_var';
   const updPago={pago:true,pagoEm:new Date().toISOString().split('T')[0],pagoCarteira:selPayCarteira};
-  if(!payContaId.startsWith('l')){try{await updateDoc(doc(db,col,payContaId),updPago);}catch(e){}}
+  if(!idLocal(payContaId)){try{await updateDoc(doc(db,col,payContaId),updPago);}catch(e){}}
   Object.assign(item,updPago);
   if(item.parcelas>0){
     const nextParc=Math.min((item.parcelaAtual||1)+1,item.parcelas);
     const updParc={parcelaAtual:nextParc};
-    if(!payContaId.startsWith('l')){try{await updateDoc(doc(db,col,payContaId),updParc);}catch(e){}}
+    if(!idLocal(payContaId)){try{await updateDoc(doc(db,col,payContaId),updParc);}catch(e){}}
     Object.assign(item,updParc);
   }
   const descParc=item.parcelas>0?item.nome+' (parc '+(item.parcelaAtual||1)+'/'+item.parcelas+'x)':item.nome;
@@ -7010,7 +7132,7 @@ window.addFixa=async()=>{
 
 window.delFixa=async(id)=>{
   if(!confirm('Excluir conta fixa?'))return;
-  if(!id.startsWith('l')){try{await deleteDoc(doc(db,'financas_fixas',id));}catch(e){}}
+  if(!idLocal(id)){try{await deleteDoc(doc(db,'financas_fixas',id));}catch(e){}}
   fixas=fixas.filter(x=>x.id!==id);
   renderFinancas();
 };
@@ -7030,7 +7152,7 @@ window.addVar=async()=>{
 
 window.delVar=async(id)=>{
   if(!confirm('Excluir gasto?'))return;
-  if(!id.startsWith('l')){try{await deleteDoc(doc(db,'financas_var',id));}catch(e){}}
+  if(!idLocal(id)){try{await deleteDoc(doc(db,'financas_var',id));}catch(e){}}
   variaveis=variaveis.filter(x=>x.id!==id);
   renderFinancas();
 };
@@ -7196,13 +7318,13 @@ window.addPeca=async()=>{
 
 window.delPeca=async(id)=>{
   if(!confirm('Excluir esta peça?'))return;
-  if(!id.startsWith('l')){try{await deleteDoc(doc(db,'pecas',id));}catch(e){}}
+  if(!idLocal(id)){try{await deleteDoc(doc(db,'pecas',id));}catch(e){}}
   pecas=pecas.filter(x=>x.id!==id);
   renderPecas();
 };
 
 window.updPecaStatus=async(id,val)=>{
-  if(!id.startsWith('l')){try{await updateDoc(doc(db,'pecas',id),{status:val});}catch(e){}}
+  if(!idLocal(id)){try{await updateDoc(doc(db,'pecas',id),{status:val});}catch(e){}}
   const p=pecas.find(x=>x.id===id);if(p)p.status=val;
   renderPecas();
   // Marcou como "Usado" sem máquina vinculada? Abre a edição pra escolher qual.
@@ -7332,7 +7454,7 @@ window.savePecaEdit=async()=>{
     produto_nome: prodNovo?prodNovo.nome:'',
     obs:(document.getElementById('pkObs').value||'').trim()
   };
-  try{ if(!String(id).startsWith('l')&&!String(id).startsWith('preset')) await updateDoc(doc(db,'pecas',id),upd); }catch(e){}
+  try{ if(!idLocal(id)) await updateDoc(doc(db,'pecas',id),upd); }catch(e){}
   Object.assign(p,upd);
   // Ajusta o custo das máquinas envolvidas — o custo SEGUE a peça
   if(maqAntiga===maqNova){
