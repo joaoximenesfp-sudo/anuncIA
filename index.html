@@ -2028,6 +2028,18 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
         <div><div class="pht">⚙️ Administração</div><div class="phs">Ferramentas exclusivas do dono — migrações e manutenção</div></div>
       </div>
 
+      <!-- BACKUP DOS DADOS -->
+      <div class="sync-card">
+        <div style="font-size:.84rem;font-weight:600;color:var(--tx);margin-bottom:6px">💾 Backup dos dados</div>
+        <div style="font-size:.74rem;color:var(--li);line-height:1.5;margin-bottom:10px">
+          Baixa tudo em um arquivo JSON — produtos, peças, clientes, fornecedores e finanças.
+          O que apaga dado na prática não é o Firebase cair: é import repetido, exclusão sem querer ou bug.
+          Guarde uma cópia por mês fora daqui.
+        </div>
+        <button class="bok" onclick="baixarBackup()">⬇ Baixar backup agora</button>
+        <div id="bkpInfo" style="font-size:.72rem;color:var(--li);margin-top:8px"></div>
+      </div>
+
       <!-- AVISOS DE SINCRONIZAÇÃO -->
       <div class="sync-card">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
@@ -8648,6 +8660,36 @@ window.buscarHist = () => {
 };
 
 // ── EXPORTAR RELATÓRIO ──
+// Backup completo em JSON. Sai do que já está carregado na tela — se você está
+// vendo, está no arquivo. Fotos ficam de fora de propósito: são data URIs e
+// deixariam o backup com centenas de MB, inviável de guardar todo mês.
+window.baixarBackup = () => {
+  const arr = (x) => Array.isArray(x) ? x : [];
+  const dump = {
+    gerado_em: new Date().toISOString(),
+    origem: 'anuncIA · backup manual',
+    produtos:     arr(typeof prods!=='undefined' && prods),
+    pecas:        arr(typeof pecas!=='undefined' && pecas),
+    clientes:     arr(typeof clientes!=='undefined' && clientes),
+    fornecedores: arr(typeof fornecedores!=='undefined' && fornecedores),
+    financas_fixas: arr(typeof fixas!=='undefined' && fixas),
+    financas_var:   arr(typeof variaveis!=='undefined' && variaveis),
+    extrato:      arr(typeof extrato!=='undefined' && extrato)
+  };
+  const contagem = Object.keys(dump).filter(k=>Array.isArray(dump[k]))
+    .map(k=>`${dump[k].length} ${k}`).join(' · ');
+  const blob = new Blob([JSON.stringify(dump, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'backup-ijx-' + new Date().toISOString().slice(0,10) + '.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+  const info = document.getElementById('bkpInfo');
+  const mb = (blob.size/1048576).toFixed(2);
+  if(info) info.innerHTML = `✅ Baixado em ${new Date().toLocaleString('pt-BR')} — ${contagem} · ${mb} MB`;
+};
+
 window.exportarRelatorio = () => {
   const el = document.getElementById('relatorioBody');
   const mes = document.getElementById('painelMesLabel').textContent;
