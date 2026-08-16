@@ -1239,7 +1239,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
         <div class="cd">
           <div class="cdh"><span class="cdht">Todos os produtos por marca</span><span style="font-size:.76rem;color:var(--li)" id="plbl">—</span></div>
           <div style="padding:0 16px 10px">
-            <input class="inp" type="text" id="pBusca" placeholder="🔎 Buscar por nome, specs, cliente, fornecedor... (ex: i5 16gb, thinkpad, dell ssd)" oninput="render()" style="width:100%">
+            <input class="inp" type="text" id="pBusca" autocomplete="off" placeholder="🔎 Buscar por nome, specs, cliente, fornecedor... (ex: i5 16gb, thinkpad, dell ssd)" oninput="render()" style="width:100%">
             <div id="pBuscaInfo" style="font-size:.7rem;color:var(--li);margin-top:4px;display:none"></div>
           </div>
           <div id="PL"><div style="text-align:center;padding:48px;color:var(--li)">Carregando...</div></div>
@@ -1675,7 +1675,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
           <div class="analise-pg" id="analise-tabela">
             <div class="prod-table-wrap">
               <div class="prod-table-search">
-                <input class="hist-inp" type="text" id="tabelaFiltro" placeholder="Filtrar por nome..." oninput="renderTabelaSocios()" style="flex:1">
+                <input class="hist-inp" type="text" id="tabelaFiltro" autocomplete="off" placeholder="Filtrar por nome..." oninput="renderTabelaSocios()" style="flex:1">
                 <select class="sel" id="tabelaInvFilter" onchange="renderTabelaSocios()" style="height:34px;font-size:.78rem">
                   <option value="todos">Todos</option>
                   <option value="joao">Só João (*)</option>
@@ -1744,7 +1744,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
       <div class="hist-wrap">
         <div class="cdh" style="padding:14px 18px"><span class="cdht">🔍 Histórico de preços por modelo</span></div>
         <div class="hist-search">
-          <input class="hist-inp" type="text" id="histBusca" placeholder="Buscar modelo... Ex: Dell i5, Lenovo T480" oninput="buscarHist()">
+          <input class="hist-inp" type="text" id="histBusca" autocomplete="off" placeholder="Buscar modelo... Ex: Dell i5, Lenovo T480" oninput="buscarHist()">
         </div>
         <div class="hist-list" id="histList">
           <div style="text-align:center;padding:32px;font-size:.78rem;color:var(--li)">Digite um modelo para buscar no histórico</div>
@@ -2111,7 +2111,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
         <button class="bsav" onclick="addClienteManual()">+ Cadastrar</button>
       </div>
 
-      <input class="inp cli-search" type="text" id="cliBusca" placeholder="🔎 Buscar cliente pelo nome..." oninput="cliFiltrar()">
+      <input class="inp cli-search" type="text" id="cliBusca" autocomplete="off" placeholder="🔎 Buscar cliente pelo nome..." oninput="cliFiltrar()">
 
       <div style="font-size:.7rem;color:var(--li);margin:-4px 0 10px;padding-left:2px;line-height:1.5">🛡️ Garantia legal obrigatória: <strong>90 dias</strong> a partir da venda (CDC art. 26, II — produto durável). A contagem regressiva por máquina aparece ao expandir o cliente.</div>
 
@@ -2148,7 +2148,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
           <button class="bsav" onclick="addFornecedorManual()">+ Cadastrar</button>
         </div>
 
-        <input class="inp cli-search" type="text" id="fornBusca" placeholder="🔎 Buscar fornecedor ou o que costuma ter..." oninput="renderFornecedores()">
+        <input class="inp cli-search" type="text" id="fornBusca" autocomplete="off" placeholder="🔎 Buscar fornecedor ou o que costuma ter..." oninput="renderFornecedores()">
 
         <div style="font-size:.7rem;color:var(--li);margin:-4px 0 10px;padding-left:2px;line-height:1.5">📦 Ordenados por <strong>mais tempo sem contato</strong> — os do topo valem um "tem mais notebook pra vender?". Toque 📞 pra marcar que falou hoje e reiniciar a contagem.</div>
 
@@ -7206,6 +7206,43 @@ function adjustPageTop(){
   const h = bar.offsetHeight;
   app.style.paddingTop = h > 0 ? h+'px' : '';
 }
+
+
+// ════════════════════════════════════════
+// BARRA DE BUSCA SEMPRE COMEÇA VAZIA
+// ════════════════════════════════════════
+// O navegador repõe o texto dos inputs ao recarregar a página e ao voltar
+// pelo histórico. Em formulário de cadastro isso ajuda; em barra de busca
+// atrapalha: você atualiza a tela e a lista continua filtrada por uma palavra
+// que não lembra ter digitado — parece que sumiu máquina do estoque.
+//
+// Os campos abaixo já ganharam autocomplete="off", que sozinho resolve no
+// Chrome (medido: com o atributo o valor não volta, sem ele volta). Este
+// handler é a rede de segurança para navegador que ignore o atributo, e roda
+// no momento certo: no pageshow o valor restaurado já existe, enquanto no
+// DOMContentLoaded ele ainda não chegou.
+
+// Buscas e filtros de lista.
+const BUSCAS_LIMPAR = ['pBusca','cliBusca','fornBusca','histBusca','tabelaFiltro',
+                       'pForn','pcForn','pkForn','eForn','smCliBusca'];
+
+// Os ids do vínculo escolhido andam junto com o nome digitado. O navegador
+// não restaura campo hidden, então limpar os dois juntos mantém o par
+// coerente: ou vem nome e id, ou não vem nenhum dos dois.
+const VINCULOS_LIMPAR = ['pFornId','pcFornId','pkFornId','eFornId','smCliId'];
+
+function limparBuscas(){
+  [...BUSCAS_LIMPAR, ...VINCULOS_LIMPAR].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.value = '';
+  });
+  // A lista pode já ter sido desenhada com o texto restaurado.
+  try{ render(); }catch(e){}
+}
+
+// pageshow, e não load: cobre a carga normal E a volta pelo botão "voltar",
+// que é justamente quando o navegador repõe os campos.
+window.addEventListener('pageshow', limparBuscas);
 
 
 // ════════════════════════════════════════
