@@ -512,6 +512,26 @@ input[type=number].inp{padding-left:32px}
 .tv-bts{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
 .tv-status{font-size:.73rem;color:var(--gr);font-weight:600;margin-top:8px;min-height:16px}
 
+/* ── RECIBO DE VENDA ── */
+.rc-resumo{font-size:.74rem;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:9px;
+  padding:9px 11px;line-height:1.5;margin-bottom:10px}
+.rc-resumo .rc-ok{color:#15803d}
+.rc-cfg-btn{width:100%;text-align:left;background:var(--bg);border:1px solid var(--b);border-radius:9px;
+  padding:8px 11px;font:inherit;font-size:.73rem;font-weight:700;color:var(--mu);cursor:pointer;margin-bottom:8px}
+.rc-cfg-btn:hover{border-color:var(--tx);color:var(--tx)}
+.rc-cfg{background:var(--bg);border:1px solid var(--b);border-radius:10px;padding:11px 12px;margin-bottom:10px;
+  display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.rc-cfg label,.rc-extra label{font-size:.68rem;color:var(--mu);font-weight:600;display:flex;flex-direction:column;gap:3px}
+.rc-cfg .inp,.rc-extra .inp{width:100%}
+.rc-cfg-bts{grid-column:1/-1;display:flex;align-items:center;gap:10px}
+.rc-cfg-msg{font-size:.72rem;color:var(--gr);font-weight:600}
+.rc-extra{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:10px}
+.rc-extra-bt{grid-column:1/-1;justify-self:start}
+.brec{background:var(--bg);border:1px solid var(--b2);border-radius:7px;padding:3px 6px;cursor:pointer;
+  font-size:.8rem;line-height:1;margin-left:3px}
+.brec:hover{border-color:var(--gr)}
+@media(max-width:520px){.rc-cfg,.rc-extra{grid-template-columns:1fr}}
+
 /* ── APORTE EXATO POR SÓCIO ── */
 .aporte-box{background:var(--bg);border:1px solid var(--b);border-radius:10px;padding:11px 12px}
 .aporte-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
@@ -2453,6 +2473,35 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
     </div>
   </div>
 
+  <div class="mo h" id="RCO">
+    <div class="mc" style="max-width:580px">
+      <div class="mh"><div class="mt">🧾 Recibo de venda</div><button class="mx" onclick="fecharRecibo()">✕</button></div>
+      <div class="mb">
+        <div class="rc-resumo" id="rcResumo"></div>
+        <button class="rc-cfg-btn" onclick="rcToggleCfg()">⚙️ Seus dados de vendedor (usados em todo recibo)</button>
+        <div class="rc-cfg" id="rcCfg" style="display:none">
+          <label>Nome ou razão social<input class="inp" id="rcVendedor" placeholder="João Ximenes"></label>
+          <label>CPF ou CNPJ<input class="inp" id="rcDoc" placeholder="000.000.000-00"></label>
+          <label>Telefone<input class="inp" id="rcFone" placeholder="(19) 90000-0000"></label>
+          <label>Cidade<input class="inp" id="rcCidade" placeholder="Campinas/SP"></label>
+          <div class="rc-cfg-bts"><button class="bok" onclick="salvarReciboCfg()">Salvar</button><span class="rc-cfg-msg" id="rcCfgMsg"></span></div>
+        </div>
+        <div class="rc-extra">
+          <label>Nº de série / etiqueta<input class="inp" id="rcSerial" placeholder="identifica a máquina na garantia"></label>
+          <label>CPF do comprador<input class="inp" id="rcCpf" placeholder="opcional"></label>
+          <button class="bcan rc-extra-bt" onclick="salvarRecDados()">Guardar nesta máquina</button>
+        </div>
+        <textarea id="rcTexto" class="tv-texto" readonly></textarea>
+        <div class="tv-bts">
+          <button class="bok" onclick="copiarRecibo()">📋 Copiar</button>
+          <button class="bcan" onclick="zapRecibo()">💬 Mandar no WhatsApp</button>
+          <button class="bcan" onclick="imprimirRecibo()">🖨️ Imprimir / PDF</button>
+        </div>
+        <div class="tv-status" id="rcStatus"></div>
+      </div>
+    </div>
+  </div>
+
   <div class="mo h" id="PECO">
     <div class="moo" onclick="closePecaEdit()"></div>
     <div class="mc" style="max-width:460px">
@@ -2971,7 +3020,7 @@ onAuthStateChanged(auth,u=>{
     // Mostrar botão admin só para o dono
     const btnAdm = document.getElementById('btnAdmin');
     if(btnAdm) btnAdm.style.display = perfilAtual==='joao' ? '' : 'none';
-    loadProds();loadFinancas();loadPecas();loadClientes();loadFornecedores();loadMetas3();loadMilhao();
+    loadProds();loadFinancas();loadPecas();loadClientes();loadFornecedores();loadMetas3();loadMilhao();loadReciboCfg();
     try{ initSpecBuilder(); loadCpuOutros(); }catch(e){}
     setTimeout(carregarAvisos, 2000); // carregar avisos após login
   }
@@ -6060,7 +6109,7 @@ function renderTabela(lista, tipo){
           <option ${p.status==='Estoque'?'selected':''} value="Estoque">Estoque</option>
           <option ${p.status==='Vendido'?'selected':''} value="Vendido">Vendido</option>
         </select></td>
-        <td><button class="bed" onclick="openEdit('${p.id}')" title="Editar">✎</button>${p.status==='Vendido'?`<button class="bdev" onclick="abrirDevolucao('${p.id}')" title="Registrar devolução ou troca">↩</button>`:''}</td>
+        <td><button class="bed" onclick="openEdit('${p.id}')" title="Editar">✎</button>${p.status==='Vendido'?`<button class="brec" onclick="abrirRecibo('${p.id}')" title="Gerar recibo de venda">🧾</button><button class="bdev" onclick="abrirDevolucao('${p.id}')" title="Registrar devolução ou troca">↩</button>`:''}</td>
         <td><button class="bdl" onclick="delProd('${p.id}')" title="Excluir">✕</button></td>
       </tr>`;
     }).join('');
@@ -6162,7 +6211,7 @@ function render(){
           <option ${p.status==='Estoque'?'selected':''} value="Estoque">Estoque</option>
           <option ${p.status==='Vendido'?'selected':''} value="Vendido">Vendido</option>
         </select></td>
-        <td><button class="bed" onclick="openEdit('${p.id}')" title="Editar">✎</button>${p.status==='Vendido'?`<button class="bdev" onclick="abrirDevolucao('${p.id}')" title="Registrar devolução ou troca">↩</button>`:''}</td>
+        <td><button class="bed" onclick="openEdit('${p.id}')" title="Editar">✎</button>${p.status==='Vendido'?`<button class="brec" onclick="abrirRecibo('${p.id}')" title="Gerar recibo de venda">🧾</button><button class="bdev" onclick="abrirDevolucao('${p.id}')" title="Registrar devolução ou troca">↩</button>`:''}</td>
         <td><button class="bdl" onclick="delProd('${p.id}')" title="Excluir">✕</button></td>
       </tr>`;
     }).join('');
@@ -8779,6 +8828,222 @@ window.copiarTabelaVend=async()=>{
 window.zapTabelaVend=()=>{
   const txt=document.getElementById('tvTexto').value;
   window.open('https://wa.me/?text='+encodeURIComponent(txt), '_blank');
+};
+
+// ── RECIBO DE VENDA ──
+// Sai pronto de máquina vendida: quem vendeu, quem comprou, o quê, quanto,
+// como pagou e a garantia legal de 90 dias (CDC art. 26, II). A garantia entra
+// SEMPRE: cláusula de "vendido no estado, sem garantia" é nula em produto de
+// consumo, então prometer menos no papel não protege ninguém — só cria briga.
+let reciboCfg={ vendedor:'', doc:'', fone:'', cidade:'', _docId:null };
+
+async function loadReciboCfg(){
+  try{ const ls=JSON.parse(localStorage.getItem('bj_recibo')||'null'); if(ls) reciboCfg={...reciboCfg,...ls}; }catch(e){}
+  try{
+    const snap=await getDocs(query(collection(db,'config'),where('userId','==','shared_ijx')));
+    const d0=snap.docs.find(d=>d.data().tipo==='recibo');
+    if(d0){ reciboCfg={...reciboCfg,...(d0.data().dados||{})}; reciboCfg._docId=d0.id; }
+  }catch(e){}
+}
+window.salvarReciboCfg=async()=>{
+  const g=id=>(document.getElementById(id)?.value||'').trim();
+  const dados={ vendedor:g('rcVendedor'), doc:g('rcDoc'), fone:g('rcFone'), cidade:g('rcCidade') };
+  reciboCfg={...reciboCfg,...dados};
+  localStorage.setItem('bj_recibo',JSON.stringify(dados));
+  try{
+    if(reciboCfg._docId){ await updateDoc(doc(db,'config',reciboCfg._docId),{dados}); }
+    else { const r=await addDoc(collection(db,'config'),{userId:'shared_ijx',tipo:'recibo',dados}); reciboCfg._docId=r.id; }
+  }catch(e){}
+  montarRecibo();
+  const m=document.getElementById('rcCfgMsg'); if(m){ m.textContent='✓ Salvo — vale pros próximos recibos'; setTimeout(()=>m.textContent='',2500); }
+};
+window.rcToggleCfg=()=>{ const c=document.getElementById('rcCfg'); if(c) c.style.display=c.style.display==='none'?'block':'none'; };
+
+// Valor por extenso. Recibo sem extenso é recibo que se contesta: dá pra
+// adulterar um dígito. Cobre até milhões, que é de sobra pra uma máquina.
+const EXT_UN=['','um','dois','três','quatro','cinco','seis','sete','oito','nove','dez','onze','doze','treze','quatorze','quinze','dezesseis','dezessete','dezoito','dezenove'];
+const EXT_DEZ=['','','vinte','trinta','quarenta','cinquenta','sessenta','setenta','oitenta','noventa'];
+const EXT_CEM=['','cento','duzentos','trezentos','quatrocentos','quinhentos','seiscentos','setecentos','oitocentos','novecentos'];
+function extensoAte999(n){
+  if(n<=0) return '';
+  if(n===100) return 'cem';
+  const c=Math.floor(n/100), d=n%100;
+  const partes=[];
+  if(c) partes.push(EXT_CEM[c]);
+  if(d){
+    if(d<20) partes.push(EXT_UN[d]);
+    else { const dz=Math.floor(d/10), un=d%10; partes.push(un?EXT_DEZ[dz]+' e '+EXT_UN[un]:EXT_DEZ[dz]); }
+  }
+  return partes.join(' e ');
+}
+function valorExtenso(v){
+  const cent=Math.round((Math.abs(v)||0)*100);
+  const inteiro=Math.floor(cent/100), centavos=cent%100;
+  const mi=Math.floor(inteiro/1000000), mil=Math.floor((inteiro%1000000)/1000), un=inteiro%1000;
+  const blocos=[];
+  if(mi)  blocos.push({n:mi,  t:(mi===1?'um milhão':extensoAte999(mi)+' milhões')});
+  if(mil) blocos.push({n:mil, t:(mil===1?'mil':extensoAte999(mil)+' mil')});
+  if(un)  blocos.push({n:un,  t:extensoAte999(un)});
+  // O "e" entra antes do último bloco quando ele é menor que cem ou centena
+  // redonda: "mil e duzentos", "dois mil e cinquenta" — mas "dois mil
+  // trezentos e cinquenta" (350 não é redondo, então não leva "e").
+  const levaE=n=>n<100||n%100===0;
+  let txt='';
+  blocos.forEach((b,i)=>{
+    if(i===0){ txt=b.t; return; }
+    txt+=(i===blocos.length-1 && levaE(b.n) ? ' e ' : ' ')+b.t;
+  });
+  let out='';
+  // Milhão exato pede a preposição: "um milhão de reais", não "um milhão reais".
+  if(inteiro>0) out=txt+(mi>0&&!mil&&!un ? ' de reais' : (inteiro===1?' real':' reais'));
+  if(centavos>0) out+=(out?' e ':'')+extensoAte999(centavos)+(centavos===1?' centavo':' centavos');
+  return out||'zero real';
+}
+
+function dataLonga(d){
+  if(!d) return '';
+  const base=d.length===7?d+'-01':d;
+  const dt=new Date(base+'T12:00:00');
+  if(isNaN(dt)) return d;
+  return dt.toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
+}
+function formaPagRecibo(p){
+  if(p.pagamento==='parcelado' && Array.isArray(p.parcelas) && p.parcelas.length){
+    const n=p.parcelas.length, pg=p.parcelas.filter(x=>x.pago).length;
+    const val=(parseFloat(p.venda)||0)/n;
+    return `Parcelado em ${n}x de ${fmt(val)} · pago ${pg} de ${n}`;
+  }
+  return 'À vista';
+}
+// Faltando dado o recibo não é emitido de qualquer jeito: ele diz o que falta.
+function reciboPendencias(p){
+  const f=[];
+  if(!reciboCfg.vendedor) f.push('seu nome/razão social');
+  if(!reciboCfg.doc) f.push('seu CPF ou CNPJ');
+  if(!(p.cliente_nome||'').trim()) f.push('nome do comprador');
+  if(!((parseFloat(p.venda)||0)>0)) f.push('valor da venda');
+  if(!p.data_venda) f.push('data da venda');
+  return f;
+}
+function textoRecibo(p){
+  const cli=(typeof clientes!=='undefined'&&Array.isArray(clientes))?clientes.find(c=>c.id===p.cliente_id):null;
+  const valor=parseFloat(p.venda)||0;
+  const g=garantiaInfo(p.data_venda);
+  const cidade=reciboCfg.cidade||'—';
+  const L=[];
+  L.push('*RECIBO DE VENDA*');
+  L.push('');
+  L.push('*Vendedor:* '+(reciboCfg.vendedor||'—'));
+  if(reciboCfg.doc) L.push('*CPF/CNPJ:* '+reciboCfg.doc);
+  if(reciboCfg.fone) L.push('*Contato:* '+reciboCfg.fone);
+  L.push('');
+  L.push('*Comprador:* '+((p.cliente_nome||'').trim()||'—'));
+  if(p.cliente_cpf) L.push('*CPF:* '+p.cliente_cpf);
+  if(cli&&cli.whatsapp) L.push('*Contato:* '+cli.whatsapp);
+  L.push('');
+  L.push('*Equipamento:* '+(p.nome||'—')+' (usado/seminovo)');
+  if(p.serial) L.push('*Nº de série:* '+p.serial);
+  L.push('*Valor:* '+fmt(valor)+' ('+valorExtenso(valor)+')');
+  L.push('*Pagamento:* '+formaPagRecibo(p));
+  L.push('*Data da venda:* '+(dataLonga(p.data_venda)||'—'));
+  L.push('');
+  L.push('*GARANTIA*');
+  L.push('Garantia legal de '+GARANTIA_DIAS+' dias contra vício ou defeito, na forma do art. 26, II do Código de Defesa do Consumidor.');
+  if(g) L.push('Válida até '+g.vencFmt+'.');
+  L.push('Não cobre mau uso, queda, líquido, violação do equipamento nem desgaste natural da bateria.');
+  L.push('');
+  L.push('Declaro ter recebido o equipamento acima em pleno funcionamento, testado no ato da entrega, e o valor correspondente foi pago ao vendedor.');
+  L.push('');
+  L.push(cidade+', '+(dataLonga(p.data_venda)||dataLonga(new Date().toISOString().slice(0,10)))+'.');
+  L.push('');
+  L.push('_____________________________');
+  L.push((reciboCfg.vendedor||'Vendedor'));
+  L.push('');
+  L.push('_____________________________');
+  L.push(((p.cliente_nome||'').trim()||'Comprador'));
+  return L.join('\n');
+}
+function reciboResumo(p){
+  const falta=reciboPendencias(p);
+  if(!falta.length) return '<span class="rc-ok">✅ Recibo completo — pode enviar ou imprimir.</span>';
+  return '⚠️ Falta preencher: <strong>'+falta.map(f=>esc(f)).join('</strong>, <strong>')+'</strong>. '
+       + 'O recibo sai com <strong>—</strong> nesses campos até você completar.';
+}
+let reciboId=null;
+function montarRecibo(){
+  const p=(typeof prods!=='undefined'?prods:[]).find(x=>x.id===reciboId);
+  if(!p) return;
+  const el=document.getElementById('rcTexto'); if(el) el.value=textoRecibo(p);
+  const res=document.getElementById('rcResumo'); if(res) res.innerHTML=reciboResumo(p);
+  const st=document.getElementById('rcStatus'); if(st) st.textContent='';
+}
+window.abrirRecibo=async(id)=>{
+  reciboId=id;
+  const p=(typeof prods!=='undefined'?prods:[]).find(x=>x.id===id);
+  if(!p) return;
+  if(!reciboCfg.vendedor && !reciboCfg._docId) await loadReciboCfg();
+  const set=(i,v)=>{const e=document.getElementById(i);if(e)e.value=v||'';};
+  set('rcVendedor',reciboCfg.vendedor); set('rcDoc',reciboCfg.doc);
+  set('rcFone',reciboCfg.fone); set('rcCidade',reciboCfg.cidade);
+  set('rcSerial',p.serial); set('rcCpf',p.cliente_cpf);
+  const cfg=document.getElementById('rcCfg');
+  // Primeira vez, sem os dados do vendedor: já abre a configuração
+  if(cfg) cfg.style.display=(reciboCfg.vendedor&&reciboCfg.doc)?'none':'block';
+  montarRecibo();
+  document.getElementById('RCO').classList.remove('h');
+};
+window.fecharRecibo=()=>{ document.getElementById('RCO').classList.add('h'); reciboId=null; };
+// Série e CPF ficam gravados na máquina/no recibo: quem digita uma vez não digita de novo
+window.salvarRecDados=async()=>{
+  const p=(typeof prods!=='undefined'?prods:[]).find(x=>x.id===reciboId);
+  if(!p) return;
+  const serial=(document.getElementById('rcSerial')?.value||'').trim();
+  const cpf=(document.getElementById('rcCpf')?.value||'').trim();
+  p.serial=serial; p.cliente_cpf=cpf;
+  if(!idLocal(p.id)) await gravar(updateDoc(doc(db,'products',p.id),{serial,cliente_cpf:cpf}), 'Dados do recibo: '+(p.nome||''));
+  montarRecibo();
+  const st=document.getElementById('rcStatus'); if(st){ st.textContent='✓ Guardado nesta máquina'; setTimeout(()=>{if(st)st.textContent='';},2500); }
+};
+window.copiarRecibo=async()=>{
+  const txt=document.getElementById('rcTexto').value;
+  const st=document.getElementById('rcStatus');
+  try{ await navigator.clipboard.writeText(txt); }
+  catch(e){
+    const el=document.getElementById('rcTexto'); el.select(); el.setSelectionRange(0,999999);
+    if(st) st.textContent='Selecionei o texto — use Ctrl+C (ou segure e copie no celular).';
+    return;
+  }
+  if(st) st.textContent='✅ Copiado. Cole no WhatsApp do cliente.';
+};
+window.zapRecibo=()=>{
+  const p=(typeof prods!=='undefined'?prods:[]).find(x=>x.id===reciboId);
+  const cli=(p&&typeof clientes!=='undefined'&&Array.isArray(clientes))?clientes.find(c=>c.id===p.cliente_id):null;
+  const fone=(cli&&cli.whatsapp||'').replace(/\D/g,'');
+  const txt=document.getElementById('rcTexto').value;
+  const base=fone?('https://wa.me/55'+fone.replace(/^55/,'')+'?text='):'https://wa.me/?text=';
+  window.open(base+encodeURIComponent(txt), '_blank');
+};
+// Versão de papel: abre janela própria e manda imprimir. "Salvar como PDF" na
+// janela de impressão é o que gera o arquivo pra guardar/mandar por e-mail.
+window.imprimirRecibo=()=>{
+  const p=(typeof prods!=='undefined'?prods:[]).find(x=>x.id===reciboId);
+  if(!p) return;
+  const linhas=textoRecibo(p).split('\n');
+  const corpo=linhas.map(l=>{
+    if(l==='') return '<div class="sp"></div>';
+    if(/^\*.+\*$/.test(l)) return '<h2>'+esc(l.replace(/\*/g,''))+'</h2>';
+    const neg=esc(l).replace(/\*([^*]+)\*/g,'<strong>$1</strong>').replace(/_([^_]+)_/g,'<em>$1</em>');
+    return '<p>'+neg+'</p>';
+  }).join('');
+  const w=window.open('','_blank','width=800,height=900');
+  if(!w){ const st=document.getElementById('rcStatus'); if(st) st.textContent='O navegador bloqueou a janela de impressão. Libere pop-ups pra este site.'; return; }
+  w.document.write('<!doctype html><meta charset="utf-8"><title>Recibo '+esc(p.nome||'')+'</title>'
+    +'<style>body{font:13px/1.7 -apple-system,Segoe UI,Roboto,sans-serif;color:#111;max-width:640px;margin:32px auto;padding:0 24px}'
+    +'h2{font-size:14px;letter-spacing:.06em;margin:18px 0 6px;padding-bottom:4px;border-bottom:1px solid #ddd}'
+    +'h2:first-child{font-size:17px;text-align:center;border:0}p{margin:2px 0}.sp{height:9px}em{color:#555}'
+    +'@media print{body{margin:0}}</style>'+corpo);
+  w.document.close();
+  setTimeout(()=>{ try{ w.focus(); w.print(); }catch(e){} }, 250);
 };
 
 // Backup completo em JSON. Sai do que já está carregado na tela — se você está
