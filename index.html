@@ -495,6 +495,21 @@ input[type=number].inp{padding-left:32px}
 .rk-compra-volta{font-size:.72rem;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;
   padding:7px 11px;margin:0 18px 8px;color:#1e40af;line-height:1.5}
 
+/* ── TABELA PRA MANDAR AOS VENDEDORES ── */
+.btn-tabela{margin-left:auto;background:var(--bg);border:1px solid var(--b2);border-radius:8px;padding:5px 11px;
+  font:inherit;font-size:.72rem;font-weight:700;color:var(--mu);cursor:pointer;white-space:nowrap}
+.btn-tabela:hover{border-color:var(--tx);color:var(--tx)}
+.tv-aviso{font-size:.73rem;background:#fffbeb;border:1px solid #fde68a;color:#92400e;border-radius:9px;
+  padding:9px 11px;line-height:1.5;margin-bottom:10px}
+.tv-ops{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:8px}
+.tv-op{display:flex;align-items:center;gap:6px;font-size:.74rem;color:var(--mu);cursor:pointer;font-weight:600}
+.tv-op input{width:15px;height:15px;accent-color:#16a34a;cursor:pointer}
+.tv-texto{width:100%;min-height:280px;background:var(--bg);border:1px solid var(--b2);border-radius:9px;
+  padding:11px 12px;font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:.76rem;line-height:1.55;
+  color:var(--tx);resize:vertical}
+.tv-bts{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.tv-status{font-size:.73rem;color:var(--gr);font-weight:600;margin-top:8px;min-height:16px}
+
 /* ── APORTE EXATO POR SÓCIO ── */
 .aporte-box{background:var(--bg);border:1px solid var(--b);border-radius:10px;padding:11px 12px}
 .aporte-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
@@ -1403,6 +1418,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
           <div style="font-family:'Instrument Serif',serif;font-size:1.1rem;color:var(--tx)">📢 Anunciados</div>
           <span id="sec-anunc-count" style="font-size:.72rem;background:var(--bbg);color:var(--bl);border:1px solid var(--bbd);padding:2px 8px;border-radius:10px;font-weight:600"></span>
           <span id="sec-anunc-pot" style="font-size:.72rem;color:var(--gr);font-weight:500"></span>
+          <button class="btn-tabela" onclick="abrirTabelaVend()">📋 Tabela pros vendedores</button>
         </div>
         <div class="cd" style="border-left:3px solid var(--bl)">
           <div id="PL-anunc"><div style="text-align:center;padding:32px;color:var(--li)">Carregando...</div></div>
@@ -2414,6 +2430,26 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
   </div>
 
   <!-- MODAL EDITAR PEÇA -->
+  <!-- TABELA PRA MANDAR AOS VENDEDORES -->
+  <div class="mo h" id="TVO">
+    <div class="mc" style="max-width:560px">
+      <div class="mh"><div class="mt">📋 Tabela pros vendedores</div><button class="mx" onclick="fecharTabelaVend()">✕</button></div>
+      <div class="mb">
+        <div class="tv-aviso">🔒 Sai só nome e preço. <strong>Custo, lucro e margem não entram</strong> — quem vende pra você não precisa saber quanto você pagou.</div>
+        <div class="tv-ops">
+          <label class="tv-op"><input type="checkbox" id="tvDias" onchange="montarTabelaVend()"> mostrar dias anunciado</label>
+          <label class="tv-op"><input type="checkbox" id="tvMarca" checked onchange="montarTabelaVend()"> agrupar por marca</label>
+        </div>
+        <textarea id="tvTexto" class="tv-texto" readonly></textarea>
+        <div class="tv-bts">
+          <button class="bok" onclick="copiarTabelaVend()">📋 Copiar</button>
+          <button class="bcan" onclick="zapTabelaVend()">💬 Abrir no WhatsApp</button>
+        </div>
+        <div class="tv-status" id="tvStatus"></div>
+      </div>
+    </div>
+  </div>
+
   <div class="mo h" id="PECO">
     <div class="moo" onclick="closePecaEdit()"></div>
     <div class="mc" style="max-width:460px">
@@ -8660,6 +8696,71 @@ window.buscarHist = () => {
 };
 
 // ── EXPORTAR RELATÓRIO ──
+// ── TABELA PRA MANDAR AOS VENDEDORES ──
+// Sai por WhatsApp, então é texto puro: tabela em markdown não renderiza lá.
+// E sai SEM custo, lucro ou margem — quem revende pra você não precisa saber
+// quanto você pagou, e uma tabela vazada é a coisa mais fácil de vazar que existe.
+function diasAnunciado(p){
+  const dc=(p.data_compra||p.data_compra_mes||'').trim();
+  if(!dc) return null;
+  const d=Date.parse((dc.length>7?dc:dc+'-01')+'T12:00:00');
+  if(isNaN(d)) return null;
+  return Math.max(0, Math.round((Date.parse(new Date().toISOString().slice(0,10)+'T12:00:00')-d)/86400000));
+}
+function textoTabelaVend(){
+  const comDias  = !!document.getElementById('tvDias')?.checked;
+  const porMarca = !!document.getElementById('tvMarca')?.checked;
+  const lista = prods.filter(p=>p.status==='Anunciado' && (parseFloat(p.venda)||0)>0)
+                     .sort((a,b)=>(parseFloat(b.venda)||0)-(parseFloat(a.venda)||0));
+  const hoje = new Date().toLocaleDateString('pt-BR');
+  if(!lista.length) return 'Nenhuma máquina anunciada com preço definido.\n\nColoque o preço de venda nas anunciadas para elas entrarem na tabela.';
+
+  const linha = (p)=>{
+    const d = comDias ? diasAnunciado(p) : null;
+    return '• ' + (p.nome||'sem nome') + ' — ' + fmt(parseFloat(p.venda)||0)
+         + (d!==null ? '  ('+d+' dias)' : '');
+  };
+
+  const L = ['*DISPONÍVEIS — '+hoje+'*', ''];
+  if(porMarca){
+    const g={};
+    lista.forEach(p=>{ const b=brand(p.nome); (g[b]=g[b]||[]).push(p); });
+    Object.keys(g).sort((a,b)=>g[b].length-g[a].length).forEach(b=>{
+      L.push('*'+b+'*');
+      g[b].forEach(p=>L.push(linha(p)));
+      L.push('');
+    });
+  } else {
+    lista.forEach(p=>L.push(linha(p)));
+    L.push('');
+  }
+  L.push('_'+lista.length+' máquina'+(lista.length!==1?'s':'')+' disponíve'+(lista.length!==1?'is':'l')+'. Preços sujeitos a alteração._');
+  return L.join('\n');
+}
+function montarTabelaVend(){
+  const el=document.getElementById('tvTexto');
+  if(el) el.value=textoTabelaVend();
+  const st=document.getElementById('tvStatus'); if(st) st.textContent='';
+}
+window.abrirTabelaVend=()=>{ montarTabelaVend(); document.getElementById('TVO').classList.remove('h'); };
+window.fecharTabelaVend=()=>{ document.getElementById('TVO').classList.add('h'); };
+window.copiarTabelaVend=async()=>{
+  const txt=document.getElementById('tvTexto').value;
+  const st=document.getElementById('tvStatus');
+  try{ await navigator.clipboard.writeText(txt); }
+  catch(e){
+    // Navegador sem permissão de área de transferência: seleciona pro usuário copiar à mão
+    const el=document.getElementById('tvTexto'); el.select(); el.setSelectionRange(0,999999);
+    if(st){ st.textContent='Selecionei o texto — use Ctrl+C (ou segure e copie no celular).'; }
+    return;
+  }
+  if(st) st.textContent='✅ Copiado. Cole no WhatsApp do vendedor.';
+};
+window.zapTabelaVend=()=>{
+  const txt=document.getElementById('tvTexto').value;
+  window.open('https://wa.me/?text='+encodeURIComponent(txt), '_blank');
+};
+
 // Backup completo em JSON. Sai do que já está carregado na tela — se você está
 // vendo, está no arquivo. Fotos ficam de fora de propósito: são data URIs e
 // deixariam o backup com centenas de MB, inviável de guardar todo mês.
