@@ -1397,6 +1397,10 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
               </div>
             </div>
             <div class="fc" style="grid-column:1/-1">
+              <span class="fla">📝 O que falta comprar/fazer <span style="font-size:.62rem;color:var(--li)">opcional — já entra na lista de atividades</span></span>
+              <input class="inp" type="text" id="pFalta" placeholder="Ex: comprar SSD 256GB · bateria nova · carregador · limpar carcaça" autocomplete="off">
+            </div>
+            <div class="fc" style="grid-column:1/-1">
               <div class="fotos-box">
                 <div class="fotos-head">
                   <span class="fla" style="margin:0">📷 Fotos desta máquina <span style="font-weight:400;color:var(--li);text-transform:none">— já entram junto no cadastro; a primeira é a capa</span></span>
@@ -3597,7 +3601,10 @@ window.addProd=async()=>{
   const custoTotal=custo+custoPecas+custoGas;
   // data_compra armazena data completa YYYY-MM-DD; data_compra_mes extrai só o mês
   const dcMes=dc?dc.slice(0,7):'';
-  const obj={userId:'shared_ijx',addedBy:user.uid,addedByName:user.displayName||user.email.split('@')[0],nome,custo:custoTotal,custo_base:custo,custo_pecas:custoPecas,custo_gasolina:custoGas,gas_pagante:gasPag,venda,lucro:venda-custoTotal,status,investidor,data_compra:dc,data_compra_mes:dcMes,data_venda:'',data:dcMes,canal_compra:canal,aporte_joao:(parseFloat(document.getElementById('pApJoao')?.value)||0),aporte_igor:(parseFloat(document.getElementById('pApIgor')?.value)||0),fornecedor_id:fornId,fornecedor_nome:fornNome,num,fotos_n:fotosPend.prod.length,createdAt:new Date().toISOString()};
+  // Pendência anotada já no cadastro. Máquina recém-comprada nunca nasce com a
+  // pendência resolvida, então aqui não existe o check de 'já foi feito'.
+  const falta=(document.getElementById('pFalta')?.value||'').trim();
+  const obj={userId:'shared_ijx',addedBy:user.uid,addedByName:user.displayName||user.email.split('@')[0],nome,custo:custoTotal,custo_base:custo,custo_pecas:custoPecas,custo_gasolina:custoGas,gas_pagante:gasPag,venda,lucro:venda-custoTotal,status,investidor,data_compra:dc,data_compra_mes:dcMes,data_venda:'',data:dcMes,canal_compra:canal,falta_comprar:falta,falta_feito:false,falta_feito_em:'',aporte_joao:(parseFloat(document.getElementById('pApJoao')?.value)||0),aporte_igor:(parseFloat(document.getElementById('pApIgor')?.value)||0),fornecedor_id:fornId,fornecedor_nome:fornNome,num,fotos_n:fotosPend.prod.length,createdAt:new Date().toISOString()};
   let prodId='l'+Date.now();
   try{const r=await addDoc(collection(db,'products'),obj);prodId=r.id;prods.push({...obj,id:r.id});}
   catch(e){ await gravar(Promise.reject(e), 'Cadastrar "'+nome+'"'); prods.push({...obj,id:prodId}); }
@@ -3635,6 +3642,7 @@ window.addProd=async()=>{
   const pfw=document.getElementById('pFornWpp'); if(pfw) pfw.value='';
   const paj=document.getElementById('pApJoao'); if(paj) paj.value='';
   const pai=document.getElementById('pApIgor'); if(pai) pai.value='';
+  const pfa=document.getElementById('pFalta'); if(pfa) pfa.value='';
   pAporteHint();
   try{ resetSpecBuilder(); }catch(e){}
   ppLimpar();
