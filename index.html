@@ -552,6 +552,27 @@ input[type=number].inp{padding-left:32px}
 .ap-i{background:#faf5ff;color:#7c3aed;border:1px solid #e9d5ff}
 .ap-caixa{background:var(--bg);color:var(--li);border:1px solid var(--b2)}
 
+/* ── CANAIS DE COMPRA ── */
+.can-cab{font-size:.72rem;color:var(--li);font-weight:600;margin:0 18px 10px}
+.can-fora{color:var(--am)}
+.can-vazio{padding:20px 18px;font-size:.8rem;color:var(--tx);line-height:1.55}
+.can-vazio span{font-size:.73rem;color:var(--li)}
+.can-row{margin:0 18px 9px;padding:11px 13px;background:var(--bg);border:1px solid var(--b);border-radius:9px}
+.can-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.can-nome{font-size:.86rem;font-weight:800;color:var(--tx)}
+.can-n{font-size:.7rem;font-weight:700;color:var(--w);background:#0891b2;border-radius:20px;padding:2px 9px;white-space:nowrap}
+.can-bar{height:4px;background:var(--b);border-radius:3px;margin:7px 0 9px;overflow:hidden}
+.can-bar span{display:block;height:100%;background:#0891b2;border-radius:3px}
+.can-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.can-cel{display:flex;flex-direction:column;gap:1px;min-width:0}
+.can-lbl{font-size:.62rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--li)}
+.can-val{font-size:.8rem;font-weight:700;color:var(--tx)}
+.can-base{font-size:.65rem;font-weight:400;color:var(--li)}
+.can-per{font-size:.68rem;color:var(--li);margin-top:7px}
+.can-dica{margin:10px 18px 4px;padding:9px 11px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:9px;
+  font-size:.72rem;color:#1e40af;line-height:1.5}
+@media(max-width:520px){.can-grid{grid-template-columns:1fr 1fr}}
+
 /* ── SELETOR DE MÊS NO RANKING ── */
 .rk-mespicker{display:flex;align-items:center;gap:9px;margin:0 18px 10px;flex-wrap:wrap}
 .rk-mespicker-lbl{font-size:.68rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--li)}
@@ -1615,6 +1636,14 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
           </div>
         </div>
         <div class="rk-body" id="rkBody"></div>
+      </div>
+
+      <!-- CANAIS DE COMPRA -->
+      <div class="rk-wrap" style="margin-top:14px">
+        <div class="rk-head">
+          <span class="rk-title">🛒 De onde vêm as máquinas que compramos</span>
+        </div>
+        <div class="rk-body" id="canBody"></div>
       </div>
 
     </div>
@@ -6449,6 +6478,7 @@ function buildCharts(){
   const font={family:"'DM Sans',sans-serif",size:11},tc='#78716c',gc='rgba(0,0,0,0.05)';
 
   renderRanking();
+  renderCanais();
   renderGiro();
 
   // ── CARDS DE INSIGHTS — calculados direto do prods (mesma fonte que Vendas) ──
@@ -7071,6 +7101,76 @@ function renderRanking(){
 }
 
 // ── GIRO POR MARCA ──
+// ── CANAIS DE COMPRA ──
+// Compara de onde as máquinas vêm: volume, custo, lucro e giro lado a lado.
+// O lucro médio sai SÓ das vendidas — máquina em estoque ainda não realizou lucro
+// nenhum, e misturar as duas faria um canal novo parecer ruim só por ser novo.
+// Por isso a contagem de vendidas aparece junto: média de 2 vendas não vale o
+// mesmo que média de 200, e o número tem que deixar isso à vista.
+function mapaCanais(lista){
+  const m={}; let semCanal=0;
+  (lista||[]).forEach(p=>{
+    const c=(p.canal_compra||'').trim();
+    if(!c){ semCanal++; return; }
+    (m[c]=m[c]||[]).push(p);
+  });
+  const linhas=Object.keys(m).map(c=>{
+    const itens=m[c];
+    const vend=itens.filter(p=>p.status==='Vendido');
+    const custoTot=itens.reduce((s,p)=>s+custoRealDe(p),0);
+    const lucroTot=vend.reduce((s,p)=>s+getLucro(p),0);
+    const giros=vend.map(p=>diasGiro(p)).filter(Boolean).map(g=>g.dias);
+    const meses=itens.map(p=>getMesCompra(p)).filter(Boolean).sort();
+    return {canal:c, n:itens.length, nVend:vend.length,
+      custoMedio: itens.length?custoTot/itens.length:0,
+      lucroMedio: vend.length?lucroTot/vend.length:0,
+      lucroTot,
+      giroMedio: giros.length?Math.round(giros.reduce((a,b)=>a+b,0)/giros.length):null,
+      de: meses[0]||'', ate: meses[meses.length-1]||''};
+  }).sort((a,b)=>b.n-a.n);
+  return {linhas, semCanal};
+}
+function renderCanais(){
+  const body=document.getElementById('canBody');
+  if(!body)return;
+  const {linhas, semCanal}=mapaCanais(prods);
+  if(!linhas.length){
+    body.innerHTML=`<div class="can-vazio">Nenhuma máquina com canal de compra registrado ainda.<br>
+      <span>O canal fica no cadastro do produto. Depois de algumas dezenas marcadas, este quadro mostra
+      qual origem traz máquina mais barata, com mais lucro e girando mais rápido — e aí dá pra decidir
+      onde colocar tempo e dinheiro sem depender de sensação.</span></div>`;
+    return;
+  }
+  const maxN=Math.max(...linhas.map(l=>l.n))||1;
+  const totalMarcado=linhas.reduce((s,l)=>s+l.n,0);
+  const cab=`<div class="can-cab">${totalMarcado} de ${prods.length} máquinas com canal marcado`
+    + (semCanal?` · <span class="can-fora">${semCanal} sem canal registrado ${semCanal!==1?'não entram':'não entra'} na comparação</span>`:'')
+    + `</div>`;
+  const corpo=linhas.map(l=>{
+    const per = l.de ? (l.de===l.ate ? fdt(l.de) : fdt(l.de)+' a '+fdt(l.ate)) : 'sem data';
+    const lucroTxt = l.nVend
+      ? `${fmt(l.lucroMedio)} <span class="can-base">em ${l.nVend} vendida${l.nVend!==1?'s':''}</span>`
+      : `<span class="can-base">nenhuma vendida ainda</span>`;
+    const giroTxt = l.giroMedio!=null ? l.giroMedio+' dias' : '<span class="can-base">—</span>';
+    return `<div class="can-row">
+      <div class="can-top">
+        <span class="can-nome">${esc(l.canal)}</span>
+        <span class="can-n">${l.n} máquina${l.n!==1?'s':''}</span>
+      </div>
+      <div class="can-bar"><span style="width:${Math.round(l.n/maxN*100)}%"></span></div>
+      <div class="can-grid">
+        <div class="can-cel"><span class="can-lbl">Custo médio</span><span class="can-val">${fmt(l.custoMedio)}</span></div>
+        <div class="can-cel"><span class="can-lbl">Lucro médio</span><span class="can-val">${lucroTxt}</span></div>
+        <div class="can-cel"><span class="can-lbl">Giro médio</span><span class="can-val">${giroTxt}</span></div>
+      </div>
+      <div class="can-per">comprado ${per}</div>
+    </div>`;
+  }).join('');
+  body.innerHTML=cab+corpo+`<div class="can-dica">💡 Compare <strong>lucro médio</strong> e <strong>giro</strong>, não
+    o volume — canal novo sempre perde no volume só por ser novo. E lembre que canal com comissão ou frete
+    por fora (motorista, indicação paga) custa mais do que aparece aqui: esse gasto não entra no custo da máquina.</div>`;
+}
+
 function renderGiro(){
   const grid=document.getElementById('giroGrid');
   if(!grid)return;
