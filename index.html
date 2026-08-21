@@ -1596,11 +1596,11 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
         <div class="ib"><div class="ii">🔮</div><div><div class="il">Potencial</div><div class="iv am" id="iPot">—</div><div class="in" id="iPotN">—</div></div></div>
         <div class="ib"><div class="ii">💼</div><div><div class="il">Capital em giro</div><div class="iv g" id="pCapGiro">—</div><div class="in" id="pCapGiroSub">investido no estoque atual</div></div></div>
         <div class="ib"><div class="ii">⏳</div><div><div class="il">Capital parado</div><div class="iv re" id="pCapParado">—</div><div class="in" id="pCapParadoSub">média de dias em estoque</div></div></div>
-        <div class="ib" title="Do dinheiro imobilizado, quanto está em máquina de fato anunciada. O que não está anunciado não é capital parado: é capital que nem entrou no jogo."><div class="ii">📣</div><div><div class="il">Do parado, anunciado</div><div class="iv b" id="pParadoAnun">—</div><div class="in" id="pParadoAnunSub">—</div></div></div>
+        <div class="ib" title="Do dinheiro imobilizado, quanto está em máquina de fato anunciada. O que não está anunciado não é capital parado: é capital que nem entrou no jogo."><div class="ii">📣</div><div><div class="il">Já anunciado</div><div class="iv b" id="pParadoAnun">—</div><div class="in" id="pParadoAnunSub">—</div></div></div>
         <div class="ib"><div class="ii">📍</div><div><div class="il">Melhor origem</div><div class="iv b" id="pMelhorPlat">—</div><div class="in" id="pMelhorPlatSub">mais vendas no período</div></div></div>
         <div class="ib"><div class="ii">🪙</div><div><div class="il">ROI médio</div><div class="iv am" id="pRoiMedio">—</div><div class="in">retorno sobre custo</div></div></div>
-        <div class="ib" title="Soma do que o João bancou em todas as máquinas: parte dele no custo, nas peças e na gasolina. Onde existe aporte exato lançado, vale o valor exato."><div class="ii">💙</div><div><div class="il">Investido — João</div><div class="iv b" id="pInvJoao">—</div><div class="in" id="pInvJoaoSub">—</div></div></div>
-        <div class="ib" title="Soma do que o Igor bancou em todas as máquinas: parte dele no custo, nas peças e na gasolina. Onde existe aporte exato lançado, vale o valor exato."><div class="ii">🧡</div><div><div class="il">Investido — Igor</div><div class="iv am" id="pInvIgor">—</div><div class="in" id="pInvIgorSub">—</div></div></div>
+        <div class="ib" title="Soma do que o João bancou em todas as máquinas: parte dele no custo, nas peças e na gasolina. Onde existe aporte exato lançado, vale o valor exato."><div class="ii">💙</div><div><div class="il">Investido João</div><div class="iv b" id="pInvJoao">—</div><div class="in" id="pInvJoaoSub">—</div></div></div>
+        <div class="ib" title="Soma do que o Igor bancou em todas as máquinas: parte dele no custo, nas peças e na gasolina. Onde existe aporte exato lançado, vale o valor exato."><div class="ii">🧡</div><div><div class="il">Investido Igor</div><div class="iv am" id="pInvIgor">—</div><div class="in" id="pInvIgorSub">—</div></div></div>
       </div>
 
       <div class="cg">
@@ -6380,7 +6380,7 @@ function buildCardsCapital(){
   });
   const media=dias.length?Math.round(dias.reduce((a,b)=>a+b,0)/dias.length):0;
   const cp=document.getElementById('pCapParado');
-  if(cp){ cp.textContent=media+'d'; sub('pCapParadoSub', fmt(capitalGiro)+' imobilizados'); }
+  if(cp){ cp.textContent=media+'d'; sub('pCapParadoSub', fmt(capitalGiro).replace(' ','\u00A0')+' imobilizados'); }
   // Quanto do imobilizado está de fato exposto ao mercado. Máquina em Estoque não
   // é "parada": é máquina que ainda nem foi tentada. Usa p.custo como o card irmão
   // acima, pra que os dois números sempre fechem entre si.
@@ -6390,7 +6390,8 @@ function buildCardsCapital(){
   if(pa){
     pa.textContent=fmt(capAnun);
     const pct=capitalGiro>0?Math.round(capAnun/capitalGiro*100):0;
-    sub('pParadoAnunSub', pct+'% do parado · '+fmt(semAnun)+' sem anunciar');
+    // espaço fino inquebrável: sem isso "R$" fica numa linha e o número na outra
+    sub('pParadoAnunSub', pct+'% do parado · '+fmt(semAnun).replace(' ','\u00A0')+' a anunciar');
   }
   // dentro do período escolhido nos gráficos
   const vend=prods.filter(p=>{
@@ -6420,9 +6421,9 @@ function buildCardsCapital(){
   const invTot=invJ+invI;
   const pctDe=v=>invTot>0?Math.round(v/invTot*100)+'% do total':'—';
   const ij=document.getElementById('pInvJoao');
-  if(ij){ ij.textContent=fmt(invJ); sub('pInvJoaoSub', pctDe(invJ)+' · '+fmt(hojeJ)+' parado hoje'); }
+  if(ij){ ij.textContent=fmt(invJ); sub('pInvJoaoSub', pctDe(invJ)+' · '+fmt(hojeJ).replace(' ','\u00A0')+' parado hoje'); }
   const ii=document.getElementById('pInvIgor');
-  if(ii){ ii.textContent=fmt(invI); sub('pInvIgorSub', pctDe(invI)+' · '+fmt(hojeI)+' parado hoje'); }
+  if(ii){ ii.textContent=fmt(invI); sub('pInvIgorSub', pctDe(invI)+' · '+fmt(hojeI).replace(' ','\u00A0')+' parado hoje'); }
 }
 
 function calcChartsData(){
