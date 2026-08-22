@@ -826,6 +826,28 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
 .graf-wrap{height:220px;margin-top:8px}
 .graf-wrap.vazio{display:none}
 .graf-msg{text-align:center;padding:22px 12px;font-size:.76rem;color:var(--li)}
+.plat-card{cursor:pointer;transition:border-color .12s,box-shadow .12s}
+.plat-card:hover{border-color:var(--li)}
+.plat-card.on{border-color:var(--tx);box-shadow:0 0 0 1px var(--tx)}
+.pi-box{border:1px solid var(--b);border-left:3px solid var(--li);border-radius:var(--rad);
+  background:var(--bg);margin:0 0 12px;overflow:hidden}
+.pi-head{display:flex;align-items:center;gap:8px;padding:9px 12px;font-size:.76rem;
+  color:var(--mu);border-bottom:1px solid var(--b)}
+.pi-x{margin-left:auto;background:none;border:none;font:inherit;font-size:.7rem;
+  color:var(--li);cursor:pointer;padding:2px 4px}
+.pi-x:hover{color:var(--tx)}
+.pi-row{display:flex;align-items:center;gap:9px;padding:7px 12px;font-size:.75rem;
+  border-bottom:1px solid var(--b)}
+.pi-row:last-child{border-bottom:none}
+.pi-nb{font-size:.65rem;font-weight:700;color:var(--li);min-width:26px}
+.pi-nome{flex:1;min-width:0;color:var(--tx);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pi-data{font-size:.68rem;color:var(--li);white-space:nowrap}
+.pi-val{font-weight:700;color:var(--tx);white-space:nowrap;min-width:74px;text-align:right}
+.pi-luc{font-weight:700;white-space:nowrap;min-width:74px;text-align:right}
+.pi-luc.pos{color:var(--gr)} .pi-luc.neg{color:var(--re)}
+.pi-st{font-size:.66rem;color:var(--li);white-space:nowrap;min-width:74px;text-align:right}
+.pi-vazio{padding:12px;font-size:.74rem;color:var(--li)}
+@media(max-width:600px){.pi-data{display:none}.pi-val,.pi-luc,.pi-st{min-width:62px}}
 
 /* ── CAPITAL INVESTIDO ── */
 .cap-socio-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
@@ -1890,6 +1912,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
         <div class="cdh"><span class="cdht">📊 Vendas por plataforma</span><span style="font-size:.74rem;color:var(--li)" id="platPeriodo">—</span></div>
         <div style="padding:16px 18px">
           <div class="plat-grid" id="platGrid"></div>
+          <div id="platItens"></div>
           <div class="graf-msg" id="platMsg" style="display:none"></div>
           <div class="graf-wrap" id="platWrap"><canvas id="cPlat"></canvas></div>
         </div>
@@ -1900,6 +1923,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
         <div class="cdh"><span class="cdht">🛒 Compras por canal</span><span style="font-size:.74rem;color:var(--li)" id="compPeriodo">—</span></div>
         <div style="padding:16px 18px">
           <div class="plat-grid" id="compGrid"></div>
+          <div id="compItens"></div>
           <div class="graf-msg" id="compMsg" style="display:none"></div>
           <div class="graf-wrap" id="compWrap"><canvas id="cComp"></canvas></div>
         </div>
@@ -6679,7 +6703,7 @@ window.sp2=p=>{
        (p==='clientes'&&t.textContent.includes('Clientes')))t.classList.add('on');
   });
   if(p==='insights'){rkMesPadrao();buildCharts();}
-  if(p==='painel'){buildPainel();buildPainelCharts();}
+  if(p==='painel'){ try{ buildPainel(); }catch(e){ console.error('buildPainel:',e); } buildPainelCharts(); }
   if(p==='financas'){renderFinLabel();checkNotificacoes();}
   if(p==='admin'){carregarAvisos();}
   if(p==='clientes'){ if(cliAba==='fornecedores')renderFornecedores(); else renderClientes(); }
@@ -7176,6 +7200,72 @@ function mapaCanais(lista){
   }).sort((a,b)=>b.n-a.n);
   return {linhas, semCanal};
 }
+// Qual card está aberto em cada painel. Guardado fora do render pra sobreviver
+// ao redesenho quando os dados do Firestore chegam depois.
+let platSel='', compSel='';
+const PLAT_CORES={'Marketplace':'#2563eb','OLX':'#f97316','Mercado Livre':'#eab308',
+  'WhatsApp':'#16a34a','Instagram':'#7c3aed','Indicação':'#0891b2','Recompra':'#9ca3af',
+  'Troca':'#9ca3af','Outro':'#78716c'};
+
+// Um card só resume; a lista é quem responde "quais máquinas são essas?".
+function itensDe(tipo, nome){
+  if(tipo==='vend') return prods.filter(p=>p.status==='Vendido' && p.plataforma===nome);
+  return prods.filter(p=>(p.canal_compra||'').trim()===nome);
+}
+function renderItensSel(tipo){
+  const alvo=document.getElementById(tipo==='vend'?'platItens':'compItens');
+  if(!alvo) return;
+  const nome=tipo==='vend'?platSel:compSel;
+  if(!nome){ alvo.innerHTML=''; return; }
+  const lista=itensDe(tipo,nome).sort((a,b)=>{
+    const da=(tipo==='vend'?a.data_venda:a.data_compra)||'', db=(tipo==='vend'?b.data_venda:b.data_compra)||'';
+    return db.localeCompare(da);
+  });
+  const cor=(tipo==='vend'?PLAT_CORES:CANAL_CORES)[nome]||'#9ca3af';
+  const linhas=lista.map(p=>{
+    const data=(tipo==='vend'?p.data_venda:p.data_compra)||'';
+    const dFmt=data?(data.length>7?new Date(data+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'2-digit'}):fdt(data)):'sem data';
+    const dir = tipo==='vend'
+      ? `<span class="pi-val">${fmt(p.venda)}</span><span class="pi-luc ${getLucro(p)>=0?'pos':'neg'}">${fmt(getLucro(p))}</span>`
+      : `<span class="pi-val">${fmt(custoRealDe(p))}</span><span class="pi-st">${esc(p.status||'—')}</span>`;
+    return `<div class="pi-row"><span class="pi-nb">${p.num||'?'}</span>
+      <span class="pi-nome">${esc(p.nome||'sem nome')}</span>
+      <span class="pi-data">${dFmt}</span>${dir}</div>`;
+  }).join('');
+  alvo.innerHTML=`<div class="pi-box" style="border-left-color:${cor}">
+    <div class="pi-head"><strong>${esc(nome)}</strong> · ${lista.length} ${tipo==='vend'?'venda':'compra'}${lista.length!==1?'s':''}
+      <button type="button" class="pi-x" onclick="verItens('${tipo}','')">fechar ✕</button></div>
+    ${linhas||'<div class="pi-vazio">Nenhum item nesta lista.</div>'}</div>`;
+}
+window.verItens=(tipo,nome)=>{
+  if(tipo==='vend') platSel = (platSel===nome ? '' : nome);
+  else compSel = (compSel===nome ? '' : nome);
+  if(tipo==='vend') renderVendasPlat(); else renderComprasPlat();
+};
+
+function renderVendasPlat(){
+  const grid=document.getElementById('platGrid');
+  const per=document.getElementById('platPeriodo');
+  if(!grid) return;
+  const vend=prods.filter(p=>p.status==='Vendido'&&p.plataforma);
+  const pp={};
+  vend.forEach(p=>{ if(!pp[p.plataforma])pp[p.plataforma]={qtd:0,luc:0}; pp[p.plataforma].qtd++; pp[p.plataforma].luc+=getLucro(p); });
+  if(platSel && !pp[platSel]) platSel='';
+  const maxQtd=Math.max(...Object.values(pp).map(x=>x.qtd),1);
+  grid.innerHTML=Object.entries(pp).sort((a,b)=>b[1].qtd-a[1].qtd).map(([nm,d])=>{
+    const pct=Math.round(d.qtd/maxQtd*100);
+    const cor=PLAT_CORES[nm]||'#9ca3af';
+    return `<div class="plat-card${platSel===nm?' on':''}" onclick="verItens('vend','${esc(nm).replace(/'/g,'&#39;')}')" title="Ver as máquinas desta plataforma">
+      <div class="plat-nm"><span style="width:8px;height:8px;border-radius:50%;background:${cor};display:inline-block"></span>${esc(nm)}</div>
+      <div class="plat-qtd" style="color:${cor}">${d.qtd}</div>
+      <div class="plat-bar-wrap"><div class="plat-bar-fill" style="width:${pct}%;background:${cor}"></div></div>
+      <div class="plat-sub">${fmt(Math.round(d.luc/d.qtd))} lucro médio</div>
+    </div>`;
+  }).join('');
+  if(per) per.textContent='todo o histórico · '+vend.length+' vendas com plataforma';
+  renderItensSel('vend');
+}
+
 // Espelho do grid de vendas, do lado da compra: de qual canal a máquina veio e
 // por quanto ela entrou. Custo médio em vez de lucro médio de propósito — canal de
 // compra se julga pelo preço de entrada; o lucro depende do que veio depois.
@@ -7192,6 +7282,7 @@ function renderComprasPlat(){
       O canal fica no cadastro do produto — depois de algumas dezenas marcadas,
       dá pra ver de onde vem máquina mais barata.</div>`;
     if(per) per.textContent='—';
+    compSel=''; renderItensSel('comp');
     return;
   }
   const cc={};
@@ -7200,11 +7291,12 @@ function renderComprasPlat(){
     if(!cc[c]) cc[c]={qtd:0, custo:0};
     cc[c].qtd++; cc[c].custo+=custoRealDe(p);
   });
+  if(compSel && !cc[compSel]) compSel='';
   const maxQtd=Math.max(...Object.values(cc).map(x=>x.qtd),1);
   grid.innerHTML=Object.entries(cc).sort((a,b)=>b[1].qtd-a[1].qtd).map(([nm,d])=>{
     const pct=Math.round(d.qtd/maxQtd*100);
     const cor=CANAL_CORES[nm]||'#9ca3af';
-    return `<div class="plat-card">
+    return `<div class="plat-card${compSel===nm?' on':''}" onclick="verItens('comp','${esc(nm).replace(/'/g,'&#39;')}')" title="Ver as máquinas deste canal">
       <div class="plat-nm"><span style="width:8px;height:8px;border-radius:50%;background:${cor};display:inline-block"></span>${esc(nm)}</div>
       <div class="plat-qtd" style="color:${cor}">${d.qtd}</div>
       <div class="plat-bar-wrap"><div class="plat-bar-fill" style="width:${pct}%;background:${cor}"></div></div>
@@ -7216,6 +7308,7 @@ function renderComprasPlat(){
   const fora=prods.length-comCanal.length;
   if(per) per.textContent='todo o histórico · '+comCanal.length+' de '+prods.length+' compras com canal'
     + (fora?' · '+fora+' sem registro':'');
+  renderItensSel('comp');
 }
 function renderCanais(){
   const body=document.getElementById('canBody');
@@ -8495,7 +8588,7 @@ window.confirmarImportacao = async () => {
 
     await loadProds();
     if(document.getElementById('pg-insights').classList.contains('on')) buildCharts();
-    if(document.getElementById('pg-painel').classList.contains('on')){ buildPainel(); buildPainelCharts(); }
+    if(document.getElementById('pg-painel').classList.contains('on')){ try{ buildPainel(); }catch(e){ console.error('buildPainel:',e); } buildPainelCharts(); }
   }catch(e){
     logMig('impLog', `\n❌ Erro fatal: ${e.message}`, '#f87171');
   }
@@ -9706,28 +9799,7 @@ function buildPainel(){
   // moraram no Painel por engano e agora vivem na aba Insights, preenchidos
   // por buildCardsCapital() a partir do período escolhido lá.
 
-  // ── Grid de plataformas ──
-  const platGrid = document.getElementById('platGrid');
-  const platPeriodo = document.getElementById('platPeriodo');
-  if(platGrid){
-    const vendPlatMes = prods.filter(p=>p.status==='Vendido'&&p.plataforma);
-    const pp = {};
-    vendPlatMes.forEach(p=>{ if(!pp[p.plataforma])pp[p.plataforma]={qtd:0,luc:0}; pp[p.plataforma].qtd++; pp[p.plataforma].luc+=p.lucro; });
-    const maxQtd = Math.max(...Object.values(pp).map(x=>x.qtd), 1);
-    const platCores = {'Marketplace':'#2563eb','OLX':'#f97316','Mercado Livre':'#eab308','WhatsApp':'#16a34a','Instagram':'#7c3aed','Indicação':'#0891b2','Outro':'#78716c'};
-    platGrid.innerHTML = Object.entries(pp).sort((a,b)=>b[1].qtd-a[1].qtd).map(([nm,d])=>{
-      const pct = Math.round(d.qtd/maxQtd*100);
-      const cor = platCores[nm]||'#9ca3af';
-      return `<div class="plat-card">
-        <div class="plat-nm"><span style="width:8px;height:8px;border-radius:50%;background:${cor};display:inline-block"></span>${nm}</div>
-        <div class="plat-qtd" style="color:${cor}">${d.qtd}</div>
-        <div class="plat-bar-wrap"><div class="plat-bar-fill" style="width:${pct}%;background:${cor}"></div></div>
-        <div class="plat-sub">${fmt(Math.round(d.luc/d.qtd))} lucro médio</div>
-      </div>`;
-    }).join('');
-    if(platPeriodo) platPeriodo.textContent = 'todo o histórico · '+vendPlatMes.length+' vendas com plataforma';
-  }
-
+  renderVendasPlat();
   renderComprasPlat();
 
   // ── Capital por sócio ──
