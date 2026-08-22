@@ -1290,7 +1290,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
         <div class="sb" title="Margem = lucro ÷ venda (quanto sobra de cada R$100 vendido). Markup = lucro ÷ custo (quanto rendeu sobre o que pagou; 100% = dobrou)."><div class="sbl">Lucro total</div><div class="sbv" id="sLuc">—</div><div class="sbs" id="sMgm">—</div></div>
         <div class="sb"><div class="sbl">Anunciados</div><div class="sbv b" id="sAnu">—</div><div class="sbs" id="sAnuV">—</div></div>
         <div class="sb"><div class="sbl">Na mão hoje</div><div class="sbv" id="sEst">—</div><div class="sbs" id="sEstV">—</div></div>
-        <div class="sb"><div class="sbl">Potencial</div><div class="sbv a" id="sPot">—</div><div class="sbs">se vender tudo</div></div>
+        <div class="sb"><div class="sbl">Lucro potencial</div><div class="sbv a" id="sPot">—</div><div class="sbs" id="sPotSub">se vender tudo</div></div>
       </div>
       </div><!-- /vendas-intro -->
       <!-- ADICIONAR PRODUTO — só aparece na aba inicial "Na mão hoje" -->
@@ -1593,7 +1593,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
         <div class="ib"><div class="ii">🏆</div><div><div class="il">Marca líder</div><div class="iv" id="iMarca">—</div><div class="in" id="iMarcaN">—</div></div></div>
         <div class="ib"><div class="ii">🎯</div><div><div class="il">Ticket médio</div><div class="iv" id="iTk">—</div><div class="in">por notebook vendido</div></div></div>
         <div class="ib"><div class="ii">📦</div><div><div class="il">Na mão hoje</div><div class="iv b" id="iEst">—</div><div class="in" id="iEstN">—</div></div></div>
-        <div class="ib"><div class="ii">🔮</div><div><div class="il">Potencial</div><div class="iv am" id="iPot">—</div><div class="in" id="iPotN">—</div></div></div>
+        <div class="ib"><div class="ii">🔮</div><div><div class="il">Lucro potencial</div><div class="iv am" id="iPot">—</div><div class="in" id="iPotN">—</div></div></div>
         <div class="ib"><div class="ii">💼</div><div><div class="il">Capital em giro</div><div class="iv g" id="pCapGiro">—</div><div class="in" id="pCapGiroSub">investido no estoque atual</div></div></div>
         <div class="ib"><div class="ii">⏳</div><div><div class="il">Capital parado</div><div class="iv re" id="pCapParado">—</div><div class="in" id="pCapParadoSub">média de dias em estoque</div></div></div>
         <div class="ib" title="Do dinheiro imobilizado, quanto está em máquina de fato anunciada. O que não está anunciado não é capital parado: é capital que nem entrou no jogo."><div class="ii">📣</div><div><div class="il">Já anunciado</div><div class="iv b" id="pParadoAnun">—</div><div class="in" id="pParadoAnunSub">—</div></div></div>
@@ -5805,7 +5805,7 @@ function renderSecoes(){
   if(elAnuncCount) elAnuncCount.textContent = anunciados.length + (anunciados.length!==1?' produtos':' produto');
   if(elAnuncPot){
     const pot = anunciados.reduce((s,p)=>s+(p.lucro||0),0);
-    elAnuncPot.textContent = pot>0?'· potencial '+fmt(pot):'';
+    elAnuncPot.textContent = pot>0?'· lucro potencial '+fmt(pot):'';
   }
   const listAnunc = document.getElementById('PL-anunc');
   if(listAnunc){
@@ -6500,13 +6500,20 @@ function buildCharts(){
   const estoqueVivo = prods.filter(p=>p.status==='Estoque'||p.status==='Anunciado');
   const potEmMaoI   = estoqueVivo.reduce((s,p)=>s+getLucro(p),0);
   document.getElementById('iEst').textContent  = estoqueVivo.length;
-  document.getElementById('iEstN').textContent = fmt(potEmMaoI)+' potencial';
+  document.getElementById('iEstN').textContent = fmt(potEmMaoI)+' de lucro potencial';
 
   // Potencial total — MESMO cálculo do calcStats (sPot)
   const elIPot = document.getElementById('iPot');
   if(elIPot) elIPot.textContent = fmt(potEmMaoI);
+  // Máquina sem preço de venda entra somando ZERO — o "se vender tudo" fica menor
+  // do que a realidade e ninguém percebe. Em vez de esconder, o card conta quantas.
+  const semPreco = estoqueVivo.filter(p=>!((parseFloat(p.venda)||0)>0)).length;
   const elIPotN = document.getElementById('iPotN');
-  if(elIPotN) elIPotN.textContent = estoqueVivo.filter(p=>p.status==='Anunciado').length+' anunciados · '+estoqueVivo.filter(p=>p.status==='Estoque').length+' estoque';
+  if(elIPotN) elIPotN.textContent = estoqueVivo.filter(p=>p.status==='Anunciado').length+' anunciados · '
+    + estoqueVivo.filter(p=>p.status==='Estoque').length+' estoque'
+    + (semPreco?' · '+semPreco+' sem preço':'');
+  const elSPotSub = document.getElementById('sPotSub');
+  if(elSPotSub) elSPotSub.textContent = semPreco ? ('sem contar '+semPreco+' sem preço') : 'se vender tudo';
 
   // ── GRÁFICO RECEITA vs LUCRO ──
   (function(){
