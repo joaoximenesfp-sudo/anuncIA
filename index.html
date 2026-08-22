@@ -509,6 +509,24 @@ input[type=number].inp{padding-left:32px}
 .tv-status{font-size:.73rem;color:var(--gr);font-weight:600;margin-top:8px;min-height:16px}
 
 /* ── RECIBO DE VENDA ── */
+.nec-box{background:var(--w);border:1px solid var(--b);border-radius:var(--rad);
+  box-shadow:var(--sh);margin-bottom:10px;overflow:hidden}
+.nec-head{padding:10px 14px;font-size:.8rem;font-weight:700;color:var(--tx);
+  border-bottom:1px solid var(--b);display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.nec-head span{font-size:.68rem;font-weight:400;color:var(--li)}
+.nec-row{display:flex;align-items:flex-start;gap:10px;padding:7px 14px;border-bottom:1px solid var(--b)}
+.nec-row:last-child{border-bottom:none}
+.nec-outros{background:var(--bg)}
+.nec-cat{font-size:.76rem;font-weight:700;color:var(--tx);min-width:112px;flex-shrink:0}
+.nec-n{font-size:.68rem;font-weight:700;color:var(--w);background:#0891b2;border-radius:20px;
+  padding:1px 8px;flex-shrink:0}
+.nec-mqs{display:flex;flex-wrap:wrap;gap:4px;min-width:0}
+.nec-mq{font-size:.66rem;font-weight:700;color:var(--mu);background:var(--bg);
+  border:1px solid var(--b2);border-radius:6px;padding:1px 6px;cursor:pointer}
+.nec-mq:hover{border-color:var(--tx);color:var(--tx)}
+.nec-mais{font-size:.66rem;color:var(--li);align-self:center}
+@media(max-width:560px){.nec-row{flex-wrap:wrap}.nec-cat{min-width:0}}
+
 .rev-tag{display:inline-flex;align-items:center;gap:4px;margin-top:3px;padding:2px 7px;
   border-radius:11px;font-size:.66rem;font-weight:700;cursor:pointer;
   background:#fff7ed;border:1px solid #fed7aa;color:#9a3412}
@@ -5915,6 +5933,84 @@ function renderSecoes(){
     elEstCap.textContent = cap>0?'· '+fmt(cap)+' investidos':'';
   }
   const listEst = document.getElementById('PL-est');
+// ── O QUE PRECISA DE QUÊ ──
+// Depois de abrir 68 máquinas, a anotação vira texto solto espalhado. Isto junta
+// tudo numa lista de compras por tipo de peça: quantas precisam de SSD, quantas
+// de memória, e quais são.
+//
+// Duas fontes, e elas não são equivalentes:
+//   falta_comprar  → o campo já significa "o que falta". Entra inteiro.
+//   revisao_obs    → descreve o que TEM dentro ("SSD 240 Sandisk, 8GB Kingston").
+//                    Procurar "SSD" aqui marcaria como faltando justo a máquina que
+//                    já tem. Por isso só entram trechos com marca de falta.
+const NEC=[
+  ['SSD',        '💾', /\bssd\b|\bnvme\b|\bm\.?2\b/],
+  ['Memória',    '🧠', /mem[óo]ria|\bram\b|pente/],
+  ['Bateria',    '🔋', /bateria/],
+  ['Tela',       '🖥️', /\btela\b|display|\blcd\b/],
+  ['Teclado',    '⌨️', /teclado|\btecla\b/],
+  ['Carregador', '🔌', /carregador|\bfonte\b/],
+  ['HD',         '📀', /\bhds?\b|\bhdd\b/],
+  ['Carcaça',    '🔩', /parafuso|carca[çc]a|dobradi[çc]a|\btampa\b/],
+  ['Cooler',     '🌀', /cooler|ventoinha|\bfan\b/],
+  ['Limpeza',    '🧽', /limpar|limpeza|pasta t[ée]rmica/],
+  ['Sistema',    '🪟', /windows|formata|licen[çc]a|ativa[çc]/],
+  ['Fotos',      '📷', /\bfotos?\b|an[úu]ncio|anunciar/],
+];
+const MARCA_FALTA=/falta|faltando|sem\s|precisa|trocar|troca\b|ruim|mort[ao]|quebrad|n[ãa]o\s+tem|comprar|fraca|viciad/;
+
+function trechosDeFalta(txt){
+  return String(txt||'').split(/[,;·.\n]+/).map(t=>t.trim())
+    .filter(t=>t && MARCA_FALTA.test(t.toLowerCase()));
+}
+function mapaNecessidades(lista){
+  const grupos={}, soltos=[];
+  const add=(cat,p,texto)=>{ (grupos[cat]=grupos[cat]||[]).push({p,texto}); };
+  (lista||[]).forEach(p=>{
+    const fontes=[];
+    const fc=(p.falta_comprar||'').trim();
+    if(fc && !p.falta_feito) fontes.push(fc);
+    trechosDeFalta(p.revisao_obs).forEach(t=>fontes.push(t));
+    fontes.forEach(txt=>{
+      const low=txt.toLowerCase();
+      const achou=NEC.filter(([cat,ic,re])=>re.test(low));
+      if(achou.length) achou.forEach(([cat])=>add(cat,p,txt));
+      else soltos.push({p,texto:txt});
+    });
+  });
+  const ordenados=NEC.filter(([cat])=>grupos[cat]).map(([cat,ic])=>({cat,ic,itens:grupos[cat]}))
+    .sort((a,b)=>b.itens.length-a.itens.length);
+  return {grupos:ordenados, soltos};
+}
+function resumoNecessidades(lista){
+  const {grupos, soltos}=mapaNecessidades(lista);
+  if(!grupos.length && !soltos.length) return '';
+  const maquinas=g=>g.itens.map(x=>
+    `<span class="nec-mq" onclick="event.stopPropagation();openEdit('${x.p.id}')" title="${esc(x.texto)}">#${x.p.num||'?'}</span>`
+  ).join('');
+  const linhas=grupos.map(g=>{
+    const n=new Set(g.itens.map(x=>x.p.id)).size;
+    return `<div class="nec-row">
+      <span class="nec-cat">${g.ic} ${g.cat}</span>
+      <span class="nec-n">${n}</span>
+      <span class="nec-mqs">${maquinas(g)}</span>
+    </div>`;
+  }).join('');
+  // Pendência que não caiu em categoria nenhuma aparece assim mesmo, com o texto
+  // cru. Classificador que erra calado é pior que classificador que não entende.
+  const fora=soltos.length?`<div class="nec-row nec-outros">
+      <span class="nec-cat">📌 Outros</span>
+      <span class="nec-n">${new Set(soltos.map(x=>x.p.id)).size}</span>
+      <span class="nec-mqs">${soltos.slice(0,12).map(x=>
+        `<span class="nec-mq" onclick="event.stopPropagation();openEdit('${x.p.id}')" title="${esc(x.texto)}">#${x.p.num||'?'} ${esc(x.texto.slice(0,26))}</span>`
+      ).join('')}${soltos.length>12?`<span class="nec-mais">+${soltos.length-12}</span>`:''}</span>
+    </div>`:'';
+  return `<div class="nec-box">
+    <div class="nec-head">🧰 O que precisa de quê <span>somado do que falta e do que você anotou abrindo</span></div>
+    ${linhas}${fora}
+  </div>`;
+}
+
   // Lista de atividades: consolida tudo que falta nas máquinas de estoque/anunciadas.
   // Nem toda pendência é compra de peça — "rever fotos", "limpar carcaça" e
   // "testar bateria" também entram aqui, por isso o nome não fala em compra.
@@ -5923,14 +6019,15 @@ function renderSecoes(){
     const comFalta=[...estoque,...anunciados].filter(p=>p.falta_comprar&&p.falta_comprar.trim());
     const pend=comFalta.filter(p=>!p.falta_feito);
     const feitas=comFalta.filter(p=>p.falta_feito);
-    if(comFalta.length){
+    const necHTML=resumoNecessidades([...estoque,...anunciados]);
+    if(comFalta.length || necHTML){
       const linha=(p)=>`<div class="compras-item${p.falta_feito?' feita':''}">
           <button class="ci-check${p.falta_feito?' on':''}" title="${p.falta_feito?'Reabrir':'Marcar como feito'}"
             onclick="event.stopPropagation();faltaFeito('${p.id}',${p.falta_feito?'false':'true'})">${p.falta_feito?'✔':''}</button>
           <span class="ci-nome" onclick="openEdit('${p.id}')">${esc(p.nome||'—')}</span>
           <span class="ci-falta" onclick="openEdit('${p.id}')">${esc(p.falta_comprar)}${p.falta_feito&&faltaFeitaEm(p)?` · ${esc(faltaFeitaEm(p))}`:''}</span>
         </div>`;
-      compras.innerHTML=`<div class="compras-box">
+      compras.innerHTML=necHTML+`<div class="compras-box"${comFalta.length?'':' style="display:none"'}>
         <div class="compras-head">📋 Lista de atividades a serem feitas <span>${pend.length?`${pend.length} máquina${pend.length!==1?'s':''} com pendência pra poder vender`:'tudo resolvido 🎯'}</span></div>
         ${pend.map(linha).join('')}
         ${feitas.length?`<div class="compras-feitas">✔ ${feitas.length} já resolvida${feitas.length!==1?'s':''} — o que foi feito fica registrado</div>${feitas.map(linha).join('')}`:''}
