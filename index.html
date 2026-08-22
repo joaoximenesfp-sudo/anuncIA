@@ -811,13 +811,18 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
    dois estilos de card lado a lado, em grids separados, desalinhavam a tela. */
 
 /* ── PLATAFORMAS ── */
-.plat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin-bottom:12px}
-.plat-card{background:var(--w);border:1px solid var(--b);border-radius:var(--rad);padding:12px 14px;box-shadow:var(--sh)}
-.plat-nm{font-size:.78rem;font-weight:700;color:var(--tx);margin-bottom:6px;display:flex;align-items:center;gap:6px}
-.plat-qtd{font-family:'Instrument Serif',serif;font-size:1.5rem;line-height:1}
-.plat-bar-wrap{height:4px;background:var(--b);border-radius:2px;margin:6px 0 4px}
+/* Uma linha só: flex divide o espaço igual entre os cards, e em tela estreita
+   o container rola de lado em vez de espremer o texto até virar ilegível. */
+.plat-grid{display:flex;gap:7px;margin-bottom:12px;overflow-x:auto;padding-bottom:3px}
+.plat-card{flex:1 1 0;min-width:112px;background:var(--w);border:1px solid var(--b);
+  border-radius:var(--rad);padding:8px 10px;box-shadow:var(--sh)}
+.plat-nm{font-size:.7rem;font-weight:700;color:var(--tx);margin-bottom:3px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.plat-nm span{vertical-align:middle;margin-right:5px}
+.plat-qtd{font-family:'Instrument Serif',serif;font-size:1.15rem;line-height:1}
+.plat-bar-wrap{height:3px;background:var(--b);border-radius:2px;margin:5px 0 3px}
 .plat-bar-fill{height:100%;border-radius:2px}
-.plat-sub{font-size:.68rem;color:var(--li)}
+.plat-sub{font-size:.63rem;color:var(--li);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .comp-vazio{grid-column:1/-1;font-size:.75rem;color:var(--li);line-height:1.5;padding:6px 2px}
 .graf-wrap{height:220px;margin-top:8px}
 .graf-wrap.vazio{display:none}
@@ -825,6 +830,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
 .plat-card{cursor:pointer;transition:border-color .12s,box-shadow .12s}
 .plat-card:hover{border-color:var(--li)}
 .plat-card.on{border-color:var(--tx);box-shadow:0 0 0 1px var(--tx)}
+@media(prefers-reduced-motion:reduce){.plat-card{transition:none}}
 .pi-box{border:1px solid var(--b);border-left:3px solid var(--li);border-radius:var(--rad);
   background:var(--bg);margin:0 0 12px;overflow:hidden}
 .pi-head{display:flex;align-items:center;gap:8px;padding:9px 12px;font-size:.76rem;
