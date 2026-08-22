@@ -238,7 +238,6 @@ input[type=number].inp{padding-left:32px}
 .al-tx strong{font-weight:700}
 
 /* ── META MENSAL ── */
-.meta-bar-wrap{background:var(--w);border:1px solid var(--b);border-radius:var(--rad);padding:14px 18px;margin-bottom:12px;box-shadow:var(--sh)}
 .meta-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:10px;flex-wrap:wrap}
 .meta-lbl{font-size:.7rem;font-weight:600;color:var(--li);text-transform:uppercase;letter-spacing:.08em}
 .meta-vals{display:flex;align-items:baseline;gap:6px}
@@ -247,9 +246,6 @@ input[type=number].inp{padding-left:32px}
 .meta-pct{font-size:.75rem;font-weight:700;padding:2px 7px;border-radius:20px;background:var(--gbg);color:var(--gr)}
 .meta-pct.warn{background:var(--abg);color:var(--am)}
 .meta-pct.re{background:var(--rbg);color:var(--re)}
-.meta-bar{height:7px;background:var(--b);border-radius:4px;overflow:hidden}
-.meta-fill{height:100%;background:var(--gr);border-radius:4px;transition:width .5s ease}
-.meta-fill.warn{background:var(--am)}.meta-fill.re{background:var(--re)}
 .meta-edit{display:flex;align-items:center;gap:6px;margin-top:8px}
 .meta-inp{width:110px;padding:4px 8px;border:1px solid var(--b2);border-radius:6px;font-size:.78rem;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);outline:none}
 .meta-inp:focus{border-color:var(--tx)}
@@ -861,49 +857,14 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
 .cap-row-val.g{color:var(--gr)}.cap-row-val.re{color:var(--re)}
 
 /* ── CALCULADORA ROI ── */
-.calc-wrap{background:var(--w);border:1px solid var(--b);border-radius:var(--rad);padding:20px;margin-bottom:12px;box-shadow:var(--sh)}
-.calc-title{font-size:.84rem;font-weight:600;color:var(--tx);margin-bottom:14px;display:flex;align-items:center;gap:8px}
-.calc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;align-items:end;margin-bottom:14px}
-.calc-result{background:var(--bg);border:1px solid var(--b);border-radius:8px;padding:14px 16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
-.calc-res-item{text-align:center}
-.calc-res-lbl{font-size:.67rem;color:var(--li);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px}
-.calc-res-val{font-family:'Instrument Serif',serif;font-size:1.3rem;color:var(--tx)}
-.calc-res-val.g{color:var(--gr)}.calc-res-val.re{color:var(--re)}.calc-res-val.am{color:var(--am)}
 
 /* ── HISTORICO PREÇOS ── */
-.hist-wrap{background:var(--w);border:1px solid var(--b);border-radius:var(--rad);overflow:hidden;margin-bottom:12px;box-shadow:var(--sh)}
-.hist-search{padding:10px 14px;background:var(--bg);border-bottom:1px solid var(--b);display:flex;gap:8px}
 .hist-inp{flex:1;height:34px;padding:0 12px;border:1px solid var(--b2);border-radius:7px;font-size:.82rem;font-family:'DM Sans',sans-serif;background:var(--w);color:var(--tx);outline:none}
 .hist-inp:focus{border-color:var(--tx)}
-.hist-list{max-height:360px;overflow-y:auto}
-.hist-item{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--b);transition:background .1s}
-.hist-item:hover{background:#faf9f7}
-.hist-item:last-child{border-bottom:none}
-.hist-nome{flex:1;font-size:.78rem;font-weight:500;color:var(--tx)}
-.hist-mes{font-size:.67rem;color:var(--li);margin-top:1px}
-.hist-vals{display:flex;gap:12px;flex-shrink:0}
-.hist-val{text-align:right}
-.hist-val-lbl{font-size:.63rem;color:var(--li);text-transform:uppercase}
-.hist-val-num{font-size:.8rem;font-weight:700;color:var(--tx)}
-.hist-val-num.g{color:var(--gr)}.hist-val-num.re{color:var(--re)}
 
 /* ── META COMPRAS ── */
-.meta-compras-wrap{background:var(--w);border:1px solid var(--b);border-radius:var(--rad);padding:14px 18px;margin-bottom:12px;box-shadow:var(--sh)}
-.meta-compras-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px}
-.meta-compras-inp{width:120px;height:32px;padding:0 10px;border:1px solid var(--b2);border-radius:7px;font-size:.82rem;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);outline:none}
-.meta-compras-inp:focus{border-color:var(--tx)}
 
 /* ── CAPITAL PARADO ── */
-.parado-item{display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid var(--b)}
-.parado-item:last-child{border-bottom:none}
-.parado-item:hover{background:#faf9f7}
-.parado-dias{width:40px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;flex-shrink:0}
-.parado-dias.grave{background:var(--rbg);color:var(--re)}
-.parado-dias.med{background:var(--abg);color:var(--am)}
-.parado-info{flex:1;overflow:hidden}
-.parado-nm{font-size:.78rem;font-weight:500;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.parado-sub{font-size:.67rem;color:var(--li);margin-top:1px}
-.parado-val{font-size:.8rem;font-weight:700;color:var(--am);flex-shrink:0}
 
 /* ── RELATÓRIO ── */
 .rel-wrap{background:var(--w);border:1px solid var(--b);border-radius:var(--rad);padding:18px 20px;margin-bottom:12px;box-shadow:var(--sh)}
@@ -2020,79 +1981,6 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
           </div>
 
         </div>
-      </div>
-
-      <!-- CALCULADORA ROI -->
-      <div class="calc-wrap">
-        <div class="calc-title">🧮 Calculadora de Rentabilidade</div>
-        <div class="calc-grid">
-          <div class="fc">
-            <span class="fla">Custo de compra R$</span>
-            <input class="inp" type="number" id="calcCusto" placeholder="0" min="0" oninput="calcRoi()">
-          </div>
-          <div class="fc">
-            <span class="fla">Preço de venda R$</span>
-            <input class="inp" type="number" id="calcVenda" placeholder="0" min="0" oninput="calcRoi()">
-          </div>
-          <div class="fc">
-            <span class="fla">Dias até vender</span>
-            <input class="inp" type="number" id="calcDias" placeholder="30" min="1" value="30" oninput="calcRoi()">
-          </div>
-          <div class="fc">
-            <span class="fla">Custo de peças R$</span>
-            <input class="inp" type="number" id="calcPecas" placeholder="0" min="0" oninput="calcRoi()">
-          </div>
-        </div>
-        <div class="calc-result" id="calcResult">
-          <div class="calc-res-item"><div class="calc-res-lbl">Lucro</div><div class="calc-res-val" id="cLucro">—</div></div>
-          <div class="calc-res-item"><div class="calc-res-lbl">Margem</div><div class="calc-res-val" id="cMargem">—</div></div>
-          <div class="calc-res-item"><div class="calc-res-lbl">ROI</div><div class="calc-res-val" id="cRoi">—</div></div>
-          <div class="calc-res-item"><div class="calc-res-lbl">R$/dia</div><div class="calc-res-val" id="cDia">—</div></div>
-          <div class="calc-res-item"><div class="calc-res-lbl">Avaliação</div><div class="calc-res-val" id="cAval">—</div></div>
-        </div>
-      </div>
-
-      <!-- HISTÓRICO DE PREÇOS -->
-      <div class="hist-wrap">
-        <div class="cdh" style="padding:14px 18px"><span class="cdht">🔍 Histórico de preços por modelo</span></div>
-        <div class="hist-search">
-          <input class="hist-inp" type="text" id="histBusca" placeholder="Buscar modelo... Ex: Dell i5, Lenovo T480" oninput="buscarHist()">
-        </div>
-        <div class="hist-list" id="histList">
-          <div style="text-align:center;padding:32px;font-size:.78rem;color:var(--li)">Digite um modelo para buscar no histórico</div>
-        </div>
-      </div>
-
-      <!-- META DE COMPRAS -->
-      <div class="meta-compras-wrap">
-        <div style="font-size:.84rem;font-weight:600;color:var(--tx);margin-bottom:10px">🎯 Metas mensais</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-          <div>
-            <div class="fla" style="margin-bottom:6px">Orçamento para compras R$</div>
-            <div style="display:flex;gap:6px">
-              <input class="meta-compras-inp" type="number" id="metaOrcamento" placeholder="Ex: 3000" min="0">
-              <button class="meta-btn" onclick="saveMetaOrcamento()">Salvar</button>
-            </div>
-            <div style="margin-top:8px" id="metaOrcStatus"></div>
-          </div>
-          <div>
-            <div class="fla" style="margin-bottom:6px">Meta de notebooks/mês</div>
-            <div style="display:flex;gap:6px">
-              <input class="meta-compras-inp" type="number" id="metaNbMes" placeholder="Ex: 10" min="1">
-              <button class="meta-btn" onclick="saveMetaNb()">Salvar</button>
-            </div>
-            <div style="margin-top:8px" id="metaNbStatus"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- CAPITAL PARADO -->
-      <div class="cd" style="margin-bottom:12px">
-        <div class="cdh">
-          <span class="cdht">⏰ Capital imobilizado — produtos parados</span>
-          <span style="font-size:.74rem;color:var(--re);font-weight:600" id="totalParado">—</span>
-        </div>
-        <div id="paradoList" style="max-height:320px;overflow-y:auto"></div>
       </div>
 
       <!-- RELATÓRIO MENSAL -->
@@ -8825,8 +8713,6 @@ window.migrarPecas = async () => {
 // ════════════════════════════════════════
 let painelMes = new Date().toISOString().slice(0,7);
 let platChart = null;
-let metaOrcamento = parseFloat(localStorage.getItem('bj_orc'))||0;
-let metaNbMes = parseInt(localStorage.getItem('bj_nb'))||0;
 
 window.painelMudaMes = (dir) => {
   const [y,m] = painelMes.split('-').map(Number);
@@ -8836,104 +8722,14 @@ window.painelMudaMes = (dir) => {
 };
 
 // ── META ORÇAMENTO / NB ──
-window.saveMetaOrcamento = () => {
-  const v = parseFloat(document.getElementById('metaOrcamento').value)||0;
-  metaOrcamento = v; localStorage.setItem('bj_orc', v);
-  const el = document.getElementById('metaOrcStatus');
-  el.innerHTML = '<span style="color:var(--gr);font-size:.72rem;font-weight:600">✓ Salvo</span>';
-  setTimeout(()=>el.innerHTML='', 2000);
-  buildPainel();
-};
-window.saveMetaNb = () => {
-  const v = parseInt(document.getElementById('metaNbMes').value)||0;
-  metaNbMes = v; localStorage.setItem('bj_nb', v);
-  const el = document.getElementById('metaNbStatus');
-  el.innerHTML = '<span style="color:var(--gr);font-size:.72rem;font-weight:600">✓ Salvo</span>';
-  setTimeout(()=>el.innerHTML='', 2000);
-  buildPainel();
-};
+
+
 
 // ── CALCULADORA ROI ──
-window.calcRoi = () => {
-  const custo = parseFloat(document.getElementById('calcCusto').value)||0;
-  const venda = parseFloat(document.getElementById('calcVenda').value)||0;
-  const dias  = parseInt(document.getElementById('calcDias').value)||30;
-  const pecas = parseFloat(document.getElementById('calcPecas').value)||0;
-  if(!custo && !venda){ return; }
-  const custoTotal = custo + pecas;
-  const lucro = venda - custoTotal;
-  const margem = venda > 0 ? (lucro/venda*100) : 0;
-  const roi = custoTotal > 0 ? (lucro/custoTotal*100) : 0;
-  const porDia = dias > 0 ? lucro/dias : 0;
-  
-  const cls = lucro >= 0 ? 'g' : 're';
-  const roiCls = roi >= 30 ? 'g' : roi >= 10 ? 'am' : 're';
-  
-  let aval = '—';
-  if(venda > 0){
-    if(roi >= 50 && dias <= 14) aval = '🔥 Excelente';
-    else if(roi >= 30) aval = '✅ Bom';
-    else if(roi >= 15) aval = '⚠️ Razoável';
-    else if(roi >= 0) aval = '📉 Baixo';
-    else aval = '❌ Prejuízo';
-  }
-  
-  document.getElementById('cLucro').textContent = fmt(lucro);
-  document.getElementById('cLucro').className = 'calc-res-val ' + cls;
-  document.getElementById('cMargem').textContent = Math.round(margem) + '%';
-  document.getElementById('cMargem').className = 'calc-res-val ' + cls;
-  document.getElementById('cRoi').textContent = Math.round(roi) + '%';
-  document.getElementById('cRoi').className = 'calc-res-val ' + roiCls;
-  document.getElementById('cDia').textContent = fmt(porDia);
-  document.getElementById('cDia').className = 'calc-res-val ' + (porDia > 0 ? 'g' : 're');
-  document.getElementById('cAval').textContent = aval;
-  document.getElementById('cAval').className = 'calc-res-val';
-};
+
 
 // ── HISTÓRICO DE PREÇOS ──
-window.buscarHist = () => {
-  const q = document.getElementById('histBusca').value.trim().toLowerCase();
-  const list = document.getElementById('histList');
-  if(q.length < 2){
-    list.innerHTML = '<div style="text-align:center;padding:32px;font-size:.78rem;color:var(--li)">Digite ao menos 2 caracteres</div>';
-    return;
-  }
-  const found = prods
-    .filter(p => p.nome.toLowerCase().includes(q))
-    .sort((a,b) => (b.data||'').localeCompare(a.data||''));
-  if(!found.length){
-    list.innerHTML = '<div style="text-align:center;padding:32px;font-size:.78rem;color:var(--li)">Nenhum resultado encontrado</div>';
-    return;
-  }
-  // Calcular médias
-  const vendidos = found.filter(p=>p.status==='Vendido');
-  const mediaC = vendidos.length ? Math.round(vendidos.reduce((s,p)=>s+p.custo,0)/vendidos.length) : 0;
-  const mediaV = vendidos.length ? Math.round(vendidos.reduce((s,p)=>s+p.venda,0)/vendidos.length) : 0;
-  const mediaL = vendidos.length ? Math.round(vendidos.reduce((s,p)=>s+p.lucro,0)/vendidos.length) : 0;
-  
-  let html2 = '';
-  if(vendidos.length > 1){
-    html2 += `<div style="display:flex;gap:12px;padding:10px 14px;background:var(--gbg);border-bottom:1px solid var(--gbd);font-size:.74rem;flex-wrap:wrap">
-      <span style="color:var(--gr);font-weight:600">📊 Médias (${vendidos.length} vendas):</span>
-      <span>Custo médio: <strong>${fmt(mediaC)}</strong></span>
-      <span>Venda média: <strong>${fmt(mediaV)}</strong></span>
-      <span>Lucro médio: <strong style="color:var(--gr)">${fmt(mediaL)}</strong></span>
-    </div>`;
-  }
-  html2 += found.slice(0,20).map(p => {
-    const stCls = p.status==='Vendido'?'sv':p.status==='Anunciado'?'san':'se';
-    return `<div class="hist-item">
-      <div class="hist-info"><div class="hist-nome">${esc(p.nome)}</div><div class="hist-mes">${fdt(p.data_compra)} → ${p.data_venda?fdt(p.data_venda):'em estoque'}</div></div>
-      <div class="hist-vals">
-        <div class="hist-val"><div class="hist-val-lbl">Custo</div><div class="hist-val-num">${fmt(p.custo)}</div></div>
-        <div class="hist-val"><div class="hist-val-lbl">Venda</div><div class="hist-val-num">${fmt(p.venda)}</div></div>
-        <div class="hist-val"><div class="hist-val-lbl">Lucro</div><div class="hist-val-num ${p.lucro>=0?'g':'re'}">${fmt(p.lucro)}</div></div>
-      </div>
-      <span class="bv ${stCls}" style="flex-shrink:0">${p.status}</span>
-    </div>`;
-  }).join('');
-  list.innerHTML = html2;
-};
+
 
 // ── EXPORTAR RELATÓRIO ──
 // ── TABELA PRA MANDAR AOS VENDEDORES ──
@@ -9939,29 +9735,6 @@ function buildPainel(){
   if(elJ) elJ.innerHTML = socioHTML(joaoProds);
   if(elI) elI.innerHTML = socioHTML(igorProds);
 
-  // ── Capital parado detalhado ──
-  const paradoList = document.getElementById('paradoList');
-  const totalParadoEl = document.getElementById('totalParado');
-  if(paradoList){
-    const parados = prods.filter(p=>p.status!=='Vendido'&&p.data_compra).map(p=>{
-      const dc = p.data_compra.length===7?p.data_compra+'-01':p.data_compra;
-      const dias = Math.round((hoje-new Date(dc))/(86400000));
-      return{...p,dias};
-    }).sort((a,b)=>b.dias-a.dias);
-    const totalCap = parados.reduce((s,p)=>s+p.custo,0);
-    if(totalParadoEl) totalParadoEl.textContent = fmt(totalCap)+' imobilizados';
-    paradoList.innerHTML = parados.slice(0,20).map(p=>{
-      const cls = p.dias>90?'grave':'med';
-      return`<div class="parado-item">
-        <div class="parado-dias ${cls}">${p.dias}d</div>
-        <div class="parado-info">
-          <div class="parado-nm">${esc(p.nome)}</div>
-          <div class="parado-sub">${p.status} · comprado em ${fdt(p.data_compra)} · custo ${fmt(p.custo)}</div>
-        </div>
-        <span class="parado-val">${fmt(p.venda)}</span>
-      </div>`;
-    }).join('');
-  }
 
   // ── Relatório mensal ──
   const relBody = document.getElementById('relatorioBody');
@@ -9998,8 +9771,6 @@ function buildPainel(){
         <div class="rel-sec-title">Compras e investimento</div>
         <div class="rel-row"><span class="rel-row-lbl">Notebooks comprados</span><span class="rel-row-val">${compM.length}</span></div>
         <div class="rel-row"><span class="rel-row-lbl">Capital investido</span><span class="rel-row-val am">${fmt(capCompM)}</span></div>
-        ${metaNbMes>0?`<div class="rel-row"><span class="rel-row-lbl">Meta de compras</span><span class="rel-row-val ${compM.length>=metaNbMes?'g':'am'}">${compM.length}/${metaNbMes} notebooks</span></div>`:''}
-        ${metaOrcamento>0?`<div class="rel-row"><span class="rel-row-lbl">Orçamento utilizado</span><span class="rel-row-val ${capCompM>metaOrcamento?'re':'g'}">${fmt(capCompM)} / ${fmt(metaOrcamento)}</span></div>`:''}
       </div>
       ${Object.keys(ppM).length?`<div class="rel-sec">
         <div class="rel-sec-title">Por plataforma</div>
@@ -10011,25 +9782,6 @@ function buildPainel(){
   // Renderizar aba ativa da análise
   renderAnalise(analiseAtual);
 
-  // Metas
-  if(metaOrcamento>0) document.getElementById('metaOrcamento').value = metaOrcamento;
-  if(metaNbMes>0) document.getElementById('metaNbMes').value = metaNbMes;
-  
-  // Atualizar status das metas
-  const compMes = prods.filter(p=>(p.data_compra||'').startsWith(painelMes));
-  const capComp = compMes.reduce((s,p)=>s+p.custo,0);
-  const elOrc = document.getElementById('metaOrcStatus');
-  const elNb = document.getElementById('metaNbStatus');
-  if(elOrc && metaOrcamento>0){
-    const pct = Math.round(capComp/metaOrcamento*100);
-    const cls = capComp>metaOrcamento?'re':'g';
-    elOrc.innerHTML = `<div class="meta-bar" style="margin-top:4px"><div class="meta-fill ${capComp>metaOrcamento?'re':''}" style="width:${Math.min(pct,100)}%"></div></div><span style="font-size:.69rem;color:var(--${cls})">${fmt(capComp)} / ${fmt(metaOrcamento)} (${pct}%)</span>`;
-  }
-  if(elNb && metaNbMes>0){
-    const pct = Math.round(compMes.length/metaNbMes*100);
-    const cls = compMes.length>=metaNbMes?'g':'am';
-    elNb.innerHTML = `<div class="meta-bar" style="margin-top:4px"><div class="meta-fill ${compMes.length<metaNbMes/2?'re':''}" style="width:${Math.min(pct,100)}%"></div></div><span style="font-size:.69rem;color:var(--${cls})">${compMes.length}/${metaNbMes} notebooks (${pct}%)</span>`;
-  }
 }
 
 let platChartInst=null, compChartInst=null;
