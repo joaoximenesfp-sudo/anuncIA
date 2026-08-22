@@ -1618,7 +1618,6 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
         </div><div class="cw tall"><canvas id="cRL"></canvas></div></div>
         <div class="cc"><div class="ch"><div class="ct">Unidades vendidas por mês</div><div class="cs">Volume de notebooks</div></div><div class="cw"><canvas id="cQ"></canvas></div></div>
         <div class="cc"><div class="ch"><div class="ct">Lucro médio por marca (R$)</div><div class="cs">Qual marca rende mais por venda</div></div><div class="cw"><canvas id="cLM"></canvas></div></div>
-        <div class="cc full"><div class="ch"><div class="ct">Distribuição do estoque por marca</div><div class="cs">Total histórico de produtos</div></div><div class="cw"><canvas id="cMarca"></canvas></div></div>
       </div>
 
       <!-- GIRO POR MARCA -->
@@ -6632,14 +6631,6 @@ function buildCharts(){
       scales:{x:{grid:{color:gc},ticks:{color:tc,font,callback:v=>'R$'+v},border:{display:false}},y:{grid:{display:false},ticks:{color:tc,font}}}}
   });
 
-  // ── GRÁFICO DISTRIBUIÇÃO POR MARCA (DONUT) ──
-  (function(){const o=document.getElementById('cMarca');if(o){const n=document.createElement('canvas');n.id='cMarca';o.parentNode.replaceChild(n,o);}})();
-  chartsInstances['cMarca'] = new Chart(document.getElementById('cMarca'),{
-    type:'doughnut',
-    data:{labels:d.marcasChart,datasets:[{data:d.distMarca,backgroundColor:bColors,borderWidth:0,hoverOffset:6}]},
-    options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
-      plugins:{legend:{position:'right',labels:{color:tc,font,boxWidth:10,padding:12}},tooltip:{bodyFont:font,titleFont:font}}}
-  });
 }
 
 
