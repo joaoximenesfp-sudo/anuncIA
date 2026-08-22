@@ -1287,11 +1287,11 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
       <div class="al-row" id="alertsRow"></div>
       <div class="sr">
         <div class="sb"><div class="sbl">Receita total</div><div class="sbv g" id="sRec">—</div><div class="sbs" id="sRecS">—</div></div>
-        <div class="sb" title="Margem = lucro ÷ venda (quanto sobra de cada R$100 vendido). Markup = lucro ÷ custo (quanto rendeu sobre o que pagou; 100% = dobrou)."><div class="sbl">Lucro total</div><div class="sbv" id="sLuc">—</div><div class="sbs" id="sMgm">—</div></div>
+        <div class="sb" title="MARGEM = média da margem de cada máquina (lucro ÷ venda). MARKUP = lucro total ÷ custo total de tudo que já foi vendido: de todo dinheiro que saiu do bolso, quanto voltou acima. 100% = dobrou."><div class="sbl">Lucro total</div><div class="sbv" id="sLuc">—</div><div class="sbs" id="sMgm">—</div></div>
         <div class="sb"><div class="sbl">Anunciados</div><div class="sbv b" id="sAnu">—</div><div class="sbs" id="sAnuV">—</div></div>
         <div class="sb"><div class="sbl">Na mão hoje</div><div class="sbv" id="sEst">—</div><div class="sbs" id="sEstV">—</div></div>
         <div class="sb" title="O que você já pagou pelas máquinas que estão na mão. Esse dinheiro volta pro caixa quando elas venderem — não é lucro, é o seu capital retornando."><div class="sbl">Capital de volta</div><div class="sbv" id="sCap">—</div><div class="sbs" id="sCapS">—</div></div>
-        <div class="sb" title="O que sobra ACIMA do capital quando as máquinas venderem. Capital de volta + lucro potencial = a receita que entra."><div class="sbl">Lucro potencial</div><div class="sbv a" id="sPot">—</div><div class="sbs" id="sPotSub">se vender tudo</div></div>
+        <div class="sb" title="O que sobra ACIMA do capital quando as máquinas venderem, calculado pelo PREÇO PEDIDO em cada anúncio. Preço pedido não é preço fechado: depois de negociar costuma sair menos. Trate como teto, não como previsão. Capital de volta + lucro potencial = a receita que entra."><div class="sbl">Lucro potencial</div><div class="sbv a" id="sPot">—</div><div class="sbs" id="sPotSub">se vender tudo</div></div>
       </div>
       </div><!-- /vendas-intro -->
       <!-- ADICIONAR PRODUTO — só aparece na aba inicial "Na mão hoje" -->
@@ -1590,7 +1590,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
         <div class="ib"><div class="ii">📈</div><div><div class="il">Melhor mês</div><div class="iv" id="iBM">—</div><div class="in" id="iBMN">—</div></div></div>
         <div class="ib"><div class="ii">💰</div><div><div class="il">Lucro total</div><div class="iv" id="iLT">—</div><div class="in" id="iLTN">—</div></div></div>
         <div class="ib" title="MARGEM = lucro ÷ venda. De cada R$ 100 que entra na venda, quanto sobra de lucro. É o padrão do varejo."><div class="ii">📊</div><div><div class="il">Margem</div><div class="iv" id="iMG">—</div><div class="in">lucro ÷ venda</div></div></div>
-        <div class="ib" title="MARKUP = lucro ÷ custo. Quanto o lucro representa em cima do que você pagou. 100% = dobrou o dinheiro."><div class="ii">🧮</div><div><div class="il">Markup</div><div class="iv" id="iMK">—</div><div class="in">lucro ÷ custo</div></div></div>
+        <div class="ib" title="MARKUP = lucro total ÷ custo total de tudo que já foi vendido. De todo dinheiro que saiu do bolso, quanto voltou acima dele. 100% = dobrou."><div class="ii">🧮</div><div><div class="il">Markup</div><div class="iv" id="iMK">—</div><div class="in">lucro ÷ custo</div></div></div>
         <div class="ib"><div class="ii">🏆</div><div><div class="il">Marca líder</div><div class="iv" id="iMarca">—</div><div class="in" id="iMarcaN">—</div></div></div>
         <div class="ib"><div class="ii">🎯</div><div><div class="il">Ticket médio</div><div class="iv" id="iTk">—</div><div class="in">por notebook vendido</div></div></div>
         <div class="ib"><div class="ii">📦</div><div><div class="il">Na mão hoje</div><div class="iv b" id="iEst">—</div><div class="in" id="iEstN">—</div></div></div>
@@ -6224,10 +6224,12 @@ function calcStats(){
   const mg=comVenda.length
     ? Math.round(comVenda.reduce((s,p)=>s+(getLucro(p)/p.venda*100),0)/comVenda.length)
     : 0;
-  const comCusto=v.filter(p=>custoRealDe(p)>0);
-  const mk=comCusto.length
-    ? Math.round(comCusto.reduce((s,p)=>s+(getLucro(p)/custoRealDe(p)*100),0)/comCusto.length)
-    : 0;
+  // Markup AGREGADO: lucro total ÷ custo total. Antes era média das razões de cada
+  // máquina, e isso estoura com item barato — uma comprada por R$ 50 e vendida por
+  // R$ 400 entra como 700% e puxa a média toda pra cima. O agregado responde a
+  // pergunta certa: "de tudo que saiu do bolso, quanto voltou acima".
+  const custoTotV=v.reduce((s,p)=>s+custoRealDe(p),0);
+  const mk=custoTotV>0 ? Math.round(luc/custoTotV*100) : 0;
   const potAn=an.reduce((s,p)=>s+getLucro(p),0);
   const potEs=es.reduce((s,p)=>s+getLucro(p),0);
   const emMaoTotal=[...an,...es]; // Estoque + Anunciados = tudo na mão hoje
@@ -6244,6 +6246,14 @@ function calcStats(){
   if(elCap) elCap.textContent=fmt(capEmMao);
   const elCapS=document.getElementById('sCapS');
   if(elCapS) elCapS.textContent='investido em '+emMaoTotal.length+' máquina'+(emMaoTotal.length!==1?'s':'');
+  // Sem a razão, R$ 43 mil de lucro ao lado de R$ 41 mil de capital não diz nada.
+  // Com ela, dá pra comparar na hora com o markup que o negócio realmente realiza.
+  const semPrecoS=emMaoTotal.filter(p=>!((parseFloat(p.venda)||0)>0)).length;
+  const elPotSub=document.getElementById('sPotSub');
+  if(elPotSub){
+    const razao = capEmMao>0 ? Math.round(potEmMao/capEmMao*100)+'% sobre o capital' : 'se vender tudo';
+    elPotSub.textContent = razao + (semPrecoS?' · '+semPrecoS+' sem preço':'');
+  }
 }
 
 // ════════════════════════════════════════
