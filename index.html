@@ -1290,7 +1290,8 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
         <div class="sb" title="Margem = lucro ÷ venda (quanto sobra de cada R$100 vendido). Markup = lucro ÷ custo (quanto rendeu sobre o que pagou; 100% = dobrou)."><div class="sbl">Lucro total</div><div class="sbv" id="sLuc">—</div><div class="sbs" id="sMgm">—</div></div>
         <div class="sb"><div class="sbl">Anunciados</div><div class="sbv b" id="sAnu">—</div><div class="sbs" id="sAnuV">—</div></div>
         <div class="sb"><div class="sbl">Na mão hoje</div><div class="sbv" id="sEst">—</div><div class="sbs" id="sEstV">—</div></div>
-        <div class="sb"><div class="sbl">Lucro potencial</div><div class="sbv a" id="sPot">—</div><div class="sbs" id="sPotSub">se vender tudo</div></div>
+        <div class="sb" title="O que você já pagou pelas máquinas que estão na mão. Esse dinheiro volta pro caixa quando elas venderem — não é lucro, é o seu capital retornando."><div class="sbl">Capital de volta</div><div class="sbv" id="sCap">—</div><div class="sbs" id="sCapS">—</div></div>
+        <div class="sb" title="O que sobra ACIMA do capital quando as máquinas venderem. Capital de volta + lucro potencial = a receita que entra."><div class="sbl">Lucro potencial</div><div class="sbv a" id="sPot">—</div><div class="sbs" id="sPotSub">se vender tudo</div></div>
       </div>
       </div><!-- /vendas-intro -->
       <!-- ADICIONAR PRODUTO — só aparece na aba inicial "Na mão hoje" -->
@@ -6233,9 +6234,16 @@ function calcStats(){
   const potEmMao=potAn+potEs;
   document.getElementById('sRec').textContent=fmt(rec);document.getElementById('sRecS').textContent=v.length+' vendas';
   document.getElementById('sLuc').textContent=fmt(luc);document.getElementById('sMgm').textContent='margem '+mg+'% · markup '+mk+'%';
-  document.getElementById('sAnu').textContent=an.length;document.getElementById('sAnuV').textContent=fmt(potAn)+' potencial';
+  document.getElementById('sAnu').textContent=an.length;document.getElementById('sAnuV').textContent=fmt(potAn)+' de lucro';
   document.getElementById('sEst').textContent=emMaoTotal.length;document.getElementById('sEstV').textContent=an.length+' anunciados · '+es.length+' estoque';
   document.getElementById('sPot').textContent=fmt(potEmMao);
+  // Retorno do capital x lucro: são coisas diferentes e estavam somadas na cabeça
+  // de quem lia. O que você pagou volta inteiro; o lucro é o que vem ACIMA disso.
+  const capEmMao=emMaoTotal.reduce((s,p)=>s+custoRealDe(p),0);
+  const elCap=document.getElementById('sCap');
+  if(elCap) elCap.textContent=fmt(capEmMao);
+  const elCapS=document.getElementById('sCapS');
+  if(elCapS) elCapS.textContent='investido em '+emMaoTotal.length+' máquina'+(emMaoTotal.length!==1?'s':'');
 }
 
 // ════════════════════════════════════════
