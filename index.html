@@ -1904,6 +1904,17 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
         </div>
       </div>
 
+      <!-- MARCAS -->
+      <div class="cd" style="margin-bottom:12px">
+        <div class="cdh"><span class="cdht">🏷️ Distribuição por marca</span><span style="font-size:.74rem;color:var(--li)" id="marcaPeriodo">—</span></div>
+        <div style="padding:16px 18px">
+          <div class="plat-grid" id="marcaGrid"></div>
+          <div id="marcaItens"></div>
+          <div class="graf-msg" id="marcaMsg" style="display:none"></div>
+          <div class="graf-wrap" id="marcaWrap"><canvas id="cMarcaP"></canvas></div>
+        </div>
+      </div>
+
       <!-- CAPITAL POR SÓCIO -->
       <div class="cd" style="margin-bottom:12px">
         <div class="cdh"><span class="cdht">💼 Capital por sócio</span></div>
@@ -7152,18 +7163,19 @@ const PLAT_CORES={'Marketplace':'#2563eb','OLX':'#f97316','Mercado Livre':'#eab3
 // Um card só resume; a lista é quem responde "quais máquinas são essas?".
 function itensDe(tipo, nome){
   if(tipo==='vend') return prods.filter(p=>p.status==='Vendido' && p.plataforma===nome);
+  if(tipo==='marca') return prods.filter(p=>brand(p.nome)===nome);
   return prods.filter(p=>(p.canal_compra||'').trim()===nome);
 }
 function renderItensSel(tipo){
-  const alvo=document.getElementById(tipo==='vend'?'platItens':'compItens');
+  const alvo=document.getElementById(tipo==='vend'?'platItens':tipo==='marca'?'marcaItens':'compItens');
   if(!alvo) return;
-  const nome=tipo==='vend'?platSel:compSel;
+  const nome=tipo==='vend'?platSel:tipo==='marca'?marcaSel:compSel;
   if(!nome){ alvo.innerHTML=''; return; }
   const lista=itensDe(tipo,nome).sort((a,b)=>{
     const da=(tipo==='vend'?a.data_venda:a.data_compra)||'', db=(tipo==='vend'?b.data_venda:b.data_compra)||'';
     return db.localeCompare(da);
   });
-  const cor=(tipo==='vend'?PLAT_CORES:CANAL_CORES)[nome]||'#9ca3af';
+  const cor=(tipo==='vend'?PLAT_CORES:tipo==='marca'?BC:CANAL_CORES)[nome]||'#9ca3af';
   const linhas=lista.map(p=>{
     const data=(tipo==='vend'?p.data_venda:p.data_compra)||'';
     const dFmt=data?(data.length>7?new Date(data+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'2-digit'}):fdt(data)):'sem data';
@@ -7175,14 +7187,17 @@ function renderItensSel(tipo){
       <span class="pi-data">${dFmt}</span>${dir}</div>`;
   }).join('');
   alvo.innerHTML=`<div class="pi-box" style="border-left-color:${cor}">
-    <div class="pi-head"><strong>${esc(nome)}</strong> · ${lista.length} ${tipo==='vend'?'venda':'compra'}${lista.length!==1?'s':''}
+    <div class="pi-head"><strong>${esc(nome)}</strong> · ${lista.length} ${tipo==='vend'?'venda':tipo==='marca'?'máquina':'compra'}${lista.length!==1?'s':''}
       <button type="button" class="pi-x" onclick="verItens('${tipo}','')">fechar ✕</button></div>
     ${linhas||'<div class="pi-vazio">Nenhum item nesta lista.</div>'}</div>`;
 }
 window.verItens=(tipo,nome)=>{
   if(tipo==='vend') platSel = (platSel===nome ? '' : nome);
+  else if(tipo==='marca') marcaSel = (marcaSel===nome ? '' : nome);
   else compSel = (compSel===nome ? '' : nome);
-  if(tipo==='vend') renderVendasPlat(); else renderComprasPlat();
+  if(tipo==='vend') renderVendasPlat();
+  else if(tipo==='marca') renderMarcasPlat();
+  else renderComprasPlat();
 };
 
 function renderVendasPlat(){
@@ -7214,6 +7229,44 @@ function renderVendasPlat(){
 const CANAL_CORES={'Marketplace':'#2563eb','Facebook':'#2563eb','OLX':'#f97316',
   'Mercado Livre':'#eab308','Shopee':'#ea580c','Instagram':'#7c3aed','Indicação':'#0891b2',
   'Presencial':'#16a34a','Uber':'#111827','Outro':'#78716c'};
+// Terceiro recorte do mesmo estoque: por marca. Conta a máquina inteira (vendida
+// ou não), porque a pergunta aqui é "com que marca a gente trabalha", não "o que
+// vendeu". O lucro médio embaixo sai só das vendidas, como nos outros painéis.
+let marcaSel='';
+function renderMarcasPlat(){
+  const grid=document.getElementById('marcaGrid');
+  const per=document.getElementById('marcaPeriodo');
+  if(!grid) return;
+  if(!prods.length){
+    grid.innerHTML='<div class="comp-vazio">Nenhuma máquina cadastrada ainda.</div>';
+    if(per) per.textContent='—';
+    marcaSel=''; renderItensSel('marca');
+    return;
+  }
+  const mm={};
+  prods.forEach(p=>{
+    const b=brand(p.nome);
+    if(!mm[b]) mm[b]={qtd:0, vend:0, luc:0};
+    mm[b].qtd++;
+    if(p.status==='Vendido'){ mm[b].vend++; mm[b].luc+=getLucro(p); }
+  });
+  if(marcaSel && !mm[marcaSel]) marcaSel='';
+  const maxQtd=Math.max(...Object.values(mm).map(x=>x.qtd),1);
+  grid.innerHTML=Object.entries(mm).sort((a,b)=>b[1].qtd-a[1].qtd).map(([nm,d])=>{
+    const pct=Math.round(d.qtd/maxQtd*100);
+    const cor=BC[nm]||'#9ca3af';
+    const sub=d.vend?fmt(Math.round(d.luc/d.vend))+' lucro médio':'<span style="color:var(--li)">nenhuma vendida</span>';
+    return `<div class="plat-card${marcaSel===nm?' on':''}" onclick="verItens('marca','${esc(nm).replace(/'/g,'&#39;')}')" title="Ver as máquinas desta marca">
+      <div class="plat-nm"><span style="width:8px;height:8px;border-radius:50%;background:${cor};display:inline-block"></span>${esc(nm)}</div>
+      <div class="plat-qtd" style="color:${cor}">${d.qtd}</div>
+      <div class="plat-bar-wrap"><div class="plat-bar-fill" style="width:${pct}%;background:${cor}"></div></div>
+      <div class="plat-sub">${sub}</div>
+    </div>`;
+  }).join('');
+  if(per) per.textContent='todo o histórico · '+prods.length+' máquinas';
+  renderItensSel('marca');
+}
+
 function renderComprasPlat(){
   const grid=document.getElementById('compGrid');
   const per=document.getElementById('compPeriodo');
@@ -9651,6 +9704,7 @@ function buildPainel(){
 
   renderVendasPlat();
   renderComprasPlat();
+  renderMarcasPlat();
 
   // ── Capital por sócio ──
   const joaoProds = prods.filter(p=>p.investidor==='João');
@@ -9882,7 +9936,7 @@ window.buscarHist = () => {
   list.innerHTML = html2;
 };
 
-let platChartInst=null, compChartInst=null;
+let platChartInst=null, compChartInst=null, marcaChartInst=null;
 
 // Desenha um donut e devolve a instância. Nunca troca o innerHTML do container:
 // substituir o pai apagava o <canvas> do DOM e, da segunda chamada em diante,
@@ -9925,12 +9979,19 @@ function buildPainelCharts(){
   if(platChartInst){ platChartInst.destroy(); platChartInst=null; }
   const pp={};
   prods.filter(p=>p.status==='Vendido'&&p.plataforma).forEach(p=>{ pp[p.plataforma]=(pp[p.plataforma]||0)+1; });
-  platChartInst=donut('cPlat','platWrap','platMsg', pp, {_pad:PAD}, 'vendas');
+  // As fatias tinham cor do rodízio enquanto os cards usavam PLAT_CORES: OLX
+  // aparecia laranja no card e azul no gráfico. Agora os dois leem a mesma tabela.
+  platChartInst=donut('cPlat','platWrap','platMsg', pp, Object.assign({_pad:PAD}, PLAT_CORES), 'vendas');
 
   if(compChartInst){ compChartInst.destroy(); compChartInst=null; }
   const cc={};
   prods.filter(p=>(p.canal_compra||'').trim()).forEach(p=>{ const c=p.canal_compra.trim(); cc[c]=(cc[c]||0)+1; });
   compChartInst=donut('cComp','compWrap','compMsg', cc, Object.assign({_pad:PAD}, CANAL_CORES), 'compras');
+
+  if(marcaChartInst){ marcaChartInst.destroy(); marcaChartInst=null; }
+  const mm={};
+  prods.forEach(p=>{ const b=brand(p.nome); mm[b]=(mm[b]||0)+1; });
+  marcaChartInst=donut('cMarcaP','marcaWrap','marcaMsg', mm, Object.assign({_pad:PAD}, BC), 'máquinas');
 }
 
 </script>
