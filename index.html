@@ -509,6 +509,19 @@ input[type=number].inp{padding-left:32px}
 .tv-status{font-size:.73rem;color:var(--gr);font-weight:600;margin-top:8px;min-height:16px}
 
 /* ── RECIBO DE VENDA ── */
+.rev-tag{display:inline-flex;align-items:center;gap:4px;margin-top:3px;padding:2px 7px;
+  border-radius:11px;font-size:.66rem;font-weight:700;cursor:pointer;
+  background:#fff7ed;border:1px solid #fed7aa;color:#9a3412}
+.rev-tag:hover{border-color:#fb923c}
+.rev-tag.ok{background:#f0fdf4;border-color:#bbf7d0;color:#15803d}
+.rev-data{font-weight:400;opacity:.75}
+.rev-box{background:var(--bg);border:1px solid var(--b);border-radius:10px;padding:11px 12px;
+  display:flex;flex-direction:column;gap:9px}
+.rev-check{display:flex;align-items:flex-start;gap:8px;font-size:.75rem;color:var(--tx);cursor:pointer}
+.rev-check input{width:16px;height:16px;accent-color:#16a34a;cursor:pointer;flex-shrink:0;margin-top:1px}
+.rev-num{font-size:.68rem;color:var(--mu);font-weight:600;display:flex;flex-direction:column;gap:3px}
+#eRevQuando{color:var(--li);font-weight:400}
+
 .rc-resumo{font-size:.74rem;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:9px;
   padding:9px 11px;line-height:1.5;margin-bottom:10px}
 .rc-resumo .rc-ok{color:#15803d}
@@ -1295,6 +1308,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
         <div class="sb"><div class="sbl">Receita total</div><div class="sbv g" id="sRec">—</div><div class="sbs" id="sRecS">—</div></div>
         <div class="sb" title="MARGEM = média da margem de cada máquina (lucro ÷ venda). MARKUP = lucro total ÷ custo total de tudo que já foi vendido: de todo dinheiro que saiu do bolso, quanto voltou acima. 100% = dobrou."><div class="sbl">Lucro total</div><div class="sbv" id="sLuc">—</div><div class="sbs" id="sMgm">—</div></div>
         <div class="sb"><div class="sbl">Anunciados</div><div class="sbv b" id="sAnu">—</div><div class="sbs" id="sAnuV">—</div></div>
+        <div class="sb" title="Máquinas abertas e conferidas por dentro. Toque na etiqueta 🔧 de qualquer linha pra marcar sem abrir a edição."><div class="sbl">Revisadas</div><div class="sbv b" id="sRev">—</div><div class="sbs" id="sRevS">—</div></div>
         <div class="sb"><div class="sbl">Na mão hoje</div><div class="sbv" id="sEst">—</div><div class="sbs" id="sEstV">—</div></div>
         <div class="sb" title="O que você já pagou pelas máquinas que estão na mão. Esse dinheiro volta pro caixa quando elas venderem — não é lucro, é o seu capital retornando."><div class="sbl">Capital de volta</div><div class="sbv" id="sCap">—</div><div class="sbs" id="sCapS">—</div></div>
         <div class="sb" title="O que sobra ACIMA do capital quando as máquinas venderem, calculado pelo PREÇO PEDIDO em cada anúncio. Preço pedido não é preço fechado: depois de negociar costuma sair menos. Trate como teto, não como previsão. Capital de volta + lucro potencial = a receita que entra."><div class="sbl">Lucro potencial</div><div class="sbv a" id="sPot">—</div><div class="sbs" id="sPotSub">se vender tudo</div></div>
@@ -2631,6 +2645,19 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
           <option value="joao">👤 João pagou tudo</option>
           <option value="igor">👤 Igor pagou tudo</option>
         </select>
+      </div>
+      <div class="fc full" id="eRevWrap">
+        <label class="fl">🔧 Revisão da máquina <span style="font-size:.67rem;color:var(--li);font-weight:400">aberta, peça conferida</span></label>
+        <div class="rev-box">
+          <label class="rev-check">
+            <input type="checkbox" id="eRevisado" onchange="eRevHint()">
+            <span>✅ Já abri e conferi esta máquina<span id="eRevQuando"></span></span>
+          </label>
+          <input class="inp" type="text" id="eRevObs" placeholder="O que tem dentro: 8GB Kingston + SSD 240 Sandisk, bateria 60%, falta parafuso...">
+          <label class="rev-num">Nº na planilha <span style="font-weight:400;color:var(--li)">se for diferente do # do site</span>
+            <input class="inp" type="text" id="eNumPlan" placeholder="ex: 214">
+          </label>
+        </div>
       </div>
       <div class="fc full" id="eFaltaWrap">
         <label class="fl">📝 O que falta comprar/fazer <span style="font-size:.67rem;color:var(--li);font-weight:400">pra deixar essa máquina pronta pra vender</span></label>
@@ -4834,6 +4861,10 @@ window.openEdit=id=>{
   eRepasseHint();
   eDescCalc();
   // Nota "o que falta comprar" — só para itens ainda não vendidos
+  const eRev=document.getElementById('eRevisado'); if(eRev) eRev.checked=!!p.revisado;
+  const eRObs=document.getElementById('eRevObs'); if(eRObs) eRObs.value=p.revisao_obs||'';
+  const eNP=document.getElementById('eNumPlan'); if(eNP) eNP.value=p.num_planilha||'';
+  eRevHint();
   const eFalta=document.getElementById('eFalta');
   if(eFalta) eFalta.value=p.falta_comprar||'';
   const eFF=document.getElementById('eFaltaFeito');
@@ -4938,6 +4969,15 @@ window.pAportePreset=(qual)=>aportePreset('p',qual);
 
 // O check só aparece quando há pendência escrita — marcar "feito" sem ter o que
 // foi feito não registra nada.
+// Só faz sentido mostrar a data quando o check está marcado.
+window.eRevHint=()=>{
+  const chk=document.getElementById('eRevisado'), quando=document.getElementById('eRevQuando');
+  if(!chk||!quando) return;
+  const p=prods.find(x=>x.id===editId);
+  const d=(p&&p.revisado&&revisadaEm(p))||'';
+  quando.textContent = (chk.checked && d) ? ' · marcado em '+d : '';
+};
+
 window.eFaltaFeitoHint=()=>{
   const inp=document.getElementById('eFalta'), wrap=document.getElementById('eFaltaFeitoWrap');
   const chk=document.getElementById('eFaltaFeito'), quando=document.getElementById('eFaltaFeitoQuando');
@@ -5012,7 +5052,7 @@ window.saveEdit=async()=>{
   const custoFinal=baseMaquina+somaJa+somaNovas;
   const totalPecas=somaJa+somaNovas;
 
-  const upd={nome,custo:custoFinal,custo_base:baseMaquina,custo_pecas:totalPecas,venda,lucro:venda-custoFinal,status,investidor,plataforma:(status==='Vendido'?(document.getElementById('ePlat')?.value||''):''),repasse_socio:(status==='Vendido'?(parseFloat(document.getElementById('eRepasse')?.value)||0):0),falta_comprar:(status!=='Vendido'?(document.getElementById('eFalta')?.value.trim()||''):''),falta_feito:(status!=='Vendido'&&!!document.getElementById('eFaltaFeito')?.checked),falta_feito_em:((status!=='Vendido'&&document.getElementById('eFaltaFeito')?.checked)?((_pAtual&&_pAtual.falta_feito&&_pAtual.falta_feito_em)||new Date().toISOString().slice(0,10)):''),fornecedor_id:fornId,fornecedor_nome:fornNome,data_compra:dc,data_compra_mes:dcMes,data_venda:dv,data:(dv?dv.slice(0,7):dcMes),gas_pagante:(document.getElementById('eGasPag')?.value||'ambos'),aporte_joao:(parseFloat(document.getElementById('eApJoao')?.value)||0),aporte_igor:(parseFloat(document.getElementById('eApIgor')?.value)||0),cliente_id:cliId,cliente_nome:cliNome,preco_cheio:(status==='Vendido'?(parseFloat(document.getElementById('ePrecoCheio')?.value)||0):0),nota_venda:(status==='Vendido'?(document.getElementById('eNotaVenda')?.value.trim()||''):'')};
+  const upd={nome,custo:custoFinal,custo_base:baseMaquina,custo_pecas:totalPecas,venda,lucro:venda-custoFinal,status,investidor,plataforma:(status==='Vendido'?(document.getElementById('ePlat')?.value||''):''),repasse_socio:(status==='Vendido'?(parseFloat(document.getElementById('eRepasse')?.value)||0):0),falta_comprar:(status!=='Vendido'?(document.getElementById('eFalta')?.value.trim()||''):''),falta_feito:(status!=='Vendido'&&!!document.getElementById('eFaltaFeito')?.checked),falta_feito_em:((status!=='Vendido'&&document.getElementById('eFaltaFeito')?.checked)?((_pAtual&&_pAtual.falta_feito&&_pAtual.falta_feito_em)||new Date().toISOString().slice(0,10)):''),revisado:!!document.getElementById('eRevisado')?.checked,revisado_em:(document.getElementById('eRevisado')?.checked?((_pAtual&&_pAtual.revisado&&_pAtual.revisado_em)||new Date().toISOString().slice(0,10)):''),revisao_obs:(document.getElementById('eRevObs')?.value.trim()||''),num_planilha:(document.getElementById('eNumPlan')?.value.trim()||''),fornecedor_id:fornId,fornecedor_nome:fornNome,data_compra:dc,data_compra_mes:dcMes,data_venda:dv,data:(dv?dv.slice(0,7):dcMes),gas_pagante:(document.getElementById('eGasPag')?.value||'ambos'),aporte_joao:(parseFloat(document.getElementById('eApJoao')?.value)||0),aporte_igor:(parseFloat(document.getElementById('eApIgor')?.value)||0),cliente_id:cliId,cliente_nome:cliNome,preco_cheio:(status==='Vendido'?(parseFloat(document.getElementById('ePrecoCheio')?.value)||0):0),nota_venda:(status==='Vendido'?(document.getElementById('eNotaVenda')?.value.trim()||''):'')};
   await vincularTroca(editId, upd);
   if(!idLocal(editId)) await gravar(updateDoc(doc(db,'products',editId),upd), 'Editar "'+nome+'"');
   // Grava as peças novas na aba Peças, vinculadas a esta máquina
@@ -5507,6 +5547,39 @@ function faltaFeitaEm(p){
   if(!d) return '';
   return d.length>7 ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short'}) : d;
 }
+// ── REVISÃO DA MÁQUINA ──
+// Máquina aberta, peça conferida. A etiqueta física no notebook leva o mesmo número
+// que aparece aqui, então dá pra ir do aparelho na bancada pro registro e vice-versa.
+function revisadaEm(p){
+  const d=(p.revisado_em||'').trim();
+  if(!d) return '';
+  const partes=d.split('-');
+  if(partes.length<3) return d;
+  const ms=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  return parseInt(partes[2])+' de '+(ms[parseInt(partes[1])-1]||partes[1]);
+}
+function revisaoBadge(p){
+  if(p.status==='Vendido') return '';
+  const feito=!!p.revisado;
+  const quando=revisadaEm(p);
+  const obs=(p.revisao_obs||'').trim();
+  const tit = feito
+    ? 'Revisada'+(quando?' em '+quando:'')+(obs?' — '+obs:'')+' · toque para reabrir'
+    : 'Ainda não aberta e conferida — toque para marcar como revisada';
+  return `<div class="rev-tag${feito?' ok':''}" title="${esc(tit)}"
+    onclick="event.stopPropagation();marcarRevisao('${p.id}',${feito?'false':'true'})">${feito?'✅':'🔧'} ${feito?'revisada':'revisar'}${feito&&quando?` <span class="rev-data">${esc(quando)}</span>`:''}</div>`;
+}
+// Marca/desmarca de um toque, sem abrir a edição — são 68 máquinas em sequência.
+window.marcarRevisao=async(id,feito)=>{
+  const p=prods.find(x=>x.id===id); if(!p) return;
+  const marcar=(feito===true||feito==='true');
+  const upd={revisado:marcar, revisado_em: marcar ? new Date().toISOString().slice(0,10) : ''};
+  Object.assign(p,upd);
+  if(!idLocal(id)) await gravar(updateDoc(doc(db,'products',id),upd),
+    (marcar?'Marcar revisada: ':'Reabrir revisão: ')+(p.nome||''));
+  render(); renderSecoes();
+};
+
 function faltaBadge(p){
   const txt=(p.falta_comprar||'').trim();
   if(p.status==='Vendido' || !txt) return '';
@@ -6048,6 +6121,7 @@ function renderTabela(lista, tipo){
       const platBd={'Marketplace':'#bfdbfe','OLX':'#fed7aa','Mercado Livre':'#fef08a','WhatsApp':'#bbf7d0','Instagram':'#e9d5ff','Indicação':'#bae6fd','Outro':'#d4d4d4'};
       const platInfo=p.status==='Vendido'&&p.plataforma?`<span style="font-size:.67rem;font-weight:600;padding:2px 7px;border-radius:10px;margin-left:4px;background:${platBg[p.plataforma]||'#f5f5f5'};color:${platColors[p.plataforma]||'#78716c'};border:1px solid ${platBd[p.plataforma]||'#d4d4d4'}">${esc(p.plataforma)}</span>`:'';
       const faltaInfo=faltaBadge(p);
+      const revInfo=revisaoBadge(p);
       let compChips='';
       if(p.status!=='Vendido' && typeof pecas!=='undefined'){
         const comps=pecas.filter(pc=>pc.produto_id===p.id);
@@ -6076,7 +6150,7 @@ function renderTabela(lista, tipo){
         <td style="color:var(--li);font-size:.75rem">${tipo==='vendidos'?fdt(p.data_venda):'—'}</td>
         <td class="ps">${fmt(p.venda)}</td>
         <td class="pp ${lp>=0?'pos':'neg'}">${fmt(lp)}${splitLucro}</td>
-        <td>${sb}${platInfo}${parcInfo}${faltaInfo}</td>
+        <td>${sb}${platInfo}${parcInfo}${revInfo}${faltaInfo}</td>
         <td><select class="sel" data-id="${p.id}" onchange="updStatus('${p.id}',this.value)">
           ${statusEstranho(p)}
           <option ${p.status==='Anunciado'?'selected':''} value="Anunciado">Anunciado</option>
@@ -6149,6 +6223,7 @@ function render(){
       const platBd={'Marketplace':'#bfdbfe','OLX':'#fed7aa','Mercado Livre':'#fef08a','WhatsApp':'#bbf7d0','Instagram':'#e9d5ff','Indicação':'#bae6fd','Outro':'#d4d4d4'};
       const platInfo=p.status==='Vendido'&&p.plataforma?`<span style="font-size:.67rem;font-weight:600;padding:2px 7px;border-radius:10px;margin-left:4px;background:${platBg[p.plataforma]||'#f5f5f5'};color:${platColors[p.plataforma]||'#78716c'};border:1px solid ${platBd[p.plataforma]||'#d4d4d4'}">${esc(p.plataforma)}</span>`:'';
       const faltaInfo=faltaBadge(p);
+      const revInfo=revisaoBadge(p);
       let compChips='';
       if(p.status!=='Vendido' && typeof pecas!=='undefined'){
         const comps=pecas.filter(pc=>pc.produto_id===p.id);
@@ -6178,7 +6253,7 @@ function render(){
         <td style="color:var(--mu)">${fmt(p.custo)}${(p.custo_pecas>0)?`<div class="custo-brk"><span title="Pago na máquina">📦 ${fmt(p.custo_base!==undefined?p.custo_base:(p.custo-p.custo_pecas))}</span> <span class="cb-pc" title="Pago em peças">🔧 ${fmt(p.custo_pecas)}</span></div>`:''}</td>
         <td class="ps">${fmt(p.venda)}</td>
         <td class="pp ${lp>=0?'pos':'neg'}">${fmt(lp)}${diasInfo}${splitLucro}</td>
-        <td>${sb}${platInfo}${parcInfo}${faltaInfo}</td>
+        <td>${sb}${platInfo}${parcInfo}${revInfo}${faltaInfo}</td>
         <td><select class="sel" data-id="${p.id}" onchange="updStatus('${p.id}',this.value)">
           ${statusEstranho(p)}
           <option ${p.status==='Anunciado'?'selected':''} value="Anunciado">Anunciado</option>
@@ -6253,6 +6328,15 @@ function calcStats(){
   document.getElementById('sRec').textContent=fmt(rec);document.getElementById('sRecS').textContent=v.length+' vendas';
   document.getElementById('sLuc').textContent=fmt(luc);document.getElementById('sMgm').textContent='margem '+mg+'% · markup '+mk+'%';
   document.getElementById('sAnu').textContent=an.length;document.getElementById('sAnuV').textContent=fmt(potAn)+' de lucro';
+  // Progresso da revisão: com 68 máquinas em sequência, saber onde parou é o
+  // que evita abrir a mesma duas vezes e esquecer outra.
+  const revOk=emMaoTotal.filter(p=>p.revisado).length;
+  const elRev=document.getElementById('sRev');
+  if(elRev) elRev.textContent=revOk+'/'+emMaoTotal.length;
+  const elRevS=document.getElementById('sRevS');
+  if(elRevS) elRevS.textContent = emMaoTotal.length
+    ? (revOk===emMaoTotal.length ? 'todas conferidas ✅' : (emMaoTotal.length-revOk)+' ainda pra abrir')
+    : 'nada em estoque';
   document.getElementById('sEst').textContent=emMaoTotal.length;document.getElementById('sEstV').textContent=an.length+' anunciados · '+es.length+' estoque';
   // Previsão de lucro só vale sobre o que está ANUNCIADO. Máquina em estoque não
   // tem preço no mercado — atribuir lucro a ela é inventar receita que ninguém
