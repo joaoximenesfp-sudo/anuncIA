@@ -823,6 +823,9 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
 .plat-bar-fill{height:100%;border-radius:2px}
 .plat-sub{font-size:.68rem;color:var(--li)}
 .comp-vazio{grid-column:1/-1;font-size:.75rem;color:var(--li);line-height:1.5;padding:6px 2px}
+.graf-wrap{height:220px;margin-top:8px}
+.graf-wrap.vazio{display:none}
+.graf-msg{text-align:center;padding:22px 12px;font-size:.76rem;color:var(--li)}
 
 /* ── CAPITAL INVESTIDO ── */
 .cap-socio-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
@@ -1887,7 +1890,8 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
         <div class="cdh"><span class="cdht">📊 Vendas por plataforma</span><span style="font-size:.74rem;color:var(--li)" id="platPeriodo">—</span></div>
         <div style="padding:16px 18px">
           <div class="plat-grid" id="platGrid"></div>
-          <div style="height:220px;margin-top:8px"><canvas id="cPlat"></canvas></div>
+          <div class="graf-msg" id="platMsg" style="display:none"></div>
+          <div class="graf-wrap" id="platWrap"><canvas id="cPlat"></canvas></div>
         </div>
       </div>
 
@@ -1896,6 +1900,8 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
         <div class="cdh"><span class="cdht">🛒 Compras por canal</span><span style="font-size:.74rem;color:var(--li)" id="compPeriodo">—</span></div>
         <div style="padding:16px 18px">
           <div class="plat-grid" id="compGrid"></div>
+          <div class="graf-msg" id="compMsg" style="display:none"></div>
+          <div class="graf-wrap" id="compWrap"><canvas id="cComp"></canvas></div>
         </div>
       </div>
 
@@ -9954,34 +9960,55 @@ function buildPainel(){
   }
 }
 
-let platChartInst = null;
-function buildPainelCharts(){
-  // Gráfico de plataformas (donut)
-  const el = document.getElementById('cPlat');
-  if(!el) return;
-  if(platChartInst){platChartInst.destroy();platChartInst=null;}
-  
-  const vendPlatAll = prods.filter(p=>p.status==='Vendido'&&p.plataforma);
-  const pp = {};
-  vendPlatAll.forEach(p=>{ if(!pp[p.plataforma])pp[p.plataforma]=0; pp[p.plataforma]++; });
-  
-  if(!Object.keys(pp).length){
-    el.parentElement.innerHTML = '<div style="text-align:center;padding:40px;font-size:.78rem;color:var(--li)">Nenhuma venda com plataforma registrada ainda</div>';
-    return;
+let platChartInst=null, compChartInst=null;
+
+// Desenha um donut e devolve a instância. Nunca troca o innerHTML do container:
+// substituir o pai apagava o <canvas> do DOM e, da segunda chamada em diante,
+// getElementById devolvia null e o gráfico não voltava mais — inclusive no caso
+// comum de a aba abrir antes do Firestore responder.
+function donut(canvasId, wrapId, msgId, contagem, cores, sufixo){
+  const el=document.getElementById(canvasId);
+  const wrap=document.getElementById(wrapId);
+  const msg=document.getElementById(msgId);
+  if(!el||!wrap) return null;
+  const labels=Object.keys(contagem).sort((a,b)=>contagem[b]-contagem[a]);
+  if(!labels.length){
+    wrap.classList.add('vazio');
+    if(msg){ msg.style.display='block'; msg.textContent='Nada registrado ainda pra desenhar aqui.'; }
+    return null;
   }
-  
-  const labels = Object.keys(pp).sort((a,b)=>pp[b]-pp[a]);
-  const vals = labels.map(k=>pp[k]);
-  const cores = ['#2563eb','#f97316','#eab308','#16a34a','#7c3aed','#0891b2','#9ca3af'];
-  const font = {family:"'DM Sans',sans-serif",size:11};
-  
-  platChartInst = new Chart(el, {
-    type:'doughnut',
-    data:{labels,datasets:[{data:vals,backgroundColor:cores.slice(0,labels.length),borderWidth:0,hoverOffset:6}]},
-    options:{responsive:true,maintainAspectRatio:false,cutout:'55%',
-      plugins:{legend:{position:'right',labels:{color:'#78716c',font,boxWidth:10,padding:10}},
-        tooltip:{callbacks:{label:ctx=>` ${ctx.label}: ${ctx.raw} vendas`},bodyFont:font,titleFont:font}}}
-  });
+  wrap.classList.remove('vazio');
+  if(msg){ msg.style.display='none'; msg.textContent=''; }
+  const vals=labels.map(k=>contagem[k]);
+  const font={family:"'DM Sans',sans-serif",size:11};
+  try{
+    return new Chart(el,{
+      type:'doughnut',
+      data:{labels,datasets:[{data:vals,backgroundColor:labels.map((l,i)=>cores[l]||cores._pad[i%cores._pad.length]),borderWidth:0,hoverOffset:6}]},
+      options:{responsive:true,maintainAspectRatio:false,cutout:'55%',
+        plugins:{legend:{position:'right',labels:{color:'#78716c',font,boxWidth:10,padding:10}},
+          tooltip:{callbacks:{label:ctx=>` ${ctx.label}: ${ctx.raw} ${sufixo}`},bodyFont:font,titleFont:font}}}
+    });
+  }catch(e){
+    // Falha da biblioteca vira aviso visível em vez de um buraco branco de 220px
+    wrap.classList.add('vazio');
+    if(msg){ msg.style.display='block'; msg.textContent='O gráfico não pôde ser desenhado ('+((e&&e.message)||e)+').'; }
+    return null;
+  }
+}
+
+function buildPainelCharts(){
+  const PAD=['#2563eb','#f97316','#eab308','#16a34a','#7c3aed','#0891b2','#9ca3af'];
+
+  if(platChartInst){ platChartInst.destroy(); platChartInst=null; }
+  const pp={};
+  prods.filter(p=>p.status==='Vendido'&&p.plataforma).forEach(p=>{ pp[p.plataforma]=(pp[p.plataforma]||0)+1; });
+  platChartInst=donut('cPlat','platWrap','platMsg', pp, {_pad:PAD}, 'vendas');
+
+  if(compChartInst){ compChartInst.destroy(); compChartInst=null; }
+  const cc={};
+  prods.filter(p=>(p.canal_compra||'').trim()).forEach(p=>{ const c=p.canal_compra.trim(); cc[c]=(cc[c]||0)+1; });
+  compChartInst=donut('cComp','compWrap','compMsg', cc, Object.assign({_pad:PAD}, CANAL_CORES), 'compras');
 }
 
 </script>
