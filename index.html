@@ -822,6 +822,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
 .plat-bar-wrap{height:4px;background:var(--b);border-radius:2px;margin:6px 0 4px}
 .plat-bar-fill{height:100%;border-radius:2px}
 .plat-sub{font-size:.68rem;color:var(--li)}
+.comp-vazio{grid-column:1/-1;font-size:.75rem;color:var(--li);line-height:1.5;padding:6px 2px}
 
 /* ── CAPITAL INVESTIDO ── */
 .cap-socio-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
@@ -1887,6 +1888,14 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
         <div style="padding:16px 18px">
           <div class="plat-grid" id="platGrid"></div>
           <div style="height:220px;margin-top:8px"><canvas id="cPlat"></canvas></div>
+        </div>
+      </div>
+
+      <!-- COMPRAS POR CANAL -->
+      <div class="cd" style="margin-bottom:12px">
+        <div class="cdh"><span class="cdht">🛒 Compras por canal</span><span style="font-size:.74rem;color:var(--li)" id="compPeriodo">—</span></div>
+        <div style="padding:16px 18px">
+          <div class="plat-grid" id="compGrid"></div>
         </div>
       </div>
 
@@ -7161,6 +7170,47 @@ function mapaCanais(lista){
   }).sort((a,b)=>b.n-a.n);
   return {linhas, semCanal};
 }
+// Espelho do grid de vendas, do lado da compra: de qual canal a máquina veio e
+// por quanto ela entrou. Custo médio em vez de lucro médio de propósito — canal de
+// compra se julga pelo preço de entrada; o lucro depende do que veio depois.
+const CANAL_CORES={'Marketplace':'#2563eb','Facebook':'#2563eb','OLX':'#f97316',
+  'Mercado Livre':'#eab308','Shopee':'#ea580c','Instagram':'#7c3aed','Indicação':'#0891b2',
+  'Presencial':'#16a34a','Uber':'#111827','Outro':'#78716c'};
+function renderComprasPlat(){
+  const grid=document.getElementById('compGrid');
+  const per=document.getElementById('compPeriodo');
+  if(!grid) return;
+  const comCanal=prods.filter(p=>(p.canal_compra||'').trim());
+  if(!comCanal.length){
+    grid.innerHTML=`<div class="comp-vazio">Nenhuma compra com canal registrado ainda.
+      O canal fica no cadastro do produto — depois de algumas dezenas marcadas,
+      dá pra ver de onde vem máquina mais barata.</div>`;
+    if(per) per.textContent='—';
+    return;
+  }
+  const cc={};
+  comCanal.forEach(p=>{
+    const c=(p.canal_compra||'').trim();
+    if(!cc[c]) cc[c]={qtd:0, custo:0};
+    cc[c].qtd++; cc[c].custo+=custoRealDe(p);
+  });
+  const maxQtd=Math.max(...Object.values(cc).map(x=>x.qtd),1);
+  grid.innerHTML=Object.entries(cc).sort((a,b)=>b[1].qtd-a[1].qtd).map(([nm,d])=>{
+    const pct=Math.round(d.qtd/maxQtd*100);
+    const cor=CANAL_CORES[nm]||'#9ca3af';
+    return `<div class="plat-card">
+      <div class="plat-nm"><span style="width:8px;height:8px;border-radius:50%;background:${cor};display:inline-block"></span>${esc(nm)}</div>
+      <div class="plat-qtd" style="color:${cor}">${d.qtd}</div>
+      <div class="plat-bar-wrap"><div class="plat-bar-fill" style="width:${pct}%;background:${cor}"></div></div>
+      <div class="plat-sub">${fmt(Math.round(d.custo/d.qtd))} custo médio</div>
+    </div>`;
+  }).join('');
+  // Diz quantas ficaram de fora: a maioria do histórico é anterior ao campo,
+  // e sem isso o painel pareceria dizer que o negócio comprou 12 máquinas na vida.
+  const fora=prods.length-comCanal.length;
+  if(per) per.textContent='todo o histórico · '+comCanal.length+' de '+prods.length+' compras com canal'
+    + (fora?' · '+fora+' sem registro':'');
+}
 function renderCanais(){
   const body=document.getElementById('canBody');
   if(!body)return;
@@ -9671,6 +9721,8 @@ function buildPainel(){
     }).join('');
     if(platPeriodo) platPeriodo.textContent = 'todo o histórico · '+vendPlatMes.length+' vendas com plataforma';
   }
+
+  renderComprasPlat();
 
   // ── Capital por sócio ──
   const joaoProds = prods.filter(p=>p.investidor==='João');
