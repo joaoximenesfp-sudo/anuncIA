@@ -6238,21 +6238,27 @@ function calcStats(){
   document.getElementById('sLuc').textContent=fmt(luc);document.getElementById('sMgm').textContent='margem '+mg+'% · markup '+mk+'%';
   document.getElementById('sAnu').textContent=an.length;document.getElementById('sAnuV').textContent=fmt(potAn)+' de lucro';
   document.getElementById('sEst').textContent=emMaoTotal.length;document.getElementById('sEstV').textContent=an.length+' anunciados · '+es.length+' estoque';
-  document.getElementById('sPot').textContent=fmt(potEmMao);
+  // Previsão de lucro só vale sobre o que está ANUNCIADO. Máquina em estoque não
+  // tem preço no mercado — atribuir lucro a ela é inventar receita que ninguém
+  // pediu ainda. O capital continua contando as duas, porque o dinheiro saiu nas duas.
+  document.getElementById('sPot').textContent=fmt(potAn);
   // Retorno do capital x lucro: são coisas diferentes e estavam somadas na cabeça
   // de quem lia. O que você pagou volta inteiro; o lucro é o que vem ACIMA disso.
   const capEmMao=emMaoTotal.reduce((s,p)=>s+custoRealDe(p),0);
   const elCap=document.getElementById('sCap');
   if(elCap) elCap.textContent=fmt(capEmMao);
+  const capAnun=an.reduce((s,p)=>s+custoRealDe(p),0);
   const elCapS=document.getElementById('sCapS');
-  if(elCapS) elCapS.textContent='investido em '+emMaoTotal.length+' máquina'+(emMaoTotal.length!==1?'s':'');
-  // Sem a razão, R$ 43 mil de lucro ao lado de R$ 41 mil de capital não diz nada.
-  // Com ela, dá pra comparar na hora com o markup que o negócio realmente realiza.
-  const semPrecoS=emMaoTotal.filter(p=>!((parseFloat(p.venda)||0)>0)).length;
+  if(elCapS) elCapS.textContent=emMaoTotal.length+' máquinas · '+fmt(capAnun).replace(' ','\u00A0')+' já anunciado';
+  // A razão é sobre o capital DOS ANUNCIADOS, que é o mesmo conjunto do lucro.
+  // Anunciada sem preço é defeito de cadastro e entra como zero: por isso é avisada.
+  // Estoque sem preço é normal e não entra em conta nenhuma aqui.
+  const anSemPreco=an.filter(p=>!((parseFloat(p.venda)||0)>0)).length;
   const elPotSub=document.getElementById('sPotSub');
   if(elPotSub){
-    const razao = capEmMao>0 ? Math.round(potEmMao/capEmMao*100)+'% sobre o capital' : 'se vender tudo';
-    elPotSub.textContent = razao + (semPrecoS?' · '+semPrecoS+' sem preço':'');
+    const razao = capAnun>0 ? ' · '+Math.round(potAn/capAnun*100)+'% sobre eles' : '';
+    elPotSub.textContent = 'nos '+an.length+' anunciados'+razao
+      + (anSemPreco?' · '+anSemPreco+' sem preço':'');
   }
 }
 
@@ -6516,22 +6522,21 @@ function buildCharts(){
 
   // Em estoque — MESMO cálculo do calcStats (sEst = Estoque+Anunciados)
   const estoqueVivo = prods.filter(p=>p.status==='Estoque'||p.status==='Anunciado');
-  const potEmMaoI   = estoqueVivo.reduce((s,p)=>s+getLucro(p),0);
+  const anunciadosI = estoqueVivo.filter(p=>p.status==='Anunciado');
+  // Só o que está anunciado tem preço no mercado, então só ele prevê lucro.
+  const potEmMaoI   = anunciadosI.reduce((s,p)=>s+getLucro(p),0);
   document.getElementById('iEst').textContent  = estoqueVivo.length;
-  document.getElementById('iEstN').textContent = fmt(potEmMaoI)+' de lucro potencial';
+  document.getElementById('iEstN').textContent = fmt(potEmMaoI)+' de lucro nos anunciados';
 
   // Potencial total — MESMO cálculo do calcStats (sPot)
   const elIPot = document.getElementById('iPot');
   if(elIPot) elIPot.textContent = fmt(potEmMaoI);
   // Máquina sem preço de venda entra somando ZERO — o "se vender tudo" fica menor
   // do que a realidade e ninguém percebe. Em vez de esconder, o card conta quantas.
-  const semPreco = estoqueVivo.filter(p=>!((parseFloat(p.venda)||0)>0)).length;
+  const semPreco = anunciadosI.filter(p=>!((parseFloat(p.venda)||0)>0)).length;
   const elIPotN = document.getElementById('iPotN');
-  if(elIPotN) elIPotN.textContent = estoqueVivo.filter(p=>p.status==='Anunciado').length+' anunciados · '
-    + estoqueVivo.filter(p=>p.status==='Estoque').length+' estoque'
+  if(elIPotN) elIPotN.textContent = anunciadosI.length+' anunciados de '+estoqueVivo.length+' em mão'
     + (semPreco?' · '+semPreco+' sem preço':'');
-  const elSPotSub = document.getElementById('sPotSub');
-  if(elSPotSub) elSPotSub.textContent = semPreco ? ('sem contar '+semPreco+' sem preço') : 'se vender tudo';
 
   // ── GRÁFICO RECEITA vs LUCRO ──
   (function(){
