@@ -527,6 +527,23 @@ input[type=number].inp{padding-left:32px}
 .nec-mais{font-size:.66rem;color:var(--li);align-self:center}
 @media(max-width:560px){.nec-row{flex-wrap:wrap}.nec-cat{min-width:0}}
 
+.hw-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(108px,1fr));gap:8px}
+.hw-f{display:flex;flex-direction:column;gap:3px;font-size:.66rem;font-weight:600;color:var(--mu)}
+.hw-f .inp{width:100%}
+.hw-chk{grid-column:1/-1;display:flex;align-items:center;gap:7px;font-size:.72rem;color:var(--tx);cursor:pointer}
+.hw-chk input{width:15px;height:15px;accent-color:#16a34a;cursor:pointer}
+.hw-sug-box{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;padding:7px 10px;
+  background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px}
+.hw-sug-txt{flex:1;min-width:0;font-size:.71rem;color:#1e40af;word-break:break-word}
+.hw-sug-bt{background:#1e40af;color:#fff;border:none;border-radius:6px;padding:4px 9px;
+  font:inherit;font-size:.67rem;font-weight:700;cursor:pointer;white-space:nowrap}
+.hw-chips{display:flex;flex-wrap:wrap;gap:3px;margin-top:3px}
+.hw-chip{font-size:.62rem;font-weight:600;color:var(--mu);background:var(--bg);
+  border:1px solid var(--b2);border-radius:5px;padding:1px 5px;white-space:nowrap}
+.hw-chip.boa{background:#f0fdf4;border-color:#bbf7d0;color:#15803d}
+.hw-chip.media{background:#fffbeb;border-color:#fde68a;color:#92400e}
+.hw-chip.ruim{background:#fef2f2;border-color:#fecaca;color:#b91c1c}
+
 .rev-tag{display:inline-flex;align-items:center;gap:4px;margin-top:3px;padding:2px 7px;
   border-radius:11px;font-size:.66rem;font-weight:700;cursor:pointer;
   background:#fff7ed;border:1px solid #fed7aa;color:#9a3412}
@@ -1374,6 +1391,10 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
               </div>
             </div>
             <div class="fc" style="grid-column:1/-1"><input class="inp" type="text" id="pN" placeholder="Monte acima ou digite: Dell Latitude i5 10ª · SSD 256GB · 8GB RAM" oninput="nomeManual=true"></div>
+            <div class="fc" style="grid-column:1/-1">
+              <span class="fla">🔩 Hardware conferido <span style="font-size:.62rem;color:var(--li)">opcional — dá pra preencher depois, na revisão</span></span>
+              <div class="hw-mount" id="pHwMount"></div>
+            </div>
             <div class="fc"><span class="fla">Custo R$</span><input class="inp" type="number" id="pC" placeholder="0" min="0" oninput="ppTotal()"></div>
             <div class="fc"><span class="fla">Venda R$</span><input class="inp" type="number" id="pV" placeholder="0" min="0"></div>
             <div class="fc"><span class="fla">Status</span>
@@ -2667,6 +2688,8 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
       <div class="fc full" id="eRevWrap">
         <label class="fl">🔧 Revisão da máquina <span style="font-size:.67rem;color:var(--li);font-weight:400">aberta, peça conferida</span></label>
         <div class="rev-box">
+          <div class="hw-mount" id="eHwMount"></div>
+          <div class="hw-sug" id="eHwSug"></div>
           <label class="rev-check">
             <input type="checkbox" id="eRevisado" onchange="eRevHint()">
             <span>✅ Já abri e conferi esta máquina<span id="eRevQuando"></span></span>
@@ -3038,7 +3061,7 @@ onAuthStateChanged(auth,u=>{
     // Mostrar botão admin só para o dono
     const btnAdm = document.getElementById('btnAdmin');
     if(btnAdm) btnAdm.style.display = perfilAtual==='joao' ? '' : 'none';
-    loadProds();loadFinancas();loadPecas();loadClientes();loadFornecedores();loadMetas3();loadMilhao();loadReciboCfg();
+    loadProds();loadFinancas();loadPecas();loadClientes();loadFornecedores();loadMetas3();loadMilhao();loadReciboCfg();try{montarHw();}catch(e){}
     try{ initSpecBuilder(); loadCpuOutros(); }catch(e){}
     setTimeout(carregarAvisos, 2000); // carregar avisos após login
   }
@@ -3650,7 +3673,7 @@ window.addProd=async()=>{
   // Pendência anotada já no cadastro. Máquina recém-comprada nunca nasce com a
   // pendência resolvida, então aqui não existe o check de 'já foi feito'.
   const falta=(document.getElementById('pFalta')?.value||'').trim();
-  const obj={userId:'shared_ijx',addedBy:user.uid,addedByName:user.displayName||user.email.split('@')[0],nome,custo:custoTotal,custo_base:custo,custo_pecas:custoPecas,custo_gasolina:custoGas,gas_pagante:gasPag,venda,lucro:venda-custoTotal,status,investidor,data_compra:dc,data_compra_mes:dcMes,data_venda:'',data:dcMes,canal_compra:canal,falta_comprar:falta,falta_feito:false,falta_feito_em:'',aporte_joao:(parseFloat(document.getElementById('pApJoao')?.value)||0),aporte_igor:(parseFloat(document.getElementById('pApIgor')?.value)||0),fornecedor_id:fornId,fornecedor_nome:fornNome,num,fotos_n:fotosPend.prod.length,createdAt:new Date().toISOString()};
+  const obj={userId:'shared_ijx',addedBy:user.uid,addedByName:user.displayName||user.email.split('@')[0],nome,custo:custoTotal,custo_base:custo,custo_pecas:custoPecas,custo_gasolina:custoGas,gas_pagante:gasPag,venda,lucro:venda-custoTotal,status,investidor,data_compra:dc,data_compra_mes:dcMes,data_venda:'',data:dcMes,canal_compra:canal,...hwCampos('p'),falta_comprar:falta,falta_feito:false,falta_feito_em:'',aporte_joao:(parseFloat(document.getElementById('pApJoao')?.value)||0),aporte_igor:(parseFloat(document.getElementById('pApIgor')?.value)||0),fornecedor_id:fornId,fornecedor_nome:fornNome,num,fotos_n:fotosPend.prod.length,createdAt:new Date().toISOString()};
   let prodId='l'+Date.now();
   try{const r=await addDoc(collection(db,'products'),obj);prodId=r.id;prods.push({...obj,id:r.id});}
   catch(e){ await gravar(Promise.reject(e), 'Cadastrar "'+nome+'"'); prods.push({...obj,id:prodId}); }
@@ -3689,6 +3712,10 @@ window.addProd=async()=>{
   const paj=document.getElementById('pApJoao'); if(paj) paj.value='';
   const pai=document.getElementById('pApIgor'); if(pai) pai.value='';
   const pfa=document.getElementById('pFalta'); if(pfa) pfa.value='';
+  ['SlotsRam','SlotsRamOc','SlotsM2','SlotsM2Oc','Tela','Bat'].forEach(id=>{
+    const e=document.getElementById('p'+id); if(e) e.value='';
+  });
+  const pb=document.getElementById('pBaia25'); if(pb) pb.checked=false;
   pAporteHint();
   try{ resetSpecBuilder(); }catch(e){}
   ppLimpar();
@@ -4879,6 +4906,7 @@ window.openEdit=id=>{
   eRepasseHint();
   eDescCalc();
   // Nota "o que falta comprar" — só para itens ainda não vendidos
+  montarHw(); hwPreencher('e',p); eHwSugerir();
   const eRev=document.getElementById('eRevisado'); if(eRev) eRev.checked=!!p.revisado;
   const eRObs=document.getElementById('eRevObs'); if(eRObs) eRObs.value=p.revisao_obs||'';
   const eNP=document.getElementById('eNumPlan'); if(eNP) eNP.value=p.num_planilha||'';
@@ -4988,6 +5016,50 @@ window.pAportePreset=(qual)=>aportePreset('p',qual);
 // O check só aparece quando há pendência escrita — marcar "feito" sem ter o que
 // foi feito não registra nada.
 // Só faz sentido mostrar a data quando o check está marcado.
+// Os dois formulários usam o mesmo HTML, gerado uma vez. Se um campo mudar,
+// muda nos dois — não dá pra um lado ficar pedindo dado que o outro não grava.
+function montarHw(){
+  const e=document.getElementById('eHwMount');
+  if(e && !e.innerHTML){
+    e.innerHTML=hwHTML('e');
+    // Um listener no container em vez de onchange em cada campo: os inputs são
+    // gerados, e handler inline exigiria diferenciar cadastro de edição no HTML.
+    e.addEventListener('input', ()=>{ try{ eHwSugerir(); }catch(err){} });
+    e.addEventListener('change', ()=>{ try{ eHwSugerir(); }catch(err){} });
+  }
+  const c=document.getElementById('pHwMount'); if(c && !c.innerHTML) c.innerHTML=hwHTML('p');
+}
+// Nome sugerido a partir do que foi conferido. NÃO sobrescreve sozinho: mostra a
+// sugestão e você aplica se quiser. Sobrescrever nome que você escreveu à mão
+// seria destruir trabalho seu sem pedir.
+window.eHwSugerir=()=>{
+  const campo=document.getElementById('eN'); const box=document.getElementById('eHwSug');
+  if(!campo||!box) return;
+  const p=prods.find(x=>x.id===editId)||{};
+  const hw=Object.assign({},p,hwCampos('e'));
+  const extras=[];
+  const lr=slotsLivres(hw.slots_ram,hw.slots_ram_ocup);
+  if(lr>0) extras.push(lr+' slot'+(lr!==1?'s':'')+' RAM livre'+(lr!==1?'s':''));
+  const lm=slotsLivres(hw.slots_m2,hw.slots_m2_ocup);
+  if(lm>0) extras.push(lm+' M.2 livre'+(lm!==1?'s':''));
+  if(hw.baia_25) extras.push('baia 2.5"');
+  if(hw.bateria_pct!=null) extras.push('bateria '+hw.bateria_pct+'%');
+  if(!extras.length){ box.innerHTML=''; return; }
+  const base=(campo.value||'').split(' · ').filter(t=>
+    !/slot|baia|bateria \d|M\.2 livre/i.test(t)).join(' · ');
+  const sug=[base,...extras].filter(Boolean).join(' · ');
+  if(sug===campo.value){ box.innerHTML=''; return; }
+  box.innerHTML=`<div class="hw-sug-box">
+    <span class="hw-sug-txt">${esc(sug)}</span>
+    <button type="button" class="hw-sug-bt" onclick="eHwAplicar()">usar este nome</button>
+  </div>`;
+  box.dataset.sug=sug;
+};
+window.eHwAplicar=()=>{
+  const box=document.getElementById('eHwSug'), campo=document.getElementById('eN');
+  if(box&&campo&&box.dataset.sug){ campo.value=box.dataset.sug; box.innerHTML=''; }
+};
+
 window.eRevHint=()=>{
   const chk=document.getElementById('eRevisado'), quando=document.getElementById('eRevQuando');
   if(!chk||!quando) return;
@@ -5070,7 +5142,7 @@ window.saveEdit=async()=>{
   const custoFinal=baseMaquina+somaJa+somaNovas;
   const totalPecas=somaJa+somaNovas;
 
-  const upd={nome,custo:custoFinal,custo_base:baseMaquina,custo_pecas:totalPecas,venda,lucro:venda-custoFinal,status,investidor,plataforma:(status==='Vendido'?(document.getElementById('ePlat')?.value||''):''),repasse_socio:(status==='Vendido'?(parseFloat(document.getElementById('eRepasse')?.value)||0):0),falta_comprar:(status!=='Vendido'?(document.getElementById('eFalta')?.value.trim()||''):''),falta_feito:(status!=='Vendido'&&!!document.getElementById('eFaltaFeito')?.checked),falta_feito_em:((status!=='Vendido'&&document.getElementById('eFaltaFeito')?.checked)?((_pAtual&&_pAtual.falta_feito&&_pAtual.falta_feito_em)||new Date().toISOString().slice(0,10)):''),revisado:!!document.getElementById('eRevisado')?.checked,revisado_em:(document.getElementById('eRevisado')?.checked?((_pAtual&&_pAtual.revisado&&_pAtual.revisado_em)||new Date().toISOString().slice(0,10)):''),revisao_obs:(document.getElementById('eRevObs')?.value.trim()||''),num_planilha:(document.getElementById('eNumPlan')?.value.trim()||''),fornecedor_id:fornId,fornecedor_nome:fornNome,data_compra:dc,data_compra_mes:dcMes,data_venda:dv,data:(dv?dv.slice(0,7):dcMes),gas_pagante:(document.getElementById('eGasPag')?.value||'ambos'),aporte_joao:(parseFloat(document.getElementById('eApJoao')?.value)||0),aporte_igor:(parseFloat(document.getElementById('eApIgor')?.value)||0),cliente_id:cliId,cliente_nome:cliNome,preco_cheio:(status==='Vendido'?(parseFloat(document.getElementById('ePrecoCheio')?.value)||0):0),nota_venda:(status==='Vendido'?(document.getElementById('eNotaVenda')?.value.trim()||''):'')};
+  const upd={nome,custo:custoFinal,custo_base:baseMaquina,custo_pecas:totalPecas,venda,lucro:venda-custoFinal,status,investidor,plataforma:(status==='Vendido'?(document.getElementById('ePlat')?.value||''):''),repasse_socio:(status==='Vendido'?(parseFloat(document.getElementById('eRepasse')?.value)||0):0),falta_comprar:(status!=='Vendido'?(document.getElementById('eFalta')?.value.trim()||''):''),falta_feito:(status!=='Vendido'&&!!document.getElementById('eFaltaFeito')?.checked),falta_feito_em:((status!=='Vendido'&&document.getElementById('eFaltaFeito')?.checked)?((_pAtual&&_pAtual.falta_feito&&_pAtual.falta_feito_em)||new Date().toISOString().slice(0,10)):''),...hwCampos('e'),revisado:!!document.getElementById('eRevisado')?.checked,revisado_em:(document.getElementById('eRevisado')?.checked?((_pAtual&&_pAtual.revisado&&_pAtual.revisado_em)||new Date().toISOString().slice(0,10)):''),revisao_obs:(document.getElementById('eRevObs')?.value.trim()||''),num_planilha:(document.getElementById('eNumPlan')?.value.trim()||''),fornecedor_id:fornId,fornecedor_nome:fornNome,data_compra:dc,data_compra_mes:dcMes,data_venda:dv,data:(dv?dv.slice(0,7):dcMes),gas_pagante:(document.getElementById('eGasPag')?.value||'ambos'),aporte_joao:(parseFloat(document.getElementById('eApJoao')?.value)||0),aporte_igor:(parseFloat(document.getElementById('eApIgor')?.value)||0),cliente_id:cliId,cliente_nome:cliNome,preco_cheio:(status==='Vendido'?(parseFloat(document.getElementById('ePrecoCheio')?.value)||0):0),nota_venda:(status==='Vendido'?(document.getElementById('eNotaVenda')?.value.trim()||''):'')};
   await vincularTroca(editId, upd);
   if(!idLocal(editId)) await gravar(updateDoc(doc(db,'products',editId),upd), 'Editar "'+nome+'"');
   // Grava as peças novas na aba Peças, vinculadas a esta máquina
@@ -5565,6 +5637,85 @@ function faltaFeitaEm(p){
   if(!d) return '';
   return d.length>7 ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short'}) : d;
 }
+// ── HARDWARE CONFERIDO NA BANCADA ──
+// Slots livres e estado de tela/bateria são o que decide preço e o que decide se
+// vale fazer upgrade. Máquina com 1 slot livre aceita +8GB por R$ 80; máquina com
+// slot único ocupado exige trocar o pente inteiro. Isso muda a conta da compra.
+const TELA_OPC=[
+  ['','—'],
+  ['perfeita','Perfeita'],
+  ['riscos','Riscos leves'],
+  ['manchas','Manchas / vazamento'],
+  ['pixel','Pixel morto'],
+  ['trincada','Trincada'],
+];
+function hwCampos(pre){
+  const g=id=>document.getElementById(pre+id);
+  const n=id=>{const e=g(id); const v=parseInt(e&&e.value); return isNaN(v)?null:v;};
+  return {
+    slots_ram: n('SlotsRam'), slots_ram_ocup: n('SlotsRamOc'),
+    slots_m2:  n('SlotsM2'),  slots_m2_ocup:  n('SlotsM2Oc'),
+    baia_25:   !!(g('Baia25')&&g('Baia25').checked),
+    tela_estado: (g('Tela')&&g('Tela').value)||'',
+    bateria_pct: n('Bat'),
+  };
+}
+function hwPreencher(pre,p){
+  const set=(id,v)=>{const e=document.getElementById(pre+id); if(e) e.value=(v===null||v===undefined)?'':v;};
+  set('SlotsRam',p.slots_ram); set('SlotsRamOc',p.slots_ram_ocup);
+  set('SlotsM2',p.slots_m2);   set('SlotsM2Oc',p.slots_m2_ocup);
+  set('Tela',p.tela_estado||''); set('Bat',p.bateria_pct);
+  const b=document.getElementById(pre+'Baia25'); if(b) b.checked=!!p.baia_25;
+}
+// Slot livre é o que sobra. Sem os dois números não dá pra saber, e chutar zero
+// faria parecer que a máquina está cheia — o oposto do que interessa.
+function slotsLivres(total,ocup){
+  if(total===null||total===undefined||ocup===null||ocup===undefined) return null;
+  return Math.max(0, total-ocup);
+}
+function hwResumo(p){
+  const partes=[];
+  const lr=slotsLivres(p.slots_ram,p.slots_ram_ocup);
+  if(p.slots_ram!=null) partes.push(`🧠 ${p.slots_ram_ocup!=null?p.slots_ram_ocup+'/':''}${p.slots_ram} RAM${lr!==null?(lr>0?' · '+lr+' livre'+(lr!==1?'s':''):' · cheio'):''}`);
+  const lm=slotsLivres(p.slots_m2,p.slots_m2_ocup);
+  if(p.slots_m2!=null) partes.push(`💾 ${p.slots_m2_ocup!=null?p.slots_m2_ocup+'/':''}${p.slots_m2} M.2${lm!==null?(lm>0?' · '+lm+' livre'+(lm!==1?'s':''):' · cheio'):''}`);
+  if(p.baia_25) partes.push('📀 baia 2.5"');
+  if(p.tela_estado){
+    const nm=(TELA_OPC.find(o=>o[0]===p.tela_estado)||[])[1]||p.tela_estado;
+    partes.push('🖥️ '+nm);
+  }
+  if(p.bateria_pct!=null) partes.push('🔋 '+p.bateria_pct+'%');
+  return partes;
+}
+// A bateria é o número que mais engana o comprador. Abaixo de 50% o anúncio tem
+// que dizer, senão vira troca depois.
+function bateriaCls(pct){
+  if(pct==null) return '';
+  return pct>=80?'boa':pct>=50?'media':'ruim';
+}
+// Na linha, o hardware vira selo curto. Bateria ganha cor porque é o número que
+// mais gera troca depois da venda quando o comprador descobre sozinho.
+function hwChips(p){
+  const partes=hwResumo(p);
+  if(!partes.length) return '';
+  return '<div class="hw-chips">'+partes.map(t=>{
+    const cls = /^🔋/.test(t) ? (' '+bateriaCls(p.bateria_pct)) : '';
+    return `<span class="hw-chip${cls}">${esc(t)}</span>`;
+  }).join('')+'</div>';
+}
+function hwHTML(pre){
+  const opc=TELA_OPC.map(([v,t])=>`<option value="${v}">${t}</option>`).join('');
+  return `<div class="hw-grid">
+    <label class="hw-f"><span>Slots RAM</span><input class="inp" type="number" min="0" max="4" id="${pre}SlotsRam" placeholder="2"></label>
+    <label class="hw-f"><span>RAM ocupados</span><input class="inp" type="number" min="0" max="4" id="${pre}SlotsRamOc" placeholder="1"></label>
+    <label class="hw-f"><span>Slots M.2</span><input class="inp" type="number" min="0" max="3" id="${pre}SlotsM2" placeholder="1"></label>
+    <label class="hw-f"><span>M.2 ocupados</span><input class="inp" type="number" min="0" max="3" id="${pre}SlotsM2Oc" placeholder="1"></label>
+    <label class="hw-f"><span>Estado da tela</span><select class="inp" id="${pre}Tela">${opc}</select></label>
+    <label class="hw-f"><span>Bateria %</span><input class="inp" type="number" min="0" max="100" id="${pre}Bat" placeholder="87"></label>
+    <label class="hw-chk"><input type="checkbox" id="${pre}Baia25"><span>Tem baia 2.5" (cabe HD/SSD SATA)</span></label>
+  </div>`;
+}
+
 // ── REVISÃO DA MÁQUINA ──
 // Máquina aberta, peça conferida. A etiqueta física no notebook leva o mesmo número
 // que aparece aqui, então dá pra ir do aparelho na bancada pro registro e vice-versa.
@@ -6219,6 +6370,7 @@ function renderTabela(lista, tipo){
       const platInfo=p.status==='Vendido'&&p.plataforma?`<span style="font-size:.67rem;font-weight:600;padding:2px 7px;border-radius:10px;margin-left:4px;background:${platBg[p.plataforma]||'#f5f5f5'};color:${platColors[p.plataforma]||'#78716c'};border:1px solid ${platBd[p.plataforma]||'#d4d4d4'}">${esc(p.plataforma)}</span>`:'';
       const faltaInfo=faltaBadge(p);
       const revInfo=revisaoBadge(p);
+      const hwInfo=hwChips(p);
       let compChips='';
       if(p.status!=='Vendido' && typeof pecas!=='undefined'){
         const comps=pecas.filter(pc=>pc.produto_id===p.id);
@@ -6247,7 +6399,7 @@ function renderTabela(lista, tipo){
         <td style="color:var(--li);font-size:.75rem">${tipo==='vendidos'?fdt(p.data_venda):'—'}</td>
         <td class="ps">${fmt(p.venda)}</td>
         <td class="pp ${lp>=0?'pos':'neg'}">${fmt(lp)}${splitLucro}</td>
-        <td>${sb}${platInfo}${parcInfo}${revInfo}${faltaInfo}</td>
+        <td>${sb}${platInfo}${parcInfo}${revInfo}${hwInfo}${faltaInfo}</td>
         <td><select class="sel" data-id="${p.id}" onchange="updStatus('${p.id}',this.value)">
           ${statusEstranho(p)}
           <option ${p.status==='Anunciado'?'selected':''} value="Anunciado">Anunciado</option>
@@ -6321,6 +6473,7 @@ function render(){
       const platInfo=p.status==='Vendido'&&p.plataforma?`<span style="font-size:.67rem;font-weight:600;padding:2px 7px;border-radius:10px;margin-left:4px;background:${platBg[p.plataforma]||'#f5f5f5'};color:${platColors[p.plataforma]||'#78716c'};border:1px solid ${platBd[p.plataforma]||'#d4d4d4'}">${esc(p.plataforma)}</span>`:'';
       const faltaInfo=faltaBadge(p);
       const revInfo=revisaoBadge(p);
+      const hwInfo=hwChips(p);
       let compChips='';
       if(p.status!=='Vendido' && typeof pecas!=='undefined'){
         const comps=pecas.filter(pc=>pc.produto_id===p.id);
@@ -6350,7 +6503,7 @@ function render(){
         <td style="color:var(--mu)">${fmt(p.custo)}${(p.custo_pecas>0)?`<div class="custo-brk"><span title="Pago na máquina">📦 ${fmt(p.custo_base!==undefined?p.custo_base:(p.custo-p.custo_pecas))}</span> <span class="cb-pc" title="Pago em peças">🔧 ${fmt(p.custo_pecas)}</span></div>`:''}</td>
         <td class="ps">${fmt(p.venda)}</td>
         <td class="pp ${lp>=0?'pos':'neg'}">${fmt(lp)}${diasInfo}${splitLucro}</td>
-        <td>${sb}${platInfo}${parcInfo}${revInfo}${faltaInfo}</td>
+        <td>${sb}${platInfo}${parcInfo}${revInfo}${hwInfo}${faltaInfo}</td>
         <td><select class="sel" data-id="${p.id}" onchange="updStatus('${p.id}',this.value)">
           ${statusEstranho(p)}
           <option ${p.status==='Anunciado'?'selected':''} value="Anunciado">Anunciado</option>
