@@ -6870,8 +6870,7 @@ function buildCharts(){
   // Ticket médio — MESMO cálculo (sRec/qtd)
   document.getElementById('iTk').textContent = fmt(tTk);
 
-  // Em estoque — MESMO cálculo do calcStats (sEst = Estoque+Anunciados)
-    + (semPreco?' · '+semPreco+' sem preço':'');
+  // 'Na mão hoje' e 'Lucro potencial' vivem só na barra da Vendas agora.
 
   // ── GRÁFICO RECEITA vs LUCRO ──
   (function(){
