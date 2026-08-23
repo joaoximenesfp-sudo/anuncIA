@@ -1340,11 +1340,9 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
       <!-- ALERTAS -->
       <div class="al-row" id="alertsRow"></div>
       <div class="sr">
-        <div class="sb"><div class="sbl">Receita total</div><div class="sbv g" id="sRec">—</div><div class="sbs" id="sRecS">—</div></div>
-        <div class="sb" title="MARGEM = média da margem de cada máquina (lucro ÷ venda). MARKUP = lucro total ÷ custo total de tudo que já foi vendido: de todo dinheiro que saiu do bolso, quanto voltou acima. 100% = dobrou."><div class="sbl">Lucro total</div><div class="sbv" id="sLuc">—</div><div class="sbs" id="sMgm">—</div></div>
-        <div class="sb"><div class="sbl">Anunciados</div><div class="sbv b" id="sAnu">—</div><div class="sbs" id="sAnuV">—</div></div>
-        <div class="sb" title="Máquinas abertas e conferidas por dentro. Toque na etiqueta 🔧 de qualquer linha pra marcar sem abrir a edição."><div class="sbl">Revisadas</div><div class="sbv b" id="sRev">—</div><div class="sbs" id="sRevS">—</div></div>
         <div class="sb"><div class="sbl">Na mão hoje</div><div class="sbv" id="sEst">—</div><div class="sbs" id="sEstV">—</div></div>
+        <div class="sb" title="Máquinas abertas e conferidas por dentro. Toque na etiqueta 🔧 de qualquer linha pra marcar sem abrir a edição."><div class="sbl">Revisadas</div><div class="sbv b" id="sRev">—</div><div class="sbs" id="sRevS">—</div></div>
+        <div class="sb"><div class="sbl">Anunciados</div><div class="sbv b" id="sAnu">—</div><div class="sbs" id="sAnuV">—</div></div>
         <div class="sb" title="O que você já pagou pelas máquinas que estão na mão. Esse dinheiro volta pro caixa quando elas venderem — não é lucro, é o seu capital retornando."><div class="sbl">Capital de volta</div><div class="sbv" id="sCap">—</div><div class="sbs" id="sCapS">—</div></div>
         <div class="sb" title="O que sobra ACIMA do capital quando as máquinas venderem, calculado pelo PREÇO PEDIDO em cada anúncio. Preço pedido não é preço fechado: depois de negociar costuma sair menos. Trate como teto, não como previsão. Capital de volta + lucro potencial = a receita que entra."><div class="sbl">Lucro potencial</div><div class="sbv a" id="sPot">—</div><div class="sbs" id="sPotSub">se vender tudo</div></div>
       </div>
@@ -1647,14 +1645,12 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
       <div class="ph"><div><div class="pht">Insights</div><div class="phs">Análise real da operação — dados direto da planilha</div></div></div>
       <div class="ig">
         <div class="ib"><div class="ii">📈</div><div><div class="il">Melhor mês</div><div class="iv" id="iBM">—</div><div class="in" id="iBMN">—</div></div></div>
+        <div class="ib"><div class="ii">💵</div><div><div class="il">Receita total</div><div class="iv g" id="iRec">—</div><div class="in" id="iRecN">—</div></div></div>
         <div class="ib"><div class="ii">💰</div><div><div class="il">Lucro total</div><div class="iv" id="iLT">—</div><div class="in" id="iLTN">—</div></div></div>
         <div class="ib" title="MARGEM = lucro ÷ venda. De cada R$ 100 que entra na venda, quanto sobra de lucro. É o padrão do varejo."><div class="ii">📊</div><div><div class="il">Margem</div><div class="iv" id="iMG">—</div><div class="in">lucro ÷ venda</div></div></div>
         <div class="ib" title="MARKUP = lucro total ÷ custo total de tudo que já foi vendido. De todo dinheiro que saiu do bolso, quanto voltou acima dele. 100% = dobrou."><div class="ii">🧮</div><div><div class="il">Markup</div><div class="iv" id="iMK">—</div><div class="in">lucro ÷ custo</div></div></div>
         <div class="ib"><div class="ii">🏆</div><div><div class="il">Marca líder</div><div class="iv" id="iMarca">—</div><div class="in" id="iMarcaN">—</div></div></div>
         <div class="ib"><div class="ii">🎯</div><div><div class="il">Ticket médio</div><div class="iv" id="iTk">—</div><div class="in">por notebook vendido</div></div></div>
-        <div class="ib"><div class="ii">📦</div><div><div class="il">Na mão hoje</div><div class="iv b" id="iEst">—</div><div class="in" id="iEstN">—</div></div></div>
-        <div class="ib"><div class="ii">🔮</div><div><div class="il">Lucro potencial</div><div class="iv am" id="iPot">—</div><div class="in" id="iPotN">—</div></div></div>
-        <div class="ib"><div class="ii">💼</div><div><div class="il">Capital em giro</div><div class="iv g" id="pCapGiro">—</div><div class="in" id="pCapGiroSub">investido no estoque atual</div></div></div>
         <div class="ib"><div class="ii">⏳</div><div><div class="il">Capital parado</div><div class="iv re" id="pCapParado">—</div><div class="in" id="pCapParadoSub">média de dias em estoque</div></div></div>
         <div class="ib" title="Do dinheiro imobilizado, quanto está em máquina de fato anunciada. O que não está anunciado não é capital parado: é capital que nem entrou no jogo."><div class="ii">📣</div><div><div class="il">Já anunciado</div><div class="iv b" id="pParadoAnun">—</div><div class="in" id="pParadoAnunSub">—</div></div></div>
         <div class="ib"><div class="ii">📍</div><div><div class="il">Melhor origem</div><div class="iv b" id="pMelhorPlat">—</div><div class="in" id="pMelhorPlatSub">mais vendas no período</div></div></div>
@@ -6575,8 +6571,7 @@ function calcStats(){
   const potEs=es.reduce((s,p)=>s+getLucro(p),0);
   const emMaoTotal=[...an,...es]; // Estoque + Anunciados = tudo na mão hoje
   const potEmMao=potAn+potEs;
-  document.getElementById('sRec').textContent=fmt(rec);document.getElementById('sRecS').textContent=v.length+' vendas';
-  document.getElementById('sLuc').textContent=fmt(luc);document.getElementById('sMgm').textContent='margem '+mg+'% · markup '+mk+'%';
+  // Receita e lucro totais são história, não operação: vivem na aba Insights.
   document.getElementById('sAnu').textContent=an.length;document.getElementById('sAnuV').textContent=fmt(potAn)+' de lucro';
   // Progresso da revisão: com 68 máquinas em sequência, saber onde parou é o
   // que evita abrir a mesma duas vezes e esquecer outra.
@@ -6697,8 +6692,8 @@ function buildCardsCapital(){
   const sub=(id,txt)=>{ const s=document.getElementById(id); if(s) s.textContent=txt; };
   const estoqueAtual=prods.filter(p=>p.status==='Estoque'||p.status==='Anunciado');
   const capitalGiro=estoqueAtual.reduce((s,p)=>s+(p.custo||0),0);
-  const cg=document.getElementById('pCapGiro');
-  if(cg){ cg.textContent=fmt(capitalGiro); sub('pCapGiroSub', estoqueAtual.length+' produtos no estoque/anunciados'); }
+  // Capital em giro virou 'Capital de volta' na barra da Vendas — um nome só no app.
+  // capitalGiro continua calculado aqui porque alimenta os dois cards abaixo.
   const dias=estoqueAtual.filter(p=>p.data_compra).map(p=>{
     const dc=p.data_compra.length===7?p.data_compra+'-01':p.data_compra;
     return Math.round((hoje-new Date(dc))/86400000);
@@ -6845,8 +6840,9 @@ function buildCharts(){
   // Margem média por notebook (lucro÷venda) e Markup médio (lucro÷custo) — cada máquina pesa igual
   const _comV   = vTodos.filter(p=>(p.venda||0)>0);
   const tMg     = _comV.length ? Math.round(_comV.reduce((s,p)=>s+(getLucro(p)/p.venda*100),0)/_comV.length) : 0;
-  const _comC   = vTodos.filter(p=>custoRealDe(p)>0);
-  const tMk     = _comC.length ? Math.round(_comC.reduce((s,p)=>s+(getLucro(p)/custoRealDe(p)*100),0)/_comC.length) : 0;
+  // Markup AGREGADO, igual ao de calcStats: média de razões estoura com item barato.
+  const _custoT = vTodos.reduce((s,p)=>s+custoRealDe(p),0);
+  const tMk     = _custoT>0 ? Math.round(tLuc/_custoT*100) : 0;
   const tTk     = tQtd>0?Math.round(tRec/tQtd):0;
 
   // Melhor mês (usa calcChartsData para o gráfico, mas cards lêem prods diretamente)
@@ -6854,7 +6850,11 @@ function buildCharts(){
   document.getElementById('iBM').textContent  = d.labels[maxIdx]||'—';
   document.getElementById('iBMN').textContent = fmt(d.rec[maxIdx]||0);
 
-  // Lucro total — MESMO cálculo do calcStats (sLuc)
+  // Receita e lucro totais: saíram da barra da Vendas e moram só aqui agora.
+  const elIRec=document.getElementById('iRec');
+  if(elIRec) elIRec.textContent = fmt(tRec);
+  const elIRecN=document.getElementById('iRecN');
+  if(elIRecN) elIRecN.textContent = tQtd+' venda'+(tQtd!==1?'s':'');
   document.getElementById('iLT').textContent  = fmt(tLuc);
   document.getElementById('iLTN').textContent = 'João '+fmt(tLuc/2)+' · Igor '+fmt(tLuc/2);
 
@@ -6871,21 +6871,6 @@ function buildCharts(){
   document.getElementById('iTk').textContent = fmt(tTk);
 
   // Em estoque — MESMO cálculo do calcStats (sEst = Estoque+Anunciados)
-  const estoqueVivo = prods.filter(p=>p.status==='Estoque'||p.status==='Anunciado');
-  const anunciadosI = estoqueVivo.filter(p=>p.status==='Anunciado');
-  // Só o que está anunciado tem preço no mercado, então só ele prevê lucro.
-  const potEmMaoI   = anunciadosI.reduce((s,p)=>s+getLucro(p),0);
-  document.getElementById('iEst').textContent  = estoqueVivo.length;
-  document.getElementById('iEstN').textContent = fmt(potEmMaoI)+' de lucro nos anunciados';
-
-  // Potencial total — MESMO cálculo do calcStats (sPot)
-  const elIPot = document.getElementById('iPot');
-  if(elIPot) elIPot.textContent = fmt(potEmMaoI);
-  // Máquina sem preço de venda entra somando ZERO — o "se vender tudo" fica menor
-  // do que a realidade e ninguém percebe. Em vez de esconder, o card conta quantas.
-  const semPreco = anunciadosI.filter(p=>!((parseFloat(p.venda)||0)>0)).length;
-  const elIPotN = document.getElementById('iPotN');
-  if(elIPotN) elIPotN.textContent = anunciadosI.length+' anunciados de '+estoqueVivo.length+' em mão'
     + (semPreco?' · '+semPreco+' sem preço':'');
 
   // ── GRÁFICO RECEITA vs LUCRO ──
