@@ -520,6 +520,25 @@ input[type=number].inp{padding-left:32px}
 .cat-cfg label{display:flex;flex-direction:column;gap:3px;font-size:.7rem;font-weight:700;color:var(--mu)}
 .cat-cfg .inp{font-size:.8rem;padding:8px 10px}
 .cat-bts{display:flex;gap:8px;flex-wrap:wrap}
+.cat-descs{margin-top:12px;border:1px solid var(--b2);border-radius:10px;background:var(--bg);
+  padding:10px 11px;max-height:420px;overflow-y:auto}
+.cat-descs-topo{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  flex-wrap:wrap;font-size:.73rem;color:var(--mu);font-weight:600;margin-bottom:9px}
+.cat-descs-fil{display:flex;align-items:center;gap:6px;font-weight:600;cursor:pointer}
+.cat-descs-fil input{width:14px;height:14px;accent-color:#16a34a;cursor:pointer}
+.cat-item{background:var(--w);border:1px solid var(--b2);border-radius:9px;padding:9px 10px;margin-bottom:7px}
+.cat-item.falta{border-left:3px solid #f59e0b}
+.cat-item-cab{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:5px}
+.cat-item-nm{font-size:.78rem;font-weight:700;color:var(--tx);line-height:1.3}
+.cat-item-pr{font-size:.75rem;font-weight:800;color:var(--gr);white-space:nowrap}
+.cat-item textarea{width:100%;min-height:56px;resize:vertical;font-family:inherit;font-size:.76rem;
+  line-height:1.5;padding:7px 9px;border:1px solid var(--b2);border-radius:7px;background:var(--w);
+  color:var(--tx)}
+.cat-item-pe{display:flex;align-items:center;justify-content:space-between;gap:8px;
+  font-size:.66rem;color:var(--li);margin-top:3px;min-height:14px}
+.cat-item-pe .salvo{color:var(--gr);font-weight:700}
+.cat-item-pe .erro{color:var(--re);font-weight:700}
+.cat-vazio{font-size:.75rem;color:var(--mu);text-align:center;padding:14px 8px;line-height:1.6}
 .cat-res{font-size:.75rem;line-height:1.7;margin-top:10px;min-height:16px}
 .cat-res .ok{color:var(--gr);font-weight:700}
 .cat-res .fora{color:#a16207;font-weight:600}
@@ -2566,8 +2585,16 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
           </div>
           <div class="cat-bts">
             <button class="bok" id="catPubBt" onclick="publicarCatalogo()">🌐 Publicar catálogo</button>
+            <button class="bcan" id="catDescBt" onclick="catDescToggle()">✍️ Escrever descrições</button>
             <button class="bcan" onclick="abrirCatalogo()">👁️ Ver a página</button>
             <button class="bcan" onclick="copiarLinkCatalogo()">🔗 Copiar link</button>
+          </div>
+          <div class="cat-descs" id="catDescs" style="display:none">
+            <div class="cat-descs-topo">
+              <span id="catDescsResumo"></span>
+              <label class="cat-descs-fil"><input type="checkbox" id="catDescsSo" onchange="catDescRender()"> só as que faltam</label>
+            </div>
+            <div id="catDescsLista"></div>
           </div>
           <div class="cat-res" id="catRes"></div>
         </div>
@@ -9495,6 +9522,87 @@ function catThumb(dataUrl, lado=420, q=0.6){
   });
 }
 
+// Escrever as descrições de todas as máquinas numa tela só. Abrir a edição de
+// cada produto pra digitar um parágrafo seria 24 idas e voltas, e ninguém
+// termina isso. Aqui a lista é a mesma que vai pro ar, na mesma ordem, e cada
+// texto grava sozinho ao sair do campo — não existe "esqueci de salvar".
+function catParaPublicar(){
+  return prods.filter(p=>p.status==='Anunciado' && (parseFloat(p.venda)||0)>0)
+              .sort((a,b)=>(parseFloat(b.venda)||0)-(parseFloat(a.venda)||0));
+}
+
+window.catDescToggle=()=>{
+  const box=document.getElementById('catDescs');
+  const abrindo = box.style.display==='none';
+  box.style.display = abrindo ? 'block' : 'none';
+  document.getElementById('catDescBt').textContent = abrindo ? '✍️ Fechar descrições' : '✍️ Escrever descrições';
+  if(abrindo) catDescRender();
+};
+
+window.catDescRender=()=>{
+  const lista=catParaPublicar();
+  const comTexto=lista.filter(p=>String(p.descricao||'').trim()).length;
+  const so=!!document.getElementById('catDescsSo')?.checked;
+  const mostrar = so ? lista.filter(p=>!String(p.descricao||'').trim()) : lista;
+
+  const res=document.getElementById('catDescsResumo');
+  if(res) res.innerHTML = lista.length
+    ? `<strong>${comTexto}</strong> de <strong>${lista.length}</strong> com descrição`
+      + (comTexto<lista.length?` · faltam ${lista.length-comTexto}`:' · todas prontas ✅')
+    : 'Nenhuma máquina anunciada com preço.';
+
+  const el=document.getElementById('catDescsLista');
+  if(!el) return;
+  if(!mostrar.length){
+    el.innerHTML=`<div class="cat-vazio">${lista.length
+      ? 'Todas as máquinas já têm descrição. Desmarque o filtro para revisar.'
+      : 'Coloque status <strong>Anunciado</strong> e um preço de venda para a máquina entrar no catálogo.'}</div>`;
+    return;
+  }
+  el.innerHTML=mostrar.map(p=>{
+    const txt=String(p.descricao||'');
+    const falta=!txt.trim();
+    return `<div class="cat-item${falta?' falta':''}" id="catIt-${esc(p.id)}">
+      <div class="cat-item-cab">
+        <span class="cat-item-nm">${esc(p.nome||'sem nome')}</span>
+        <span class="cat-item-pr">${fmt(parseFloat(p.venda)||0)}</span>
+      </div>
+      <textarea maxlength="600" placeholder="O que essa máquina resolve pra quem comprar. Ex: roda Office com várias abas sem travar, acompanha carregador original, bateria segura umas 4h."
+        oninput="catDescConta('${esc(p.id)}')"
+        onblur="catDescSalvar('${esc(p.id)}',this.value)">${esc(txt)}</textarea>
+      <div class="cat-item-pe"><span id="catSt-${esc(p.id)}"></span><span id="catCt-${esc(p.id)}">${txt.length?txt.length+'/600':''}</span></div>
+    </div>`;
+  }).join('');
+};
+
+window.catDescConta=(id)=>{
+  const it=document.getElementById('catIt-'+id); if(!it) return;
+  const n=(it.querySelector('textarea')?.value||'').length;
+  const c=document.getElementById('catCt-'+id); if(c) c.textContent=n?n+'/600':'';
+  const st=document.getElementById('catSt-'+id); if(st) st.textContent='';
+};
+
+window.catDescSalvar=async(id,valor)=>{
+  const p=prods.find(x=>x.id===id); if(!p) return;
+  const novo=String(valor||'').trim().slice(0,600);
+  const st=document.getElementById('catSt-'+id);
+  if(novo===String(p.descricao||'')){ if(st) st.textContent=''; return; }
+  p.descricao=novo;
+  let ok=true;
+  if(!idLocal(id)) ok=await gravar(updateDoc(doc(db,'products',id),{descricao:novo}),'Descrição de "'+(p.nome||id)+'"');
+  if(st){
+    st.innerHTML = ok ? '<span class="salvo">✓ salvo</span>' : '<span class="erro">não salvou — veja o aviso vermelho no topo</span>';
+    if(ok) setTimeout(()=>{ if(st.textContent==='✓ salvo') st.textContent=''; },2500);
+  }
+  const it=document.getElementById('catIt-'+id);
+  if(it) it.classList.toggle('falta',!novo);
+  const lista=catParaPublicar();
+  const comTexto=lista.filter(x=>String(x.descricao||'').trim()).length;
+  const res=document.getElementById('catDescsResumo');
+  if(res) res.innerHTML=`<strong>${comTexto}</strong> de <strong>${lista.length}</strong> com descrição`
+    + (comTexto<lista.length?` · faltam ${lista.length-comTexto}`:' · todas prontas ✅');
+};
+
 window.abrirCatalogo=()=>window.open(catUrl(),'_blank');
 window.copiarLinkCatalogo=async()=>{
   const el=document.getElementById('catRes');
@@ -9601,7 +9709,14 @@ window.publicarCatalogo=async()=>{
   bt.disabled=false; bt.textContent='🌐 Publicar catálogo';
 };
 
-window.abrirTabelaVend=()=>{ montarTabelaVend(); catCarregarCfg(); document.getElementById('TVO').classList.remove('h'); };
+window.abrirTabelaVend=()=>{
+  montarTabelaVend(); catCarregarCfg();
+  // Se o painel de descrições ficou aberto da última vez, a lista pode estar
+  // velha: máquina vendida, preço novo, outra anunciada. Refaz.
+  const box=document.getElementById('catDescs');
+  if(box && box.style.display!=='none') catDescRender();
+  document.getElementById('TVO').classList.remove('h');
+};
 window.fecharTabelaVend=()=>{ document.getElementById('TVO').classList.add('h'); };
 window.copiarTabelaVend=async()=>{
   const txt=document.getElementById('tvTexto').value;
