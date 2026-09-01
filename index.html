@@ -508,6 +508,22 @@ input[type=number].inp{padding-left:32px}
 .tv-bts{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
 .tv-status{font-size:.73rem;color:var(--gr);font-weight:600;margin-top:8px;min-height:16px}
 
+/* ── CATÁLOGO PÚBLICO ── */
+.cat-bloco{margin-top:16px;padding-top:14px;border-top:1px solid var(--b2)}
+.cat-tit{font-size:.85rem;font-weight:800;color:var(--tx);margin-bottom:2px}
+.cat-sub{font-size:.7rem;font-weight:500;color:var(--li)}
+.cat-cfg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
+.cat-cfg label{display:flex;flex-direction:column;gap:3px;font-size:.7rem;font-weight:700;color:var(--mu)}
+.cat-cfg .inp{font-size:.8rem;padding:8px 10px}
+.cat-bts{display:flex;gap:8px;flex-wrap:wrap}
+.cat-res{font-size:.75rem;line-height:1.7;margin-top:10px;min-height:16px}
+.cat-res .ok{color:var(--gr);font-weight:700}
+.cat-res .fora{color:#a16207;font-weight:600}
+.cat-res .erro{color:var(--re);font-weight:700}
+.cat-res code{background:var(--bg);border:1px solid var(--b2);border-radius:5px;padding:1px 5px;
+  font-size:.72rem;word-break:break-all}
+@media(max-width:520px){ .cat-cfg{grid-template-columns:1fr} }
+
 /* ── RECIBO DE VENDA ── */
 .nec-box{background:var(--w);border:1px solid var(--b);border-radius:var(--rad);
   box-shadow:var(--sh);margin-bottom:10px;overflow:hidden}
@@ -2534,6 +2550,23 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
           <button class="bcan" onclick="zapTabelaVend()">💬 Abrir no WhatsApp</button>
         </div>
         <div class="tv-status" id="tvStatus"></div>
+
+        <!-- CATÁLOGO PÚBLICO -->
+        <div class="cat-bloco">
+          <div class="cat-tit">🌐 Catálogo público <span class="cat-sub">a página que o cliente abre pelo WhatsApp</span></div>
+          <div class="cat-cfg">
+            <label>Nome da loja<input class="inp" id="catNome" placeholder="Tech Campinas"></label>
+            <label>WhatsApp<input class="inp" id="catWpp" placeholder="19999999999"></label>
+            <label>Cidade<input class="inp" id="catCidade" placeholder="Campinas · SP"></label>
+            <label>Instagram<input class="inp" id="catInsta" placeholder="tech.campinas"></label>
+          </div>
+          <div class="cat-bts">
+            <button class="bok" id="catPubBt" onclick="publicarCatalogo()">🌐 Publicar catálogo</button>
+            <button class="bcan" onclick="abrirCatalogo()">👁️ Ver a página</button>
+            <button class="bcan" onclick="copiarLinkCatalogo()">🔗 Copiar link</button>
+          </div>
+          <div class="cat-res" id="catRes"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -3054,7 +3087,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
 import { getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,onAuthStateChanged,updateProfile,sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-import { getFirestore,collection,addDoc,getDocs,doc,deleteDoc,updateDoc,query,where,orderBy } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { getFirestore,collection,addDoc,getDocs,doc,setDoc,deleteDoc,updateDoc,query,where,orderBy } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 const app=initializeApp({apiKey:"AIzaSyDmC5BxL2_qf7YT9Yq9gUIhpRBn0RoRa2A",authDomain:"anuncia-70b88.firebaseapp.com",projectId:"anuncia-70b88",storageBucket:"anuncia-70b88.firebasestorage.app",messagingSenderId:"325014740359",appId:"1:325014740359:web:eff4e874f9f18a2ba54722"});
 const auth=getAuth(app), db=getFirestore(app);
@@ -9399,7 +9432,153 @@ function montarTabelaVend(){
   if(res) res.innerHTML=resumoTabelaVend();
   const st=document.getElementById('tvStatus'); if(st) st.textContent='';
 }
-window.abrirTabelaVend=()=>{ montarTabelaVend(); document.getElementById('TVO').classList.remove('h'); };
+// ── CATÁLOGO PÚBLICO ────────────────────────────────────────────────────
+// A página catalogo.html é aberta por quem não tem login. O Firestore devolve
+// o documento inteiro em qualquer leitura, então ela NÃO pode ler 'products':
+// custo, lucro, fornecedor e aportes viajariam pro navegador do visitante,
+// invisíveis na tela e visíveis no DevTools. Por isso existe a coleção
+// 'catalogo', que recebe só o que é público. O que não é escrito não vaza.
+const CAT_CFG_ID='loja';
+let catCfg={nome:'',whatsapp:'',cidade:'',instagram:''};
+
+function catUrl(){
+  return location.origin+location.pathname.replace(/[^/]*$/,'')+'catalogo.html';
+}
+
+async function catCarregarCfg(){
+  try{
+    const snap=await getDocs(collection(db,'catalogo_cfg'));
+    snap.forEach(d=>{ if(d.id===CAT_CFG_ID) catCfg={...catCfg,...d.data()}; });
+  }catch(e){}
+  const set=(id,v)=>{const e=document.getElementById(id); if(e&&!e.value) e.value=v||'';};
+  set('catNome',catCfg.nome); set('catWpp',catCfg.whatsapp);
+  set('catCidade',catCfg.cidade); set('catInsta',catCfg.instagram);
+}
+
+// Miniatura do cartão. A foto original tem 1100px e uns 250 KB; vinte delas
+// seriam 5 MB no celular do cliente antes de ele ver qualquer coisa.
+function catThumb(dataUrl, lado=420, q=0.6){
+  return new Promise((res,rej)=>{
+    const img=new Image();
+    img.onload=()=>{
+      const e=Math.min(1, lado/Math.max(img.width||lado, img.height||lado));
+      const c=document.createElement('canvas');
+      c.width=Math.max(1,Math.round((img.width||lado)*e));
+      c.height=Math.max(1,Math.round((img.height||lado)*e));
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      try{ res(c.toDataURL('image/jpeg',q)); }catch(err){ rej(err); }
+    };
+    img.onerror=()=>rej(new Error('imagem ilegível'));
+    img.src=dataUrl;
+  });
+}
+
+window.abrirCatalogo=()=>window.open(catUrl(),'_blank');
+window.copiarLinkCatalogo=async()=>{
+  const el=document.getElementById('catRes');
+  try{ await navigator.clipboard.writeText(catUrl()); el.innerHTML='<span class="ok">✅ Link copiado.</span> Cole no WhatsApp Business, na bio do Instagram e nos anúncios.'; }
+  catch(e){ el.innerHTML='Copie à mão: <code>'+esc(catUrl())+'</code>'; }
+};
+
+window.publicarCatalogo=async()=>{
+  const el=document.getElementById('catRes');
+  const bt=document.getElementById('catPubBt');
+  const g=id=>(document.getElementById(id)?.value||'').trim();
+  const nome=g('catNome'), wpp=g('catWpp').replace(/\D/g,'');
+  if(!nome || !wpp){
+    el.innerHTML='<span class="erro">Preencha o nome da loja e o WhatsApp antes.</span> São eles que aparecem no topo da página e no botão de contato.';
+    return;
+  }
+  bt.disabled=true; bt.textContent='Publicando...';
+  el.innerHTML='Lendo as máquinas e as fotos...';
+
+  const anunciadas=prods.filter(p=>p.status==='Anunciado');
+  const semPreco=anunciadas.filter(p=>!((parseFloat(p.venda)||0)>0));
+  const lista=anunciadas.filter(p=>(parseFloat(p.venda)||0)>0)
+                        .sort((a,b)=>(parseFloat(b.venda)||0)-(parseFloat(a.venda)||0));
+
+  const semFoto=[], falhas=[];
+  const idsVivos=new Set(), fotoIdsVivos=new Set();
+  let publicadas=0, nFotos=0;
+
+  try{
+    for(let i=0;i<lista.length;i++){
+      const p=lista[i];
+      el.innerHTML=`Publicando ${i+1} de ${lista.length}: <strong>${esc(p.nome||'sem nome')}</strong>...`;
+
+      let fotos=[];
+      try{
+        const snap=await getDocs(query(collection(db,'fotos'),where('produto_id','==',p.id)));
+        fotos=snap.docs.map(d=>({id:d.id,...d.data()}))
+                       .sort((a,b)=>(a.ordem||0)-(b.ordem||0))
+                       .filter(f=>f.dataUrl);
+      }catch(e){ falhas.push((p.nome||p.id)+' — não consegui ler as fotos'); }
+
+      if(!fotos.length) semFoto.push(p.nome||'sem nome');
+
+      let capa='';
+      if(fotos[0]){ try{ capa=await catThumb(fotos[0].dataUrl); }catch(e){ capa=fotos[0].dataUrl; } }
+
+      const doc0={
+        nome:String(p.nome||'Notebook'),
+        preco:parseFloat(p.venda)||0,
+        marca:brand(p.nome),
+        specs:hwResumo(p),
+        revisado:!!p.revisado,
+        capa,
+        n_fotos:fotos.length,
+        publicado_em:new Date().toISOString()
+      };
+      const okDoc=await gravar(setDoc(doc(db,'catalogo',p.id),doc0),'Publicar "'+(p.nome||p.id)+'" no catálogo');
+      if(!okDoc){ falhas.push((p.nome||p.id)+' — não entrou no catálogo'); continue; }
+      idsVivos.add(p.id); publicadas++;
+
+      // fotos grandes, carregadas só quando o visitante abre a máquina
+      for(const f of fotos){
+        const ok=await gravar(setDoc(doc(db,'catalogo_fotos',f.id),
+          {produto_id:p.id, ordem:f.ordem||0, dataUrl:f.dataUrl}),'Foto de "'+(p.nome||p.id)+'"');
+        if(ok){ fotoIdsVivos.add(f.id); nFotos++; }
+      }
+    }
+
+    // Tira do ar o que não está mais anunciado — senão o cliente abre a página
+    // e pede uma máquina que já foi vendida.
+    el.innerHTML='Limpando o que saiu do ar...';
+    let removidas=0;
+    try{
+      const snap=await getDocs(collection(db,'catalogo'));
+      for(const d of snap.docs) if(!idsVivos.has(d.id)){ await deleteDoc(doc(db,'catalogo',d.id)); removidas++; }
+      const snapF=await getDocs(collection(db,'catalogo_fotos'));
+      for(const d of snapF.docs) if(!fotoIdsVivos.has(d.id)) await deleteDoc(doc(db,'catalogo_fotos',d.id));
+    }catch(e){ falhas.push('não consegui remover o que saiu do catálogo'); }
+
+    catCfg={nome, whatsapp:wpp, cidade:g('catCidade'), instagram:g('catInsta').replace(/^@/,''),
+            publicado_em:new Date().toISOString()};
+    await gravar(setDoc(doc(db,'catalogo_cfg',CAT_CFG_ID),catCfg),'Dados da loja no catálogo');
+
+    let h=`<span class="ok">✅ ${publicadas} máquina${publicadas!==1?'s':''} no ar</span> · ${nFotos} foto${nFotos!==1?'s':''}`;
+    if(removidas) h+=` · ${removidas} tirada${removidas!==1?'s':''} do ar`;
+    if(semPreco.length){
+      h+=`<br><span class="fora">⚠️ ${semPreco.length} anunciada${semPreco.length!==1?'s':''} ficou de fora por estar sem preço:</span> `
+       + semPreco.slice(0,6).map(p=>esc(p.nome||'sem nome')).join(' · ')
+       + (semPreco.length>6?` +${semPreco.length-6}`:'');
+    }
+    if(semFoto.length){
+      h+=`<br><span class="fora">📷 ${semFoto.length} entrou sem foto nenhuma</span> (aparece como "sem foto" pro cliente): `
+       + semFoto.slice(0,6).map(esc).join(' · ')+(semFoto.length>6?` +${semFoto.length-6}`:'');
+    }
+    if(falhas.length){
+      h+=`<br><span class="erro">❌ ${falhas.length} problema${falhas.length!==1?'s':''}:</span> `+falhas.slice(0,5).map(esc).join(' · ');
+    }
+    h+=`<br>🔗 <code>${esc(catUrl())}</code>`;
+    el.innerHTML=h;
+  }catch(e){
+    el.innerHTML='<span class="erro">Falhou: '+esc(e.message||String(e))+'</span>';
+  }
+  bt.disabled=false; bt.textContent='🌐 Publicar catálogo';
+};
+
+window.abrirTabelaVend=()=>{ montarTabelaVend(); catCarregarCfg(); document.getElementById('TVO').classList.remove('h'); };
 window.fecharTabelaVend=()=>{ document.getElementById('TVO').classList.add('h'); };
 window.copiarTabelaVend=async()=>{
   const txt=document.getElementById('tvTexto').value;

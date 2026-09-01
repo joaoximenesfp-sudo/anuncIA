@@ -48,6 +48,22 @@ service cloud.firestore {
     // é justamente o canal de recado entre os dois, então é compartilhado.
     match /avisos/{doc}       { allow read, write: if socio(); }
 
+    // ── CATÁLOGO PÚBLICO — a única coisa que o mundo pode ler ──
+    // A página catalogo.html é aberta por cliente, sem login. O Firestore
+    // devolve o documento inteiro em qualquer leitura: não existe esconder
+    // campo. Por isso o catálogo NÃO lê products — se lesse, custo, lucro,
+    // fornecedor e os aportes viajariam pro navegador do visitante, sem
+    // aparecer na tela mas visíveis em dois cliques no DevTools.
+    //
+    // Estas três coleções são cópias públicas, escritas pelo botão "Publicar
+    // catálogo". Só entra nelas nome, preço, marca, specs de hardware e foto.
+    // A garantia não é a regra abaixo — é o que a gente escolhe escrever.
+    //
+    // Escrever continua sendo só dos sócios.
+    match /catalogo/{doc}       { allow read: if true; allow write: if socio(); }
+    match /catalogo_fotos/{doc} { allow read: if true; allow write: if socio(); }
+    match /catalogo_cfg/{doc}   { allow read: if true; allow write: if socio(); }
+
     // ── FINANÇAS PESSOAIS — isoladas por sócio ──
     // O app já consulta com where('userId','==',user.uid), então as consultas
     // atuais passam. A regra garante que continue assim mesmo que alguém
