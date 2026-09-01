@@ -2298,6 +2298,24 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
     #pg-clientes .cli-stat.f{border-color:var(--gbd);background:linear-gradient(180deg,#fff,#f5fdf7)}
     #pg-clientes .cli-add{background:var(--w);border:1px solid var(--b);border-radius:12px;padding:14px;margin-bottom:14px;display:grid;grid-template-columns:1.6fr 1fr 1fr auto;gap:8px;align-items:end}
     #pg-clientes .cli-search{width:100%;margin-bottom:12px}
+    /* Diagnóstico + importação em lote da base antiga */
+    #pg-clientes .cli-imp{background:var(--w);border:1px solid var(--b);border-radius:12px;padding:12px 14px;margin-bottom:14px}
+    #pg-clientes .cli-diag{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+    #pg-clientes .cli-pill{font-size:.72rem;font-weight:600;color:var(--mu);background:var(--bg);border:1px solid var(--b);border-radius:20px;padding:4px 10px;white-space:nowrap}
+    #pg-clientes .cli-pill b{color:var(--tx);font-weight:800}
+    #pg-clientes .cli-pill.al{background:var(--abg);border-color:var(--abd);color:var(--am)}
+    #pg-clientes .cli-pill.al b{color:var(--am)}
+    #pg-clientes .cli-imp-acoes{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+    #pg-clientes .cli-imp-bt{font-size:.76rem;font-weight:700;padding:8px 12px;border-radius:8px;border:1px solid var(--b);background:var(--bg);color:var(--tx);cursor:pointer}
+    #pg-clientes .cli-imp-bt.pri{background:var(--bl);border-color:var(--bl);color:#fff}
+    #pg-clientes .cli-imp-bt:disabled{opacity:.5;cursor:default}
+    #pg-clientes .cli-imp-body{margin-top:12px;padding-top:12px;border-top:1px solid var(--b)}
+    #pg-clientes .cli-imp-body textarea{width:100%;min-height:130px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.8rem;line-height:1.6;resize:vertical}
+    #pg-clientes .cli-imp-dica{font-size:.7rem;color:var(--li);line-height:1.5;margin:6px 0 10px}
+    #pg-clientes .cli-imp-res{margin-top:10px;font-size:.78rem;line-height:1.7}
+    #pg-clientes .cli-imp-res .ok{color:var(--gr);font-weight:600}
+    #pg-clientes .cli-imp-res .ruim{color:var(--am);font-weight:600}
+    #pg-clientes .cli-imp-res pre{background:var(--bg);border:1px solid var(--b);border-radius:8px;padding:8px 10px;margin:6px 0 0;font-size:.74rem;white-space:pre-wrap;max-height:160px;overflow:auto}
     #pg-clientes .cli-card{display:flex;align-items:center;gap:12px;background:var(--w);border:1px solid var(--b);border-radius:12px;padding:12px 14px;margin-bottom:8px}
     #pg-clientes .cli-tag{font-size:.66rem;font-weight:700;padding:4px 8px;border-radius:20px;white-space:nowrap;min-width:120px;text-align:center}
     #pg-clientes .cli-tag.re{background:var(--rbg);color:var(--re)}
@@ -2429,6 +2447,27 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
           </select>
         </div>
         <button class="bsav" onclick="addClienteManual()">+ Cadastrar</button>
+      </div>
+
+      <!-- RECUPERAR A BASE ANTIGA: diagnóstico + importação em lote -->
+      <div class="cli-imp">
+        <div class="cli-diag" id="cliDiag"></div>
+        <div class="cli-imp-acoes">
+          <button class="cli-imp-bt" id="cliPuxarBt" onclick="cliPuxarDasVendas()">🧲 Puxar nomes das vendas</button>
+          <button class="cli-imp-bt" onclick="cliImpToggle()">📋 Importar lista (nome + telefone)</button>
+        </div>
+        <div class="cli-imp-body" id="cliImpBody" style="display:none">
+          <div class="cli-imp-dica">
+            Uma pessoa por linha. Aceita vírgula, ponto e vírgula, tab ou traço entre o nome e o número.<br>
+            Quem já existe recebe o telefone sem virar cliente repetido, e as vendas com o mesmo nome são vinculadas sozinhas.
+          </div>
+          <textarea id="cliImpTxt" placeholder="Carlos Eduardo, 19991234567&#10;Marina Souza; 19987654321&#10;Rafael Lima - 19 99999 8888"></textarea>
+          <div class="cli-imp-acoes">
+            <button class="cli-imp-bt pri" id="cliImpBt" onclick="cliImportar()">Importar</button>
+            <button class="cli-imp-bt" onclick="document.getElementById('cliImpTxt').value='';document.getElementById('cliImpRes').innerHTML=''">Limpar</button>
+          </div>
+          <div class="cli-imp-res" id="cliImpRes"></div>
+        </div>
       </div>
 
       <input class="inp cli-search" type="text" id="cliBusca" placeholder="🔎 Buscar cliente pelo nome..." oninput="cliFiltrar()">
@@ -4218,6 +4257,148 @@ window.addClienteManual=async()=>{
 
 window.cliFiltrar=()=>renderClientes();
 
+// ── Recuperar a base antiga ─────────────────────────────────────────────
+// 350 vendas foram feitas antes do cadastro existir. O nome do comprador
+// ficou gravado na venda (cliente_nome) mesmo sem cadastro por trás, então
+// dá pra reconstruir a lista a partir do que o próprio site já sabe — e
+// depois só completar o telefone, que é o que falta de verdade.
+
+// Compara nomes ignorando acento, caixa e espaço sobrando.
+function cliNorm(s){
+  return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .trim().toLowerCase().replace(/\s+/g,' ');
+}
+function cliTel(s){
+  let d=String(s||'').replace(/\D/g,'');
+  if(d.length>11 && d.startsWith('55')) d=d.slice(2);
+  return d;
+}
+
+function cliDiagCalc(){
+  const vendidos=prods.filter(p=>p.status==='Vendido');
+  const comNome=vendidos.filter(p=>String(p.cliente_nome||'').trim());
+  const vinculadas=vendidos.filter(p=>p.cliente_id);
+  const semTel=clientes.filter(c=>!cliTel(c.whatsapp));
+  // Nomes que aparecem nas vendas e ainda não têm cadastro nenhum
+  const cadastrados=new Set(clientes.map(c=>cliNorm(c.nome)));
+  const soltos=new Map();
+  comNome.forEach(p=>{
+    const n=String(p.cliente_nome).trim(), k=cliNorm(n);
+    if(k && !cadastrados.has(k) && !soltos.has(k)) soltos.set(k,n);
+  });
+  return {tot:vendidos.length, comNome:comNome.length, vinculadas:vinculadas.length,
+          semTel:semTel.length, soltos};
+}
+
+function cliDiagRender(){
+  const el=document.getElementById('cliDiag'); if(!el) return;
+  const d=cliDiagCalc();
+  const semNome=d.tot-d.comNome;
+  const pill=(txt,alerta)=>`<span class="cli-pill${alerta?' al':''}">${txt}</span>`;
+  const partes=[
+    pill(`<b>${d.tot}</b> vendas`),
+    pill(`<b>${d.comNome}</b> com nome do cliente`),
+    semNome>0 ? pill(`<b>${semNome}</b> sem nome nenhum`, true) : '',
+    pill(`<b>${d.vinculadas}</b> vinculadas a um cadastro`),
+    d.soltos.size>0 ? pill(`<b>${d.soltos.size}</b> nomes nas vendas sem cadastro`, true) : '',
+    d.semTel>0 ? pill(`<b>${d.semTel}</b> clientes sem telefone`, true) : ''
+  ];
+  el.innerHTML=partes.filter(Boolean).join('');
+  const bt=document.getElementById('cliPuxarBt');
+  if(bt){
+    bt.disabled=d.soltos.size===0;
+    bt.textContent=d.soltos.size?`🧲 Puxar ${d.soltos.size} nome${d.soltos.size!==1?'s':''} das vendas`:'🧲 Nada novo pra puxar';
+  }
+}
+
+// Liga as vendas que têm esse nome escrito ao cadastro. Devolve quantas ligou.
+async function cliVincularVendas(nome, cid){
+  const k=cliNorm(nome); if(!k||!cid) return 0;
+  const alvo=prods.filter(p=>!p.cliente_id && cliNorm(p.cliente_nome)===k);
+  let n=0;
+  for(const p of alvo){
+    p.cliente_id=cid;
+    if(!idLocal(p.id)) await gravar(updateDoc(doc(db,'products',p.id),{cliente_id:cid}),'vincular '+nome);
+    n++;
+  }
+  return n;
+}
+
+// Cria cadastro para todo nome que só existe dentro das vendas.
+window.cliPuxarDasVendas=async()=>{
+  const d=cliDiagCalc();
+  if(!d.soltos.size){ alert('Todo nome que aparece nas vendas já tem cadastro.'); return; }
+  if(!confirm(`Criar cadastro para ${d.soltos.size} cliente(s) que hoje só existem dentro das vendas?\n\nEles entram sem telefone — você completa depois. As vendas são vinculadas automaticamente.`)) return;
+  const bt=document.getElementById('cliPuxarBt');
+  if(bt){ bt.disabled=true; bt.textContent='Puxando...'; }
+  let criados=0, vinc=0;
+  for(const nome of d.soltos.values()){
+    const cid=await salvarCliente({nome, whatsapp:'', perfil:'', origem:'vendas antigas'});
+    if(cid){ criados++; vinc+=await cliVincularVendas(nome,cid); }
+  }
+  renderClientes();
+  alert(`${criados} cliente(s) criado(s) e ${vinc} venda(s) vinculada(s).\n\nAgora falta só o telefone de cada um — é isso que você busca no WhatsApp.`);
+};
+
+window.cliImpToggle=()=>{
+  const b=document.getElementById('cliImpBody');
+  b.style.display = b.style.display==='none' ? 'block' : 'none';
+  if(b.style.display==='block') document.getElementById('cliImpTxt').focus();
+};
+
+// Cola uma lista "nome + telefone" e cadastra tudo de uma vez.
+window.cliImportar=async()=>{
+  const txt=(document.getElementById('cliImpTxt').value||'').trim();
+  const res=document.getElementById('cliImpRes');
+  if(!txt){ res.innerHTML='<span class="ruim">Cola a lista antes.</span>'; return; }
+  const bt=document.getElementById('cliImpBt');
+  bt.disabled=true; bt.textContent='Importando...';
+
+  const linhas=txt.split('\n').map(l=>l.trim()).filter(Boolean);
+  const puladas=[], vistos=new Set();
+  let novos=0, jaExistiam=0, telAdd=0, vinc=0;
+
+  for(const linha of linhas){
+    // separador: vírgula, ponto e vírgula, tab, ou traço cercado de espaço
+    const m=linha.split(/\s*[,;\t]\s*|\s+[-–—]\s+/);
+    let nome=(m[0]||'').trim();
+    let tel=cliTel(m.slice(1).join(''));
+    // "Fulano 19999998888" sem separador nenhum
+    if(m.length<2){
+      const g=linha.match(/^(.*?)[\s:]*(\+?\d[\d\s().-]{8,})$/);
+      if(g){ nome=g[1].trim(); tel=cliTel(g[2]); }
+    }
+    if(!nome){ puladas.push(linha+'   ← sem nome'); continue; }
+    if(tel && tel.length!==10 && tel.length!==11){
+      puladas.push(linha+'   ← telefone com '+tel.length+' dígitos (esperado 10 ou 11)');
+      continue;
+    }
+    const k=cliNorm(nome);
+    if(vistos.has(k)){ puladas.push(linha+'   ← repetido na própria lista'); continue; }
+    vistos.add(k);
+
+    const antes=clientes.find(c=>cliNorm(c.nome)===k);
+    const tinhaTel=!!(antes && cliTel(antes.whatsapp));
+    const cid=await salvarCliente({nome, whatsapp:tel, perfil:'', origem:'importado'});
+    if(!cid){ puladas.push(linha+'   ← não foi possível salvar'); continue; }
+    if(antes){ jaExistiam++; if(tel && !tinhaTel) telAdd++; } else { novos++; }
+    vinc+=await cliVincularVendas(nome,cid);
+  }
+
+  renderClientes();
+  const linhasOk=linhas.length-puladas.length;
+  let html=`<span class="ok">✅ ${linhasOk} de ${linhas.length} linha${linhas.length!==1?'s':''} importada${linhasOk!==1?'s':''}</span><br>`;
+  html+=`${novos} cliente${novos!==1?'s':''} novo${novos!==1?'s':''} · ${jaExistiam} já existia${jaExistiam!==1?'m':''}`;
+  if(telAdd) html+=` · ${telAdd} telefone${telAdd!==1?'s':''} preenchido${telAdd!==1?'s':''}`;
+  if(vinc) html+=`<br>🔗 ${vinc} venda${vinc!==1?'s':''} vinculada${vinc!==1?'s':''} pelo nome`;
+  if(puladas.length){
+    html+=`<br><span class="ruim">⚠️ ${puladas.length} linha${puladas.length!==1?'s':''} não entrou — corrige e cola de novo:</span><pre>${esc(puladas.join('\n'))}</pre>`;
+  }
+  res.innerHTML=html;
+  if(!puladas.length) document.getElementById('cliImpTxt').value='';
+  bt.disabled=false; bt.textContent='Importar';
+};
+
 // ── Busca de cliente dentro do modal de venda ──
 window.cliSellBusca=(val)=>{
   const drop=document.getElementById('smCliDrop');
@@ -4749,6 +4930,7 @@ function renderCliOrigem(){
 
 function renderClientes(){
   renderCliOrigem();
+  cliDiagRender();
   const lista=document.getElementById('cliLista');
   if(!lista)return;
   const q=(document.getElementById('cliBusca')?.value||'').trim().toLowerCase();
