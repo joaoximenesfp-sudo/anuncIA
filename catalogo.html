@@ -97,14 +97,26 @@
   .dt-x b{font-size:.9rem}
   .dt-x button{border:none;background:var(--bg);color:var(--mu);width:32px;height:32px;
     border-radius:50%;font-size:1rem;cursor:pointer;line-height:1;font-family:inherit}
+  .car-wrap{position:relative;background:var(--bg)}
   .car{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;
     background:var(--bg);scrollbar-width:none}
   .car::-webkit-scrollbar{display:none}
   .car img{width:100%;flex:none;scroll-snap-align:center;aspect-ratio:4/3;object-fit:contain;display:block}
   .car .carregando{width:100%;aspect-ratio:4/3;display:grid;place-items:center;color:var(--li);font-size:.82rem}
-  .pts{display:flex;gap:5px;justify-content:center;padding:9px 0 2px}
-  .pt{width:6px;height:6px;border-radius:50%;background:var(--b)}
+  /* Setas: no celular o dedo arrasta, no computador não existe gesto nenhum
+     e a barra de rolagem está escondida — sem elas a foto 2 fica invisível. */
+  .car-nav{position:absolute;top:50%;transform:translateY(-50%);width:38px;height:38px;
+    border:none;border-radius:50%;background:rgba(8,12,20,.6);color:#fff;font-size:1.4rem;
+    line-height:1;cursor:pointer;display:grid;place-items:center;padding:0 0 3px;
+    backdrop-filter:blur(4px);transition:opacity .15s ease;font-family:inherit}
+  .car-nav:hover{background:rgba(8,12,20,.8)}
+  .car-nav.prev{left:8px} .car-nav.next{right:8px}
+  .car-nav[hidden]{display:none}
+  .pts{display:flex;gap:6px;justify-content:center;padding:10px 0 2px}
+  .pt{width:7px;height:7px;border-radius:50%;background:var(--b);border:none;padding:0;cursor:pointer;
+    transition:background .15s ease}
   .pt.on{background:var(--mu)}
+  .dt-desc{font-size:.86rem;line-height:1.65;color:var(--tx);white-space:pre-line;margin-bottom:14px}
   .dt-bd{padding:14px 16px 20px}
   .dt-nm{font-size:1.06rem;font-weight:800;line-height:1.3;margin-bottom:4px}
   .dt-pr{font-size:1.5rem;font-weight:800;letter-spacing:-.5px;margin:8px 0 12px}
@@ -332,14 +344,19 @@ async function abrir(id){
   const msg=`Olá! Tenho interesse no *${i.nome}* por ${fmt(i.preco)}, que vi no catálogo. Ainda está disponível?`;
   $('dt').innerHTML=`
     <div class="dt-x"><b>Detalhes</b><button onclick="fechar()" aria-label="Fechar">✕</button></div>
-    <div class="car" id="car">${ i.capa
-        ? `<img src="${i.capa}" alt="${esc(i.nome)}">`
-        : `<div class="carregando">sem foto</div>` }</div>
+    <div class="car-wrap">
+      <div class="car" id="car">${ i.capa
+          ? `<img src="${i.capa}" alt="${esc(i.nome)}">`
+          : `<div class="carregando">sem foto</div>` }</div>
+      <button class="car-nav prev" id="carPrev" aria-label="Foto anterior" hidden>‹</button>
+      <button class="car-nav next" id="carNext" aria-label="Próxima foto" hidden>›</button>
+    </div>
     <div class="pts" id="pts"></div>
     <div class="dt-bd">
       <div class="dt-nm">${esc(i.nome)}</div>
       <div class="dt-pr">${fmt(i.preco)}</div>
       <div class="dt-sp">${(i.specs||[]).map(chipSpec).join('')||'<span class="sp">specs não informadas</span>'}</div>
+      ${ i.descricao ? `<div class="dt-desc">${esc(i.descricao)}</div>` : '' }
       <div class="gar">
         ✅ <b>90 dias de garantia</b> a partir da entrega, com nota e recibo.<br>
         🔧 Revisada por dentro: memória, armazenamento, bateria e limpeza com troca de pasta térmica.<br>
@@ -366,13 +383,33 @@ async function abrir(id){
   }
 }
 
+// Navegação do carrossel. Três caminhos pro mesmo lugar, porque cada aparelho
+// tem o seu: dedo no celular, seta no computador, bolinha nos dois.
 function pontos(car,n){
   if(n<2) return;
-  const el=$('pts');
-  el.innerHTML=Array.from({length:n},(_,k)=>`<span class="pt${k===0?' on':''}"></span>`).join('');
-  car.onscroll=()=>{
-    const k=Math.round(car.scrollLeft/car.clientWidth);
+  const el=$('pts'), prev=$('carPrev'), next=$('carNext');
+  el.innerHTML=Array.from({length:n},(_,k)=>
+    `<button class="pt${k===0?' on':''}" data-k="${k}" aria-label="Foto ${k+1}"></button>`).join('');
+  const irPara=k=>car.scrollTo({left:Math.max(0,Math.min(n-1,k))*car.clientWidth,behavior:'smooth'});
+  const atual=()=>Math.round(car.scrollLeft/Math.max(1,car.clientWidth));
+
+  el.querySelectorAll('.pt').forEach(b=>{ b.onclick=()=>irPara(Number(b.dataset.k)); });
+  if(prev){ prev.hidden=false; prev.onclick=()=>irPara(atual()-1); }
+  if(next){ next.hidden=false; next.onclick=()=>irPara(atual()+1); }
+
+  const marcar=()=>{
+    const k=atual();
     el.querySelectorAll('.pt').forEach((p,j)=>p.classList.toggle('on',j===k));
+    if(prev) prev.style.opacity = k<=0 ? '.25' : '1';
+    if(next) next.style.opacity = k>=n-1 ? '.25' : '1';
+  };
+  car.onscroll=marcar;
+  marcar();
+  // Setas do teclado, já que a página abre bastante no computador
+  car.tabIndex=0;
+  car.onkeydown=e=>{
+    if(e.key==='ArrowRight'){ e.preventDefault(); irPara(atual()+1); }
+    if(e.key==='ArrowLeft'){ e.preventDefault(); irPara(atual()-1); }
   };
 }
 

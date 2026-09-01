@@ -508,6 +508,10 @@ input[type=number].inp{padding-left:32px}
 .tv-bts{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
 .tv-status{font-size:.73rem;color:var(--gr);font-weight:600;margin-top:8px;min-height:16px}
 
+.desc-cat{width:100%;min-height:76px;resize:vertical;font-family:inherit;line-height:1.5}
+.desc-conta{font-size:.68rem;color:var(--li);text-align:right;margin-top:3px;min-height:14px}
+.desc-conta.perto{color:#a16207;font-weight:600}
+
 /* ── CATÁLOGO PÚBLICO ── */
 .cat-bloco{margin-top:16px;padding-top:14px;border-top:1px solid var(--b2)}
 .cat-tit{font-size:.85rem;font-weight:800;color:var(--tx);margin-bottom:2px}
@@ -2767,6 +2771,12 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
             <input class="inp" type="text" id="eNumPlan" placeholder="ex: 214">
           </label>
         </div>
+      </div>
+      <div class="fc full">
+        <label class="fl">🌐 Descrição do catálogo <span style="font-size:.67rem;color:var(--li);font-weight:400">o texto que o cliente lê na página pública — deixe vazio pra não aparecer</span></label>
+        <textarea class="inp desc-cat" id="eDescricao" maxlength="600" oninput="eDescContar()"
+          placeholder="Ex: Máquina de linha corporativa, teclado excelente, roda Office e várias abas sem travar. Acompanha carregador original. Bateria segura cerca de 4h fora da tomada."></textarea>
+        <div class="desc-conta" id="eDescConta"></div>
       </div>
       <div class="fc full" id="eFaltaWrap">
         <label class="fl">📝 O que falta comprar/fazer <span style="font-size:.67rem;color:var(--li);font-weight:400">pra deixar essa máquina pronta pra vender</span></label>
@@ -5120,6 +5130,8 @@ window.openEdit=id=>{
   montarHw(); hwPreencher('e',p); eHwSugerir();
   const eRev=document.getElementById('eRevisado'); if(eRev) eRev.checked=!!p.revisado;
   const eRObs=document.getElementById('eRevObs'); if(eRObs) eRObs.value=p.revisao_obs||'';
+  const eDsc=document.getElementById('eDescricao'); if(eDsc) eDsc.value=p.descricao||'';
+  eDescContar();
   const eNP=document.getElementById('eNumPlan'); if(eNP) eNP.value=p.num_planilha||'';
   eRevHint();
   const eFalta=document.getElementById('eFalta');
@@ -5353,7 +5365,7 @@ window.saveEdit=async()=>{
   const custoFinal=baseMaquina+somaJa+somaNovas;
   const totalPecas=somaJa+somaNovas;
 
-  const upd={nome,custo:custoFinal,custo_base:baseMaquina,custo_pecas:totalPecas,venda,lucro:venda-custoFinal,status,investidor,plataforma:(status==='Vendido'?(document.getElementById('ePlat')?.value||''):''),repasse_socio:(status==='Vendido'?(parseFloat(document.getElementById('eRepasse')?.value)||0):0),falta_comprar:(status!=='Vendido'?(document.getElementById('eFalta')?.value.trim()||''):''),falta_feito:(status!=='Vendido'&&!!document.getElementById('eFaltaFeito')?.checked),falta_feito_em:((status!=='Vendido'&&document.getElementById('eFaltaFeito')?.checked)?((_pAtual&&_pAtual.falta_feito&&_pAtual.falta_feito_em)||new Date().toISOString().slice(0,10)):''),...hwCampos('e'),revisado:!!document.getElementById('eRevisado')?.checked,revisado_em:(document.getElementById('eRevisado')?.checked?((_pAtual&&_pAtual.revisado&&_pAtual.revisado_em)||new Date().toISOString().slice(0,10)):''),revisao_obs:(document.getElementById('eRevObs')?.value.trim()||''),num_planilha:(document.getElementById('eNumPlan')?.value.trim()||''),fornecedor_id:fornId,fornecedor_nome:fornNome,data_compra:dc,data_compra_mes:dcMes,data_venda:dv,data:(dv?dv.slice(0,7):dcMes),gas_pagante:(document.getElementById('eGasPag')?.value||'ambos'),aporte_joao:(parseFloat(document.getElementById('eApJoao')?.value)||0),aporte_igor:(parseFloat(document.getElementById('eApIgor')?.value)||0),cliente_id:cliId,cliente_nome:cliNome,preco_cheio:(status==='Vendido'?(parseFloat(document.getElementById('ePrecoCheio')?.value)||0):0),nota_venda:(status==='Vendido'?(document.getElementById('eNotaVenda')?.value.trim()||''):'')};
+  const upd={nome,custo:custoFinal,custo_base:baseMaquina,custo_pecas:totalPecas,venda,lucro:venda-custoFinal,status,investidor,plataforma:(status==='Vendido'?(document.getElementById('ePlat')?.value||''):''),repasse_socio:(status==='Vendido'?(parseFloat(document.getElementById('eRepasse')?.value)||0):0),falta_comprar:(status!=='Vendido'?(document.getElementById('eFalta')?.value.trim()||''):''),falta_feito:(status!=='Vendido'&&!!document.getElementById('eFaltaFeito')?.checked),falta_feito_em:((status!=='Vendido'&&document.getElementById('eFaltaFeito')?.checked)?((_pAtual&&_pAtual.falta_feito&&_pAtual.falta_feito_em)||new Date().toISOString().slice(0,10)):''),...hwCampos('e'),revisado:!!document.getElementById('eRevisado')?.checked,revisado_em:(document.getElementById('eRevisado')?.checked?((_pAtual&&_pAtual.revisado&&_pAtual.revisado_em)||new Date().toISOString().slice(0,10)):''),revisao_obs:(document.getElementById('eRevObs')?.value.trim()||''),descricao:(document.getElementById('eDescricao')?.value.trim()||''),num_planilha:(document.getElementById('eNumPlan')?.value.trim()||''),fornecedor_id:fornId,fornecedor_nome:fornNome,data_compra:dc,data_compra_mes:dcMes,data_venda:dv,data:(dv?dv.slice(0,7):dcMes),gas_pagante:(document.getElementById('eGasPag')?.value||'ambos'),aporte_joao:(parseFloat(document.getElementById('eApJoao')?.value)||0),aporte_igor:(parseFloat(document.getElementById('eApIgor')?.value)||0),cliente_id:cliId,cliente_nome:cliNome,preco_cheio:(status==='Vendido'?(parseFloat(document.getElementById('ePrecoCheio')?.value)||0):0),nota_venda:(status==='Vendido'?(document.getElementById('eNotaVenda')?.value.trim()||''):'')};
   await vincularTroca(editId, upd);
   if(!idLocal(editId)) await gravar(updateDoc(doc(db,'products',editId),upd), 'Editar "'+nome+'"');
   // Grava as peças novas na aba Peças, vinculadas a esta máquina
@@ -9432,6 +9444,16 @@ function montarTabelaVend(){
   if(res) res.innerHTML=resumoTabelaVend();
   const st=document.getElementById('tvStatus'); if(st) st.textContent='';
 }
+// Contador da descrição do catálogo. O limite é de tela, não de banco: texto
+// longo demais vira parede no celular do cliente e ninguém lê.
+window.eDescContar=()=>{
+  const e=document.getElementById('eDescricao'), c=document.getElementById('eDescConta');
+  if(!e||!c) return;
+  const n=e.value.length;
+  c.textContent = n ? n+'/600' : '';
+  c.classList.toggle('perto', n>=520);
+};
+
 // ── CATÁLOGO PÚBLICO ────────────────────────────────────────────────────
 // A página catalogo.html é aberta por quem não tem login. O Firestore devolve
 // o documento inteiro em qualquer leitura, então ela NÃO pode ler 'products':
@@ -9524,6 +9546,7 @@ window.publicarCatalogo=async()=>{
         preco:parseFloat(p.venda)||0,
         marca:brand(p.nome),
         specs:hwResumo(p),
+        descricao:String(p.descricao||'').slice(0,600),
         revisado:!!p.revisado,
         capa,
         n_fotos:fotos.length,
