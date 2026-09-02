@@ -179,10 +179,15 @@
   .rp p{margin:0 0 6px;line-height:1.65}
   .rp a{color:#e8eef6;text-decoration:none;display:inline-block;margin-bottom:6px}
   .rp a:hover{color:#fff;text-decoration:underline}
-  .rp-band{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
-  .rp-band span{font-size:.68rem;font-weight:700;color:#c8d3e0;
-    background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);
-    border-radius:5px;padding:2px 7px;white-space:nowrap}
+  /* Bandeiras desenhadas, não escritas: o cliente reconhece o cartão que tem
+     na mão pelo desenho antes de ler o nome. Os SVG são inline de propósito —
+     imagem de fora seria mais uma requisição pra travar em 4G ruim. */
+  /* 158px = três selos por linha. Sem isso a coluna quebrava em 4+2, que fica
+     torto ao lado das outras. */
+  .rp-band{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px;max-width:158px}
+  .rp-band .bnd{width:46px;height:29px;border-radius:4px;overflow:hidden;
+    background:#fff;border:1px solid rgba(255,255,255,.16);flex:0 0 auto}
+  .rp-band .bnd svg{display:block;width:100%;height:100%}
   .rp-taxa{font-size:.71rem;color:#6f8098;margin-top:7px;line-height:1.55}
   .rp-fim{border-top:1px solid rgba(255,255,255,.09);margin-top:24px;padding-top:14px;
     font-size:.71rem;color:#6f8098;line-height:1.7}
@@ -379,12 +384,63 @@ const MARCA_SVG=`<svg viewBox="0 0 800 800" aria-hidden="true">
             stroke-linecap="round" stroke-linejoin="round"/>
   <rect x="168" y="486" width="464" height="52" rx="26" fill="#06231A"/></svg>`;
 
+// Marcas de pagamento, desenhadas em SVG num quadro de 46x29. São versões
+// simplificadas, feitas só pra identificar o meio de pagamento aceito.
+const BANDEIRAS=[
+  ['Pix',
+   `<rect width="46" height="29" fill="#fff"/>
+    <g transform="rotate(45 23 14.5)"><rect x="16" y="7.5" width="14" height="14" rx="3.4" fill="#32BCAD"/></g>
+    <path d="M23 4.2V24.8M12.7 14.5H33.3" stroke="#fff" stroke-width="1.9" stroke-linecap="round"/>`],
+  ['Visa',
+   `<rect width="46" height="29" fill="#fff"/>
+    <text x="23" y="20" text-anchor="middle" font-family="Arial,Helvetica,sans-serif"
+      font-size="12.5" font-weight="700" font-style="italic" fill="#1A1F71">VISA</text>`],
+  ['Mastercard',
+   `<rect width="46" height="29" fill="#fff"/>
+    <clipPath id="bndMc"><circle cx="27" cy="14.5" r="8.6"/></clipPath>
+    <circle cx="19" cy="14.5" r="8.6" fill="#EB001B"/>
+    <circle cx="27" cy="14.5" r="8.6" fill="#F79E1B"/>
+    <circle cx="19" cy="14.5" r="8.6" fill="#FF5F00" clip-path="url(#bndMc)"/>`],
+  ['Elo',
+   `<rect width="46" height="29" fill="#000"/>
+    <g fill="none" stroke-width="2.7">
+      <path d="M11 9A5.5 5.5 0 0 1 15.76 17.25" stroke="#FFCB05"/>
+      <path d="M15.76 17.25A5.5 5.5 0 0 1 6.24 17.25" stroke="#EF4123"/>
+      <path d="M6.24 17.25A5.5 5.5 0 0 1 11 9" stroke="#00A4E0"/>
+    </g>
+    <text x="31" y="19" text-anchor="middle" font-family="Arial,Helvetica,sans-serif"
+      font-size="10.5" font-weight="700" fill="#fff">elo</text>`],
+  ['American Express',
+   `<rect width="46" height="29" fill="#016FD0"/>
+    <text x="23" y="19" text-anchor="middle" font-family="Arial,Helvetica,sans-serif"
+      font-size="10" font-weight="700" fill="#fff" letter-spacing=".3">AMEX</text>`],
+  ['Hipercard',
+   `<rect width="46" height="29" fill="#B3131B"/>
+    <text x="23" y="18" text-anchor="middle" font-family="Arial,Helvetica,sans-serif"
+      font-size="7.6" font-weight="700" fill="#fff">Hipercard</text>`],
+];
+function bandeirasHTML(){
+  return BANDEIRAS.map(([nome,corpo])=>
+    `<span class="bnd" title="${esc(nome)}"><svg viewBox="0 0 46 29" role="img"`
+    + ` aria-label="${esc(nome)}">${corpo}</svg></span>`).join('');
+}
+
+// (19) 99999-9999 — número à vista, não só a palavra "WhatsApp". Quem está no
+// computador não clica no link: copia o número e chama do celular.
+function waFmt(){
+  const n=waNum();
+  const d=(n.length>11 && n.startsWith('55')) ? n.slice(2) : n;
+  if(d.length===11) return `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`;
+  if(d.length===10) return `(${d.slice(0,2)}) ${d.slice(2,6)}-${d.slice(6)}`;
+  return d ? d : '';
+}
+
 function rodape(){
   const q=cfg.publicado_em ? new Date(cfg.publicado_em) : null;
   const quando=q&&!isNaN(q) ? q.toLocaleDateString('pt-BR') : '';
   const n=waNum();
   const contatos=[];
-  if(n) contatos.push(`<a href="${waLink()}" target="_blank" rel="noopener">💬 WhatsApp</a>`);
+  if(n) contatos.push(`<a href="${waLink()}" target="_blank" rel="noopener">💬 ${esc(waFmt())}</a>`);
   if(cfg.email) contatos.push(`<a href="mailto:${esc(cfg.email)}">✉️ ${esc(cfg.email)}</a>`);
   if(cfg.instagram) contatos.push(`<a href="https://instagram.com/${esc(String(cfg.instagram).replace(/^@/,''))}" target="_blank" rel="noopener">📷 @${esc(String(cfg.instagram).replace(/^@/,''))}</a>`);
 
@@ -408,12 +464,8 @@ function rodape(){
       </div>
       <div>
         <h4>Pagamento</h4>
-        <p>💠 Pix</p>
-        <p>💳 Cartão de débito e crédito</p>
-        <div class="rp-band">
-          <span>Visa</span><span>Mastercard</span><span>Elo</span>
-          <span>Amex</span><span>Hipercard</span>
-        </div>
+        <p>Pix, cartão de débito e crédito.</p>
+        <div class="rp-band">${bandeirasHTML()}</div>
         <p class="rp-taxa">Parcelamento no cartão tem taxa da maquininha — consulte antes de fechar.</p>
       </div>
     </div>
@@ -506,7 +558,7 @@ function filtrados(){
       if(f && !naFaixa(i,f)) return false;
     }
     if(!q) return true;
-    const alvo=norm((i.nome||'')+' '+(i.marca||'')+' '+(i.specs||[]).join(' '));
+    const alvo=norm((i.nome||'')+' '+(i.marca||'')+' '+specsDe(i).join(' '));
     return q.split(/\s+/).every(t=>alvo.includes(t));
   });
 }
@@ -528,6 +580,15 @@ function render(){
   $('grade').querySelectorAll('[data-id]').forEach(el=>{
     el.onclick=()=>abrir(el.dataset.id);
   });
+}
+
+// Slot que não existe não é spec. "0 slots M.2" faz o cliente achar que falta
+// peça na máquina; quem não tem M.2 simplesmente não fala de M.2. O app já não
+// publica mais isso, mas documento publicado antes do conserto ainda traz —
+// então a limpeza também acontece na leitura, sem depender de republicar.
+const ZERO_SPEC=/^\S+\s+(0\s+slots?\s|0\/0\s|sem\s)/;
+function specsDe(i){
+  return ((i&&i.specs)||[]).filter(s=>!ZERO_SPEC.test(String(s)));
 }
 
 // A bateria mudou de porcentagem pra escala, mas máquina antiga ainda vem com
@@ -559,7 +620,7 @@ function cartao(i){
     </div>
     <div class="cd-bd">
       <div class="cd-nm">${esc(i.nome)}</div>
-      <div class="cd-sp">${(i.specs||[]).slice(0,3).map(chipSpec).join('')}</div>
+      <div class="cd-sp">${specsDe(i).slice(0,3).map(chipSpec).join('')}</div>
       ${preco}
     </div>
   </div>`;
@@ -600,7 +661,7 @@ async function abrir(id){
       <div class="dt-nm">${esc(i.nome)}</div>
       <div class="dt-pr${temPreco?'':' breve'}">${temPreco?fmt(i.preco):'Preço em breve'}</div>
       ${ cheg ? `<div class="dt-cheg">🚚 Essa máquina ainda está chegando. Dá pra reservar agora e garantir antes de entrar à venda.</div>` : '' }
-      <div class="dt-sp">${(i.specs||[]).map(chipSpec).join('')||'<span class="sp">specs não informadas</span>'}</div>
+      <div class="dt-sp">${specsDe(i).map(chipSpec).join('')||'<span class="sp">specs não informadas</span>'}</div>
       ${ i.descricao ? `<div class="dt-desc">${esc(i.descricao)}</div>` : '' }
       <div class="gar">
         ✅ <b>90 dias de garantia</b> a partir da entrega.<br>

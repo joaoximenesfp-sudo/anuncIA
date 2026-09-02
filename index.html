@@ -6162,8 +6162,15 @@ function hwResumo(p, publico){
   const partes=[];
   const slot=(emoji,total,ocup,nome)=>{
     if(total==null) return;
+    // Total zero = a máquina não tem esse slot. No catálogo isso não é
+    // informação, é ruído: "0 slots M.2" só faz o cliente perguntar o que
+    // faltou. Some a linha inteira e sobra o que ela tem.
+    if(publico && !total) return;
     if(publico && ocup===0){ partes.push(`${emoji} ${total} slot${total!==1?'s':''} ${nome}`); return; }
     const l=slotsLivres(total,ocup);
+    // Sem slot nenhum não existe "cheio" nem "livre" — o que tem pra dizer é
+    // que não tem.
+    if(!total){ partes.push(`${emoji} sem ${nome}`); return; }
     partes.push(`${emoji} ${ocup!=null?ocup+'/':''}${total} ${nome}`
       + (l!==null ? (l>0 ? ' · '+l+' livre'+(l!==1?'s':'') : ' · cheio') : ''));
   };
