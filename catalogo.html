@@ -64,6 +64,8 @@
   .chips.tipos{padding-bottom:0}
   .chips.tipos .chip{font-size:.79rem;font-weight:700;padding:7px 14px}
   .chips.tipos .chip.on{background:var(--ac);border-color:var(--ac);color:#fff}
+  .chips.faixas{padding-top:6px}
+  .chips.faixas .chip.on{background:var(--nav);border-color:var(--nav);color:#fff}
   .cont{font-size:.76rem;color:var(--li);margin:4px 2px 12px}
 
   /* ── grade ── */
@@ -176,6 +178,7 @@
     <input class="bs" id="busca" type="search" placeholder="🔎 Buscar por modelo, marca, processador…" autocomplete="off">
     <div class="chips tipos" id="tipos"></div>
     <div class="chips" id="chips"></div>
+    <div class="chips faixas" id="faixas"></div>
   </div>
   <div class="cont" id="contagem"></div>
   <div class="gr" id="grade"></div>
@@ -200,7 +203,7 @@ const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>
 const fmt=v=>'R$ '+Math.round(Number(v)||0).toLocaleString('pt-BR');
 const norm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 
-let itens=[], cfg={}, tipoSel='', marcaSel='', busca='';
+let itens=[], cfg={}, tipoSel='', marcaSel='', faixaSel='', busca='';
 const cacheFotos={};   // produto_id -> [dataUrl]
 
 // ── carregar ────────────────────────────────────────────────────────────
@@ -249,6 +252,7 @@ async function carregar(){
   $('filtros').hidden=false;
   montarTipos();
   montarChips();
+  montarFaixas();
   render();
   rodape();
 }
@@ -315,7 +319,7 @@ function montarTipos(){
   el.innerHTML=`<button class="chip${tipoSel?'':' on'}" data-t="">Tudo <span style="opacity:.65">${itens.length}</span></button>`+
     presentes.map(([v,rot])=>`<button class="chip${tipoSel===v?' on':''}" data-t="${v}">${rot} <span style="opacity:.65">${cont[v]}</span></button>`).join('');
   el.querySelectorAll('.chip').forEach(b=>{
-    b.onclick=()=>{ tipoSel=b.dataset.t; marcaSel=''; montarTipos(); montarChips(); render(); };
+    b.onclick=()=>{ tipoSel=b.dataset.t; marcaSel=''; faixaSel=''; montarTipos(); montarChips(); montarFaixas(); render(); };
   });
 }
 
@@ -330,7 +334,40 @@ function montarChips(){
     `<button class="chip${marcaSel?'':' on'}" data-m="">Todas <span style="opacity:.6">${base.length}</span></button>`+
     marcas.map(m=>`<button class="chip${marcaSel===m?' on':''}" data-m="${esc(m)}">${esc(m)} <span style="opacity:.6">${cont[m]}</span></button>`).join('');
   $('chips').querySelectorAll('.chip').forEach(b=>{
-    b.onclick=()=>{ marcaSel=b.dataset.m; montarChips(); render(); };
+    b.onclick=()=>{ marcaSel=b.dataset.m; faixaSel=''; montarChips(); montarFaixas(); render(); };
+  });
+}
+
+// Faixas fixas em vez de calculadas: "até R$ 1.500" é uma frase que o comprador
+// já tem na cabeça antes de abrir a página. Faixa que sai de percentil muda de
+// significado toda semana e não ajuda ninguém a decidir.
+const FAIXAS=[
+  ['ate15',   'Até R$ 1.500',      0,    1500],
+  ['15a25',   'R$ 1.500 a 2.500',  1500, 2500],
+  ['25a35',   'R$ 2.500 a 3.500',  2500, 3500],
+  ['acima35', 'Acima de R$ 3.500', 3500, Infinity],
+];
+function naFaixa(i,f){
+  const p=Number(i.preco)||0;
+  if(!p) return false;            // "preço em breve" não cabe em faixa nenhuma
+  return p>f[2] && p<=f[3];       // limite superior fecha, inferior abre: sem buraco e sem sobreposição
+}
+function montarFaixas(){
+  // conta dentro do que já está filtrado acima (tipo e marca)
+  const base=itens.filter(i=>
+    (!tipoSel  || (i.tipo==='desktop'?'desktop':'notebook')===tipoSel) &&
+    (!marcaSel || (i.marca||'Outros')===marcaSel));
+  const presentes=FAIXAS.map(f=>[f,base.filter(i=>naFaixa(i,f)).length]).filter(([,n])=>n>0);
+  const el=$('faixas');
+  // Uma faixa só (ou nenhuma) não filtra nada — vira ruído.
+  if(presentes.length<2){ el.innerHTML=''; el.style.display='none'; faixaSel=''; return; }
+  el.style.display='';
+  const semPreco=base.filter(i=>!(Number(i.preco)||0)).length;
+  el.innerHTML=`<button class="chip${faixaSel?'':' on'}" data-f="">💰 Qualquer preço</button>`+
+    presentes.map(([f,n])=>`<button class="chip${faixaSel===f[0]?' on':''}" data-f="${f[0]}">${f[1]} <span style="opacity:.6">${n}</span></button>`).join('')+
+    (semPreco?`<button class="chip${faixaSel==='breve'?' on':''}" data-f="breve">A combinar <span style="opacity:.6">${semPreco}</span></button>`:'');
+  el.querySelectorAll('.chip').forEach(b=>{
+    b.onclick=()=>{ faixaSel=b.dataset.f; montarFaixas(); render(); };
   });
 }
 
@@ -339,6 +376,11 @@ function filtrados(){
   return itens.filter(i=>{
     if(tipoSel && (i.tipo==='desktop'?'desktop':'notebook')!==tipoSel) return false;
     if(marcaSel && (i.marca||'Outros')!==marcaSel) return false;
+    if(faixaSel==='breve'){ if(Number(i.preco)||0) return false; }
+    else if(faixaSel){
+      const f=FAIXAS.find(x=>x[0]===faixaSel);
+      if(f && !naFaixa(i,f)) return false;
+    }
     if(!q) return true;
     const alvo=norm((i.nome||'')+' '+(i.marca||'')+' '+(i.specs||[]).join(' '));
     return q.split(/\s+/).every(t=>alvo.includes(t));

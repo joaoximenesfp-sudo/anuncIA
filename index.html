@@ -6113,12 +6113,21 @@ function slotsLivres(total,ocup){
   if(total===null||total===undefined||ocup===null||ocup===undefined) return null;
   return Math.max(0, total-ocup);
 }
-function hwResumo(p){
+// `publico` muda o que se diz sobre slot vazio. Aqui dentro, "0/1 M.2" é a
+// verdade: a peça saiu pra outra máquina. No catálogo, o cliente leria isso
+// como "vem sem SSD" — e o título, que é o que ele leva, diz o contrário.
+// Então na vitrine o slot vazio vira só capacidade, sem o zero.
+function hwResumo(p, publico){
   const partes=[];
-  const lr=slotsLivres(p.slots_ram,p.slots_ram_ocup);
-  if(p.slots_ram!=null) partes.push(`🧠 ${p.slots_ram_ocup!=null?p.slots_ram_ocup+'/':''}${p.slots_ram} RAM${lr!==null?(lr>0?' · '+lr+' livre'+(lr!==1?'s':''):' · cheio'):''}`);
-  const lm=slotsLivres(p.slots_m2,p.slots_m2_ocup);
-  if(p.slots_m2!=null) partes.push(`💾 ${p.slots_m2_ocup!=null?p.slots_m2_ocup+'/':''}${p.slots_m2} M.2${lm!==null?(lm>0?' · '+lm+' livre'+(lm!==1?'s':''):' · cheio'):''}`);
+  const slot=(emoji,total,ocup,nome)=>{
+    if(total==null) return;
+    if(publico && ocup===0){ partes.push(`${emoji} ${total} slot${total!==1?'s':''} ${nome}`); return; }
+    const l=slotsLivres(total,ocup);
+    partes.push(`${emoji} ${ocup!=null?ocup+'/':''}${total} ${nome}`
+      + (l!==null ? (l>0 ? ' · '+l+' livre'+(l!==1?'s':'') : ' · cheio') : ''));
+  };
+  slot('🧠',p.slots_ram,p.slots_ram_ocup,'RAM');
+  slot('💾',p.slots_m2,p.slots_m2_ocup,'M.2');
   if(p.baia_25) partes.push('📀 baia 2.5"');
   if(p.tela_estado){
     const nm=(TELA_OPC.find(o=>o[0]===p.tela_estado)||[])[1]||p.tela_estado;
@@ -9931,7 +9940,7 @@ window.publicarCatalogo=async()=>{
         nome:String(p.nome||'Notebook'),
         preco:parseFloat(p.venda)||0,
         marca:brand(p.nome),
-        specs:hwResumo(p),
+        specs:hwResumo(p,true),
         descricao:String(p.descricao||'').slice(0,600),
         tipo:tipoMaquina(p),
         estado:(aguardandoP(p)?'chegando':'disponivel'),
