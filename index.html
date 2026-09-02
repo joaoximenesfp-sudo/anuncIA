@@ -509,6 +509,10 @@ input[type=number].inp{padding-left:32px}
 .tv-status{font-size:.73rem;color:var(--gr);font-weight:600;margin-top:8px;min-height:16px}
 
 .tipo-auto{font-size:.68rem;color:var(--li);margin-top:3px;min-height:14px;line-height:1.4}
+.agu-check{display:flex;align-items:flex-start;gap:7px;margin-top:8px;font-size:.74rem;
+  color:var(--mu);cursor:pointer;line-height:1.45}
+.agu-check input{width:15px;height:15px;accent-color:#f59e0b;cursor:pointer;flex:none;margin-top:1px}
+.agu-check strong{color:#b45309}
 .desc-cat{width:100%;min-height:76px;resize:vertical;font-family:inherit;line-height:1.5}
 .desc-conta{font-size:.68rem;color:var(--li);text-align:right;margin-top:3px;min-height:14px}
 .desc-conta.perto{color:#a16207;font-weight:600}
@@ -2827,6 +2831,11 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
           <option value="desktop">🖥️ Desktop / Mini</option>
         </select>
         <div class="tipo-auto" id="eTipoAuto"></div>
+        <label class="agu-check">
+          <input type="checkbox" id="eAguardando" onchange="eAguHint()">
+          <span>🚚 Aguardando chegar — entra no catálogo como <strong>chegando</strong>, mesmo sem estar anunciada<span id="eAguQuando"></span></span>
+        </label>
+        <div class="tipo-auto" id="eAguHint"></div>
       </div>
       <div class="fc full">
         <label class="fl">🌐 Descrição do catálogo <span style="font-size:.67rem;color:var(--li);font-weight:400">o texto que o cliente lê na página pública — deixe vazio pra não aparecer</span></label>
@@ -5187,6 +5196,8 @@ window.openEdit=id=>{
   montarHw(); hwPreencher('e',p); eHwSugerir();
   const eRev=document.getElementById('eRevisado'); if(eRev) eRev.checked=!!p.revisado;
   const eRObs=document.getElementById('eRevObs'); if(eRObs) eRObs.value=p.revisao_obs||'';
+  const eAg=document.getElementById('eAguardando'); if(eAg) eAg.checked=!!p.aguardando;
+  eAguHint();
   const eTp=document.getElementById('eTipoCat'); if(eTp) eTp.value=p.tipo_catalogo||'';
   eTipoAutoHint();
   const eDsc=document.getElementById('eDescricao'); if(eDsc) eDsc.value=p.descricao||'';
@@ -5424,7 +5435,7 @@ window.saveEdit=async()=>{
   const custoFinal=baseMaquina+somaJa+somaNovas;
   const totalPecas=somaJa+somaNovas;
 
-  const upd={nome,custo:custoFinal,custo_base:baseMaquina,custo_pecas:totalPecas,venda,lucro:venda-custoFinal,status,investidor,plataforma:(status==='Vendido'?(document.getElementById('ePlat')?.value||''):''),repasse_socio:(status==='Vendido'?(parseFloat(document.getElementById('eRepasse')?.value)||0):0),falta_comprar:(status!=='Vendido'?(document.getElementById('eFalta')?.value.trim()||''):''),falta_feito:(status!=='Vendido'&&!!document.getElementById('eFaltaFeito')?.checked),falta_feito_em:((status!=='Vendido'&&document.getElementById('eFaltaFeito')?.checked)?((_pAtual&&_pAtual.falta_feito&&_pAtual.falta_feito_em)||new Date().toISOString().slice(0,10)):''),...hwCampos('e'),revisado:!!document.getElementById('eRevisado')?.checked,revisado_em:(document.getElementById('eRevisado')?.checked?((_pAtual&&_pAtual.revisado&&_pAtual.revisado_em)||new Date().toISOString().slice(0,10)):''),revisao_obs:(document.getElementById('eRevObs')?.value.trim()||''),descricao:(document.getElementById('eDescricao')?.value.trim()||''),tipo_catalogo:(document.getElementById('eTipoCat')?.value||''),num_planilha:(document.getElementById('eNumPlan')?.value.trim()||''),fornecedor_id:fornId,fornecedor_nome:fornNome,data_compra:dc,data_compra_mes:dcMes,data_venda:dv,data:(dv?dv.slice(0,7):dcMes),gas_pagante:(document.getElementById('eGasPag')?.value||'ambos'),aporte_joao:(parseFloat(document.getElementById('eApJoao')?.value)||0),aporte_igor:(parseFloat(document.getElementById('eApIgor')?.value)||0),cliente_id:cliId,cliente_nome:cliNome,preco_cheio:(status==='Vendido'?(parseFloat(document.getElementById('ePrecoCheio')?.value)||0):0),nota_venda:(status==='Vendido'?(document.getElementById('eNotaVenda')?.value.trim()||''):'')};
+  const upd={nome,custo:custoFinal,custo_base:baseMaquina,custo_pecas:totalPecas,venda,lucro:venda-custoFinal,status,investidor,plataforma:(status==='Vendido'?(document.getElementById('ePlat')?.value||''):''),repasse_socio:(status==='Vendido'?(parseFloat(document.getElementById('eRepasse')?.value)||0):0),falta_comprar:(status!=='Vendido'?(document.getElementById('eFalta')?.value.trim()||''):''),falta_feito:(status!=='Vendido'&&!!document.getElementById('eFaltaFeito')?.checked),falta_feito_em:((status!=='Vendido'&&document.getElementById('eFaltaFeito')?.checked)?((_pAtual&&_pAtual.falta_feito&&_pAtual.falta_feito_em)||new Date().toISOString().slice(0,10)):''),...hwCampos('e'),revisado:!!document.getElementById('eRevisado')?.checked,revisado_em:(document.getElementById('eRevisado')?.checked?((_pAtual&&_pAtual.revisado&&_pAtual.revisado_em)||new Date().toISOString().slice(0,10)):''),revisao_obs:(document.getElementById('eRevObs')?.value.trim()||''),descricao:(document.getElementById('eDescricao')?.value.trim()||''),tipo_catalogo:(document.getElementById('eTipoCat')?.value||''),aguardando:(status!=='Vendido'&&!!document.getElementById('eAguardando')?.checked),num_planilha:(document.getElementById('eNumPlan')?.value.trim()||''),fornecedor_id:fornId,fornecedor_nome:fornNome,data_compra:dc,data_compra_mes:dcMes,data_venda:dv,data:(dv?dv.slice(0,7):dcMes),gas_pagante:(document.getElementById('eGasPag')?.value||'ambos'),aporte_joao:(parseFloat(document.getElementById('eApJoao')?.value)||0),aporte_igor:(parseFloat(document.getElementById('eApIgor')?.value)||0),cliente_id:cliId,cliente_nome:cliNome,preco_cheio:(status==='Vendido'?(parseFloat(document.getElementById('ePrecoCheio')?.value)||0):0),nota_venda:(status==='Vendido'?(document.getElementById('eNotaVenda')?.value.trim()||''):'')};
   await vincularTroca(editId, upd);
   if(!idLocal(editId)) await gravar(updateDoc(doc(db,'products',editId),upd), 'Editar "'+nome+'"');
   // Grava as peças novas na aba Peças, vinculadas a esta máquina
@@ -9660,6 +9671,19 @@ window.eTipoAutoHint=()=>{
   h.textContent='Pelo nome, entra como '+tipoRotulo(t)+'. Se estiver errado, escolha acima.';
 };
 
+// Máquina comprada que ainda não chegou. Entra no catálogo marcada como
+// "chegando" pra o cliente pedir antes — e pra você descobrir o que tem
+// procura antes de gastar em anúncio.
+window.eAguHint=()=>{
+  const c=document.getElementById('eAguardando'), h=document.getElementById('eAguHint');
+  if(!c||!h) return;
+  if(!c.checked){ h.textContent=''; return; }
+  const preco=parseFloat(document.getElementById('eV')?.value)||0;
+  h.textContent = preco>0
+    ? 'Vai aparecer no catálogo como "chegando", por '+fmt(preco)+'.'
+    : 'Vai aparecer como "chegando", com "preço em breve" — o preço é opcional aqui.';
+};
+
 // Contador da descrição do catálogo. O limite é de tela, não de banco: texto
 // longo demais vira parede no celular do cliente e ninguém lê.
 window.eDescContar=()=>{
@@ -9844,10 +9868,18 @@ window.publicarCatalogo=async()=>{
   bt.disabled=true; bt.textContent='Publicando...';
   el.innerHTML='Lendo as máquinas e as fotos...';
 
-  const anunciadas=prods.filter(p=>p.status==='Anunciado');
+  // Duas origens: o que está à venda hoje, e o que foi comprado e ainda vai
+  // chegar. A segunda entra mesmo sem preço — quando a máquina nem chegou, o
+  // preço muitas vezes ainda não está fechado, e esconder ela por isso seria
+  // perder o cliente que estava justamente procurando aquilo.
+  const anunciadas=prods.filter(p=>p.status==='Anunciado' && !p.aguardando);
   const semPreco=anunciadas.filter(p=>!((parseFloat(p.venda)||0)>0));
-  const lista=anunciadas.filter(p=>(parseFloat(p.venda)||0)>0)
-                        .sort((a,b)=>(parseFloat(b.venda)||0)-(parseFloat(a.venda)||0));
+  const disponiveis=anunciadas.filter(p=>(parseFloat(p.venda)||0)>0)
+                              .sort((a,b)=>(parseFloat(b.venda)||0)-(parseFloat(a.venda)||0));
+  const chegando=prods.filter(p=>p.aguardando && p.status!=='Vendido')
+                      .sort((a,b)=>(parseFloat(b.venda)||0)-(parseFloat(a.venda)||0));
+  const chegandoSemPreco=chegando.filter(p=>!((parseFloat(p.venda)||0)>0)).length;
+  const lista=disponiveis.concat(chegando);
 
   const semFoto=[], falhas=[];
   const idsVivos=new Set(), fotoIdsVivos=new Set();
@@ -9878,6 +9910,7 @@ window.publicarCatalogo=async()=>{
         specs:hwResumo(p),
         descricao:String(p.descricao||'').slice(0,600),
         tipo:tipoMaquina(p),
+        estado:(p.aguardando?'chegando':'disponivel'),
         capa,
         n_fotos:fotos.length,
         publicado_em:new Date().toISOString()
@@ -9909,7 +9942,11 @@ window.publicarCatalogo=async()=>{
             publicado_em:new Date().toISOString()};
     await gravar(setDoc(doc(db,'catalogo_cfg',CAT_CFG_ID),catCfg),'Dados da loja no catálogo');
 
-    let h=`<span class="ok">✅ ${publicadas} máquina${publicadas!==1?'s':''} no ar</span> · ${nFotos} foto${nFotos!==1?'s':''}`;
+    const nCheg=chegando.length, nDisp=publicadas-nCheg;
+    let h=`<span class="ok">✅ ${publicadas} máquina${publicadas!==1?'s':''} no ar</span>`
+        + (nCheg?` — ${nDisp} disponíve${nDisp!==1?'is':'l'} e <strong>${nCheg} chegando</strong>`:'')
+        + ` · ${nFotos} foto${nFotos!==1?'s':''}`;
+    if(chegandoSemPreco) h+=`<br>🚚 ${chegandoSemPreco} chegando sem preço — aparece como "preço em breve".`;
     if(removidas) h+=` · ${removidas} tirada${removidas!==1?'s':''} do ar`;
     if(semPreco.length){
       h+=`<br><span class="fora">⚠️ ${semPreco.length} anunciada${semPreco.length!==1?'s':''} ficou de fora por estar sem preço:</span> `
@@ -9917,7 +9954,8 @@ window.publicarCatalogo=async()=>{
        + (semPreco.length>6?` +${semPreco.length-6}`:'');
     }
     if(semFoto.length){
-      h+=`<br><span class="fora">📷 ${semFoto.length} entrou sem foto nenhuma</span> (aparece como "sem foto" pro cliente): `
+      const v=semFoto.length!==1;
+      h+=`<br><span class="fora">📷 ${semFoto.length} ${v?'entraram':'entrou'} sem foto nenhuma</span> (${v?'aparecem':'aparece'} como "sem foto" pro cliente): `
        + semFoto.slice(0,6).map(esc).join(' · ')+(semFoto.length>6?` +${semFoto.length-6}`:'');
     }
     if(falhas.length){

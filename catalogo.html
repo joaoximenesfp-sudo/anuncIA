@@ -75,6 +75,13 @@
   .cd-im{aspect-ratio:4/3;background:var(--bg);position:relative;overflow:hidden}
   .cd-im img{width:100%;height:100%;object-fit:cover;display:block}
   .cd-im .sem{width:100%;height:100%;display:grid;place-items:center;color:var(--li);font-size:.78rem}
+  .cd-ch{position:absolute;left:8px;top:8px;background:#f59e0b;color:#3b2200;
+    font-size:.66rem;font-weight:800;padding:3px 9px;border-radius:20px;letter-spacing:.01em}
+  .cd.cheg{border-color:#f4c77a}
+  .cd-pr.breve{font-size:.9rem;color:var(--al);font-weight:700}
+  .dt-pr.breve{font-size:1.05rem;color:var(--al)}
+  .dt-cheg{background:var(--albg);border:1px solid var(--al);color:var(--al);border-radius:10px;
+    padding:9px 12px;font-size:.79rem;font-weight:600;line-height:1.55;margin-bottom:12px}
   .cd-nf{position:absolute;right:8px;bottom:8px;background:rgba(8,12,20,.72);color:#fff;
     font-size:.68rem;font-weight:700;padding:3px 8px;border-radius:20px;backdrop-filter:blur(4px)}
   .cd-bd{padding:11px 12px 13px;display:flex;flex-direction:column;gap:7px;flex:1}
@@ -216,6 +223,13 @@ async function carregar(){
     ]);
     snapC.forEach(d=>{ if(d.id==='loja') cfg=d.data()||{}; });
     itens=snapI.docs.map(d=>({id:d.id,...d.data()}));
+    // Chegando vai pro fim: quem abre o catálogo quer comprar hoje. O que
+    // ainda não chegou é bônus, não pode empurrar o disponível pra baixo.
+    itens.sort((a,b)=>{
+      const ca=a.estado==='chegando'?1:0, cb=b.estado==='chegando'?1:0;
+      if(ca!==cb) return ca-cb;
+      return (Number(b.preco)||0)-(Number(a.preco)||0);
+    });
   }catch(e){
     console.error(e);
     $('lojaSub').textContent='—';
@@ -248,9 +262,10 @@ function waLink(msg){
 
 function cabecalho(){
   $('lojaNome').textContent=cfg.nome||'Catálogo';
-  const n=itens.length;
-  $('lojaSub').textContent=`${n} máquina${n!==1?'s':''} disponíve${n!==1?'is':'l'}`+
-    (cfg.cidade?` · ${cfg.cidade}`:'');
+  const nCheg=itens.filter(i=>i.estado==='chegando').length;
+  const nDisp=itens.length-nCheg;
+  $('lojaSub').textContent=`${nDisp} máquina${nDisp!==1?'s':''} disponíve${nDisp!==1?'is':'l'}`+
+    (nCheg?` · ${nCheg} chegando`:'')+(cfg.cidade?` · ${cfg.cidade}`:'');
   const bts=[];
   if(waNum()) bts.push(`<a class="hd-bt" href="${waLink()}" target="_blank" rel="noopener">💬 Chamar no WhatsApp</a>`);
   if(cfg.instagram) bts.push(`<a class="hd-bt sec" href="https://instagram.com/${esc(String(cfg.instagram).replace(/^@/,''))}" target="_blank" rel="noopener">📷 Instagram</a>`);
@@ -359,14 +374,19 @@ function cartao(i){
     ? `<img src="${i.capa}" alt="${esc(i.nome)}" loading="lazy">`
     : `<div class="sem">sem foto</div>`;
   const n = Number(i.n_fotos)||0;
-  return `<div class="cd" data-id="${esc(i.id)}">
+  const cheg = i.estado==='chegando';
+  const preco = (Number(i.preco)||0)>0
+    ? `<div class="cd-pr">${fmt(i.preco)}</div>`
+    : `<div class="cd-pr breve">Preço em breve</div>`;
+  return `<div class="cd${cheg?' cheg':''}" data-id="${esc(i.id)}">
     <div class="cd-im">${capa}
+      ${cheg?'<span class="cd-ch">🚚 chegando</span>':''}
       ${n>1?`<span class="cd-nf">📷 ${n}</span>`:''}
     </div>
     <div class="cd-bd">
       <div class="cd-nm">${esc(i.nome)}</div>
       <div class="cd-sp">${(i.specs||[]).slice(0,3).map(chipSpec).join('')}</div>
-      <div class="cd-pr">${fmt(i.preco)}</div>
+      ${preco}
     </div>
   </div>`;
 }
@@ -385,7 +405,13 @@ window.fechar=()=>{ $('ov').classList.remove('on'); document.body.style.overflow
 
 async function abrir(id){
   const i=itens.find(x=>x.id===id); if(!i) return;
-  const msg=`Olá! Tenho interesse no *${i.nome}* por ${fmt(i.preco)}, que vi no catálogo. Ainda está disponível?`;
+  const cheg = i.estado==='chegando';
+  const temPreco = (Number(i.preco)||0)>0;
+  // A conversa começa diferente conforme o caso: pedir uma máquina que ainda
+  // não chegou não é a mesma pergunta que pedir uma que está na prateleira.
+  const msg = cheg
+    ? `Olá! Vi no catálogo que o *${i.nome}* está chegando${temPreco?` por ${fmt(i.preco)}`:''}. Dá pra reservar?`
+    : `Olá! Tenho interesse no *${i.nome}* por ${fmt(i.preco)}, que vi no catálogo. Ainda está disponível?`;
   $('dt').innerHTML=`
     <div class="dt-x"><b>Detalhes</b><button onclick="fechar()" aria-label="Fechar">✕</button></div>
     <div class="car-wrap">
@@ -398,15 +424,16 @@ async function abrir(id){
     <div class="pts" id="pts"></div>
     <div class="dt-bd">
       <div class="dt-nm">${esc(i.nome)}</div>
-      <div class="dt-pr">${fmt(i.preco)}</div>
+      <div class="dt-pr${temPreco?'':' breve'}">${temPreco?fmt(i.preco):'Preço em breve'}</div>
+      ${ cheg ? `<div class="dt-cheg">🚚 Essa máquina ainda está chegando. Dá pra reservar agora e garantir antes de entrar à venda.</div>` : '' }
       <div class="dt-sp">${(i.specs||[]).map(chipSpec).join('')||'<span class="sp">specs não informadas</span>'}</div>
       ${ i.descricao ? `<div class="dt-desc">${esc(i.descricao)}</div>` : '' }
       <div class="gar">
         ✅ <b>90 dias de garantia</b> a partir da entrega.<br>
-        🔧 Revisada por dentro: memória, armazenamento, bateria e limpeza com troca de pasta térmica.<br>
+        🔧 Testada antes da venda: memória, armazenamento e limpeza interna.<br>
         🚚 Entrega combinada na região e envio por Correios com rastreio.
       </div>
-      <a class="cta" href="${waLink(msg)}" target="_blank" rel="noopener">💬 Tenho interesse</a>
+      <a class="cta" href="${waLink(msg)}" target="_blank" rel="noopener">${cheg?'🚚 Quero reservar':'💬 Tenho interesse'}</a>
     </div>`;
   $('ov').classList.add('on');
   document.body.style.overflow='hidden';
