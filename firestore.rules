@@ -63,6 +63,8 @@ service cloud.firestore {
     match /catalogo/{doc}       { allow read: if true; allow write: if socio(); }
     match /catalogo_fotos/{doc} { allow read: if true; allow write: if socio(); }
     match /catalogo_cfg/{doc}   { allow read: if true; allow write: if socio(); }
+    // Vitrine de revendedor: nome, whatsapp e a comissao dele. Nada do custo.
+    match /catalogo_rev/{doc}   { allow read: if true; allow write: if socio(); }
 
     // ── FINANÇAS PESSOAIS — isoladas por sócio ──
     // O app já consulta com where('userId','==',user.uid), então as consultas

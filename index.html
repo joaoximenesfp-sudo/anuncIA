@@ -546,6 +546,25 @@ input[type=number].inp{padding-left:32px}
 .cat-qr canvas,.cat-qr img{display:block;margin:0 auto;border-radius:6px}
 .cat-qr .cat-qr-txt{font-size:.7rem;color:var(--mu);line-height:1.6;margin-top:9px}
 .cat-qr .cat-qr-txt a{color:var(--bl);font-weight:700}
+.rev-bloco{margin-top:16px;padding-top:14px;border-top:1px solid var(--b2)}
+.rev-dica{font-size:.7rem;color:var(--li);line-height:1.6;margin:5px 0 10px}
+.rev-dica code{background:var(--bg);border:1px solid var(--b2);border-radius:4px;padding:0 4px}
+.rev-item{background:var(--w);border:1px solid var(--b2);border-radius:9px;padding:10px 11px;margin-bottom:7px}
+.rev-cab{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:7px}
+.rev-nome{font-size:.8rem;font-weight:700;color:var(--tx);flex:1;min-width:120px}
+.rev-sem{font-size:.66rem;color:var(--am);font-weight:700}
+.rev-linha{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.rev-linha .inp{width:88px;font-size:.78rem;padding:6px 8px}
+.rev-bt{font-size:.72rem;font-weight:700;padding:6px 10px;border-radius:7px;border:1px solid var(--b2);
+  background:var(--bg);color:var(--tx);cursor:pointer;font-family:inherit}
+.rev-bt.pri{background:var(--bl);border-color:var(--bl);color:#fff}
+.rev-bt:disabled{opacity:.5;cursor:default}
+.rev-st{font-size:.68rem;line-height:1.6;margin-top:5px;min-height:14px}
+.rev-st .ok{color:var(--gr);font-weight:700}
+.rev-st .erro{color:var(--re);font-weight:700}
+.rev-st code{background:var(--bg);border:1px solid var(--b2);border-radius:4px;padding:1px 4px;
+  font-size:.68rem;word-break:break-all}
+.rev-vazio{font-size:.74rem;color:var(--mu);line-height:1.6;padding:10px 2px}
 .cat-res{font-size:.75rem;line-height:1.7;margin-top:10px;min-height:16px}
 .cat-res .ok{color:var(--gr);font-weight:700}
 .cat-res .fora{color:#a16207;font-weight:600}
@@ -2611,6 +2630,15 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
             <button class="bcan" onclick="catQR()">📱 QR code</button>
           </div>
           <div id="catQRBox" class="cat-qr" style="display:none"></div>
+
+          <div class="rev-bloco">
+            <div class="cat-tit">🔁 Catálogo dos revendedores <span class="cat-sub">mesma vitrine, com a comissão dele embutida no preço</span></div>
+            <div class="rev-dica">
+              Quem aparece aqui é cliente com perfil <strong>🔁 Repasse</strong>. A comissão aceita
+              <strong>valor</strong> (<code>120</code>) ou <strong>porcentagem</strong> (<code>5%</code>) — em porcentagem o preço final é arredondado pra dezena.
+            </div>
+            <div id="revLista"></div>
+          </div>
           <div class="cat-descs" id="catDescs" style="display:none">
             <div class="cat-descs-topo">
               <span id="catDescsResumo"></span>
@@ -9882,6 +9910,96 @@ window.catQR=async()=>{
   }
 };
 
+// ── CATÁLOGO DO REVENDEDOR ──────────────────────────────────────────────
+// Mesma vitrine, preço com a comissão dele dentro, e o contato dele no topo —
+// senão o cliente dele fala com você e o revendedor perde a venda que trouxe.
+// O seu preço não vai junto: o que é publicado já é o preço final dele.
+function comissaoParse(txt){
+  const t=String(txt||'').trim().replace(',','.');
+  if(!t) return null;
+  // O sinal tem que ser visto antes da limpeza: tirando os não-dígitos,
+  // "-50" viraria "50" e uma comissão negativa passaria como positiva.
+  if(t.includes('-')) return null;
+  const pct=/%\s*$/.test(t);
+  const n=parseFloat(t.replace('%','').replace(/[^\d.]/g,''));
+  if(isNaN(n)||n<=0) return null;
+  return {tipo: pct?'pct':'fixo', valor:n};
+}
+function comissaoTexto(c){
+  if(!c) return '';
+  return c.tipo==='pct' ? (c.valor+'%') : String(c.valor);
+}
+function revUrl(id){ return catUrl()+'?r='+encodeURIComponent(id); }
+
+window.revRender=()=>{
+  const el=document.getElementById('revLista'); if(!el) return;
+  const revs=clientes.filter(c=>c.perfil==='repasse');
+  if(!revs.length){
+    el.innerHTML='<div class="rev-vazio">Nenhum revendedor ainda. Na aba <strong>Clientes</strong>, marque o perfil <strong>🔁 Repasse de notebooks</strong> em quem revende — ele aparece aqui.</div>';
+    return;
+  }
+  el.innerHTML=revs.map(c=>{
+    const tel=String(c.whatsapp||'').replace(/\D/g,'');
+    const com=comissaoTexto(c.comissao_tipo?{tipo:c.comissao_tipo,valor:c.comissao_valor}:null);
+    return `<div class="rev-item">
+      <div class="rev-cab">
+        <span class="rev-nome">${esc(c.nome||'sem nome')}</span>
+        ${tel?'':'<span class="rev-sem">⚠️ sem WhatsApp cadastrado</span>'}
+      </div>
+      <div class="rev-linha">
+        <input class="inp" id="revCom-${esc(c.id)}" value="${esc(com)}" placeholder="120 ou 5%">
+        <button class="rev-bt pri" onclick="revPublicar('${esc(c.id)}')">Publicar pra ele</button>
+        <button class="rev-bt" onclick="revCopiar('${esc(c.id)}')">🔗 Link</button>
+        <button class="rev-bt" onclick="window.open(revUrl('${esc(c.id)}'),'_blank')">👁️</button>
+      </div>
+      <div class="rev-st" id="revSt-${esc(c.id)}"></div>
+    </div>`;
+  }).join('');
+};
+
+window.revCopiar=async(id)=>{
+  const st=document.getElementById('revSt-'+id);
+  try{ await navigator.clipboard.writeText(revUrl(id)); st.innerHTML='<span class="ok">✅ Link copiado.</span> Manda pra ele.'; }
+  catch(e){ st.innerHTML='<code>'+esc(revUrl(id))+'</code>'; }
+};
+
+window.revPublicar=async(id)=>{
+  const c=clientes.find(x=>x.id===id); if(!c) return;
+  const st=document.getElementById('revSt-'+id);
+  const com=comissaoParse(document.getElementById('revCom-'+id)?.value);
+  if(!com){ st.innerHTML='<span class="erro">Preencha a comissão</span> — um valor como <code>120</code> ou uma porcentagem como <code>5%</code>.'; return; }
+  const tel=String(c.whatsapp||'').replace(/\D/g,'');
+  if(!tel){ st.innerHTML='<span class="erro">Esse revendedor está sem WhatsApp.</span> Sem número, o cliente dele não teria pra quem escrever — cadastre na aba Clientes.'; return; }
+
+  st.textContent='Publicando...';
+  const upd={comissao_tipo:com.tipo, comissao_valor:com.valor};
+  Object.assign(c,upd);
+  if(!idLocal(id)) await gravar(updateDoc(doc(db,'clientes',id),upd),'Comissão de "'+(c.nome||id)+'"');
+
+  const okDoc=await gravar(setDoc(doc(db,'catalogo_rev',id),{
+    nome:String(c.nome||'Revendedor'), whatsapp:tel,
+    comissao_tipo:com.tipo, comissao_valor:com.valor,
+    publicado_em:new Date().toISOString()
+  }),'Catálogo do revendedor "'+(c.nome||id)+'"');
+  if(!okDoc){ st.innerHTML='<span class="erro">Não consegui publicar</span> — veja o aviso vermelho no topo.'; return; }
+
+  // Quantas máquinas ele realmente vai ver: sem preço base não há o que somar.
+  const base=prods.filter(p=>p.status==='Anunciado' && !aguardandoP(p) && (parseFloat(p.venda)||0)>0);
+  const exemplo=base.length ? revPreco(parseFloat(base[0].venda)||0,com) : 0;
+  st.innerHTML=`<span class="ok">✅ No ar com ${base.length} máquina${base.length!==1?'s':''}.</span>`
+    + (base.length?` Ex.: ${fmt(parseFloat(base[0].venda)||0)} vira <strong>${fmt(exemplo)}</strong> pra ele.`:'')
+    + `<br>🔗 <code>${esc(revUrl(id))}</code>`;
+};
+
+// Mesma conta que a página do revendedor faz. Porcentagem arredonda pra dezena
+// pra não sair preço quebrado tipo R$ 2.573.
+function revPreco(base, com){
+  const b=Number(base)||0;
+  if(!b||!com) return b;
+  if(com.tipo==='pct') return Math.round(b*(1+com.valor/100)/10)*10;
+  return b+com.valor;
+}
+
 window.abrirCatalogo=()=>window.open(catUrl(),'_blank');
 window.copiarLinkCatalogo=async()=>{
   const el=document.getElementById('catRes');
@@ -10008,6 +10126,7 @@ window.abrirTabelaVend=()=>{
   // velha: máquina vendida, preço novo, outra anunciada. Refaz.
   const box=document.getElementById('catDescs');
   if(box && box.style.display!=='none') catDescRender();
+  revRender();
   document.getElementById('TVO').classList.remove('h');
 };
 window.fecharTabelaVend=()=>{ document.getElementById('TVO').classList.add('h'); };

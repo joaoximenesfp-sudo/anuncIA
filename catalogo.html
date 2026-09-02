@@ -204,6 +204,17 @@ const fmt=v=>'R$ '+Math.round(Number(v)||0).toLocaleString('pt-BR');
 const norm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 
 let itens=[], cfg={}, tipoSel='', marcaSel='', faixaSel='', busca='';
+// ?r=<id> abre a vitrine de um revendedor: mesmas máquinas, preço com a
+// comissão dele dentro e o contato dele no topo. Sem o parâmetro, é a loja.
+const REV_ID=new URLSearchParams(location.search).get('r')||'';
+let rev=null;
+function revPreco(base){
+  const b=Number(base)||0;
+  if(!b||!rev) return b;
+  return rev.comissao_tipo==='pct'
+    ? Math.round(b*(1+(Number(rev.comissao_valor)||0)/100)/10)*10
+    : b+(Number(rev.comissao_valor)||0);
+}
 const cacheFotos={};   // produto_id -> [dataUrl]
 
 // ── carregar ────────────────────────────────────────────────────────────
@@ -220,12 +231,25 @@ function estado(ic,titulo,texto){
 async function carregar(){
   esqueleto();
   try{
-    const [snapC,snapI]=await Promise.all([
+    const [snapC,snapI,snapR]=await Promise.all([
       getDocs(collection(db,'catalogo_cfg')),
-      getDocs(query(collection(db,'catalogo'),orderBy('preco','desc')))
+      getDocs(query(collection(db,'catalogo'),orderBy('preco','desc'))),
+      REV_ID ? getDocs(collection(db,'catalogo_rev')) : Promise.resolve(null)
     ]);
     snapC.forEach(d=>{ if(d.id==='loja') cfg=d.data()||{}; });
+    if(snapR) snapR.forEach(d=>{ if(d.id===REV_ID) rev=d.data()||null; });
+    if(REV_ID && !rev){
+      estado('🔒','Este catálogo não está disponível',
+        'O link pode ter expirado. Peça um novo para quem enviou.');
+      return;
+    }
     itens=snapI.docs.map(d=>({id:d.id,...d.data()}));
+    if(rev){
+      // Sem preço base não há o que somar comissão, então não entra.
+      itens=itens.filter(i=>(Number(i.preco)||0)>0).map(i=>({...i,preco:revPreco(i.preco)}));
+      cfg={nome:rev.nome, whatsapp:rev.whatsapp, cidade:cfg.cidade||'',
+           instagram:'', publicado_em:rev.publicado_em||cfg.publicado_em};
+    }
     // Chegando vai pro fim: quem abre o catálogo quer comprar hoje. O que
     // ainda não chegou é bônus, não pode empurrar o disponível pra baixo.
     itens.sort((a,b)=>{
@@ -266,7 +290,7 @@ function waLink(msg){
 
 function cabecalho(){
   $('lojaNome').textContent=cfg.nome||'Catálogo';
-  const nCheg=itens.filter(i=>i.estado==='chegando').length;
+  const nCheg=rev?0:itens.filter(i=>i.estado==='chegando').length;
   const nDisp=itens.length-nCheg;
   $('lojaSub').textContent=`${nDisp} máquina${nDisp!==1?'s':''} disponíve${nDisp!==1?'is':'l'}`+
     (nCheg?` · ${nCheg} chegando`:'')+(cfg.cidade?` · ${cfg.cidade}`:'');
