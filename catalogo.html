@@ -251,7 +251,26 @@ function cabecalho(){
   const bts=[];
   if(waNum()) bts.push(`<a class="hd-bt" href="${waLink()}" target="_blank" rel="noopener">💬 Chamar no WhatsApp</a>`);
   if(cfg.instagram) bts.push(`<a class="hd-bt sec" href="https://instagram.com/${esc(String(cfg.instagram).replace(/^@/,''))}" target="_blank" rel="noopener">📷 Instagram</a>`);
+  bts.push(`<button class="hd-bt sec" id="btShare" type="button">🔗 Compartilhar</button>`);
   $('hdBar').innerHTML=bts.join('');
+  const bs=$('btShare');
+  if(bs) bs.onclick=()=>compartilhar(bs);
+}
+
+// Qualquer visitante pode repassar o catálogo: no celular abre a bandeja de
+// compartilhamento do sistema, no computador copia o endereço.
+async function compartilhar(bt){
+  const url=location.href.split('#')[0];
+  const dados={ title:(cfg.nome||'Catálogo')+' — notebooks disponíveis',
+                text:'Dá uma olhada nas máquinas disponíveis:', url };
+  if(navigator.share){
+    try{ await navigator.share(dados); return; }
+    catch(e){ if(e && e.name==='AbortError') return; }
+  }
+  const antes=bt.textContent;
+  try{ await navigator.clipboard.writeText(url); bt.textContent='✅ Link copiado'; }
+  catch(e){ bt.textContent='🔗 '+url; }
+  setTimeout(()=>{ bt.textContent=antes; },2200);
 }
 
 function rodape(){

@@ -539,6 +539,11 @@ input[type=number].inp{padding-left:32px}
 .cat-item-pe .salvo{color:var(--gr);font-weight:700}
 .cat-item-pe .erro{color:var(--re);font-weight:700}
 .cat-vazio{font-size:.75rem;color:var(--mu);text-align:center;padding:14px 8px;line-height:1.6}
+.cat-qr{margin-top:12px;text-align:center;background:var(--w);border:1px solid var(--b2);
+  border-radius:10px;padding:14px}
+.cat-qr canvas,.cat-qr img{display:block;margin:0 auto;border-radius:6px}
+.cat-qr .cat-qr-txt{font-size:.7rem;color:var(--mu);line-height:1.6;margin-top:9px}
+.cat-qr .cat-qr-txt a{color:var(--bl);font-weight:700}
 .cat-res{font-size:.75rem;line-height:1.7;margin-top:10px;min-height:16px}
 .cat-res .ok{color:var(--gr);font-weight:700}
 .cat-res .fora{color:#a16207;font-weight:600}
@@ -671,7 +676,19 @@ input[type=number].inp{padding-left:32px}
 .fotos-add{background:#0e7490;color:#fff;border:none;border-radius:7px;font-size:.72rem;font-weight:700;
   padding:5px 11px;cursor:pointer;white-space:nowrap}
 .fotos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:7px}
-.foto-item{position:relative;aspect-ratio:4/3;border-radius:8px;overflow:hidden;border:1px solid var(--b2);background:var(--w)}
+/* touch-action:none porque durante o arrasto o navegador não pode roubar o
+   gesto pra rolar a página. Rolar o modal continua funcionando em qualquer
+   ponto fora da grade de fotos. */
+.foto-item{position:relative;aspect-ratio:4/3;border-radius:8px;overflow:hidden;border:1px solid var(--b2);background:var(--w);
+  touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;
+  transition:opacity .12s ease,transform .12s ease}
+.foto-item.arrastando{opacity:.25;transform:scale(.94)}
+.foto-ghost{position:fixed;z-index:300;pointer-events:none;border-radius:10px;overflow:hidden;
+  box-shadow:0 14px 34px rgba(0,0,0,.45);opacity:.96;transform:scale(1.07);
+  transform-origin:center;border:2px solid #fff}
+.foto-ghost img{width:100%;height:100%;object-fit:cover;display:block}
+body.arrastando-foto{user-select:none;-webkit-user-select:none;cursor:grabbing}
+.fotos-dica{font-size:.66rem;color:var(--li);line-height:1.5;margin:-2px 0 7px}
 .foto-item img{width:100%;height:100%;object-fit:cover;display:block}
 .foto-del{position:absolute;top:3px;right:3px;background:rgba(185,28,28,.92);color:#fff;border:none;
   width:20px;height:20px;border-radius:50%;font-size:.7rem;line-height:1;cursor:pointer;padding:0}
@@ -2588,7 +2605,9 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
             <button class="bcan" id="catDescBt" onclick="catDescToggle()">✍️ Escrever descrições</button>
             <button class="bcan" onclick="abrirCatalogo()">👁️ Ver a página</button>
             <button class="bcan" onclick="copiarLinkCatalogo()">🔗 Copiar link</button>
+            <button class="bcan" onclick="catQR()">📱 QR code</button>
           </div>
+          <div id="catQRBox" class="cat-qr" style="display:none"></div>
           <div class="cat-descs" id="catDescs" style="display:none">
             <div class="cat-descs-topo">
               <span id="catDescsResumo"></span>
@@ -2862,6 +2881,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
               <input type="file" id="foInput" accept="image/*" multiple onchange="foSubir(this)" style="display:none">
             </label>
           </div>
+          <div id="foDica" class="fotos-dica"></div>
           <div id="foLista" class="fotos-grid"></div>
           <div id="foStatus" class="fotos-status"></div>
         </div>
@@ -5734,8 +5754,8 @@ function foRender(msg){
   if(msg){ lista.innerHTML=`<div class="fotos-vazio">${esc(msg)}</div>`; if(st) st.textContent=''; return; }
   const ult=fotosDoProduto.length-1;
   lista.innerHTML = fotosDoProduto.length
-    ? fotosDoProduto.map((f,i)=>`<div class="foto-item">
-        <img src="${f.dataUrl}" alt="Foto ${i+1}" onclick="foAmpliar('edit',${i})" title="Toque para ampliar">
+    ? fotosDoProduto.map((f,i)=>`<div class="foto-item" data-id="${esc(f.id)}">
+        <img src="${f.dataUrl}" alt="Foto ${i+1}" draggable="false" title="Toque para ampliar · segure para arrastar">
         <button type="button" class="foto-del" onclick="foApagar('${f.id}')" title="Remover">✕</button>
         <div class="foto-barra">
           <button type="button" class="foto-mv" onclick="foMover(${i},-1)" ${i===0?'disabled':''} title="Mover para trás">◀</button>
@@ -5744,6 +5764,10 @@ function foRender(msg){
         </div>
       </div>`).join('')
     : '<div class="fotos-vazio">Nenhuma foto ainda. A primeira vira a capa do anúncio.</div>';
+  const dica=document.getElementById('foDica');
+  if(dica) dica.textContent = fotosDoProduto.length>1
+    ? '✋ Segure uma foto e arraste para trocar de lugar. A primeira é a capa.' : '';
+  if(!lista._arrOn){ lista._arrOn=true; lista.addEventListener('pointerdown',foArrDown); }
   if(st){
     const kb=Math.round(fotosDoProduto.reduce((s,f)=>s+((f.dataUrl||'').length),0)/1024);
     st.textContent = fotosDoProduto.length
@@ -5794,18 +5818,150 @@ window.foSubir=async(input)=>{
 // Trocar a ordem das fotos. A da frente é a capa do anúncio, então mover é
 // escolher com qual foto a máquina se apresenta — não é enfeite.
 // A tela muda na hora e a gravação vai atrás; se falhar, a faixa vermelha avisa.
-window.foMover=async(i, passo)=>{
-  const j=i+passo;
-  if(i<0||j<0||i>=fotosDoProduto.length||j>=fotosDoProduto.length) return;
-  const a=fotosDoProduto[i], b=fotosDoProduto[j];
-  fotosDoProduto[i]=b; fotosDoProduto[j]=a;
-  fotosDoProduto.forEach((f,k)=>{ f.ordem=k; });
+// Grava só o que realmente mudou de posição. Arrastar uma foto de ponta a
+// ponta reordena todas, mas mandar dez gravações iguais ao banco é desperdício.
+async function foGravarOrdem(){
+  const mudou=[];
+  fotosDoProduto.forEach((f,k)=>{ if(f.ordem!==k){ f.ordem=k; mudou.push(f); } });
   foRender();
-  for(const f of [a,b]){
+  for(const f of mudou){
     if(idLocal(f.id)) continue;
     await gravar(updateDoc(doc(db,'fotos',f.id),{ordem:f.ordem}), 'Reordenar fotos de "'+((prods.find(x=>x.id===editId)||{}).nome||editId)+'"');
   }
+}
+
+window.foMover=async(i, passo)=>{
+  const j=i+passo;
+  if(i<0||j<0||i>=fotosDoProduto.length||j>=fotosDoProduto.length) return;
+  const a=fotosDoProduto[i];
+  fotosDoProduto[i]=fotosDoProduto[j]; fotosDoProduto[j]=a;
+  await foGravarOrdem();
 };
+
+// ── ARRASTAR FOTO PRA TROCAR DE LUGAR ───────────────────────────────────
+// Ponteiro em vez de mouse+touch separados: o mesmo código serve pro dedo e
+// pro mouse. Só vira arrasto depois de segurar um instante — senão um toque
+// pra ampliar viraria arrasto sem querer, e rolar a lista ficaria impossível.
+let foArr=null;
+const FO_SEGURAR=200;   // ms até virar arrasto
+const FO_FOLGA=10;      // px de tremida que ainda contam como toque parado
+
+function foArrDown(e){
+  if(e.pointerType==='mouse' && e.button!==0) return;
+  const alvo=e.target.closest ? e.target.closest('.foto-item') : null;
+  if(!alvo || (e.target.closest && e.target.closest('.foto-del, .foto-mv'))) return;
+  const id=alvo.dataset.id;
+  if(!id || fotosDoProduto.length<1) return;
+  foArrLimpar();
+  foArr={id, el:alvo, x0:e.clientX, y0:e.clientY, ativo:false, ptr:e.pointerId,
+         timer:setTimeout(()=>foArrIniciar(e.clientX,e.clientY),FO_SEGURAR)};
+  document.addEventListener('pointermove',foArrMove,{passive:false});
+  document.addEventListener('pointerup',foArrUp);
+  document.addEventListener('pointercancel',foArrCancelar);
+}
+
+function foArrIniciar(x,y){
+  const a=foArr; if(!a||a.ativo) return;
+  const f=fotosDoProduto.find(z=>z.id===a.id); if(!f) return;
+  a.ativo=true;
+  const r=a.el.getBoundingClientRect();
+  a.ox=x-r.left; a.oy=y-r.top;
+  const g=document.createElement('div');
+  g.className='foto-ghost';
+  g.style.width=r.width+'px'; g.style.height=r.height+'px';
+  const im=document.createElement('img'); im.src=f.dataUrl; im.draggable=false;
+  g.appendChild(im);
+  document.body.appendChild(g);
+  a.ghost=g;
+  foArrPosGhost(x,y);
+  a.el.classList.add('arrastando');
+  document.body.classList.add('arrastando-foto');
+  try{ a.el.setPointerCapture&&a.el.setPointerCapture(a.ptr); }catch(err){}
+  if(navigator.vibrate) try{ navigator.vibrate(12); }catch(err){}
+}
+
+function foArrPosGhost(x,y){
+  const a=foArr; if(!a||!a.ghost) return;
+  a.ghost.style.left=(x-a.ox)+'px';
+  a.ghost.style.top =(y-a.oy)+'px';
+}
+
+function foArrMove(e){
+  const a=foArr; if(!a) return;
+  if(!a.ativo){
+    // Mexeu antes de segurar: era rolagem ou toque errado, não arrasto.
+    if(Math.hypot(e.clientX-a.x0,e.clientY-a.y0)>FO_FOLGA) foArrCancelar();
+    return;
+  }
+  e.preventDefault();
+  foArrPosGhost(e.clientX,e.clientY);
+  const sob=document.elementFromPoint(e.clientX,e.clientY);
+  const alvo=sob&&sob.closest?sob.closest('.foto-item'):null;
+  if(!alvo||alvo===a.el) return;
+  const lista=document.getElementById('foLista'); if(!lista) return;
+  const itens=[...lista.querySelectorAll('.foto-item')];
+  const de=itens.indexOf(a.el), para=itens.indexOf(alvo);
+  if(de<0||para<0) return;
+  if(para>de) alvo.after(a.el); else alvo.before(a.el);
+  fotosDoProduto.splice(para,0,fotosDoProduto.splice(de,1)[0]);
+  foArrBadges();
+}
+
+// Atualiza só os rótulos CAPA/2/3. Refazer o innerHTML aqui apagaria o
+// elemento que está na mão do usuário no meio do arrasto.
+function foArrBadges(){
+  const lista=document.getElementById('foLista'); if(!lista) return;
+  [...lista.querySelectorAll('.foto-item')].forEach((it,k)=>{
+    const b=it.querySelector('.foto-pos');
+    if(b){ b.textContent = k===0?'CAPA':String(k+1); b.classList.toggle('capa',k===0); }
+  });
+}
+
+async function foArrUp(e){
+  const a=foArr; if(!a) return;
+  foArrDesligar();
+  clearTimeout(a.timer);
+  if(!a.ativo){
+    // Foi só um toque: abre a foto ampliada, como antes.
+    foArr=null;
+    if(Math.hypot(e.clientX-a.x0,e.clientY-a.y0)<=FO_FOLGA){
+      const i=fotosDoProduto.findIndex(f=>f.id===a.id);
+      if(i>-1) foAmpliar('edit',i);
+    }
+    return;
+  }
+  if(a.ghost) a.ghost.remove();
+  a.el.classList.remove('arrastando');
+  document.body.classList.remove('arrastando-foto');
+  foArr=null;
+  await foGravarOrdem();
+}
+
+function foArrCancelar(){
+  const a=foArr; if(!a) return;
+  clearTimeout(a.timer);
+  if(a.ghost) a.ghost.remove();
+  a.el.classList.remove('arrastando');
+  document.body.classList.remove('arrastando-foto');
+  const tinhaOrdem=a.ativo;
+  foArr=null;
+  foArrDesligar();
+  // Se já estava arrastando, a lista mudou na tela: grava onde parou.
+  if(tinhaOrdem) foGravarOrdem();
+}
+
+function foArrDesligar(){
+  document.removeEventListener('pointermove',foArrMove);
+  document.removeEventListener('pointerup',foArrUp);
+  document.removeEventListener('pointercancel',foArrCancelar);
+}
+
+function foArrLimpar(){
+  if(foArr){ clearTimeout(foArr.timer); if(foArr.ghost) foArr.ghost.remove();
+             foArr.el.classList.remove('arrastando'); }
+  document.body.classList.remove('arrastando-foto');
+  foArr=null; foArrDesligar();
+}
 
 window.foApagar=async(fotoId)=>{
   if(!confirm('Remover esta foto?')) return;
@@ -9601,6 +9757,39 @@ window.catDescSalvar=async(id,valor)=>{
   const res=document.getElementById('catDescsResumo');
   if(res) res.innerHTML=`<strong>${comTexto}</strong> de <strong>${lista.length}</strong> com descrição`
     + (comTexto<lista.length?` · faltam ${lista.length-comTexto}`:' · todas prontas ✅');
+};
+
+// QR do catálogo: serve pra mostrar na entrega, imprimir num cartão e pra
+// colar na tela do carro. A biblioteca só é baixada quando o botão é clicado.
+window.catQR=async()=>{
+  const box=document.getElementById('catQRBox');
+  if(box.style.display!=='none'){ box.style.display='none'; return; }
+  box.style.display='block';
+  box.innerHTML='<div class="cat-qr-txt">Gerando...</div>';
+  try{
+    if(!window.QRCode){
+      await new Promise((res,rej)=>{
+        const s=document.createElement('script');
+        s.src='https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+        s.onload=res; s.onerror=()=>rej(new Error('sem internet pra baixar o gerador'));
+        document.head.appendChild(s);
+      });
+    }
+    box.innerHTML='<div id="catQRAlvo"></div>';
+    new QRCode(document.getElementById('catQRAlvo'),
+      {text:catUrl(), width:220, height:220, correctLevel:QRCode.CorrectLevel.M});
+    // A biblioteca desenha num canvas; vira imagem pra poder salvar e imprimir.
+    setTimeout(()=>{
+      const cv=box.querySelector('canvas');
+      let baixar='';
+      if(cv){ try{ baixar=`<a href="${cv.toDataURL('image/png')}" download="catalogo-qr.png">baixar em PNG</a> · `; }catch(e){} }
+      box.insertAdjacentHTML('beforeend',
+        `<div class="cat-qr-txt">${baixar}aponte a câmera do celular<br><span style="color:var(--li)">${esc(catUrl())}</span></div>`);
+    },120);
+  }catch(e){
+    box.innerHTML='<div class="cat-qr-txt">Não consegui gerar o QR: '+esc(e.message||String(e))
+      +'<br>O link continua funcionando normalmente.</div>';
+  }
 };
 
 window.abrirCatalogo=()=>window.open(catUrl(),'_blank');
