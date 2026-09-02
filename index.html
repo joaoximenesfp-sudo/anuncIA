@@ -116,6 +116,7 @@ nav{position:sticky;top:0;z-index:50;background:rgba(249,248,246,.93);backdrop-f
 .sv{background:var(--gbg);color:var(--gr);border:1px solid var(--gbd)}
 .san{background:var(--bbg);color:var(--bl);border:1px solid var(--bbd)}
 .se{background:#ecfdf5;color:#065f46;border:1px solid #6ee7b7}
+.sag{background:#fff7ed;color:#b45309;border:1px solid #fdba74}
 .sel{padding:3px 7px;font-size:.72rem;border:1px solid var(--b2);border-radius:6px;background:var(--w);color:var(--tx);cursor:pointer;outline:none;font-family:'DM Sans',sans-serif}
 .bed{width:26px;height:26px;border-radius:5px;border:1px solid var(--b);background:transparent;color:var(--li);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.8rem;transition:all .15s}
 .bed:hover{border-color:var(--bl);color:var(--bl);background:var(--bbg)}
@@ -509,10 +510,6 @@ input[type=number].inp{padding-left:32px}
 .tv-status{font-size:.73rem;color:var(--gr);font-weight:600;margin-top:8px;min-height:16px}
 
 .tipo-auto{font-size:.68rem;color:var(--li);margin-top:3px;min-height:14px;line-height:1.4}
-.agu-check{display:flex;align-items:flex-start;gap:7px;margin-top:8px;font-size:.74rem;
-  color:var(--mu);cursor:pointer;line-height:1.45}
-.agu-check input{width:15px;height:15px;accent-color:#f59e0b;cursor:pointer;flex:none;margin-top:1px}
-.agu-check strong{color:#b45309}
 .desc-cat{width:100%;min-height:76px;resize:vertical;font-family:inherit;line-height:1.5}
 .desc-conta{font-size:.68rem;color:var(--li);text-align:right;margin-top:3px;min-height:14px}
 .desc-conta.perto{color:#a16207;font-weight:600}
@@ -1460,6 +1457,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
               <select class="inp" id="pS">
                 <option value="Anunciado">Anunciado</option>
                 <option value="Estoque">Estoque</option>
+                <option value="Aguardando">🚚 Aguardando chegar</option>
                 <option value="Vendido">Vendido</option>
               </select>
             </div>
@@ -2764,7 +2762,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
       <div class="fc"><label class="fl">Custo R$</label><input class="inp" id="eC" type="number" min="0" oninput="eAporteHint()"></div>
       <div class="fc"><label class="fl">Preço de venda R$</label><input class="inp" id="eV" type="number" min="0"></div>
       <div class="fc"><label class="fl">Status</label>
-        <select class="inp" id="eS" onchange="ePlatToggle();eFaltaToggle()">
+        <select class="inp" id="eS" onchange="ePlatToggle();eFaltaToggle();eAguHint()">
           <option value="Anunciado">Anunciado</option>
           <option value="Estoque">Estoque</option>
           <option value="Vendido">Vendido</option>
@@ -2831,10 +2829,6 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
           <option value="desktop">🖥️ Desktop / Mini</option>
         </select>
         <div class="tipo-auto" id="eTipoAuto"></div>
-        <label class="agu-check">
-          <input type="checkbox" id="eAguardando" onchange="eAguHint()">
-          <span>🚚 Aguardando chegar — entra no catálogo como <strong>chegando</strong>, mesmo sem estar anunciada<span id="eAguQuando"></span></span>
-        </label>
         <div class="tipo-auto" id="eAguHint"></div>
       </div>
       <div class="fc full">
@@ -4643,7 +4637,7 @@ function matchEstoque(texto){
   const stop=new Set(['de','para','pra','ate','um','uma','com','e','o','a','reais','notebook','note','maquina','que','por','volta','uns','mais','menos','ou','na','no','pro','uns','tela','ssd']);
   const termos=(norm(texto).match(/[a-z0-9]+/g)||[]).filter(t=>t.length>=2 && !stop.has(t));
   if(!termos.length)return [];
-  const estoque=prods.filter(p=>p.status==='Estoque'||p.status==='Anunciado');
+  const estoque=prods.filter(p=>p.status==='Estoque'||p.status==='Anunciado'||p.status==='Aguardando');
   return estoque.map(p=>{
     const nome=norm(p.nome);
     const hits=termos.filter(t=>nome.includes(t)).length;
@@ -5196,7 +5190,6 @@ window.openEdit=id=>{
   montarHw(); hwPreencher('e',p); eHwSugerir();
   const eRev=document.getElementById('eRevisado'); if(eRev) eRev.checked=!!p.revisado;
   const eRObs=document.getElementById('eRevObs'); if(eRObs) eRObs.value=p.revisao_obs||'';
-  const eAg=document.getElementById('eAguardando'); if(eAg) eAg.checked=!!p.aguardando;
   eAguHint();
   const eTp=document.getElementById('eTipoCat'); if(eTp) eTp.value=p.tipo_catalogo||'';
   eTipoAutoHint();
@@ -5435,7 +5428,7 @@ window.saveEdit=async()=>{
   const custoFinal=baseMaquina+somaJa+somaNovas;
   const totalPecas=somaJa+somaNovas;
 
-  const upd={nome,custo:custoFinal,custo_base:baseMaquina,custo_pecas:totalPecas,venda,lucro:venda-custoFinal,status,investidor,plataforma:(status==='Vendido'?(document.getElementById('ePlat')?.value||''):''),repasse_socio:(status==='Vendido'?(parseFloat(document.getElementById('eRepasse')?.value)||0):0),falta_comprar:(status!=='Vendido'?(document.getElementById('eFalta')?.value.trim()||''):''),falta_feito:(status!=='Vendido'&&!!document.getElementById('eFaltaFeito')?.checked),falta_feito_em:((status!=='Vendido'&&document.getElementById('eFaltaFeito')?.checked)?((_pAtual&&_pAtual.falta_feito&&_pAtual.falta_feito_em)||new Date().toISOString().slice(0,10)):''),...hwCampos('e'),revisado:!!document.getElementById('eRevisado')?.checked,revisado_em:(document.getElementById('eRevisado')?.checked?((_pAtual&&_pAtual.revisado&&_pAtual.revisado_em)||new Date().toISOString().slice(0,10)):''),revisao_obs:(document.getElementById('eRevObs')?.value.trim()||''),descricao:(document.getElementById('eDescricao')?.value.trim()||''),tipo_catalogo:(document.getElementById('eTipoCat')?.value||''),aguardando:(status!=='Vendido'&&!!document.getElementById('eAguardando')?.checked),num_planilha:(document.getElementById('eNumPlan')?.value.trim()||''),fornecedor_id:fornId,fornecedor_nome:fornNome,data_compra:dc,data_compra_mes:dcMes,data_venda:dv,data:(dv?dv.slice(0,7):dcMes),gas_pagante:(document.getElementById('eGasPag')?.value||'ambos'),aporte_joao:(parseFloat(document.getElementById('eApJoao')?.value)||0),aporte_igor:(parseFloat(document.getElementById('eApIgor')?.value)||0),cliente_id:cliId,cliente_nome:cliNome,preco_cheio:(status==='Vendido'?(parseFloat(document.getElementById('ePrecoCheio')?.value)||0):0),nota_venda:(status==='Vendido'?(document.getElementById('eNotaVenda')?.value.trim()||''):'')};
+  const upd={nome,custo:custoFinal,custo_base:baseMaquina,custo_pecas:totalPecas,venda,lucro:venda-custoFinal,status,investidor,plataforma:(status==='Vendido'?(document.getElementById('ePlat')?.value||''):''),repasse_socio:(status==='Vendido'?(parseFloat(document.getElementById('eRepasse')?.value)||0):0),falta_comprar:(status!=='Vendido'?(document.getElementById('eFalta')?.value.trim()||''):''),falta_feito:(status!=='Vendido'&&!!document.getElementById('eFaltaFeito')?.checked),falta_feito_em:((status!=='Vendido'&&document.getElementById('eFaltaFeito')?.checked)?((_pAtual&&_pAtual.falta_feito&&_pAtual.falta_feito_em)||new Date().toISOString().slice(0,10)):''),...hwCampos('e'),revisado:!!document.getElementById('eRevisado')?.checked,revisado_em:(document.getElementById('eRevisado')?.checked?((_pAtual&&_pAtual.revisado&&_pAtual.revisado_em)||new Date().toISOString().slice(0,10)):''),revisao_obs:(document.getElementById('eRevObs')?.value.trim()||''),descricao:(document.getElementById('eDescricao')?.value.trim()||''),tipo_catalogo:(document.getElementById('eTipoCat')?.value||''),num_planilha:(document.getElementById('eNumPlan')?.value.trim()||''),fornecedor_id:fornId,fornecedor_nome:fornNome,data_compra:dc,data_compra_mes:dcMes,data_venda:dv,data:(dv?dv.slice(0,7):dcMes),gas_pagante:(document.getElementById('eGasPag')?.value||'ambos'),aporte_joao:(parseFloat(document.getElementById('eApJoao')?.value)||0),aporte_igor:(parseFloat(document.getElementById('eApIgor')?.value)||0),cliente_id:cliId,cliente_nome:cliNome,preco_cheio:(status==='Vendido'?(parseFloat(document.getElementById('ePrecoCheio')?.value)||0):0),nota_venda:(status==='Vendido'?(document.getElementById('eNotaVenda')?.value.trim()||''):'')};
   await vincularTroca(editId, upd);
   if(!idLocal(editId)) await gravar(updateDoc(doc(db,'products',editId),upd), 'Editar "'+nome+'"');
   // Grava as peças novas na aba Peças, vinculadas a esta máquina
@@ -6733,7 +6726,7 @@ window.irParaGrupo=(btn)=>{
 // anunciada quando não está.
 function statusEstranho(p){
   const st=p.status||'';
-  if(st==='Anunciado'||st==='Estoque'||st==='Vendido') return '';
+  if(st==='Anunciado'||st==='Estoque'||st==='Aguardando'||st==='Vendido') return '';
   return `<option selected value="${esc(st)}">⚠️ ${esc(st||'sem status')}</option>`;
 }
 
@@ -6759,7 +6752,8 @@ function renderTabela(lista, tipo){
     const nv=g2.filter(p=>p.status==='Vendido').length;
     const nan=g2.filter(p=>p.status==='Anunciado').length;
     const ne=g2.filter(p=>p.status==='Estoque').length;
-    const ct=[nv?nv+' vendidos':'',nan?nan+' anunciados':'',ne?ne+' estoque':''].filter(Boolean).join(' · ');
+    const nag=g2.filter(p=>aguardandoP(p)).length;
+    const ct=[nv?nv+' vendidos':'',nan?nan+' anunciados':'',ne?ne+' estoque':'',nag?nag+' chegando':''].filter(Boolean).join(' · ');
     const lv = g2.filter(p=>p.status==='Vendido').reduce((s,p)=>s+(p.lucro||0),0);
     const capGiro = g2.filter(p=>p.status!=='Vendido').reduce((s,p)=>s+p.custo,0);
     const resumoVal = tipo==='vendidos' ? fmt(lv) : fmt(capGiro);
@@ -6792,7 +6786,7 @@ function renderTabela(lista, tipo){
         }
       }
 
-      const sb = p.status==='Vendido'?'<span class="bv sv">Vendido</span>':p.status==='Anunciado'?'<span class="bv san">Anunciado</span>':'<span class="bv se">Estoque</span>';
+      const sb = p.status==='Vendido'?'<span class="bv sv">Vendido</span>':p.status==='Anunciado'?'<span class="bv san">Anunciado</span>':aguardandoP(p)?'<span class="bv sag">🚚 Chegando</span>':'<span class="bv se">Estoque</span>';
       const platColors={'Marketplace':'#1d4ed8','OLX':'#f97316','Mercado Livre':'#eab308','WhatsApp':'#16a34a','Instagram':'#7c3aed','Indicação':'#0891b2','Outro':'#78716c'};
       const platBg={'Marketplace':'#eff6ff','OLX':'#fff7ed','Mercado Livre':'#fefce8','WhatsApp':'#f0fdf4','Instagram':'#faf5ff','Indicação':'#e0f2fe','Outro':'#f5f5f5'};
       const platBd={'Marketplace':'#bfdbfe','OLX':'#fed7aa','Mercado Livre':'#fef08a','WhatsApp':'#bbf7d0','Instagram':'#e9d5ff','Indicação':'#bae6fd','Outro':'#d4d4d4'};
@@ -6833,6 +6827,7 @@ function renderTabela(lista, tipo){
           ${statusEstranho(p)}
           <option ${p.status==='Anunciado'?'selected':''} value="Anunciado">Anunciado</option>
           <option ${p.status==='Estoque'?'selected':''} value="Estoque">Estoque</option>
+          <option ${p.status==='Aguardando'?'selected':''} value="Aguardando">🚚 Aguardando chegar</option>
           <option ${p.status==='Vendido'?'selected':''} value="Vendido">Vendido</option>
         </select></td>
         <td><button class="bed" onclick="openEdit('${p.id}')" title="Editar">✎</button>${p.status==='Vendido'?`<button class="brec" onclick="abrirRecibo('${p.id}')" title="Gerar recibo de venda">🧾</button><button class="bdev" onclick="abrirDevolucao('${p.id}')" title="Registrar devolução ou troca">↩</button>`:''}</td>
@@ -6892,10 +6887,11 @@ function render(){
     const nv=g2.filter(p=>p.status==='Vendido').length;
     const nan=g2.filter(p=>p.status==='Anunciado').length;
     const ne=g2.filter(p=>p.status==='Estoque').length;
-    const ct=[nv?nv+' vendidos':'',nan?nan+' anunciados':'',ne?ne+' em estoque':''].filter(Boolean).join(' · ');
+    const nag=g2.filter(p=>aguardandoP(p)).length;
+    const ct=[nv?nv+' vendidos':'',nan?nan+' anunciados':'',ne?ne+' em estoque':'',nag?nag+' chegando':''].filter(Boolean).join(' · ');
     const rows=g2.map(p=>{
       const lp=p.lucro!==undefined?p.lucro:(p.venda-p.custo);
-      const sb=p.status==='Vendido'?'<span class="bv sv">Vendido</span>':p.status==='Anunciado'?'<span class="bv san">Anunciado</span>':'<span class="bv se">Estoque</span>';
+      const sb=p.status==='Vendido'?'<span class="bv sv">Vendido</span>':p.status==='Anunciado'?'<span class="bv san">Anunciado</span>':aguardandoP(p)?'<span class="bv sag">🚚 Chegando</span>':'<span class="bv se">Estoque</span>';
       const platColors={'Marketplace':'#1d4ed8','OLX':'#f97316','Mercado Livre':'#eab308','WhatsApp':'#16a34a','Instagram':'#7c3aed','Indicação':'#0891b2','Outro':'#78716c'};
       const platBg={'Marketplace':'#eff6ff','OLX':'#fff7ed','Mercado Livre':'#fefce8','WhatsApp':'#f0fdf4','Instagram':'#faf5ff','Indicação':'#e0f2fe','Outro':'#f5f5f5'};
       const platBd={'Marketplace':'#bfdbfe','OLX':'#fed7aa','Mercado Livre':'#fef08a','WhatsApp':'#bbf7d0','Instagram':'#e9d5ff','Indicação':'#bae6fd','Outro':'#d4d4d4'};
@@ -6937,6 +6933,7 @@ function render(){
           ${statusEstranho(p)}
           <option ${p.status==='Anunciado'?'selected':''} value="Anunciado">Anunciado</option>
           <option ${p.status==='Estoque'?'selected':''} value="Estoque">Estoque</option>
+          <option ${p.status==='Aguardando'?'selected':''} value="Aguardando">🚚 Aguardando chegar</option>
           <option ${p.status==='Vendido'?'selected':''} value="Vendido">Vendido</option>
         </select></td>
         <td><button class="bed" onclick="openEdit('${p.id}')" title="Editar">✎</button>${p.status==='Vendido'?`<button class="brec" onclick="abrirRecibo('${p.id}')" title="Gerar recibo de venda">🧾</button><button class="bdev" onclick="abrirDevolucao('${p.id}')" title="Registrar devolução ou troca">↩</button>`:''}</td>
@@ -6986,7 +6983,8 @@ function calcStats(){
   try{ if(typeof renderCrescimento==='function') renderCrescimento(); }catch(e){}
   const v=prods.filter(p=>p.status==='Vendido');
   const an=prods.filter(p=>p.status==='Anunciado');
-  const es=prods.filter(p=>p.status==='Estoque');
+  const es=prods.filter(p=>p.status==='Estoque' && !aguardandoP(p));
+  const ag=prods.filter(p=>aguardandoP(p));
   const rec=v.reduce((s,p)=>s+(p.venda||0),0),luc=v.reduce((s,p)=>s+getLucro(p),0);
   // Margem MÉDIA POR NOTEBOOK: cada máquina tem sua margem (lucro/venda), tira-se a média.
   // Cada notebook pesa igual — reflete "quanto ganho, em média, por máquina".
@@ -7002,7 +7000,7 @@ function calcStats(){
   const mk=custoTotV>0 ? Math.round(luc/custoTotV*100) : 0;
   const potAn=an.reduce((s,p)=>s+getLucro(p),0);
   const potEs=es.reduce((s,p)=>s+getLucro(p),0);
-  const emMaoTotal=[...an,...es]; // Estoque + Anunciados = tudo na mão hoje
+  const emMaoTotal=[...an,...es,...ag]; // Anunciado + Estoque + Chegando = tudo que é nosso hoje
   const potEmMao=potAn+potEs;
   // Receita e lucro totais são história, não operação: vivem na aba Insights.
   document.getElementById('sAnu').textContent=an.length;document.getElementById('sAnuV').textContent=fmt(potAn)+' de lucro';
@@ -7015,7 +7013,7 @@ function calcStats(){
   if(elRevS) elRevS.textContent = emMaoTotal.length
     ? (revOk===emMaoTotal.length ? 'todas conferidas ✅' : (emMaoTotal.length-revOk)+' ainda pra abrir')
     : 'nada em estoque';
-  document.getElementById('sEst').textContent=emMaoTotal.length;document.getElementById('sEstV').textContent=an.length+' anunciados · '+es.length+' estoque';
+  document.getElementById('sEst').textContent=emMaoTotal.length;document.getElementById('sEstV').textContent=an.length+' anunciados · '+es.length+' estoque'+(ag.length?' · '+ag.length+' chegando':'');
   // Previsão de lucro só vale sobre o que está ANUNCIADO. Máquina em estoque não
   // tem preço no mercado — atribuir lucro a ela é inventar receita que ninguém
   // pediu ainda. O capital continua contando as duas, porque o dinheiro saiu nas duas.
@@ -7123,7 +7121,7 @@ function buildCardsCapital(){
   // Legendas por id: os cards usam o mesmo padrão dos demais indicadores da aba,
   // então o subtítulo é um elemento próprio em vez de ser buscado pelo pai.
   const sub=(id,txt)=>{ const s=document.getElementById(id); if(s) s.textContent=txt; };
-  const estoqueAtual=prods.filter(p=>p.status==='Estoque'||p.status==='Anunciado');
+  const estoqueAtual=prods.filter(p=>p.status==='Estoque'||p.status==='Anunciado'||p.status==='Aguardando');
   const capitalGiro=estoqueAtual.reduce((s,p)=>s+(p.custo||0),0);
   // Capital em giro virou 'Capital de volta' na barra da Vendas — um nome só no app.
   // capitalGiro continua calculado aqui porque alimenta os dois cards abaixo.
@@ -7169,7 +7167,7 @@ function buildCardsCapital(){
   prods.forEach(p=>{
     const sp=custoSplit(p);
     invJ+=sp.joao; invI+=sp.igor;
-    if(p.status==='Estoque'||p.status==='Anunciado'){ hojeJ+=sp.joao; hojeI+=sp.igor; }
+    if(p.status==='Estoque'||p.status==='Anunciado'||p.status==='Aguardando'){ hojeJ+=sp.joao; hojeI+=sp.igor; }
   });
   const invTot=invJ+invI;
   const pctDe=v=>invTot>0?Math.round(v/invTot*100)+'% do total':'—';
@@ -9671,13 +9669,16 @@ window.eTipoAutoHint=()=>{
   h.textContent='Pelo nome, entra como '+tipoRotulo(t)+'. Se estiver errado, escolha acima.';
 };
 
-// Máquina comprada que ainda não chegou. Entra no catálogo marcada como
-// "chegando" pra o cliente pedir antes — e pra você descobrir o que tem
-// procura antes de gastar em anúncio.
+// Máquina comprada que ainda não chegou. É um estado dela, então mora no
+// status junto de Estoque/Anunciado/Vendido. O campo antigo `aguardando`
+// continua sendo lido pra não sumir com o que já foi marcado antes.
+function aguardandoP(p){
+  return !!p && (p.status==='Aguardando' || (!!p.aguardando && p.status!=='Vendido'));
+}
 window.eAguHint=()=>{
-  const c=document.getElementById('eAguardando'), h=document.getElementById('eAguHint');
-  if(!c||!h) return;
-  if(!c.checked){ h.textContent=''; return; }
+  const h=document.getElementById('eAguHint'); if(!h) return;
+  const st=document.getElementById('eS')?.value||'';
+  if(st!=='Aguardando'){ h.textContent=''; return; }
   const preco=parseFloat(document.getElementById('eV')?.value)||0;
   h.textContent = preco>0
     ? 'Vai aparecer no catálogo como "chegando", por '+fmt(preco)+'.'
@@ -9872,11 +9873,11 @@ window.publicarCatalogo=async()=>{
   // chegar. A segunda entra mesmo sem preço — quando a máquina nem chegou, o
   // preço muitas vezes ainda não está fechado, e esconder ela por isso seria
   // perder o cliente que estava justamente procurando aquilo.
-  const anunciadas=prods.filter(p=>p.status==='Anunciado' && !p.aguardando);
+  const anunciadas=prods.filter(p=>p.status==='Anunciado' && !aguardandoP(p));
   const semPreco=anunciadas.filter(p=>!((parseFloat(p.venda)||0)>0));
   const disponiveis=anunciadas.filter(p=>(parseFloat(p.venda)||0)>0)
                               .sort((a,b)=>(parseFloat(b.venda)||0)-(parseFloat(a.venda)||0));
-  const chegando=prods.filter(p=>p.aguardando && p.status!=='Vendido')
+  const chegando=prods.filter(p=>aguardandoP(p))
                       .sort((a,b)=>(parseFloat(b.venda)||0)-(parseFloat(a.venda)||0));
   const chegandoSemPreco=chegando.filter(p=>!((parseFloat(p.venda)||0)>0)).length;
   const lista=disponiveis.concat(chegando);
@@ -9910,7 +9911,7 @@ window.publicarCatalogo=async()=>{
         specs:hwResumo(p),
         descricao:String(p.descricao||'').slice(0,600),
         tipo:tipoMaquina(p),
-        estado:(p.aguardando?'chegando':'disponivel'),
+        estado:(aguardandoP(p)?'chegando':'disponivel'),
         capa,
         n_fotos:fotos.length,
         publicado_em:new Date().toISOString()
@@ -9946,8 +9947,8 @@ window.publicarCatalogo=async()=>{
     let h=`<span class="ok">✅ ${publicadas} máquina${publicadas!==1?'s':''} no ar</span>`
         + (nCheg?` — ${nDisp} disponíve${nDisp!==1?'is':'l'} e <strong>${nCheg} chegando</strong>`:'')
         + ` · ${nFotos} foto${nFotos!==1?'s':''}`;
-    if(chegandoSemPreco) h+=`<br>🚚 ${chegandoSemPreco} chegando sem preço — aparece como "preço em breve".`;
     if(removidas) h+=` · ${removidas} tirada${removidas!==1?'s':''} do ar`;
+    if(chegandoSemPreco) h+=`<br>🚚 ${chegandoSemPreco} chegando sem preço — aparece como "preço em breve".`;
     if(semPreco.length){
       h+=`<br><span class="fora">⚠️ ${semPreco.length} anunciada${semPreco.length!==1?'s':''} ficou de fora por estar sem preço:</span> `
        + semPreco.slice(0,6).map(p=>esc(p.nome||'sem nome')).join(' · ')
@@ -10518,7 +10519,7 @@ window.renderTabelaSocios = () => {
     const _sp = custoSplit(p);
     const invJoao = _sp.joao;
     const invIgor = _sp.igor;
-    const sb = p.status==='Vendido'?'<span class="bv sv">Vendido</span>':p.status==='Anunciado'?'<span class="bv san">Anunciado</span>':'<span class="bv se">Estoque</span>';
+    const sb = p.status==='Vendido'?'<span class="bv sv">Vendido</span>':p.status==='Anunciado'?'<span class="bv san">Anunciado</span>':aguardandoP(p)?'<span class="bv sag">🚚 Chegando</span>':'<span class="bv se">Estoque</span>';
     const ast = bkt==='ambos'
       ? '<span style="font-size:.65rem;background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0;padding:1px 5px;border-radius:5px;font-weight:700">★ Ambos</span>'
       : bkt==='joao'
