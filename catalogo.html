@@ -164,7 +164,21 @@
   .sk .ln{height:11px;margin:11px 12px;border-radius:6px;background:var(--bg)}
   .sk .ln.c{width:55%}
   @keyframes sh{to{background-position:-200% 0}}
-  footer{text-align:center;color:var(--li);font-size:.72rem;padding:26px 14px 10px;line-height:1.7}
+  /* Mesma faixa escura do topo: a página abre e fecha com a marca. */
+  footer{background:var(--nav);color:#a9b6c6;margin-top:38px;padding:28px 0 26px;font-size:.78rem}
+  .rp{display:grid;grid-template-columns:1fr;gap:22px}
+  @media(min-width:720px){ .rp{grid-template-columns:1.25fr 1fr 1fr;gap:28px} }
+  .rp-mk{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+  .rp-mk .lg-mk{width:34px;height:34px;border-radius:9px}
+  .rp-mk .lg-mk svg{width:19px;height:19px}
+  .rp-nm{font-size:.95rem;font-weight:800;color:#fff;letter-spacing:-.2px}
+  .rp h4{font-size:.66rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;
+    color:#6f8098;margin:0 0 8px}
+  .rp p{margin:0 0 6px;line-height:1.65}
+  .rp a{color:#e8eef6;text-decoration:none;display:inline-block;margin-bottom:6px}
+  .rp a:hover{color:#fff;text-decoration:underline}
+  .rp-fim{border-top:1px solid rgba(255,255,255,.09);margin-top:24px;padding-top:14px;
+    font-size:.71rem;color:#6f8098;line-height:1.7}
 </style>
 </head>
 <body>
@@ -172,14 +186,7 @@
 <header>
   <div class="wrap">
     <div class="lg">
-      <div class="lg-mk">
-        <svg viewBox="0 0 800 800" aria-hidden="true">
-          <rect x="232" y="222" width="336" height="232" rx="26" fill="none" stroke="#06231A" stroke-width="46"/>
-          <polyline points="300,347 356,403 492,268" fill="none" stroke="#06231A" stroke-width="56"
-                    stroke-linecap="round" stroke-linejoin="round"/>
-          <rect x="168" y="486" width="464" height="52" rx="26" fill="#06231A"/>
-        </svg>
-      </div>
+      <div class="lg-mk" id="marcaTopo"></div>
       <div>
         <div class="lg-nm" id="lojaNome">Catálogo</div>
         <div class="lg-sb" id="lojaSub">carregando…</div>
@@ -210,7 +217,7 @@
   </div>
 </div>
 
-<footer id="rodape"></footer>
+<footer><div class="wrap" id="rodape"></div></footer>
 
 <div class="ov" id="ov" onclick="if(event.target===this)fechar()">
   <div class="dt" id="dt"></div>
@@ -289,6 +296,7 @@ async function carregar(){
       'Pode ser a conexão. Tente atualizar a página em alguns instantes.');
     return;
   }
+  $('marcaTopo').innerHTML=MARCA_SVG;
   cabecalho();
   if(!itens.length){
     $('lojaSub').textContent='nenhuma máquina no momento';
@@ -347,12 +355,44 @@ async function compartilhar(bt){
   setTimeout(()=>{ bt.textContent=antes; },2200);
 }
 
+const MARCA_SVG=`<svg viewBox="0 0 800 800" aria-hidden="true">
+  <rect x="232" y="222" width="336" height="232" rx="26" fill="none" stroke="#06231A" stroke-width="46"/>
+  <polyline points="300,347 356,403 492,268" fill="none" stroke="#06231A" stroke-width="56"
+            stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="168" y="486" width="464" height="52" rx="26" fill="#06231A"/></svg>`;
+
 function rodape(){
   const q=cfg.publicado_em ? new Date(cfg.publicado_em) : null;
   const quando=q&&!isNaN(q) ? q.toLocaleDateString('pt-BR') : '';
-  $('rodape').innerHTML=
-    `Todas as máquinas saem com <b>90 dias de garantia</b>.`+
-    (quando?`<br>Catálogo atualizado em ${quando}. Preços sujeitos a alteração.`:'<br>Preços sujeitos a alteração.');
+  const n=waNum();
+  const contatos=[];
+  if(n) contatos.push(`<a href="${waLink()}" target="_blank" rel="noopener">💬 WhatsApp</a>`);
+  if(cfg.email) contatos.push(`<a href="mailto:${esc(cfg.email)}">✉️ ${esc(cfg.email)}</a>`);
+  if(cfg.instagram) contatos.push(`<a href="https://instagram.com/${esc(String(cfg.instagram).replace(/^@/,''))}" target="_blank" rel="noopener">📷 @${esc(String(cfg.instagram).replace(/^@/,''))}</a>`);
+
+  $('rodape').innerHTML=`
+    <div class="rp">
+      <div>
+        <div class="rp-mk"><div class="lg-mk">${MARCA_SVG}</div>
+          <div class="rp-nm">${esc(cfg.nome||'Catálogo')}</div></div>
+        <p>Notebooks e desktops seminovos, testados antes da venda.</p>
+        <p><strong style="color:#e8eef6">90 dias de garantia</strong> em todas as máquinas.</p>
+      </div>
+      <div>
+        <h4>Contato</h4>
+        ${contatos.length?contatos.join('<br>'):'<p>Fale pelo anúncio.</p>'}
+      </div>
+      <div>
+        <h4>Atendimento</h4>
+        ${cfg.cidade?`<p>📍 ${esc(cfg.cidade)}</p>`:''}
+        <p>🚚 Entrega combinada na região</p>
+        <p>📦 Envio por Correios com rastreio</p>
+      </div>
+    </div>
+    <div class="rp-fim">
+      ${quando?`Catálogo atualizado em ${quando}. `:''}Preços sujeitos a alteração sem aviso.
+      Fotos das máquinas reais, tiradas por nós.
+    </div>`;
 }
 
 // ── filtros ─────────────────────────────────────────────────────────────

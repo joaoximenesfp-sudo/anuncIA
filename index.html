@@ -2621,6 +2621,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
             <label>WhatsApp<input class="inp" id="catWpp" placeholder="19999999999"></label>
             <label>Cidade<input class="inp" id="catCidade" placeholder="Campinas · SP"></label>
             <label>Instagram<input class="inp" id="catInsta" placeholder="tech.campinas"></label>
+            <label>E-mail<input class="inp" id="catEmail" placeholder="contato.techcampinas@gmail.com"></label>
           </div>
           <div class="cat-bts">
             <button class="bok" id="catPubBt" onclick="publicarCatalogo()">🌐 Publicar catálogo</button>
@@ -9762,7 +9763,7 @@ window.eDescContar=()=>{
 // invisíveis na tela e visíveis no DevTools. Por isso existe a coleção
 // 'catalogo', que recebe só o que é público. O que não é escrito não vaza.
 const CAT_CFG_ID='loja';
-let catCfg={nome:'',whatsapp:'',cidade:'',instagram:''};
+let catCfg={nome:'',whatsapp:'',cidade:'',instagram:'',email:''};
 
 function catUrl(){
   return location.origin+location.pathname.replace(/[^/]*$/,'')+'catalogo.html';
@@ -9775,7 +9776,7 @@ async function catCarregarCfg(){
   }catch(e){}
   const set=(id,v)=>{const e=document.getElementById(id); if(e&&!e.value) e.value=v||'';};
   set('catNome',catCfg.nome); set('catWpp',catCfg.whatsapp);
-  set('catCidade',catCfg.cidade); set('catInsta',catCfg.instagram);
+  set('catCidade',catCfg.cidade); set('catInsta',catCfg.instagram); set('catEmail',catCfg.email);
 }
 
 // Miniatura do cartão. A foto original tem 1100px e uns 250 KB; vinte delas
@@ -10090,7 +10091,7 @@ window.publicarCatalogo=async()=>{
     }catch(e){ falhas.push('não consegui remover o que saiu do catálogo'); }
 
     catCfg={nome, whatsapp:wpp, cidade:g('catCidade'), instagram:g('catInsta').replace(/^@/,''),
-            publicado_em:new Date().toISOString()};
+            email:g('catEmail'), publicado_em:new Date().toISOString()};
     await gravar(setDoc(doc(db,'catalogo_cfg',CAT_CFG_ID),catCfg),'Dados da loja no catálogo');
 
     const nCheg=chegando.length, nDisp=publicadas-nCheg;
