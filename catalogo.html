@@ -9,6 +9,7 @@
 <meta property="og:title" content="Catálogo de notebooks e desktops">
 <meta property="og:description" content="Notebooks e desktops disponíveis, com garantia. Toque para ver fotos e preço.">
 <meta property="og:type" content="website">
+<script src="tema.js"></script>
 <style>
   :root{
     --bg:#f4f5f7; --w:#ffffff; --tx:#12161d; --mu:#5c6572; --li:#8a929e;
@@ -167,7 +168,8 @@
   /* Mesma faixa escura do topo: a página abre e fecha com a marca. */
   footer{background:var(--nav);color:#a9b6c6;margin-top:38px;padding:28px 0 26px;font-size:.78rem}
   .rp{display:grid;grid-template-columns:1fr;gap:22px}
-  @media(min-width:720px){ .rp{grid-template-columns:1.25fr 1fr 1fr;gap:28px} }
+  @media(min-width:720px){ .rp{grid-template-columns:1fr 1fr;gap:26px} }
+  @media(min-width:980px){ .rp{grid-template-columns:1.3fr 1fr 1fr 1.05fr;gap:26px} }
   .rp-mk{display:flex;align-items:center;gap:10px;margin-bottom:9px}
   .rp-mk .lg-mk{width:34px;height:34px;border-radius:9px}
   .rp-mk .lg-mk svg{width:19px;height:19px}
@@ -177,11 +179,20 @@
   .rp p{margin:0 0 6px;line-height:1.65}
   .rp a{color:#e8eef6;text-decoration:none;display:inline-block;margin-bottom:6px}
   .rp a:hover{color:#fff;text-decoration:underline}
+  .rp-band{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+  .rp-band span{font-size:.68rem;font-weight:700;color:#c8d3e0;
+    background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);
+    border-radius:5px;padding:2px 7px;white-space:nowrap}
+  .rp-taxa{font-size:.71rem;color:#6f8098;margin-top:7px;line-height:1.55}
   .rp-fim{border-top:1px solid rgba(255,255,255,.09);margin-top:24px;padding-top:14px;
     font-size:.71rem;color:#6f8098;line-height:1.7}
+  /* faixa de data comemorativa — o CSS mora no tema.js pra nao divergir */
 </style>
+<style id="temaCss"></style>
 </head>
 <body>
+
+<div id="temaFaixa"></div>
 
 <header>
   <div class="wrap">
@@ -296,6 +307,13 @@ async function carregar(){
       'Pode ser a conexão. Tente atualizar a página em alguns instantes.');
     return;
   }
+  // Recepção pela data: quem abre em dezembro é recebido com boas festas.
+  try{
+    if(window.Tema){
+      document.getElementById('temaCss').textContent=Tema.TEMA_CSS;
+      document.getElementById('temaFaixa').innerHTML=Tema.temaFaixaHTML(Tema.temaDe());
+    }
+  }catch(e){}
   $('marcaTopo').innerHTML=MARCA_SVG;
   cabecalho();
   if(!itens.length){
@@ -387,6 +405,16 @@ function rodape(){
         ${cfg.cidade?`<p>📍 ${esc(cfg.cidade)}</p>`:''}
         <p>🚚 Entrega combinada na região</p>
         <p>📦 Envio por Correios com rastreio</p>
+      </div>
+      <div>
+        <h4>Pagamento</h4>
+        <p>💠 Pix</p>
+        <p>💳 Cartão de débito e crédito</p>
+        <div class="rp-band">
+          <span>Visa</span><span>Mastercard</span><span>Elo</span>
+          <span>Amex</span><span>Hipercard</span>
+        </div>
+        <p class="rp-taxa">Parcelamento no cartão tem taxa da maquininha — consulte antes de fechar.</p>
       </div>
     </div>
     <div class="rp-fim">
