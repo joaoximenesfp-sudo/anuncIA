@@ -5329,10 +5329,11 @@ window.eHwSugerir=()=>{
   const lm=slotsLivres(hw.slots_m2,hw.slots_m2_ocup);
   if(lm>0) extras.push(lm+' M.2 livre'+(lm!==1?'s':''));
   if(hw.baia_25) extras.push('baia 2.5"');
-  if(hw.bateria_pct!=null) extras.push('bateria '+hw.bateria_pct+'%');
+  const batSug=batRotulo(hw);
+  if(batSug) extras.push('bateria '+batSug.toLowerCase());
   if(!extras.length){ box.innerHTML=''; return; }
   const base=(campo.value||'').split(' · ').filter(t=>
-    !/slot|baia|bateria \d|M\.2 livre/i.test(t)).join(' · ');
+    !/slot|baia|bateria /i.test(t)).join(' · ');
   const sug=[base,...extras].filter(Boolean).join(' · ');
   if(sug===campo.value){ box.innerHTML=''; return; }
   box.innerHTML=`<div class="hw-sug-box">
@@ -6063,6 +6064,23 @@ function faltaFeitaEm(p){
 // Slots livres e estado de tela/bateria são o que decide preço e o que decide se
 // vale fazer upgrade. Máquina com 1 slot livre aceita +8GB por R$ 80; máquina com
 // slot único ocupado exige trocar o pente inteiro. Isso muda a conta da compra.
+// Bateria: escala em vez de porcentagem. Rodar o powercfg em 68 máquinas leva
+// tempo demais, e as que estão sem SSD nem ligam pra rodar o comando — campo
+// caro de preencher é campo que fica vazio, e vazio não vale nada.
+const BAT_OPC=[
+  ['','—'],
+  ['excelente','Excelente'],
+  ['boa','Boa'],
+  ['segura','Segurando carga'],
+  ['tomada','Apenas conectado na tomada'],
+];
+// Registros antigos guardaram só a porcentagem; continuam sendo lidos.
+function batRotulo(p){
+  const e=(p&&p.bateria_estado)||'';
+  if(e) return (BAT_OPC.find(o=>o[0]===e)||[])[1]||e;
+  if(p&&p.bateria_pct!=null&&p.bateria_pct!=='') return p.bateria_pct+'%';
+  return '';
+}
 const TELA_OPC=[
   ['','—'],
   ['perfeita','Perfeita'],
@@ -6079,14 +6097,14 @@ function hwCampos(pre){
     slots_m2:  n('SlotsM2'),  slots_m2_ocup:  n('SlotsM2Oc'),
     baia_25:   !!(g('Baia25')&&g('Baia25').checked),
     tela_estado: (g('Tela')&&g('Tela').value)||'',
-    bateria_pct: n('Bat'),
+    bateria_estado: (g('Bat')&&g('Bat').value)||'',
   };
 }
 function hwPreencher(pre,p){
   const set=(id,v)=>{const e=document.getElementById(pre+id); if(e) e.value=(v===null||v===undefined)?'':v;};
   set('SlotsRam',p.slots_ram); set('SlotsRamOc',p.slots_ram_ocup);
   set('SlotsM2',p.slots_m2);   set('SlotsM2Oc',p.slots_m2_ocup);
-  set('Tela',p.tela_estado||''); set('Bat',p.bateria_pct);
+  set('Tela',p.tela_estado||''); set('Bat',p.bateria_estado||'');
   const b=document.getElementById(pre+'Baia25'); if(b) b.checked=!!p.baia_25;
 }
 // Slot livre é o que sobra. Sem os dois números não dá pra saber, e chutar zero
@@ -6106,13 +6124,17 @@ function hwResumo(p){
     const nm=(TELA_OPC.find(o=>o[0]===p.tela_estado)||[])[1]||p.tela_estado;
     partes.push('🖥️ '+nm);
   }
-  if(p.bateria_pct!=null) partes.push('🔋 '+p.bateria_pct+'%');
+  const bat=batRotulo(p);
+  if(bat) partes.push('🔋 '+bat);
   return partes;
 }
 // A bateria é o número que mais engana o comprador. Abaixo de 50% o anúncio tem
 // que dizer, senão vira troca depois.
-function bateriaCls(pct){
-  if(pct==null) return '';
+function bateriaCls(p){
+  const e=(p&&p.bateria_estado)||'';
+  if(e) return (e==='excelente'||e==='boa') ? 'boa' : (e==='segura' ? 'media' : 'ruim');
+  const pct=p&&p.bateria_pct;
+  if(pct==null||pct==='') return '';
   return pct>=80?'boa':pct>=50?'media':'ruim';
 }
 // Na linha, o hardware vira selo curto. Bateria ganha cor porque é o número que
@@ -6121,19 +6143,20 @@ function hwChips(p){
   const partes=hwResumo(p);
   if(!partes.length) return '';
   return '<div class="hw-chips">'+partes.map(t=>{
-    const cls = /^🔋/.test(t) ? (' '+bateriaCls(p.bateria_pct)) : '';
+    const cls = /^🔋/.test(t) ? (' '+bateriaCls(p)) : '';
     return `<span class="hw-chip${cls}">${esc(t)}</span>`;
   }).join('')+'</div>';
 }
 function hwHTML(pre){
   const opc=TELA_OPC.map(([v,t])=>`<option value="${v}">${t}</option>`).join('');
+  const opcBat=BAT_OPC.map(([v,t])=>`<option value="${v}">${t}</option>`).join('');
   return `<div class="hw-grid">
     <label class="hw-f"><span>Slots RAM</span><input class="inp" type="number" min="0" max="4" id="${pre}SlotsRam" placeholder="2"></label>
     <label class="hw-f"><span>RAM ocupados</span><input class="inp" type="number" min="0" max="4" id="${pre}SlotsRamOc" placeholder="1"></label>
     <label class="hw-f"><span>Slots M.2</span><input class="inp" type="number" min="0" max="3" id="${pre}SlotsM2" placeholder="1"></label>
     <label class="hw-f"><span>M.2 ocupados</span><input class="inp" type="number" min="0" max="3" id="${pre}SlotsM2Oc" placeholder="1"></label>
     <label class="hw-f"><span>Estado da tela</span><select class="inp" id="${pre}Tela">${opc}</select></label>
-    <label class="hw-f"><span>Bateria %</span><input class="inp" type="number" min="0" max="100" id="${pre}Bat" placeholder="87"></label>
+    <label class="hw-f"><span>Bateria</span><select class="inp" id="${pre}Bat">${opcBat}</select></label>
     <label class="hw-chk"><input type="checkbox" id="${pre}Baia25"><span>Tem baia 2.5" (cabe HD/SSD SATA)</span></label>
   </div>`;
 }

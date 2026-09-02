@@ -364,8 +364,16 @@ function render(){
   });
 }
 
+// A bateria mudou de porcentagem pra escala, mas máquina antiga ainda vem com
+// número — os dois formatos precisam colorir igual.
 function chipSpec(s){
-  const cls = /^🔋/.test(s) ? (/(\d+)%/.test(s) ? (parseInt(s.match(/(\d+)%/)[1])>=80?' bat-boa':(parseInt(s.match(/(\d+)%/)[1])<50?' bat-ruim':'')) : '') : '';
+  let cls='';
+  if(/^🔋/.test(s)){
+    const m=s.match(/(\d+)%/);
+    if(m){ const n=parseInt(m[1]); cls = n>=80 ? ' bat-boa' : (n<50 ? ' bat-ruim' : ''); }
+    else if(/excelente|boa/i.test(s)) cls=' bat-boa';
+    else if(/tomada/i.test(s))        cls=' bat-ruim';
+  }
   return `<span class="sp${cls}">${esc(s)}</span>`;
 }
 
