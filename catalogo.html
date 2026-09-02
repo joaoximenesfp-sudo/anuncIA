@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Catálogo — máquinas disponíveis</title>
-<meta name="description" content="Notebooks seminovos revisados peça por peça, com garantia.">
+<meta name="description" content="Notebooks e desktops seminovos, com garantia. Veja o que está disponível hoje.">
 <meta name="theme-color" content="#0B1221">
-<meta property="og:title" content="Catálogo de notebooks">
-<meta property="og:description" content="Máquinas revisadas peça por peça, com garantia. Toque para ver fotos e preço.">
+<meta property="og:title" content="Catálogo de notebooks e desktops">
+<meta property="og:description" content="Notebooks e desktops disponíveis, com garantia. Toque para ver fotos e preço.">
 <meta property="og:type" content="website">
 <style>
   :root{
@@ -61,6 +61,9 @@
     border:1px solid var(--b);background:var(--w);color:var(--mu);cursor:pointer;white-space:nowrap;
     font-family:inherit}
   .chip.on{background:var(--tx);border-color:var(--tx);color:var(--bg)}
+  .chips.tipos{padding-bottom:0}
+  .chips.tipos .chip{font-size:.79rem;font-weight:700;padding:7px 14px}
+  .chips.tipos .chip.on{background:var(--ac);border-color:var(--ac);color:#fff}
   .cont{font-size:.76rem;color:var(--li);margin:4px 2px 12px}
 
   /* ── grade ── */
@@ -74,8 +77,6 @@
   .cd-im .sem{width:100%;height:100%;display:grid;place-items:center;color:var(--li);font-size:.78rem}
   .cd-nf{position:absolute;right:8px;bottom:8px;background:rgba(8,12,20,.72);color:#fff;
     font-size:.68rem;font-weight:700;padding:3px 8px;border-radius:20px;backdrop-filter:blur(4px)}
-  .cd-rv{position:absolute;left:8px;top:8px;background:var(--ac);color:#fff;
-    font-size:.66rem;font-weight:800;padding:3px 8px;border-radius:20px}
   .cd-bd{padding:11px 12px 13px;display:flex;flex-direction:column;gap:7px;flex:1}
   .cd-nm{font-size:.85rem;font-weight:700;line-height:1.35}
   .cd-sp{display:flex;flex-wrap:wrap;gap:4px}
@@ -166,6 +167,7 @@
 <div class="wrap">
   <div class="fl" id="filtros" hidden>
     <input class="bs" id="busca" type="search" placeholder="🔎 Buscar por modelo, marca, processador…" autocomplete="off">
+    <div class="chips tipos" id="tipos"></div>
     <div class="chips" id="chips"></div>
   </div>
   <div class="cont" id="contagem"></div>
@@ -191,7 +193,7 @@ const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>
 const fmt=v=>'R$ '+Math.round(Number(v)||0).toLocaleString('pt-BR');
 const norm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 
-let itens=[], cfg={}, marcaSel='', busca='';
+let itens=[], cfg={}, tipoSel='', marcaSel='', busca='';
 const cacheFotos={};   // produto_id -> [dataUrl]
 
 // ── carregar ────────────────────────────────────────────────────────────
@@ -231,6 +233,7 @@ async function carregar(){
     return;
   }
   $('filtros').hidden=false;
+  montarTipos();
   montarChips();
   render();
   rodape();
@@ -261,7 +264,7 @@ function cabecalho(){
 // compartilhamento do sistema, no computador copia o endereço.
 async function compartilhar(bt){
   const url=location.href.split('#')[0];
-  const dados={ title:(cfg.nome||'Catálogo')+' — notebooks disponíveis',
+  const dados={ title:(cfg.nome||'Catálogo')+' — notebooks e desktops disponíveis',
                 text:'Dá uma olhada nas máquinas disponíveis:', url };
   if(navigator.share){
     try{ await navigator.share(dados); return; }
@@ -277,17 +280,39 @@ function rodape(){
   const q=cfg.publicado_em ? new Date(cfg.publicado_em) : null;
   const quando=q&&!isNaN(q) ? q.toLocaleDateString('pt-BR') : '';
   $('rodape').innerHTML=
-    `Todas as máquinas são revisadas peça por peça e saem com <b>90 dias de garantia</b>, nota e recibo.`+
+    `Todas as máquinas saem com <b>90 dias de garantia</b>.`+
     (quando?`<br>Catálogo atualizado em ${quando}. Preços sujeitos a alteração.`:'<br>Preços sujeitos a alteração.');
 }
 
 // ── filtros ─────────────────────────────────────────────────────────────
-function montarChips(){
+// Notebook e desktop são compras diferentes: quem quer levar pra faculdade não
+// quer ver mini pra mesa, e vice-versa. Por isso o tipo vem antes da marca.
+const TIPOS=[['notebook','💻 Notebooks'],['desktop','🖥️ Desktops']];
+
+function montarTipos(){
   const cont={};
-  itens.forEach(i=>{ const m=i.marca||'Outros'; cont[m]=(cont[m]||0)+1; });
+  itens.forEach(i=>{ const t=i.tipo==='desktop'?'desktop':'notebook'; cont[t]=(cont[t]||0)+1; });
+  const presentes=TIPOS.filter(([v])=>cont[v]);
+  const el=$('tipos');
+  // Um tipo só: o filtro não serve pra nada e vira ruído.
+  if(presentes.length<2){ el.innerHTML=''; el.style.display='none'; tipoSel=''; return; }
+  el.style.display='';
+  el.innerHTML=`<button class="chip${tipoSel?'':' on'}" data-t="">Tudo <span style="opacity:.65">${itens.length}</span></button>`+
+    presentes.map(([v,rot])=>`<button class="chip${tipoSel===v?' on':''}" data-t="${v}">${rot} <span style="opacity:.65">${cont[v]}</span></button>`).join('');
+  el.querySelectorAll('.chip').forEach(b=>{
+    b.onclick=()=>{ tipoSel=b.dataset.t; marcaSel=''; montarTipos(); montarChips(); render(); };
+  });
+}
+
+// As marcas contam dentro do tipo escolhido: com "Desktops" ligado, "Dell 3"
+// tem que significar 3 desktops Dell, não 3 máquinas Dell no total.
+function montarChips(){
+  const base=itens.filter(i=>!tipoSel || (i.tipo==='desktop'?'desktop':'notebook')===tipoSel);
+  const cont={};
+  base.forEach(i=>{ const m=i.marca||'Outros'; cont[m]=(cont[m]||0)+1; });
   const marcas=Object.keys(cont).sort((a,b)=>cont[b]-cont[a]);
   $('chips').innerHTML=
-    `<button class="chip${marcaSel?'':' on'}" data-m="">Todas <span style="opacity:.6">${itens.length}</span></button>`+
+    `<button class="chip${marcaSel?'':' on'}" data-m="">Todas <span style="opacity:.6">${base.length}</span></button>`+
     marcas.map(m=>`<button class="chip${marcaSel===m?' on':''}" data-m="${esc(m)}">${esc(m)} <span style="opacity:.6">${cont[m]}</span></button>`).join('');
   $('chips').querySelectorAll('.chip').forEach(b=>{
     b.onclick=()=>{ marcaSel=b.dataset.m; montarChips(); render(); };
@@ -297,6 +322,7 @@ function montarChips(){
 function filtrados(){
   const q=norm(busca).trim();
   return itens.filter(i=>{
+    if(tipoSel && (i.tipo==='desktop'?'desktop':'notebook')!==tipoSel) return false;
     if(marcaSel && (i.marca||'Outros')!==marcaSel) return false;
     if(!q) return true;
     const alvo=norm((i.nome||'')+' '+(i.marca||'')+' '+(i.specs||[]).join(' '));
@@ -335,7 +361,6 @@ function cartao(i){
   const n = Number(i.n_fotos)||0;
   return `<div class="cd" data-id="${esc(i.id)}">
     <div class="cd-im">${capa}
-      ${i.revisado?'<span class="cd-rv">✅ revisada</span>':''}
       ${n>1?`<span class="cd-nf">📷 ${n}</span>`:''}
     </div>
     <div class="cd-bd">
@@ -377,7 +402,7 @@ async function abrir(id){
       <div class="dt-sp">${(i.specs||[]).map(chipSpec).join('')||'<span class="sp">specs não informadas</span>'}</div>
       ${ i.descricao ? `<div class="dt-desc">${esc(i.descricao)}</div>` : '' }
       <div class="gar">
-        ✅ <b>90 dias de garantia</b> a partir da entrega, com nota e recibo.<br>
+        ✅ <b>90 dias de garantia</b> a partir da entrega.<br>
         🔧 Revisada por dentro: memória, armazenamento, bateria e limpeza com troca de pasta térmica.<br>
         🚚 Entrega combinada na região e envio por Correios com rastreio.
       </div>

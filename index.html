@@ -508,6 +508,7 @@ input[type=number].inp{padding-left:32px}
 .tv-bts{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
 .tv-status{font-size:.73rem;color:var(--gr);font-weight:600;margin-top:8px;min-height:16px}
 
+.tipo-auto{font-size:.68rem;color:var(--li);margin-top:3px;min-height:14px;line-height:1.4}
 .desc-cat{width:100%;min-height:76px;resize:vertical;font-family:inherit;line-height:1.5}
 .desc-conta{font-size:.68rem;color:var(--li);text-align:right;margin-top:3px;min-height:14px}
 .desc-conta.perto{color:#a16207;font-weight:600}
@@ -2817,6 +2818,15 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
             <input class="inp" type="text" id="eNumPlan" placeholder="ex: 214">
           </label>
         </div>
+      </div>
+      <div class="fc full">
+        <label class="fl">🖥️ Tipo no catálogo <span style="font-size:.67rem;color:var(--li);font-weight:400">separa notebooks de desktops na página pública</span></label>
+        <select class="inp" id="eTipoCat" onchange="eTipoAutoHint()">
+          <option value="">Automático (pelo nome)</option>
+          <option value="notebook">💻 Notebook</option>
+          <option value="desktop">🖥️ Desktop / Mini</option>
+        </select>
+        <div class="tipo-auto" id="eTipoAuto"></div>
       </div>
       <div class="fc full">
         <label class="fl">🌐 Descrição do catálogo <span style="font-size:.67rem;color:var(--li);font-weight:400">o texto que o cliente lê na página pública — deixe vazio pra não aparecer</span></label>
@@ -5177,6 +5187,8 @@ window.openEdit=id=>{
   montarHw(); hwPreencher('e',p); eHwSugerir();
   const eRev=document.getElementById('eRevisado'); if(eRev) eRev.checked=!!p.revisado;
   const eRObs=document.getElementById('eRevObs'); if(eRObs) eRObs.value=p.revisao_obs||'';
+  const eTp=document.getElementById('eTipoCat'); if(eTp) eTp.value=p.tipo_catalogo||'';
+  eTipoAutoHint();
   const eDsc=document.getElementById('eDescricao'); if(eDsc) eDsc.value=p.descricao||'';
   eDescContar();
   const eNP=document.getElementById('eNumPlan'); if(eNP) eNP.value=p.num_planilha||'';
@@ -5412,7 +5424,7 @@ window.saveEdit=async()=>{
   const custoFinal=baseMaquina+somaJa+somaNovas;
   const totalPecas=somaJa+somaNovas;
 
-  const upd={nome,custo:custoFinal,custo_base:baseMaquina,custo_pecas:totalPecas,venda,lucro:venda-custoFinal,status,investidor,plataforma:(status==='Vendido'?(document.getElementById('ePlat')?.value||''):''),repasse_socio:(status==='Vendido'?(parseFloat(document.getElementById('eRepasse')?.value)||0):0),falta_comprar:(status!=='Vendido'?(document.getElementById('eFalta')?.value.trim()||''):''),falta_feito:(status!=='Vendido'&&!!document.getElementById('eFaltaFeito')?.checked),falta_feito_em:((status!=='Vendido'&&document.getElementById('eFaltaFeito')?.checked)?((_pAtual&&_pAtual.falta_feito&&_pAtual.falta_feito_em)||new Date().toISOString().slice(0,10)):''),...hwCampos('e'),revisado:!!document.getElementById('eRevisado')?.checked,revisado_em:(document.getElementById('eRevisado')?.checked?((_pAtual&&_pAtual.revisado&&_pAtual.revisado_em)||new Date().toISOString().slice(0,10)):''),revisao_obs:(document.getElementById('eRevObs')?.value.trim()||''),descricao:(document.getElementById('eDescricao')?.value.trim()||''),num_planilha:(document.getElementById('eNumPlan')?.value.trim()||''),fornecedor_id:fornId,fornecedor_nome:fornNome,data_compra:dc,data_compra_mes:dcMes,data_venda:dv,data:(dv?dv.slice(0,7):dcMes),gas_pagante:(document.getElementById('eGasPag')?.value||'ambos'),aporte_joao:(parseFloat(document.getElementById('eApJoao')?.value)||0),aporte_igor:(parseFloat(document.getElementById('eApIgor')?.value)||0),cliente_id:cliId,cliente_nome:cliNome,preco_cheio:(status==='Vendido'?(parseFloat(document.getElementById('ePrecoCheio')?.value)||0):0),nota_venda:(status==='Vendido'?(document.getElementById('eNotaVenda')?.value.trim()||''):'')};
+  const upd={nome,custo:custoFinal,custo_base:baseMaquina,custo_pecas:totalPecas,venda,lucro:venda-custoFinal,status,investidor,plataforma:(status==='Vendido'?(document.getElementById('ePlat')?.value||''):''),repasse_socio:(status==='Vendido'?(parseFloat(document.getElementById('eRepasse')?.value)||0):0),falta_comprar:(status!=='Vendido'?(document.getElementById('eFalta')?.value.trim()||''):''),falta_feito:(status!=='Vendido'&&!!document.getElementById('eFaltaFeito')?.checked),falta_feito_em:((status!=='Vendido'&&document.getElementById('eFaltaFeito')?.checked)?((_pAtual&&_pAtual.falta_feito&&_pAtual.falta_feito_em)||new Date().toISOString().slice(0,10)):''),...hwCampos('e'),revisado:!!document.getElementById('eRevisado')?.checked,revisado_em:(document.getElementById('eRevisado')?.checked?((_pAtual&&_pAtual.revisado&&_pAtual.revisado_em)||new Date().toISOString().slice(0,10)):''),revisao_obs:(document.getElementById('eRevObs')?.value.trim()||''),descricao:(document.getElementById('eDescricao')?.value.trim()||''),tipo_catalogo:(document.getElementById('eTipoCat')?.value||''),num_planilha:(document.getElementById('eNumPlan')?.value.trim()||''),fornecedor_id:fornId,fornecedor_nome:fornNome,data_compra:dc,data_compra_mes:dcMes,data_venda:dv,data:(dv?dv.slice(0,7):dcMes),gas_pagante:(document.getElementById('eGasPag')?.value||'ambos'),aporte_joao:(parseFloat(document.getElementById('eApJoao')?.value)||0),aporte_igor:(parseFloat(document.getElementById('eApIgor')?.value)||0),cliente_id:cliId,cliente_nome:cliNome,preco_cheio:(status==='Vendido'?(parseFloat(document.getElementById('ePrecoCheio')?.value)||0):0),nota_venda:(status==='Vendido'?(document.getElementById('eNotaVenda')?.value.trim()||''):'')};
   await vincularTroca(editId, upd);
   if(!idLocal(editId)) await gravar(updateDoc(doc(db,'products',editId),upd), 'Editar "'+nome+'"');
   // Grava as peças novas na aba Peças, vinculadas a esta máquina
@@ -9627,6 +9639,27 @@ function montarTabelaVend(){
   if(res) res.innerHTML=resumoTabelaVend();
   const st=document.getElementById('tvStatus'); if(st) st.textContent='';
 }
+// Notebook ou desktop. O nome da máquina já diz na prática — "Dell Pro Micro",
+// "Optiplex Mini", "ThinkCentre" — então o padrão é adivinhar por ele. Mas
+// adivinhação erra, e errar calado seria pior: por isso existe o campo de
+// correção manual, e a tela mostra qual foi o palpite.
+const DESKTOP_RE=/\b(mini|micro|tiny|sff|desktop|torre|optiplex|thinkcentre|prodesk|elitedesk|nuc|aio|all[- ]?in[- ]?one)\b/i;
+function tipoMaquina(p){
+  const forcado=(p&&p.tipo_catalogo)||'';
+  if(forcado==='notebook'||forcado==='desktop') return forcado;
+  return DESKTOP_RE.test((p&&p.nome)||'') ? 'desktop' : 'notebook';
+}
+function tipoRotulo(t){ return t==='desktop' ? '🖥️ Desktop / Mini' : '💻 Notebook'; }
+
+window.eTipoAutoHint=()=>{
+  const sel=document.getElementById('eTipoCat'), h=document.getElementById('eTipoAuto');
+  if(!sel||!h) return;
+  if(sel.value){ h.textContent='Definido por você — o nome não muda mais o tipo.'; return; }
+  const nome=(document.getElementById('eN')?.value)||(_pAtual&&_pAtual.nome)||'';
+  const t=DESKTOP_RE.test(nome)?'desktop':'notebook';
+  h.textContent='Pelo nome, entra como '+tipoRotulo(t)+'. Se estiver errado, escolha acima.';
+};
+
 // Contador da descrição do catálogo. O limite é de tela, não de banco: texto
 // longo demais vira parede no celular do cliente e ninguém lê.
 window.eDescContar=()=>{
@@ -9844,7 +9877,7 @@ window.publicarCatalogo=async()=>{
         marca:brand(p.nome),
         specs:hwResumo(p),
         descricao:String(p.descricao||'').slice(0,600),
-        revisado:!!p.revisado,
+        tipo:tipoMaquina(p),
         capa,
         n_fotos:fotos.length,
         publicado_em:new Date().toISOString()
