@@ -14,7 +14,7 @@ acontece é voltar a respirar.
 
 | Data | 1ª | 2ª | 3ª | Melhor | Condição | Anotação |
 |------|----|----|----|--------|----------|----------|
-| 2026-09-04 | 54s | | | **54s** | fim do treino | primeira medição |
+| 2026-09-04 | 44s | 54s | — | **54s** | fim do treino | +23% da 1ª pra 2ª; parou na segunda |
 
 Medir sempre na mesma condição, senão o número não compara com nada: dá pra
 achar que melhorou quando só estava mais descansado naquele dia. O padrão é
@@ -38,6 +38,7 @@ minutos antes de começar.
 - **A primeira tentativa é sempre a pior.** Três seguidas, com uns 2 minutos de
   descanso, e a terceira costuma vir 20–40% mais longa que a primeira. Não é
   força de vontade: o baço libera hemácias e a frequência cardíaca cai.
+  Confirmado na primeira medição — 44s → 54s, +23%, e a terceira nem foi feita.
 - **Rosto na água fria** dispara esse mesmo reflexo mais rápido. Bacia com água
   gelada, rosto dentro, prendendo — costuma render bem mais que no seco.
 - **Cigarro derruba.** O monóxido de carbono ocupa parte da hemoglobina, então
