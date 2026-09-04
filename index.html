@@ -524,6 +524,14 @@ input[type=number].inp{padding-left:32px}
 .copia-it .cn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .copia-it .cv{color:var(--li);font-size:.72rem;white-space:nowrap}
 .copia-vazio{padding:9px 10px;font-size:.72rem;color:var(--li)}
+.lote-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;
+  padding:8px 10px;border:1px solid var(--b);border-radius:8px;background:var(--bbg);
+  font-size:.74rem;color:var(--mu)}
+.lote-bar .inp{width:auto;padding:4px 8px;font-size:.74rem}
+.lote-bt{border:1px solid var(--bl);background:var(--bl);color:#fff;font-family:inherit;
+  font-size:.74rem;font-weight:700;padding:5px 12px;border-radius:6px;cursor:pointer}
+.lote-bt:hover{filter:brightness(1.08)}
+.lote-obs{font-size:.68rem;color:var(--li);flex:1;min-width:180px}
 .desc-cat{width:100%;min-height:76px;resize:vertical;font-family:inherit;line-height:1.5}
 .desc-conta{font-size:.68rem;color:var(--li);text-align:right;margin-top:3px;min-height:14px}
 .desc-conta.perto{color:#a16207;font-weight:600}
@@ -1653,6 +1661,21 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
           <div style="padding:0 16px 10px">
             <input class="inp" type="text" id="pBusca" placeholder="🔎 Buscar por nome, specs, cliente, fornecedor... (ex: i5 16gb, thinkpad, dell ssd)" oninput="render()" style="width:100%">
             <div id="pBuscaInfo" style="font-size:.7rem;color:var(--li);margin-top:4px;display:none"></div>
+            <!-- Mudar o status de um punhado de máquinas de uma vez. Só aparece
+                 quando a lista já está estreitada por busca ou filtro: em cima
+                 de "Todos" sem busca, isso mexeria no estoque inteiro. -->
+            <div class="lote-bar" id="loteBar" style="display:none">
+              <span id="loteLbl"></span>
+              <select class="inp" id="loteAlvo">
+                <option value="">mudar status para…</option>
+                <option value="Anunciado">Anunciado</option>
+                <option value="Estoque">Estoque</option>
+                <option value="Reservado">🤝 Reservado</option>
+                <option value="Aguardando">🚚 Aguardando chegar</option>
+              </select>
+              <button class="lote-bt" onclick="loteAplicar()">Aplicar</button>
+              <span class="lote-obs">Vendido não entra aqui — venda tem cliente e data, passa pela tela de venda.</span>
+            </div>
           </div>
           <div id="PL"><div style="text-align:center;padding:48px;color:var(--li)">Carregando...</div></div>
         </div>
@@ -7022,6 +7045,11 @@ function render(){
         return casaBusca(p,termos);
       })
     : porStatus;
+  // A barra de lote age exatamente sobre o que está na tela agora — por isso a
+  // lista fica guardada aqui, e não recalculada no clique: entre um e outro o
+  // texto da busca pode ter mudado.
+  loteLista=filtered;
+  loteBarra(termos.length>0 || filt!=='todos');
   // Info da busca
   const bi=document.getElementById('pBuscaInfo');
   if(bi){
@@ -9861,6 +9889,59 @@ function statusSelectHTML(p){
     ${STATUS_OPC.map(([v,t])=>`<option ${p.status===v?'selected':''} value="${v}">${t}</option>`).join('')}
   </select>`;
 }
+// ── Mudar o status de várias de uma vez ────────────────────────────────
+// Cadastrar dez máquinas de uma vez e depois trocar o status de uma em uma
+// desfaz o ganho. A barra age sobre a lista que está na tela, e só sobre ela.
+let loteLista=[];
+function loteBarra(mostrar){
+  const bar=document.getElementById('loteBar'), lbl=document.getElementById('loteLbl');
+  if(!bar||!lbl) return;
+  // Máquina vendida não entra: mudar o status dela por aqui deixaria data de
+  // venda e lucro pendurados sem venda nenhuma.
+  const n=loteLista.filter(p=>p.status!=='Vendido').length;
+  if(!mostrar || !n){ bar.style.display='none'; return; }
+  bar.style.display='flex';
+  lbl.innerHTML=`<strong>${n}</strong> máquina${n!==1?'s':''} na lista:`;
+}
+window.loteAplicar=async()=>{
+  const sel=document.getElementById('loteAlvo'); if(!sel) return;
+  const alvo=sel.value;
+  if(!alvo){ alert('Escolha para qual status.'); return; }
+  const mexer=loteLista.filter(p=>p.status!=='Vendido' && p.status!==alvo);
+  const jaEstavam=loteLista.filter(p=>p.status===alvo).length;
+  const vendidas=loteLista.filter(p=>p.status==='Vendido').length;
+  if(!mexer.length){
+    alert(jaEstavam ? 'Todas as '+jaEstavam+' já estão em '+alvo+'.' : 'Nenhuma máquina para mudar.');
+    return;
+  }
+  const amostra=mexer.slice(0,5).map(p=>'#'+(p.num||'?')+' '+(p.nome||'sem nome')).join('\n');
+  const ok=confirm(
+    'Mudar '+mexer.length+' máquina'+(mexer.length!==1?'s':'')+' para "'+alvo+'":\n\n'
+    + amostra + (mexer.length>5 ? '\n... e mais '+(mexer.length-5) : '')
+    + (jaEstavam ? '\n\n'+jaEstavam+' já estava'+(jaEstavam!==1?'m':'')+' nesse status e fica'+(jaEstavam!==1?'m':'')+' como está.' : '')
+    + (vendidas ? '\n'+vendidas+' vendida'+(vendidas!==1?'s':'')+' fica'+(vendidas!==1?'m':'')+' de fora.' : '')
+  );
+  if(!ok) return;
+  const bt=document.querySelector('.lote-bt');
+  if(bt){ bt.disabled=true; bt.textContent='Mudando...'; }
+  let feitas=0;
+  for(const p of mexer){
+    if(!idLocal(p.id)){
+      const gravou=await gravar(updateDoc(doc(db,'products',p.id),{status:alvo}),
+                                'Mudar "'+(p.nome||p.id)+'" para '+alvo);
+      if(!gravou) continue;
+    }
+    p.status=alvo; feitas++;
+  }
+  if(bt){ bt.disabled=false; bt.textContent='Aplicar'; }
+  sel.value='';
+  render(); renderSecoes(); calcStats();
+  try{ renderAlertas(); }catch(e){}
+  if(feitas<mexer.length){
+    alert(feitas+' de '+mexer.length+' mudaram. O resto falhou — veja o aviso vermelho no topo.');
+  }
+};
+
 // ── Copiar de outra máquina ────────────────────────────────────────────
 // Lote de 10 Dell iguais era 10 cadastros idênticos digitados à mão. Aqui a
 // máquina já vendida serve de molde: o que é da identidade dela (nome, preço,
@@ -9912,7 +9993,10 @@ window.copiarDe=id=>{
   try{ descContar('p'); }catch(e){}
   nomeManual=true;                        // o nome veio pronto, montarNome não mexe
   try{ hwPreencher('p', p); }catch(e){}
-  const st=document.getElementById('pS'); if(st) st.value='Estoque';
+  // Antes isto forçava Estoque, e o lote sumia de "Anunciados", que é onde se
+  // procura o que está à venda. Máquina copiada é máquina pra vender: entra
+  // anunciada, e quem quiser guardar muda no campo Status ao lado.
+  const st=document.getElementById('pS'); if(st) st.value='Anunciado';
   set('pCopiaBusca','');
   const box=document.getElementById('pCopiaLista'); if(box){ box.style.display='none'; box.innerHTML=''; }
   copiaHint();
@@ -9932,7 +10016,7 @@ window.copiaHint=()=>{
   const p=id?prods.find(x=>x.id===id):null;
   const qtd=Math.max(1,Math.min(20,parseInt(document.getElementById('pQtd')?.value)||1));
   const partes=[];
-  if(p) partes.push('Copiado de #'+(p.num||'?')+' — data, status e a venda anterior não vieram.');
+  if(p) partes.push('Copiado de #'+(p.num||'?')+' — entra como Anunciado; data e a venda anterior não vieram.');
   if(qtd>1) partes.push('Vai cadastrar '+qtd+' máquinas iguais. Peças, gasolina, aporte e fotos entram só na primeira; as outras entram com o custo da máquina.');
   h.innerHTML = partes.length
     ? esc(partes.join(' ')) + (p?' <a href="#" onclick="event.preventDefault();copiaLimpar()" style="color:var(--bl)">desfazer cópia</a>':'')
