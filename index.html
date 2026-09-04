@@ -117,6 +117,9 @@ nav{position:sticky;top:0;z-index:50;background:rgba(249,248,246,.93);backdrop-f
 .san{background:var(--bbg);color:var(--bl);border:1px solid var(--bbd)}
 .se{background:#ecfdf5;color:#065f46;border:1px solid #6ee7b7}
 .sag{background:#fff7ed;color:#b45309;border:1px solid #fdba74}
+/* Roxo pra reservado: não é verde de "disponível" nem laranja de "chegando",
+   e olhando a lista dá pra separar os três de longe. */
+.sres{background:#f5f3ff;color:#6d28d9;border:1px solid #c4b5fd}
 .sel{padding:3px 7px;font-size:.72rem;border:1px solid var(--b2);border-radius:6px;background:var(--w);color:var(--tx);cursor:pointer;outline:none;font-family:'DM Sans',sans-serif}
 .bed{width:26px;height:26px;border-radius:5px;border:1px solid var(--b);background:transparent;color:var(--li);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.8rem;transition:all .15s}
 .bed:hover{border-color:var(--bl);color:var(--bl);background:var(--bbg)}
@@ -510,6 +513,17 @@ input[type=number].inp{padding-left:32px}
 .tv-status{font-size:.73rem;color:var(--gr);font-weight:600;margin-top:8px;min-height:16px}
 
 .tipo-auto{font-size:.68rem;color:var(--li);margin-top:3px;min-height:14px;line-height:1.4}
+/* Lista do "copiar de outra máquina". Some quando não há busca — não pode
+   empurrar o formulário pra baixo enquanto ninguém está procurando nada. */
+.copia-lista{display:none;margin-top:4px;border:1px solid var(--b);border-radius:8px;
+  background:var(--w);max-height:230px;overflow-y:auto}
+.copia-it{display:flex;align-items:center;gap:8px;padding:7px 10px;cursor:pointer;
+  border-bottom:1px solid var(--b);font-size:.76rem}
+.copia-it:last-child{border-bottom:none}
+.copia-it:hover{background:var(--bbg)}
+.copia-it .cn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.copia-it .cv{color:var(--li);font-size:.72rem;white-space:nowrap}
+.copia-vazio{padding:9px 10px;font-size:.72rem;color:var(--li)}
 .desc-cat{width:100%;min-height:76px;resize:vertical;font-family:inherit;line-height:1.5}
 .desc-conta{font-size:.68rem;color:var(--li);text-align:right;margin-top:3px;min-height:14px}
 .desc-conta.perto{color:#a16207;font-weight:600}
@@ -1433,6 +1447,13 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
         <div class="cdb">
           <div class="fr">
             <div class="fc" style="grid-column:1/-1">
+              <span class="fla">🔁 Copiar de outra máquina <span style="font-size:.62rem;color:var(--li)">opcional — pra lote de máquinas iguais</span></span>
+              <input class="inp" type="text" id="pCopiaBusca" placeholder="Digite o nome ou o número de uma máquina já cadastrada..." autocomplete="off" oninput="copiaBuscar()" onfocus="copiaBuscar()">
+              <input type="hidden" id="pCopiaId">
+              <div class="copia-lista" id="pCopiaLista"></div>
+              <div class="tipo-auto" id="pCopiaHint"></div>
+            </div>
+            <div class="fc" style="grid-column:1/-1">
               <div class="spec-builder">
                 <div class="spec-row">
                   <div class="spec-field">
@@ -1478,10 +1499,13 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
               <select class="inp" id="pS">
                 <option value="Anunciado">Anunciado</option>
                 <option value="Estoque">Estoque</option>
+                <option value="Reservado">🤝 Reservado</option>
                 <option value="Aguardando">🚚 Aguardando chegar</option>
                 <option value="Vendido">Vendido</option>
               </select>
             </div>
+            <div class="fc"><span class="fla">Quantidade <span style="font-size:.62rem;color:var(--li)">máquinas iguais</span></span>
+              <input class="inp" type="number" id="pQtd" value="1" min="1" max="20" oninput="copiaHint()"></div>
             <div class="fc"><span class="fla">Investidor</span>
               <select class="inp" id="pInv" onchange="pAporteHint()">
                 <option value="João">👤 João</option>
@@ -2796,6 +2820,8 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
         <select class="inp" id="eS" onchange="ePlatToggle();eFaltaToggle();eAguHint()">
           <option value="Anunciado">Anunciado</option>
           <option value="Estoque">Estoque</option>
+          <option value="Reservado">🤝 Reservado</option>
+          <option value="Aguardando">🚚 Aguardando chegar</option>
           <option value="Vendido">Vendido</option>
         </select>
       </div>
@@ -3841,6 +3867,13 @@ window.addProd=async()=>{
   const fornWpp=(document.getElementById('pFornWpp')?.value||'').replace(/\D/g,'');
   if(fornNome){ const fid=await salvarFornecedor({nome:fornNome,whatsapp:fornWpp}); if(fid) fornId=fid; }
   const num=prods.length>0?Math.max(...prods.map(p=>p.num||0))+1:1;
+  // Lote de máquinas iguais: uma passada só, um registro pra cada.
+  const qtd=Math.max(1,Math.min(20,parseInt(document.getElementById('pQtd')?.value)||1));
+  // Molde: descrição do catálogo e tipo (notebook/mini desktop) não têm campo
+  // no cadastro, então vêm direto do registro copiado em vez de se perderem.
+  const copiaId=document.getElementById('pCopiaId')?.value||'';
+  const molde=copiaId?prods.find(x=>x.id===copiaId):null;
+  const herdado=molde?{descricao:molde.descricao||'', tipo_catalogo:molde.tipo_catalogo||''}:{};
   // Peças aplicadas: entram no custo real da máquina
   const pecasNovas=ppColetar();
   const custoPecas=pecasNovas.reduce((s,x)=>s+x.custo,0);
@@ -3852,7 +3885,7 @@ window.addProd=async()=>{
   // Pendência anotada já no cadastro. Máquina recém-comprada nunca nasce com a
   // pendência resolvida, então aqui não existe o check de 'já foi feito'.
   const falta=(document.getElementById('pFalta')?.value||'').trim();
-  const obj={userId:'shared_ijx',addedBy:user.uid,addedByName:user.displayName||user.email.split('@')[0],nome,custo:custoTotal,custo_base:custo,custo_pecas:custoPecas,custo_gasolina:custoGas,gas_pagante:gasPag,venda,lucro:venda-custoTotal,status,investidor,data_compra:dc,data_compra_mes:dcMes,data_venda:'',data:dcMes,canal_compra:canal,...hwCampos('p'),falta_comprar:falta,falta_feito:false,falta_feito_em:'',aporte_joao:(parseFloat(document.getElementById('pApJoao')?.value)||0),aporte_igor:(parseFloat(document.getElementById('pApIgor')?.value)||0),fornecedor_id:fornId,fornecedor_nome:fornNome,num,fotos_n:fotosPend.prod.length,createdAt:new Date().toISOString()};
+  const obj={userId:'shared_ijx',addedBy:user.uid,addedByName:user.displayName||user.email.split('@')[0],nome,custo:custoTotal,custo_base:custo,custo_pecas:custoPecas,custo_gasolina:custoGas,gas_pagante:gasPag,venda,lucro:venda-custoTotal,status,investidor,data_compra:dc,data_compra_mes:dcMes,data_venda:'',data:dcMes,canal_compra:canal,...hwCampos('p'),falta_comprar:falta,falta_feito:false,falta_feito_em:'',aporte_joao:(parseFloat(document.getElementById('pApJoao')?.value)||0),aporte_igor:(parseFloat(document.getElementById('pApIgor')?.value)||0),fornecedor_id:fornId,fornecedor_nome:fornNome,num,fotos_n:fotosPend.prod.length,...herdado,copiado_de:(molde?molde.id:''),createdAt:new Date().toISOString()};
   let prodId='l'+Date.now();
   try{const r=await addDoc(collection(db,'products'),obj);prodId=r.id;prods.push({...obj,id:r.id});}
   catch(e){ await gravar(Promise.reject(e), 'Cadastrar "'+nome+'"'); prods.push({...obj,id:prodId}); }
@@ -3884,7 +3917,25 @@ window.addProd=async()=>{
     try{const pr=await addDoc(collection(db,'pecas'),pobj);pecas.push({...pobj,id:pr.id});}
     catch(e){pecas.push({...pobj,id:'lp'+Date.now()+Math.random()});}
   }
+  // As cópias do lote. Peça aplicada é física e foto pesa no banco, então as
+  // duas ficam só na primeira; a cópia entra com o custo cheio da máquina.
+  let criadas=1;
+  if(qtd>1){
+    let ult=Math.max(num, ...prods.map(p=>p.num||0));
+    for(let k=1;k<qtd;k++){
+      const cop={...obj, custo:custo, custo_base:custo, custo_pecas:0, custo_gasolina:0,
+                 lucro:venda-custo, aporte_joao:0, aporte_igor:0, fotos_n:0,
+                 num:++ult, createdAt:new Date().toISOString()};
+      try{ const r=await addDoc(collection(db,'products'),cop); prods.push({...cop,id:r.id}); criadas++; }
+      catch(e){
+        await gravar(Promise.reject(e),'Cadastrar cópia '+(k+1)+' de "'+nome+'"');
+        prods.push({...cop,id:'l'+Date.now()+'_'+k}); criadas++;
+      }
+    }
+  }
   document.getElementById('pN').value='';document.getElementById('pC').value='';document.getElementById('pV').value='';document.getElementById('pDC').value='';document.getElementById('pCanal').value='';document.getElementById('pForn').value='';document.getElementById('pFornId').value='';
+  const pq=document.getElementById('pQtd'); if(pq) pq.value='1';
+  try{ copiaLimpar(); }catch(e){}
   const pg=document.getElementById('pGas'); if(pg) pg.value='';
   const pgp=document.getElementById('pGasPag'); if(pgp) pgp.value='ambos';
   const pfw=document.getElementById('pFornWpp'); if(pfw) pfw.value='';
@@ -3899,7 +3950,7 @@ window.addProd=async()=>{
   try{ resetSpecBuilder(); }catch(e){}
   ppLimpar();
   // Notificar o sócio sobre o novo produto
-  criarAviso('produto_adicionado', nome);
+  criarAviso('produto_adicionado', criadas>1 ? (criadas+'x '+nome) : nome);
   render();renderSecoes();calcStats();renderAlertas();renderMeta();
   if(typeof renderPecas==='function') renderPecas();
   if(document.getElementById('fornView')&&document.getElementById('fornView').style.display!=='none')renderFornecedores();
@@ -4678,7 +4729,7 @@ function matchEstoque(texto){
   const stop=new Set(['de','para','pra','ate','um','uma','com','e','o','a','reais','notebook','note','maquina','que','por','volta','uns','mais','menos','ou','na','no','pro','uns','tela','ssd']);
   const termos=(norm(texto).match(/[a-z0-9]+/g)||[]).filter(t=>t.length>=2 && !stop.has(t));
   if(!termos.length)return [];
-  const estoque=prods.filter(p=>p.status==='Estoque'||p.status==='Anunciado'||p.status==='Aguardando');
+  const estoque=prods.filter(p=>p.status==='Estoque'||p.status==='Anunciado'||p.status==='Reservado'||p.status==='Aguardando');
   return estoque.map(p=>{
     const nome=norm(p.nome);
     const hits=termos.filter(t=>nome.includes(t)).length;
@@ -5182,7 +5233,17 @@ window.openEdit=id=>{
   document.getElementById('eN').value=p.nome||'';
   document.getElementById('eC').value=p.custo||'';
   document.getElementById('eV').value=p.venda||'';
-  document.getElementById('eS').value=p.status||'Anunciado';
+  // Se o status gravado nao existir na lista, o <select> ficaria em branco e
+  // salvar apagaria o status da maquina sem avisar. Cria a opcao na hora.
+  {
+    const sel=document.getElementById('eS'), st=p.status||'Anunciado';
+    sel.value=st;
+    if(sel.value!==st){
+      const o=document.createElement('option');
+      o.value=st; o.textContent='⚠️ '+(st||'sem status');
+      sel.insertBefore(o, sel.firstChild); sel.value=st;
+    }
+  }
   // FIX 1: preenche data de compra — suporta YYYY-MM-DD (novo) e YYYY-MM (legado)
   const dcRaw=p.data_compra||'';
   document.getElementById('eDC').value=dcRaw.length===7?dcRaw+'-01':dcRaw;
@@ -6806,7 +6867,7 @@ window.irParaGrupo=(btn)=>{
 // anunciada quando não está.
 function statusEstranho(p){
   const st=p.status||'';
-  if(st==='Anunciado'||st==='Estoque'||st==='Aguardando'||st==='Vendido') return '';
+  if(st==='Anunciado'||st==='Estoque'||st==='Reservado'||st==='Aguardando'||st==='Vendido') return '';
   return `<option selected value="${esc(st)}">⚠️ ${esc(st||'sem status')}</option>`;
 }
 
@@ -6833,7 +6894,9 @@ function renderTabela(lista, tipo){
     const nan=g2.filter(p=>p.status==='Anunciado').length;
     const ne=g2.filter(p=>p.status==='Estoque').length;
     const nag=g2.filter(p=>aguardandoP(p)).length;
-    const ct=[nv?nv+' vendidos':'',nan?nan+' anunciados':'',ne?ne+' estoque':'',nag?nag+' chegando':''].filter(Boolean).join(' · ');
+    const nres=g2.filter(p=>reservadoP(p)).length;
+    const ct=[nv?nv+' vendidos':'',nan?nan+' anunciados':'',ne?ne+' estoque':'',
+              nres?nres+' reservados':'',nag?nag+' chegando':''].filter(Boolean).join(' · ');
     const lv = g2.filter(p=>p.status==='Vendido').reduce((s,p)=>s+(p.lucro||0),0);
     const capGiro = g2.filter(p=>p.status!=='Vendido').reduce((s,p)=>s+p.custo,0);
     const resumoVal = tipo==='vendidos' ? fmt(lv) : fmt(capGiro);
@@ -6866,7 +6929,7 @@ function renderTabela(lista, tipo){
         }
       }
 
-      const sb = p.status==='Vendido'?'<span class="bv sv">Vendido</span>':p.status==='Anunciado'?'<span class="bv san">Anunciado</span>':aguardandoP(p)?'<span class="bv sag">🚚 Chegando</span>':'<span class="bv se">Estoque</span>';
+      const sb = statusBadge(p);
       const platColors={'Marketplace':'#1d4ed8','OLX':'#f97316','Mercado Livre':'#eab308','WhatsApp':'#16a34a','Instagram':'#7c3aed','Indicação':'#0891b2','Outro':'#78716c'};
       const platBg={'Marketplace':'#eff6ff','OLX':'#fff7ed','Mercado Livre':'#fefce8','WhatsApp':'#f0fdf4','Instagram':'#faf5ff','Indicação':'#e0f2fe','Outro':'#f5f5f5'};
       const platBd={'Marketplace':'#bfdbfe','OLX':'#fed7aa','Mercado Livre':'#fef08a','WhatsApp':'#bbf7d0','Instagram':'#e9d5ff','Indicação':'#bae6fd','Outro':'#d4d4d4'};
@@ -6903,13 +6966,7 @@ function renderTabela(lista, tipo){
         <td class="ps">${fmt(p.venda)}</td>
         <td class="pp ${lp>=0?'pos':'neg'}">${fmt(lp)}${splitLucro}</td>
         <td>${sb}${platInfo}${parcInfo}${revInfo}${hwInfo}${faltaInfo}</td>
-        <td><select class="sel" data-id="${p.id}" onchange="updStatus('${p.id}',this.value)">
-          ${statusEstranho(p)}
-          <option ${p.status==='Anunciado'?'selected':''} value="Anunciado">Anunciado</option>
-          <option ${p.status==='Estoque'?'selected':''} value="Estoque">Estoque</option>
-          <option ${p.status==='Aguardando'?'selected':''} value="Aguardando">🚚 Aguardando chegar</option>
-          <option ${p.status==='Vendido'?'selected':''} value="Vendido">Vendido</option>
-        </select></td>
+        <td>${statusSelectHTML(p)}</td>
         <td><button class="bed" onclick="openEdit('${p.id}')" title="Editar">✎</button>${p.status==='Vendido'?`<button class="brec" onclick="abrirRecibo('${p.id}')" title="Gerar recibo de venda">🧾</button><button class="bdev" onclick="abrirDevolucao('${p.id}')" title="Registrar devolução ou troca">↩</button>`:''}</td>
         <td><button class="bdl" onclick="delProd('${p.id}')" title="Excluir">✕</button></td>
       </tr>`;
@@ -6968,10 +7025,12 @@ function render(){
     const nan=g2.filter(p=>p.status==='Anunciado').length;
     const ne=g2.filter(p=>p.status==='Estoque').length;
     const nag=g2.filter(p=>aguardandoP(p)).length;
-    const ct=[nv?nv+' vendidos':'',nan?nan+' anunciados':'',ne?ne+' em estoque':'',nag?nag+' chegando':''].filter(Boolean).join(' · ');
+    const nres=g2.filter(p=>reservadoP(p)).length;
+    const ct=[nv?nv+' vendidos':'',nan?nan+' anunciados':'',ne?ne+' em estoque':'',
+              nres?nres+' reservados':'',nag?nag+' chegando':''].filter(Boolean).join(' · ');
     const rows=g2.map(p=>{
       const lp=p.lucro!==undefined?p.lucro:(p.venda-p.custo);
-      const sb=p.status==='Vendido'?'<span class="bv sv">Vendido</span>':p.status==='Anunciado'?'<span class="bv san">Anunciado</span>':aguardandoP(p)?'<span class="bv sag">🚚 Chegando</span>':'<span class="bv se">Estoque</span>';
+      const sb=statusBadge(p);
       const platColors={'Marketplace':'#1d4ed8','OLX':'#f97316','Mercado Livre':'#eab308','WhatsApp':'#16a34a','Instagram':'#7c3aed','Indicação':'#0891b2','Outro':'#78716c'};
       const platBg={'Marketplace':'#eff6ff','OLX':'#fff7ed','Mercado Livre':'#fefce8','WhatsApp':'#f0fdf4','Instagram':'#faf5ff','Indicação':'#e0f2fe','Outro':'#f5f5f5'};
       const platBd={'Marketplace':'#bfdbfe','OLX':'#fed7aa','Mercado Livre':'#fef08a','WhatsApp':'#bbf7d0','Instagram':'#e9d5ff','Indicação':'#bae6fd','Outro':'#d4d4d4'};
@@ -7009,13 +7068,7 @@ function render(){
         <td class="ps">${fmt(p.venda)}</td>
         <td class="pp ${lp>=0?'pos':'neg'}">${fmt(lp)}${diasInfo}${splitLucro}</td>
         <td>${sb}${platInfo}${parcInfo}${revInfo}${hwInfo}${faltaInfo}</td>
-        <td><select class="sel" data-id="${p.id}" onchange="updStatus('${p.id}',this.value)">
-          ${statusEstranho(p)}
-          <option ${p.status==='Anunciado'?'selected':''} value="Anunciado">Anunciado</option>
-          <option ${p.status==='Estoque'?'selected':''} value="Estoque">Estoque</option>
-          <option ${p.status==='Aguardando'?'selected':''} value="Aguardando">🚚 Aguardando chegar</option>
-          <option ${p.status==='Vendido'?'selected':''} value="Vendido">Vendido</option>
-        </select></td>
+        <td>${statusSelectHTML(p)}</td>
         <td><button class="bed" onclick="openEdit('${p.id}')" title="Editar">✎</button>${p.status==='Vendido'?`<button class="brec" onclick="abrirRecibo('${p.id}')" title="Gerar recibo de venda">🧾</button><button class="bdev" onclick="abrirDevolucao('${p.id}')" title="Registrar devolução ou troca">↩</button>`:''}</td>
         <td><button class="bdl" onclick="delProd('${p.id}')" title="Excluir">✕</button></td>
       </tr>`;
@@ -7065,6 +7118,8 @@ function calcStats(){
   const an=prods.filter(p=>p.status==='Anunciado');
   const es=prods.filter(p=>p.status==='Estoque' && !aguardandoP(p));
   const ag=prods.filter(p=>aguardandoP(p));
+  // Reservada não vendeu: o dinheiro não entrou, então ela segue no "na mão".
+  const res=prods.filter(p=>reservadoP(p));
   const rec=v.reduce((s,p)=>s+(p.venda||0),0),luc=v.reduce((s,p)=>s+getLucro(p),0);
   // Margem MÉDIA POR NOTEBOOK: cada máquina tem sua margem (lucro/venda), tira-se a média.
   // Cada notebook pesa igual — reflete "quanto ganho, em média, por máquina".
@@ -7080,7 +7135,7 @@ function calcStats(){
   const mk=custoTotV>0 ? Math.round(luc/custoTotV*100) : 0;
   const potAn=an.reduce((s,p)=>s+getLucro(p),0);
   const potEs=es.reduce((s,p)=>s+getLucro(p),0);
-  const emMaoTotal=[...an,...es,...ag]; // Anunciado + Estoque + Chegando = tudo que é nosso hoje
+  const emMaoTotal=[...an,...es,...res,...ag]; // Anunciado + Estoque + Reservado + Chegando = tudo que é nosso hoje
   const potEmMao=potAn+potEs;
   // Receita e lucro totais são história, não operação: vivem na aba Insights.
   document.getElementById('sAnu').textContent=an.length;document.getElementById('sAnuV').textContent=fmt(potAn)+' de lucro';
@@ -7093,7 +7148,7 @@ function calcStats(){
   if(elRevS) elRevS.textContent = emMaoTotal.length
     ? (revOk===emMaoTotal.length ? 'todas conferidas ✅' : (emMaoTotal.length-revOk)+' ainda pra abrir')
     : 'nada em estoque';
-  document.getElementById('sEst').textContent=emMaoTotal.length;document.getElementById('sEstV').textContent=an.length+' anunciados · '+es.length+' estoque'+(ag.length?' · '+ag.length+' chegando':'');
+  document.getElementById('sEst').textContent=emMaoTotal.length;document.getElementById('sEstV').textContent=an.length+' anunciados · '+es.length+' estoque'+(res.length?' · '+res.length+' reservado'+(res.length!==1?'s':''):'')+(ag.length?' · '+ag.length+' chegando':'');
   // Previsão de lucro só vale sobre o que está ANUNCIADO. Máquina em estoque não
   // tem preço no mercado — atribuir lucro a ela é inventar receita que ninguém
   // pediu ainda. O capital continua contando as duas, porque o dinheiro saiu nas duas.
@@ -7201,7 +7256,7 @@ function buildCardsCapital(){
   // Legendas por id: os cards usam o mesmo padrão dos demais indicadores da aba,
   // então o subtítulo é um elemento próprio em vez de ser buscado pelo pai.
   const sub=(id,txt)=>{ const s=document.getElementById(id); if(s) s.textContent=txt; };
-  const estoqueAtual=prods.filter(p=>p.status==='Estoque'||p.status==='Anunciado'||p.status==='Aguardando');
+  const estoqueAtual=prods.filter(p=>p.status==='Estoque'||p.status==='Anunciado'||p.status==='Reservado'||p.status==='Aguardando');
   const capitalGiro=estoqueAtual.reduce((s,p)=>s+(p.custo||0),0);
   // Capital em giro virou 'Capital de volta' na barra da Vendas — um nome só no app.
   // capitalGiro continua calculado aqui porque alimenta os dois cards abaixo.
@@ -7247,7 +7302,7 @@ function buildCardsCapital(){
   prods.forEach(p=>{
     const sp=custoSplit(p);
     invJ+=sp.joao; invI+=sp.igor;
-    if(p.status==='Estoque'||p.status==='Anunciado'||p.status==='Aguardando'){ hojeJ+=sp.joao; hojeI+=sp.igor; }
+    if(p.status==='Estoque'||p.status==='Anunciado'||p.status==='Reservado'||p.status==='Aguardando'){ hojeJ+=sp.joao; hojeI+=sp.igor; }
   });
   const invTot=invJ+invI;
   const pctDe=v=>invTot>0?Math.round(v/invTot*100)+'% do total':'—';
@@ -9755,14 +9810,130 @@ window.eTipoAutoHint=()=>{
 function aguardandoP(p){
   return !!p && (p.status==='Aguardando' || (!!p.aguardando && p.status!=='Vendido'));
 }
+// Máquina que alguém já chamou de sua mas ainda não pagou nem levou. Não é
+// vendida: o dinheiro não entrou e ela continua sendo nosso capital parado.
+// Por isso é status próprio e não sai das contas de estoque.
+function reservadoP(p){ return !!p && p.status==='Reservado'; }
+
+// Os cinco status num lugar só. Antes o <select> estava copiado em três telas
+// e o selo em quatro — status novo obrigava a lembrar de todas.
+const STATUS_OPC=[
+  ['Anunciado','Anunciado'],
+  ['Estoque','Estoque'],
+  ['Reservado','🤝 Reservado'],
+  ['Aguardando','🚚 Aguardando chegar'],
+  ['Vendido','Vendido'],
+];
+// Reservado e chegando vêm antes de Anunciado porque são mais específicos:
+// uma máquina reservada também está anunciada, e o que interessa ver é a
+// reserva. É também o que o catálogo mostra, então as duas telas combinam.
+function statusBadge(p){
+  if(!p) return '';
+  if(p.status==='Vendido')   return '<span class="bv sv">Vendido</span>';
+  if(reservadoP(p))          return '<span class="bv sres">🤝 Reservado</span>';
+  if(aguardandoP(p))         return '<span class="bv sag">🚚 Chegando</span>';
+  if(p.status==='Anunciado') return '<span class="bv san">Anunciado</span>';
+  return '<span class="bv se">Estoque</span>';
+}
+function statusSelectHTML(p){
+  return `<select class="sel" data-id="${p.id}" onchange="updStatus('${p.id}',this.value)">
+    ${statusEstranho(p)}
+    ${STATUS_OPC.map(([v,t])=>`<option ${p.status===v?'selected':''} value="${v}">${t}</option>`).join('')}
+  </select>`;
+}
+// ── Copiar de outra máquina ────────────────────────────────────────────
+// Lote de 10 Dell iguais era 10 cadastros idênticos digitados à mão. Aqui a
+// máquina já vendida serve de molde: o que é da identidade dela (nome, preço,
+// hardware, fornecedor) vem junto; o que é da venda (data, cliente, status,
+// lucro) não vem, porque a cópia é máquina nova e ainda não vendeu nada.
+window.copiaBuscar=()=>{
+  const inp=document.getElementById('pCopiaBusca'), box=document.getElementById('pCopiaLista');
+  if(!inp||!box) return;
+  const t=cliNorm(inp.value);
+  if(t.length<2){ box.style.display='none'; box.innerHTML=''; return; }
+  // Vendidas primeiro: é de uma vendida que ele costuma copiar — foi o lote
+  // que acabou e vale repetir.
+  const achados=prods
+    .filter(p=>cliNorm(p.nome).includes(t) || String(p.num||'')===t)
+    .sort((a,b)=>{
+      const va=a.status==='Vendido'?0:1, vb=b.status==='Vendido'?0:1;
+      if(va!==vb) return va-vb;
+      return String(b.createdAt||b.data_compra||'').localeCompare(String(a.createdAt||a.data_compra||''));
+    })
+    .slice(0,8);
+  if(!achados.length){
+    box.innerHTML='<div class="copia-vazio">Nenhuma máquina com esse nome.</div>';
+    box.style.display='block'; return;
+  }
+  box.innerHTML=achados.map(p=>
+    `<div class="copia-it" onclick="copiarDe('${p.id}')">
+      <span class="nb">${p.num||'?'}</span>
+      <span class="cn">${esc(p.nome||'sem nome')}</span>
+      ${statusBadge(p)}
+      <span class="cv">${fmt(p.venda||0)}</span>
+    </div>`).join('');
+  box.style.display='block';
+};
+window.copiarDe=id=>{
+  const p=prods.find(x=>x.id===id); if(!p) return;
+  const set=(el,v)=>{ const e=document.getElementById(el); if(e) e.value=(v==null?'':v); };
+  set('pCopiaId', id);
+  // custo_base é o que ele pagou na máquina; custo inclui peças e gasolina
+  // daquela unidade, que não se repetem na cópia.
+  set('pN', p.nome||'');
+  set('pC', p.custo_base!=null ? p.custo_base : (p.custo||''));
+  set('pV', p.venda||'');
+  set('pCanal', p.canal_compra||'');
+  set('pForn', p.fornecedor_nome||'');
+  set('pFornId', p.fornecedor_id||'');
+  const inv=document.getElementById('pInv');
+  if(inv && p.investidor) inv.value=p.investidor;
+  nomeManual=true;                        // o nome veio pronto, montarNome não mexe
+  try{ hwPreencher('p', p); }catch(e){}
+  const st=document.getElementById('pS'); if(st) st.value='Estoque';
+  set('pCopiaBusca','');
+  const box=document.getElementById('pCopiaLista'); if(box){ box.style.display='none'; box.innerHTML=''; }
+  copiaHint();
+  try{ ppTotal(); }catch(e){}
+};
+window.copiaLimpar=()=>{
+  const set=(el,v)=>{ const e=document.getElementById(el); if(e) e.value=v; };
+  set('pCopiaId',''); set('pCopiaBusca','');
+  const box=document.getElementById('pCopiaLista'); if(box){ box.style.display='none'; box.innerHTML=''; }
+  copiaHint();
+};
+// A dica diz o que vai acontecer antes de acontecer — inclusive o que NÃO é
+// copiado, que é onde dá pra se enganar.
+window.copiaHint=()=>{
+  const h=document.getElementById('pCopiaHint'); if(!h) return;
+  const id=document.getElementById('pCopiaId')?.value||'';
+  const p=id?prods.find(x=>x.id===id):null;
+  const qtd=Math.max(1,Math.min(20,parseInt(document.getElementById('pQtd')?.value)||1));
+  const partes=[];
+  if(p) partes.push('Copiado de #'+(p.num||'?')+' — data, status e a venda anterior não vieram.');
+  if(qtd>1) partes.push('Vai cadastrar '+qtd+' máquinas iguais. Peças, gasolina, aporte e fotos entram só na primeira; as outras entram com o custo da máquina.');
+  h.innerHTML = partes.length
+    ? esc(partes.join(' ')) + (p?' <a href="#" onclick="event.preventDefault();copiaLimpar()" style="color:var(--bl)">desfazer cópia</a>':'')
+    : '';
+};
+
 window.eAguHint=()=>{
   const h=document.getElementById('eAguHint'); if(!h) return;
   const st=document.getElementById('eS')?.value||'';
-  if(st!=='Aguardando'){ h.textContent=''; return; }
   const preco=parseFloat(document.getElementById('eV')?.value)||0;
-  h.textContent = preco>0
-    ? 'Vai aparecer no catálogo como "chegando", por '+fmt(preco)+'.'
-    : 'Vai aparecer como "chegando", com "preço em breve" — o preço é opcional aqui.';
+  if(st==='Aguardando'){
+    h.textContent = preco>0
+      ? 'Vai aparecer no catálogo como "chegando", por '+fmt(preco)+'.'
+      : 'Vai aparecer como "chegando", com "preço em breve" — o preço é opcional aqui.';
+    return;
+  }
+  if(st==='Reservado'){
+    h.textContent = 'Fica no catálogo marcada como reservada, sem botão de comprar — '
+      + 'o cliente só consegue pedir aviso se liberar. Continua contando como capital '
+      + 'parado, porque o dinheiro ainda não entrou. Quando ele pagar, mude para Vendido.';
+    return;
+  }
+  h.textContent='';
 };
 
 // Contador da descrição do catálogo. O limite é de tela, não de banco: texto
@@ -10043,14 +10214,18 @@ window.publicarCatalogo=async()=>{
   // chegar. A segunda entra mesmo sem preço — quando a máquina nem chegou, o
   // preço muitas vezes ainda não está fechado, e esconder ela por isso seria
   // perder o cliente que estava justamente procurando aquilo.
-  const anunciadas=prods.filter(p=>p.status==='Anunciado' && !aguardandoP(p));
+  const anunciadas=prods.filter(p=>p.status==='Anunciado' && !aguardandoP(p) && !reservadoP(p));
   const semPreco=anunciadas.filter(p=>!((parseFloat(p.venda)||0)>0));
   const disponiveis=anunciadas.filter(p=>(parseFloat(p.venda)||0)>0)
                               .sort((a,b)=>(parseFloat(b.venda)||0)-(parseFloat(a.venda)||0));
   const chegando=prods.filter(p=>aguardandoP(p))
                       .sort((a,b)=>(parseFloat(b.venda)||0)-(parseFloat(a.venda)||0));
   const chegandoSemPreco=chegando.filter(p=>!((parseFloat(p.venda)||0)>0)).length;
-  const lista=disponiveis.concat(chegando);
+  // Reservada continua no catálogo de propósito: reserva cai, e quem viu a
+  // máquina volta. Vai marcada, no fim da lista, e sem botão de comprar.
+  const reservadas=prods.filter(p=>reservadoP(p))
+                        .sort((a,b)=>(parseFloat(b.venda)||0)-(parseFloat(a.venda)||0));
+  const lista=disponiveis.concat(chegando, reservadas);
 
   const semFoto=[], falhas=[];
   const idsVivos=new Set(), fotoIdsVivos=new Set();
@@ -10081,7 +10256,7 @@ window.publicarCatalogo=async()=>{
         specs:hwResumo(p,true),
         descricao:String(p.descricao||'').slice(0,600),
         tipo:tipoMaquina(p),
-        estado:(aguardandoP(p)?'chegando':'disponivel'),
+        estado:(reservadoP(p)?'reservado':aguardandoP(p)?'chegando':'disponivel'),
         capa,
         n_fotos:fotos.length,
         publicado_em:new Date().toISOString()
@@ -10113,9 +10288,11 @@ window.publicarCatalogo=async()=>{
             email:g('catEmail'), publicado_em:new Date().toISOString()};
     await gravar(setDoc(doc(db,'catalogo_cfg',CAT_CFG_ID),catCfg),'Dados da loja no catálogo');
 
-    const nCheg=chegando.length, nDisp=publicadas-nCheg;
+    const nCheg=chegando.length, nRes=reservadas.length, nDisp=publicadas-nCheg-nRes;
+    const detalhe=[nCheg?`<strong>${nCheg} chegando</strong>`:'',
+                   nRes?`<strong>${nRes} reservada${nRes!==1?'s':''}</strong>`:''].filter(Boolean).join(' e ');
     let h=`<span class="ok">✅ ${publicadas} máquina${publicadas!==1?'s':''} no ar</span>`
-        + (nCheg?` — ${nDisp} disponíve${nDisp!==1?'is':'l'} e <strong>${nCheg} chegando</strong>`:'')
+        + (detalhe?` — ${nDisp} disponíve${nDisp!==1?'is':'l'}, ${detalhe}`:'')
         + ` · ${nFotos} foto${nFotos!==1?'s':''}`;
     if(removidas) h+=` · ${removidas} tirada${removidas!==1?'s':''} do ar`;
     if(chegandoSemPreco) h+=`<br>🚚 ${chegandoSemPreco} chegando sem preço — aparece como "preço em breve".`;
@@ -10690,7 +10867,7 @@ window.renderTabelaSocios = () => {
     const _sp = custoSplit(p);
     const invJoao = _sp.joao;
     const invIgor = _sp.igor;
-    const sb = p.status==='Vendido'?'<span class="bv sv">Vendido</span>':p.status==='Anunciado'?'<span class="bv san">Anunciado</span>':aguardandoP(p)?'<span class="bv sag">🚚 Chegando</span>':'<span class="bv se">Estoque</span>';
+    const sb = statusBadge(p);
     const ast = bkt==='ambos'
       ? '<span style="font-size:.65rem;background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0;padding:1px 5px;border-radius:5px;font-weight:700">★ Ambos</span>'
       : bkt==='joao'

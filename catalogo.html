@@ -97,6 +97,17 @@
   .cd-ch{position:absolute;left:8px;top:8px;background:#f59e0b;color:#3b2200;
     font-size:.66rem;font-weight:800;padding:3px 9px;border-radius:20px;letter-spacing:.01em}
   .cd.cheg{border-color:#f4c77a}
+  /* Reservada: a foto perde um pouco de cor e ganha o selo roxo. O cliente
+     entende sem ler que aquela ali nao esta a venda agora — e continua vendo
+     a maquina, porque reserva cai e ele volta. */
+  .cd.res{border-color:#c4b5fd}
+  .cd.res .cd-im img{filter:saturate(.55) brightness(.94)}
+  .cd-rs{position:absolute;left:8px;top:8px;background:#6d28d9;color:#fff;
+    font-size:.66rem;font-weight:800;padding:3px 9px;border-radius:20px;letter-spacing:.01em}
+  .dt-res{background:#f5f3ff;border:1px solid #c4b5fd;color:#5b21b6;border-radius:10px;
+    padding:9px 12px;font-size:.79rem;font-weight:600;line-height:1.55;margin-bottom:12px}
+  :root:not([data-theme="light"]) .dt-res{background:#241c3d;border-color:#6d28d9;color:#c4b5fd}
+  :root[data-theme="dark"] .dt-res{background:#241c3d;border-color:#6d28d9;color:#c4b5fd}
   .cd-pr.breve{font-size:.9rem;color:var(--al);font-weight:700}
   .dt-pr.breve{font-size:1.05rem;color:var(--al)}
   .dt-cheg{background:var(--albg);border:1px solid var(--al);color:var(--al);border-radius:10px;
@@ -300,9 +311,12 @@ async function carregar(){
     }
     // Chegando vai pro fim: quem abre o catálogo quer comprar hoje. O que
     // ainda não chegou é bônus, não pode empurrar o disponível pra baixo.
+    // Disponivel primeiro, chegando depois, reservada por ultimo: a ordem e a
+    // de quanto o cliente consegue levar a maquina pra casa hoje.
+    const ordem=i=>i.estado==='reservado'?2:(i.estado==='chegando'?1:0);
     itens.sort((a,b)=>{
-      const ca=a.estado==='chegando'?1:0, cb=b.estado==='chegando'?1:0;
-      if(ca!==cb) return ca-cb;
+      const oa=ordem(a), ob=ordem(b);
+      if(oa!==ob) return oa-ob;
       return (Number(b.preco)||0)-(Number(a.preco)||0);
     });
   }catch(e){
@@ -350,9 +364,11 @@ function waLink(msg){
 function cabecalho(){
   $('lojaNome').textContent=cfg.nome||'Catálogo';
   const nCheg=rev?0:itens.filter(i=>i.estado==='chegando').length;
+  const nRes=itens.filter(i=>i.estado==='reservado').length;
   const nDisp=itens.length-nCheg;
   $('lojaSub').textContent=`${nDisp} máquina${nDisp!==1?'s':''} disponíve${nDisp!==1?'is':'l'}`+
-    (nCheg?` · ${nCheg} chegando`:'')+(cfg.cidade?` · ${cfg.cidade}`:'');
+    (nCheg?` · ${nCheg} chegando`:'')+(nRes?` · ${nRes} reservada${nRes!==1?'s':''}`:'')
+    +(cfg.cidade?` · ${cfg.cidade}`:'');
   const bts=[];
   if(waNum()) bts.push(`<a class="hd-bt" href="${waLink()}" target="_blank" rel="noopener">💬 Chamar no WhatsApp</a>`);
   if(cfg.instagram) bts.push(`<a class="hd-bt sec" href="https://instagram.com/${esc(String(cfg.instagram).replace(/^@/,''))}" target="_blank" rel="noopener">📷 Instagram</a>`);
@@ -610,12 +626,13 @@ function cartao(i){
     : `<div class="sem">sem foto</div>`;
   const n = Number(i.n_fotos)||0;
   const cheg = i.estado==='chegando';
+  const res  = i.estado==='reservado';
   const preco = (Number(i.preco)||0)>0
     ? `<div class="cd-pr">${fmt(i.preco)}</div>`
     : `<div class="cd-pr breve">Preço em breve</div>`;
-  return `<div class="cd${cheg?' cheg':''}" data-id="${esc(i.id)}">
+  return `<div class="cd${cheg?' cheg':''}${res?' res':''}" data-id="${esc(i.id)}">
     <div class="cd-im">${capa}
-      ${cheg?'<span class="cd-ch">🚚 chegando</span>':''}
+      ${res?'<span class="cd-rs">🤝 reservado</span>':cheg?'<span class="cd-ch">🚚 chegando</span>':''}
       ${n>1?`<span class="cd-nf">📷 ${n}</span>`:''}
     </div>
     <div class="cd-bd">
@@ -641,10 +658,14 @@ window.fechar=()=>{ $('ov').classList.remove('on'); document.body.style.overflow
 async function abrir(id){
   const i=itens.find(x=>x.id===id); if(!i) return;
   const cheg = i.estado==='chegando';
+  const res  = i.estado==='reservado';
   const temPreco = (Number(i.preco)||0)>0;
   // A conversa começa diferente conforme o caso: pedir uma máquina que ainda
-  // não chegou não é a mesma pergunta que pedir uma que está na prateleira.
-  const msg = cheg
+  // não chegou não é a mesma pergunta que pedir uma que está na prateleira,
+  // e pedir uma reservada não é pedir nenhuma das duas.
+  const msg = res
+    ? `Olá! Vi no catálogo que o *${i.nome}* está reservado. Me avisa se liberar? E se tiver outra parecida, pode me mostrar.`
+    : cheg
     ? `Olá! Vi no catálogo que o *${i.nome}* está chegando${temPreco?` por ${fmt(i.preco)}`:''}. Dá pra reservar?`
     : `Olá! Tenho interesse no *${i.nome}* por ${fmt(i.preco)}, que vi no catálogo. Ainda está disponível?`;
   $('dt').innerHTML=`
@@ -660,7 +681,8 @@ async function abrir(id){
     <div class="dt-bd">
       <div class="dt-nm">${esc(i.nome)}</div>
       <div class="dt-pr${temPreco?'':' breve'}">${temPreco?fmt(i.preco):'Preço em breve'}</div>
-      ${ cheg ? `<div class="dt-cheg">🚚 Essa máquina ainda está chegando. Dá pra reservar agora e garantir antes de entrar à venda.</div>` : '' }
+      ${ res ? `<div class="dt-res">🤝 Essa máquina está reservada para outro cliente. Reserva às vezes não se confirma — me chame que eu aviso se liberar, ou te mostro outra parecida.</div>`
+             : cheg ? `<div class="dt-cheg">🚚 Essa máquina ainda está chegando. Dá pra reservar agora e garantir antes de entrar à venda.</div>` : '' }
       <div class="dt-sp">${specsDe(i).map(chipSpec).join('')||'<span class="sp">specs não informadas</span>'}</div>
       ${ i.descricao ? `<div class="dt-desc">${esc(i.descricao)}</div>` : '' }
       <div class="gar">
@@ -668,7 +690,7 @@ async function abrir(id){
         🔧 Testada antes da venda: memória, armazenamento e limpeza interna.<br>
         🚚 Entrega combinada na região e envio por Correios com rastreio.
       </div>
-      <a class="cta" href="${waLink(msg)}" target="_blank" rel="noopener">${cheg?'🚚 Quero reservar':'💬 Tenho interesse'}</a>
+      <a class="cta" href="${waLink(msg)}" target="_blank" rel="noopener">${res?'🔔 Me avisa se liberar':cheg?'🚚 Quero reservar':'💬 Tenho interesse'}</a>
     </div>`;
   $('ov').classList.add('on');
   document.body.style.overflow='hidden';
