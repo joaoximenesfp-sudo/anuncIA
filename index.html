@@ -1347,6 +1347,8 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
             <button class="fc2 on" onclick="setF('todos',this)">Todos</button>
             <button class="fc2" onclick="setF('Anunciado',this)">Anunciados</button>
             <button class="fc2" onclick="setF('Estoque',this)">Em estoque</button>
+            <button class="fc2" onclick="setF('Reservado',this)">🤝 Reservados</button>
+            <button class="fc2" onclick="setF('Aguardando',this)">🚚 Chegando</button>
             <button class="fc2" onclick="setF('Vendido',this)">Vendidos</button>
           </div>
           <div id="vendas-sec-tabs" style="display:flex;gap:4px">
@@ -6993,7 +6995,14 @@ function renderTabela(lista, tipo){
 
 function render(){
   const list=document.getElementById('PL');
-  const porStatus=filt==='todos'?prods:prods.filter(p=>p.status===filt);
+  // Reservado e Chegando não podem ser comparação exata de status: a marcação
+  // antiga de "aguardando" era um campo à parte, e quem foi marcado assim
+  // sumiria do próprio filtro que existe pra encontrá-lo.
+  const porStatus = filt==='todos'      ? prods
+                  : filt==='Aguardando' ? prods.filter(aguardandoP)
+                  : filt==='Reservado'  ? prods.filter(reservadoP)
+                  : filt==='Estoque'    ? prods.filter(p=>p.status==='Estoque' && !aguardandoP(p))
+                  : prods.filter(p=>p.status===filt);
   // Busca: todas as palavras digitadas precisam aparecer (nome, cliente, fornecedor, investidor, status)
   const q=(document.getElementById('pBusca')?.value||'').toLowerCase().trim();
   const termos=q.split(/\s+/).filter(Boolean);
