@@ -1495,6 +1495,12 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
               <span class="fla">🔩 Hardware conferido <span style="font-size:.62rem;color:var(--li)">opcional — dá pra preencher depois, na revisão</span></span>
               <div class="hw-mount" id="pHwMount"></div>
             </div>
+            <div class="fc" style="grid-column:1/-1">
+              <span class="fla">🌐 Descrição do catálogo <span style="font-size:.62rem;color:var(--li)">o texto que o cliente lê na página pública — deixe vazio pra não aparecer</span></span>
+              <textarea class="inp desc-cat" id="pDescricao" maxlength="600" oninput="descContar('p')"
+                placeholder="Ex: Máquina de linha corporativa, teclado excelente, roda Office e várias abas sem travar. Acompanha carregador original. Bateria segura cerca de 4h fora da tomada."></textarea>
+              <div class="desc-conta" id="pDescConta"></div>
+            </div>
             <div class="fc"><span class="fla">Custo R$</span><input class="inp" type="number" id="pC" placeholder="0" min="0" oninput="ppTotal()"></div>
             <div class="fc"><span class="fla">Venda R$</span><input class="inp" type="number" id="pV" placeholder="0" min="0"></div>
             <div class="fc"><span class="fla">Status</span>
@@ -2892,7 +2898,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
       </div>
       <div class="fc full">
         <label class="fl">🌐 Descrição do catálogo <span style="font-size:.67rem;color:var(--li);font-weight:400">o texto que o cliente lê na página pública — deixe vazio pra não aparecer</span></label>
-        <textarea class="inp desc-cat" id="eDescricao" maxlength="600" oninput="eDescContar()"
+        <textarea class="inp desc-cat" id="eDescricao" maxlength="600" oninput="descContar('e')"
           placeholder="Ex: Máquina de linha corporativa, teclado excelente, roda Office e várias abas sem travar. Acompanha carregador original. Bateria segura cerca de 4h fora da tomada."></textarea>
         <div class="desc-conta" id="eDescConta"></div>
       </div>
@@ -3875,7 +3881,10 @@ window.addProd=async()=>{
   // no cadastro, então vêm direto do registro copiado em vez de se perderem.
   const copiaId=document.getElementById('pCopiaId')?.value||'';
   const molde=copiaId?prods.find(x=>x.id===copiaId):null;
-  const herdado=molde?{descricao:molde.descricao||'', tipo_catalogo:molde.tipo_catalogo||''}:{};
+  // A descrição agora tem campo próprio no cadastro, então é ela que manda;
+  // do molde vem só o tipo, que não tem campo aqui.
+  const herdado=molde?{tipo_catalogo:molde.tipo_catalogo||''}:{};
+  const descricao=(document.getElementById('pDescricao')?.value||'').trim().slice(0,600);
   // Peças aplicadas: entram no custo real da máquina
   const pecasNovas=ppColetar();
   const custoPecas=pecasNovas.reduce((s,x)=>s+x.custo,0);
@@ -3887,7 +3896,7 @@ window.addProd=async()=>{
   // Pendência anotada já no cadastro. Máquina recém-comprada nunca nasce com a
   // pendência resolvida, então aqui não existe o check de 'já foi feito'.
   const falta=(document.getElementById('pFalta')?.value||'').trim();
-  const obj={userId:'shared_ijx',addedBy:user.uid,addedByName:user.displayName||user.email.split('@')[0],nome,custo:custoTotal,custo_base:custo,custo_pecas:custoPecas,custo_gasolina:custoGas,gas_pagante:gasPag,venda,lucro:venda-custoTotal,status,investidor,data_compra:dc,data_compra_mes:dcMes,data_venda:'',data:dcMes,canal_compra:canal,...hwCampos('p'),falta_comprar:falta,falta_feito:false,falta_feito_em:'',aporte_joao:(parseFloat(document.getElementById('pApJoao')?.value)||0),aporte_igor:(parseFloat(document.getElementById('pApIgor')?.value)||0),fornecedor_id:fornId,fornecedor_nome:fornNome,num,fotos_n:fotosPend.prod.length,...herdado,copiado_de:(molde?molde.id:''),createdAt:new Date().toISOString()};
+  const obj={userId:'shared_ijx',addedBy:user.uid,addedByName:user.displayName||user.email.split('@')[0],nome,custo:custoTotal,custo_base:custo,custo_pecas:custoPecas,custo_gasolina:custoGas,gas_pagante:gasPag,venda,lucro:venda-custoTotal,status,investidor,data_compra:dc,data_compra_mes:dcMes,data_venda:'',data:dcMes,canal_compra:canal,...hwCampos('p'),falta_comprar:falta,falta_feito:false,falta_feito_em:'',aporte_joao:(parseFloat(document.getElementById('pApJoao')?.value)||0),aporte_igor:(parseFloat(document.getElementById('pApIgor')?.value)||0),fornecedor_id:fornId,fornecedor_nome:fornNome,num,fotos_n:fotosPend.prod.length,descricao,...herdado,copiado_de:(molde?molde.id:''),createdAt:new Date().toISOString()};
   let prodId='l'+Date.now();
   try{const r=await addDoc(collection(db,'products'),obj);prodId=r.id;prods.push({...obj,id:r.id});}
   catch(e){ await gravar(Promise.reject(e), 'Cadastrar "'+nome+'"'); prods.push({...obj,id:prodId}); }
@@ -3937,6 +3946,8 @@ window.addProd=async()=>{
   }
   document.getElementById('pN').value='';document.getElementById('pC').value='';document.getElementById('pV').value='';document.getElementById('pDC').value='';document.getElementById('pCanal').value='';document.getElementById('pForn').value='';document.getElementById('pFornId').value='';
   const pq=document.getElementById('pQtd'); if(pq) pq.value='1';
+  const pd=document.getElementById('pDescricao'); if(pd) pd.value='';
+  try{ descContar('p'); }catch(e){}
   try{ copiaLimpar(); }catch(e){}
   const pg=document.getElementById('pGas'); if(pg) pg.value='';
   const pgp=document.getElementById('pGasPag'); if(pgp) pgp.value='ambos';
@@ -9897,6 +9908,8 @@ window.copiarDe=id=>{
   set('pFornId', p.fornecedor_id||'');
   const inv=document.getElementById('pInv');
   if(inv && p.investidor) inv.value=p.investidor;
+  set('pDescricao', p.descricao||'');
+  try{ descContar('p'); }catch(e){}
   nomeManual=true;                        // o nome veio pronto, montarNome não mexe
   try{ hwPreencher('p', p); }catch(e){}
   const st=document.getElementById('pS'); if(st) st.value='Estoque';
@@ -9947,13 +9960,15 @@ window.eAguHint=()=>{
 
 // Contador da descrição do catálogo. O limite é de tela, não de banco: texto
 // longo demais vira parede no celular do cliente e ninguém lê.
-window.eDescContar=()=>{
-  const e=document.getElementById('eDescricao'), c=document.getElementById('eDescConta');
+window.descContar=pre=>{
+  const e=document.getElementById(pre+'Descricao'), c=document.getElementById(pre+'DescConta');
   if(!e||!c) return;
   const n=e.value.length;
   c.textContent = n ? n+'/600' : '';
   c.classList.toggle('perto', n>=520);
 };
+// O editor já chamava assim em dois lugares; o contador agora é um só.
+window.eDescContar=()=>descContar('e');
 
 // ── CATÁLOGO PÚBLICO ────────────────────────────────────────────────────
 // A página catalogo.html é aberta por quem não tem login. O Firestore devolve
