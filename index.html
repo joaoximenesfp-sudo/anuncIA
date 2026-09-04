@@ -532,6 +532,17 @@ input[type=number].inp{padding-left:32px}
   font-size:.74rem;font-weight:700;padding:5px 12px;border-radius:6px;cursor:pointer}
 .lote-bt:hover{filter:brightness(1.08)}
 .lote-obs{font-size:.68rem;color:var(--li);flex:1;min-width:180px}
+.lv-prev{max-height:190px;overflow-y:auto;border:1px solid var(--b);border-radius:8px}
+.lv-lin{display:flex;align-items:center;gap:8px;padding:5px 9px;font-size:.72rem;
+  border-bottom:1px solid var(--b)}
+.lv-lin:last-child{border-bottom:none}
+.lv-lin .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lv-lin .de{color:var(--li);text-decoration:line-through}
+.lv-lin .pa{font-weight:700}
+.lv-lin .pa.menos{color:var(--am)}
+.lv-lin .pa.mais{color:var(--gr)}
+.lv-tot{display:flex;justify-content:space-between;padding:6px 9px;font-size:.73rem;
+  font-weight:700;background:var(--bg);border-top:1px solid var(--b)}
 .desc-cat{width:100%;min-height:76px;resize:vertical;font-family:inherit;line-height:1.5}
 .desc-conta{font-size:.68rem;color:var(--li);text-align:right;margin-top:3px;min-height:14px}
 .desc-conta.perto{color:#a16207;font-weight:600}
@@ -1674,6 +1685,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
                 <option value="Aguardando">🚚 Aguardando chegar</option>
               </select>
               <button class="lote-bt" onclick="loteAplicar()">Aplicar</button>
+              <button class="lote-bt" style="background:var(--gr);border-color:var(--gr)" onclick="lvAbrir()">💰 Vender em lote</button>
               <span class="lote-obs">Vendido não entra aqui — venda tem cliente e data, passa pela tela de venda.</span>
             </div>
           </div>
@@ -3013,6 +3025,79 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
 </div>
 
 <!-- SELL MODAL -->
+<!-- ── VENDA EM LOTE ────────────────────────────────────────────────────
+     Dez maquinas pro mesmo cliente, num preco fechado. Registrar uma a uma
+     e dividir o valor na cabeca da erro no lucro de cada uma. -->
+<div class="smo h" id="LVO">
+  <div class="smoo" onclick="lvFechar()"></div>
+  <div class="smc" style="max-width:560px">
+    <div class="smch">
+      <span class="smct">📦 Vender em lote</span>
+      <button class="smcl" onclick="lvFechar()">✕</button>
+    </div>
+    <div class="smcp" id="lvResumoTopo">—</div>
+    <div class="smcb" style="grid-template-columns:1fr 1fr">
+      <div class="fc full">
+        <label class="fl">👤 Cliente <span style="font-size:.67rem;color:var(--li);font-weight:400">quem levou as máquinas — busque ou digite um nome novo</span></label>
+        <input class="inp" type="text" id="lvCliBusca" placeholder="Nome do cliente..." autocomplete="off" oninput="lvCliBuscar()" onfocus="lvCliBuscar()">
+        <input type="hidden" id="lvCliId">
+        <div class="copia-lista" id="lvCliLista"></div>
+        <div id="lvCliNovo" style="display:none;margin-top:6px">
+          <div class="fr" style="grid-template-columns:1fr 1fr;gap:8px">
+            <div class="fc"><label class="fl">WhatsApp</label>
+              <input class="inp" type="tel" id="lvCliWpp" placeholder="(19) 99999-9999"></div>
+            <div class="fc"><label class="fl">Perfil</label>
+              <select class="inp" id="lvCliPerfil">
+                <option value="">—</option>
+                <option value="consumidor">Consumidor final</option>
+                <option value="repasse">Revendedor (repasse)</option>
+                <option value="empresa">Empresa</option>
+              </select></div>
+          </div>
+          <div class="tipo-auto">Cliente novo — o WhatsApp aqui é o que faltou nas suas vendas antigas.</div>
+        </div>
+      </div>
+      <div class="fc full">
+        <label class="fl">📍 De onde veio esse cliente?</label>
+        <select class="inp" id="lvPlat">
+          <option value="">— Selecione a origem —</option>
+          <option value="Marketplace">📘 Facebook Marketplace</option>
+          <option value="OLX">🟠 OLX</option>
+          <option value="Mercado Livre">🟡 Mercado Livre</option>
+          <option value="Instagram">📸 Instagram</option>
+          <option value="Recompra">🔁 Recompra — cliente que voltou</option>
+          <option value="Indicação">🤝 Indicação</option>
+          <option value="Shopee">🛍️ Shopee</option>
+          <option value="Presencial">🏠 Presencial / conhecido</option>
+          <option value="Contato direto">💬 Já tinha meu contato</option>
+          <option value="Outro">Outro</option>
+        </select>
+      </div>
+      <div class="fc"><label class="fl">Data da venda</label>
+        <input class="inp" type="date" id="lvData"></div>
+      <div class="fc"><label class="fl">💰 Valor total do lote</label>
+        <input class="inp" type="number" id="lvTotal" min="0" step="0.01" placeholder="0" oninput="lvPreview()"></div>
+      <div class="fc full">
+        <label class="fl">Entrou em qual carteira? <span style="font-size:.67rem;color:var(--li);font-weight:400">opcional — lança uma entrada só, do valor cheio</span></label>
+        <select class="inp" id="lvCarteira">
+          <option value="">— não lançar no extrato —</option>
+          <option value="c6">C6</option>
+          <option value="mp">Mercado Pago</option>
+        </select>
+      </div>
+      <div class="fc full">
+        <label class="fl">Como fica cada máquina</label>
+        <div class="lv-prev" id="lvPrev"></div>
+        <div class="tipo-auto" id="lvPrevHint"></div>
+      </div>
+      <div class="fc full">
+        <button class="lote-bt" style="width:100%;padding:10px" onclick="lvConfirmar()" id="lvBt">Registrar a venda</button>
+        <div class="tipo-auto">À vista. Parcelado em lote precisaria de datas por máquina — para isso, registre uma a uma.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="smo h" id="SMO">
   <div class="smoo" onclick="cancelSell()"></div>
   <div class="smc">
@@ -9940,6 +10025,156 @@ window.loteAplicar=async()=>{
   if(feitas<mexer.length){
     alert(feitas+' de '+mexer.length+' mudaram. O resto falhou — veja o aviso vermelho no topo.');
   }
+};
+
+// ── Venda em lote ──────────────────────────────────────────────────────
+// Um preço fechado pelo conjunto precisa virar um preço por máquina, senão o
+// lucro de cada uma fica inventado. O rateio é proporcional ao preço de
+// tabela: a máquina que valia mais continua respondendo por mais do total.
+let lvItens=[];
+function lvRateio(itens, total){
+  const t=Number(total)||0;
+  const base=itens.map(p=>Number(p.venda)||0);
+  const soma=base.reduce((a,b)=>a+b,0);
+  // Sem preço de tabela em nenhuma, não há proporção pra respeitar: divide igual.
+  const pesos = soma>0 ? base : itens.map(()=>1);
+  const somaP = pesos.reduce((a,b)=>a+b,0);
+  const out=[]; let acc=0;
+  for(let i=0;i<itens.length;i++){
+    // A última absorve a sobra do arredondamento. Sem isso a soma das partes
+    // não fecha com o total combinado e o lucro do lote erra por centavos.
+    const v = (i===itens.length-1)
+      ? Math.round((t-acc)*100)/100
+      : Math.round(t*pesos[i]/somaP*100)/100;
+    acc=Math.round((acc+v)*100)/100;
+    out.push(v);
+  }
+  return out;
+}
+window.lvAbrir=()=>{
+  lvItens=loteLista.filter(p=>p.status!=='Vendido');
+  if(!lvItens.length){ alert('Nenhuma máquina para vender nesta lista.'); return; }
+  const set=(id,v)=>{ const e=document.getElementById(id); if(e) e.value=v; };
+  set('lvCliBusca',''); set('lvCliId',''); set('lvCliWpp',''); set('lvCliPerfil','');
+  set('lvPlat',''); set('lvCarteira','');
+  set('lvData', new Date().toISOString().split('T')[0]);
+  // O total já vem somado pelos preços de tabela: se ele não deu desconto, é só
+  // confirmar; se deu, ele digita por cima e vê o rateio mudar.
+  const somaTabela=lvItens.reduce((s,p)=>s+(Number(p.venda)||0),0);
+  set('lvTotal', somaTabela>0 ? somaTabela : '');
+  const nv=document.getElementById('lvCliNovo'); if(nv) nv.style.display='none';
+  const lst=document.getElementById('lvCliLista'); if(lst){ lst.style.display='none'; lst.innerHTML=''; }
+  document.getElementById('lvResumoTopo').textContent=
+    lvItens.length+' máquina'+(lvItens.length!==1?'s':'')+' · '+fmt(somaTabela)+' somando os preços de tabela';
+  lvPreview();
+  document.getElementById('LVO').classList.remove('h');
+};
+window.lvFechar=()=>{ document.getElementById('LVO').classList.add('h'); };
+window.lvPreview=()=>{
+  const box=document.getElementById('lvPrev'), hint=document.getElementById('lvPrevHint');
+  if(!box) return;
+  const total=parseFloat(document.getElementById('lvTotal')?.value)||0;
+  const precos=lvRateio(lvItens,total);
+  const somaTabela=lvItens.reduce((s,p)=>s+(Number(p.venda)||0),0);
+  const custo=lvItens.reduce((s,p)=>s+(Number(p.custo)||0),0);
+  box.innerHTML=lvItens.map((p,i)=>{
+    const de=Number(p.venda)||0, pa=precos[i];
+    const cls = pa<de ? ' menos' : (pa>de ? ' mais' : '');
+    return `<div class="lv-lin">
+      <span class="nb">${p.num||'?'}</span>
+      <span class="n">${esc(p.nome||'sem nome')}</span>
+      ${de&&Math.abs(de-pa)>=0.01?`<span class="de">${fmt(de)}</span>`:''}
+      <span class="pa${cls}">${fmt(pa)}</span>
+    </div>`;
+  }).join('')
+  + `<div class="lv-tot"><span>Total</span><span>${fmt(precos.reduce((a,b)=>a+b,0))}</span></div>`;
+  if(hint){
+    const lucro=total-custo;
+    const dif=total-somaTabela;
+    hint.textContent = !total ? 'Digite o valor total combinado.'
+      : (dif<0 ? 'Desconto de '+fmt(-dif)+' sobre a tabela. ' : dif>0 ? 'Acima da tabela em '+fmt(dif)+'. ' : 'No preço de tabela. ')
+        + 'Custo do lote '+fmt(custo)+' · lucro '+fmt(lucro)+'.';
+  }
+};
+window.lvCliBuscar=()=>{
+  const inp=document.getElementById('lvCliBusca'), box=document.getElementById('lvCliLista');
+  const novo=document.getElementById('lvCliNovo');
+  if(!inp||!box) return;
+  const txt=inp.value.trim(), t=cliNorm(txt);
+  document.getElementById('lvCliId').value='';
+  if(t.length<2){ box.style.display='none'; box.innerHTML=''; if(novo) novo.style.display='none'; return; }
+  const achados=clientes.filter(c=>cliNorm(c.nome).includes(t)).slice(0,6);
+  box.innerHTML=achados.map(c=>
+    `<div class="copia-it" onclick="lvCliEscolher('${c.id}')">
+      <span class="cn">${esc(c.nome||'sem nome')}</span>
+      <span class="cv">${esc(c.whatsapp||'sem telefone')}</span>
+    </div>`).join('');
+  box.style.display=achados.length?'block':'none';
+  // Nome que não bate com ninguém = cliente novo, e aí os campos dele abrem.
+  const exato=clientes.some(c=>cliNorm(c.nome)===t);
+  if(novo) novo.style.display = exato ? 'none' : 'block';
+};
+window.lvCliEscolher=id=>{
+  const c=clientes.find(x=>x.id===id); if(!c) return;
+  document.getElementById('lvCliBusca').value=c.nome||'';
+  document.getElementById('lvCliId').value=id;
+  const box=document.getElementById('lvCliLista'); box.style.display='none'; box.innerHTML='';
+  const novo=document.getElementById('lvCliNovo'); if(novo) novo.style.display='none';
+};
+window.lvConfirmar=async()=>{
+  const total=parseFloat(document.getElementById('lvTotal').value)||0;
+  if(total<=0){ alert('Digite o valor total do lote.'); return; }
+  const cliNome=(document.getElementById('lvCliBusca').value||'').trim();
+  if(!cliNome && !confirm('Sem cliente, essas '+lvItens.length+' vendas ficam sem telefone — que é o que faltou nas 350 anteriores.\n\nRegistrar assim mesmo?')) return;
+  const plat=document.getElementById('lvPlat').value;
+  const dataVenda=document.getElementById('lvData').value||'';
+  const precos=lvRateio(lvItens,total);
+  const nomes=lvItens.slice(0,4).map(p=>'#'+(p.num||'?')+' '+(p.nome||'')).join('\n');
+  if(!confirm('Registrar a venda de '+lvItens.length+' máquina'+(lvItens.length!==1?'s':'')+' por '+fmt(total)
+      +(cliNome?' para '+cliNome:'')+':\n\n'+nomes+(lvItens.length>4?'\n... e mais '+(lvItens.length-4):''))) return;
+
+  const bt=document.getElementById('lvBt');
+  if(bt){ bt.disabled=true; bt.textContent='Registrando...'; }
+
+  let cliId=document.getElementById('lvCliId').value||'';
+  if(cliNome && !cliId){
+    const wpp=(document.getElementById('lvCliWpp').value||'').replace(/\D/g,'');
+    const perfil=document.getElementById('lvCliPerfil').value||'';
+    cliId=await salvarCliente({nome:cliNome,whatsapp:wpp,perfil,origem:plat||''});
+  }
+  const mesVenda=dataVenda?dataVenda.slice(0,7):'';
+  let feitas=0;
+  for(let i=0;i<lvItens.length;i++){
+    const p=lvItens[i], preco=precos[i];
+    const dcRaw=p.data_compra||p.data||'';
+    const dc=dcRaw?(dcRaw.length===7?dcRaw+'-01':dcRaw):null;
+    const dias=dataVenda&&dc?Math.round((new Date(dataVenda)-new Date(dc))/86400000):null;
+    const upd={status:'Vendido',plataforma:plat,venda:preco,lucro:preco-(p.custo||0),
+      data_venda:dataVenda,data:mesVenda,diasParado:(dias>=0?dias:null),
+      cliente_id:cliId,cliente_nome:cliNome,pagamento:'vista',parcelas:null,
+      venda_lote:true};
+    if(!idLocal(p.id)){
+      const gravou=await gravar(updateDoc(doc(db,'products',p.id),upd),'Vender "'+(p.nome||p.id)+'"');
+      if(!gravou) continue;
+    }
+    Object.assign(p,upd); feitas++;
+  }
+  // Uma entrada só no extrato: foi um Pix só, não dez.
+  const cart=document.getElementById('lvCarteira').value;
+  if(cart && feitas){
+    await addExtrato({tipo:'entrada',carteira:cart,valor:total,prodId:'',
+      descricao:'Venda em lote: '+feitas+' máquinas'+(cliNome?' — '+cliNome:''),
+      data:dataVenda||new Date().toISOString().split('T')[0]});
+  }
+  criarAviso('venda_realizada', feitas+'x em lote'+(cliNome?' — '+cliNome:''));
+  if(bt){ bt.disabled=false; bt.textContent='Registrar a venda'; }
+  lvFechar();
+  render(); renderSecoes(); calcStats();
+  try{ renderAlertas(); renderMeta(); }catch(e){}
+  try{ if(typeof loadFinancas==='function') loadFinancas(); }catch(e){}
+  alert(feitas===lvItens.length
+    ? feitas+' vendas registradas — '+fmt(total)+'.'
+    : feitas+' de '+lvItens.length+' registradas. O resto falhou: veja o aviso vermelho no topo.');
 };
 
 // ── Copiar de outra máquina ────────────────────────────────────────────
