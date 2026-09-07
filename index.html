@@ -47,7 +47,12 @@ nav{position:sticky;top:0;z-index:50;background:rgba(249,248,246,.93);backdrop-f
 .nl{display:flex;align-items:baseline;gap:9px;flex-shrink:0}
 .nln{font-family:'Instrument Serif',serif;font-size:1.25rem;color:var(--tx);letter-spacing:-.01em}
 .nlb{font-size:.65rem;font-weight:600;color:var(--mu);letter-spacing:.12em;text-transform:uppercase;border:1px solid var(--b2);padding:2px 7px;border-radius:20px}
-.nts{display:flex;gap:2px}
+.nts{display:flex;gap:2px;flex-wrap:wrap}
+/* A aba de acao nao e mais uma secao: e um botao de fazer alguma coisa.
+   Cor propria pra nao se perder no meio das outras cinco. */
+.nt.acao{background:var(--gbg);color:var(--gr);font-weight:700;border:1px solid var(--gbd)}
+.nt.acao:hover{background:var(--gr);color:#fff;border-color:var(--gr)}
+.nt.acao.on{background:var(--gr);color:#fff;border-color:var(--gr)}
 .nt{padding:6px 14px;border-radius:7px;border:none;background:transparent;color:var(--mu);font-family:'DM Sans',sans-serif;font-weight:500;font-size:.82rem;cursor:pointer;transition:all .15s}
 .nt:hover{background:var(--b);color:var(--tx)}.nt.on{background:var(--tx);color:#fff}
 .nr{display:flex;align-items:center;gap:10px;flex-shrink:0}
@@ -1414,7 +1419,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
 
         <button class="nt" id="nav-fin" onclick="sp2('financas')">Finanças</button>
         <button class="nt" onclick="sp2('clientes')">👥 Clientes</button>
-        <button class="nt" onclick="sp2('anuncio')">🎨 Anúncio</button>
+        <button class="nt acao" onclick="sp2('anuncio')">🎨 Gerar anúncio</button>
       </div>
       <div class="nr">
         <span class="nu" id="NU"></span>
@@ -2819,6 +2824,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
             <button class="bcan" onclick="abrirCatalogo()">👁️ Ver a página</button>
             <button class="bcan" onclick="copiarLinkCatalogo()">🔗 Copiar link</button>
             <button class="bcan" onclick="catQR()">📱 QR code</button>
+            <button class="bcan" onclick="sp2('anuncio')">🎨 Gerar anúncio</button>
           </div>
           <div id="catQRBox" class="cat-qr" style="display:none"></div>
 
