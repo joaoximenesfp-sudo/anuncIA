@@ -581,6 +581,21 @@ input[type=number].inp{padding-left:32px}
 .copia-it .cn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .copia-it .cv{color:var(--li);font-size:.72rem;white-space:nowrap}
 .copia-vazio{padding:9px 10px;font-size:.72rem;color:var(--li)}
+.an-grade{display:grid;grid-template-columns:1fr;gap:18px}
+@media(min-width:900px){ .an-grade{grid-template-columns:340px 1fr;align-items:start} }
+.an-lado{display:flex;flex-direction:column;gap:12px}
+.an-prev{display:flex;flex-direction:column;gap:8px;align-items:center;
+  background:var(--bg);border:1px solid var(--b);border-radius:var(--rad);padding:16px}
+/* A previa e a mesma imagem, so encolhida pela tela. O que baixa e o tamanho
+   cheio, entao o que ele ve aqui e exatamente o que vai postar. */
+.an-prev canvas{max-width:100%;height:auto;border-radius:8px;box-shadow:var(--sh);background:#0b1221}
+.an-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.an-chip{display:inline-flex;align-items:center;gap:6px;font-size:.71rem;font-weight:600;
+  background:var(--bbg);color:var(--bl);border:1px solid var(--bbd);border-radius:20px;
+  padding:3px 6px 3px 9px;cursor:pointer}
+.an-chip b{font-weight:800}
+.an-chip .x{font-size:.8rem;opacity:.6}
+.an-chip:hover .x{opacity:1}
 .lote-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;
   padding:8px 10px;border:1px solid var(--b);border-radius:8px;background:var(--bbg);
   font-size:.74rem;color:var(--mu)}
@@ -1399,6 +1414,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
 
         <button class="nt" id="nav-fin" onclick="sp2('financas')">Finanças</button>
         <button class="nt" onclick="sp2('clientes')">👥 Clientes</button>
+        <button class="nt" onclick="sp2('anuncio')">🎨 Anúncio</button>
       </div>
       <div class="nr">
         <span class="nu" id="NU"></span>
@@ -2616,6 +2632,52 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
       #pg-clientes .cli-tag{order:-1}
     }
   </style>
+  <!-- ── GERADOR DE ANÚNCIO ───────────────────────────────────────────────
+       As fotos, os precos e as datas comemorativas ja estao todos aqui
+       dentro. Faltava so juntar os tres e cuspir a imagem pronta pra postar.
+       Tudo desenhado no proprio navegador: sem servico de fora, sem conta
+       nova, sem mensalidade. -->
+  <div class="pg" id="pg-anuncio">
+    <div class="cd">
+      <div class="cdh"><span class="cdht">🎨 Gerar anúncio</span>
+        <span style="font-size:.74rem;color:var(--li)">imagem pronta pro Instagram, story ou capa do WhatsApp</span></div>
+      <div class="cdb">
+        <div class="an-grade">
+          <div class="an-lado">
+            <div class="fc"><span class="fla">Formato</span>
+              <select class="inp" id="anFmt" onchange="anDesenhar()">
+                <option value="feed">📷 Post do Instagram — 1080×1080</option>
+                <option value="story">📱 Story — 1080×1920</option>
+                <option value="capa">💬 Capa do WhatsApp — 1440×448</option>
+              </select>
+            </div>
+            <div class="fc"><span class="fla">Data comemorativa</span>
+              <select class="inp" id="anData" onchange="anTrocouData()"></select>
+              <div class="tipo-auto" id="anDataHint"></div>
+            </div>
+            <div class="fc"><span class="fla">Chamada</span>
+              <input class="inp" type="text" id="anFrase" maxlength="90" oninput="anDesenhar()">
+            </div>
+            <div class="fc"><span class="fla">Selo <span style="font-size:.62rem;color:var(--li)">o canto colorido — deixe vazio pra não aparecer</span></span>
+              <input class="inp" type="text" id="anSelo" maxlength="22" placeholder="Ex: OFERTA DA SEMANA" oninput="anDesenhar()">
+            </div>
+            <div class="fc"><span class="fla">Máquinas <span style="font-size:.62rem;color:var(--li)">até 4 — clique pra adicionar ou tirar</span></span>
+              <input class="inp" type="text" id="anBusca" placeholder="Buscar no que está anunciado..." autocomplete="off" oninput="anBuscar()" onfocus="anBuscar()">
+              <div class="copia-lista" id="anLista"></div>
+              <div id="anEscolhidas" class="an-chips"></div>
+            </div>
+            <button class="bok" style="width:100%" onclick="anBaixar()" id="anBaixarBt">⬇️ Baixar imagem</button>
+            <div class="tipo-auto" id="anStatus"></div>
+          </div>
+          <div class="an-prev">
+            <canvas id="anCanvas"></canvas>
+            <div class="tipo-auto" style="text-align:center">Prévia — a imagem baixada sai no tamanho cheio.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="pg" id="pg-clientes">
     <div class="wr">
       <div class="ph">
@@ -7736,6 +7798,7 @@ window.sp2=p=>{
   if(p==='painel'){ try{ buildPainel(); }catch(e){ console.error('buildPainel:',e); } buildPainelCharts(); }
   if(p==='financas'){renderFinLabel();checkNotificacoes();}
   if(p==='admin'){carregarAvisos();}
+  if(p==='anuncio'){ try{ anMontarSelect(); anChips(); anBuscar(); }catch(e){ console.error('anuncio:',e); } }
   if(p==='clientes'){ if(cliAba==='fornecedores')renderFornecedores(); else renderClientes(); }
   else{const bar=document.getElementById('notifBar');if(bar){bar.innerHTML='';bar.classList.remove('on');adjustPageTop();}}
 };
@@ -10037,6 +10100,347 @@ function statusSelectHTML(p){
     ${STATUS_OPC.map(([v,t])=>`<option ${p.status===v?'selected':''} value="${v}">${t}</option>`).join('')}
   </select>`;
 }
+// ── Gerador de anúncio ─────────────────────────────────────────────────
+// A imagem inteira e desenhada em canvas aqui no navegador. Nao usa servico
+// de fora de proposito: as fotos ja estao no banco, os precos tambem, e o
+// tema.js ja sabe as datas do ano. Servico externo so acrescentaria conta
+// nova, mensalidade e um lugar a mais pra subir as mesmas fotos.
+const AN_FMT={
+  feed:  {w:1080, h:1080, nome:'post'},
+  story: {w:1080, h:1920, nome:'story'},
+  capa:  {w:1440, h:448,  nome:'capa'},
+};
+let anEscolhidas=[];          // produtos escolhidos, na ordem em que entraram
+const anCacheFoto={};         // id do produto -> Image ja carregada
+
+// As datas do ano vêm do tema.js, o mesmo arquivo que pinta o catálogo. Uma
+// lista só: se um dia entrar data nova, ela aparece nos dois lugares.
+function anDatas(){
+  const hoje=new Date(), ano=hoje.getFullYear();
+  const lista=(window.Tema&&Tema.DATAS)?Tema.DATAS:[];
+  return lista.map(t=>{
+    const [ini,fim]=t.janela(ano);
+    return {id:t.id, nome:t.nome, emoji:t.emoji, frase:t.frase,
+            cor1:t.cor1, cor2:t.cor2, ini, fim};
+  }).sort((a,b)=>a.ini-b.ini);
+}
+function anMontarSelect(){
+  const sel=document.getElementById('anData'); if(!sel) return;
+  const atual=(window.Tema&&Tema.temaDe())||null;
+  const opts=['<option value="">— sem data, promoção comum —</option>'];
+  anDatas().forEach(d=>{
+    const q=d.ini.toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
+    opts.push(`<option value="${d.id}">${d.emoji} ${esc(d.nome)} · ${q}</option>`);
+  });
+  sel.innerHTML=opts.join('');
+  // Abre já na data que está valendo hoje — é a que ele quer 90% das vezes.
+  if(atual) sel.value=atual.id;
+  anTrocouData();
+}
+window.anTrocouData=()=>{
+  const sel=document.getElementById('anData');
+  const d=anDatas().find(x=>x.id===sel.value);
+  const f=document.getElementById('anFrase');
+  const h=document.getElementById('anDataHint');
+  if(f) f.value = d ? d.frase : 'Notebooks revisados, com 90 dias de garantia.';
+  const selo=document.getElementById('anSelo');
+  if(selo && !selo.value) selo.value = d ? d.nome.toUpperCase() : '';
+  if(h) h.textContent = d
+    ? 'Janela: '+d.ini.toLocaleDateString('pt-BR')+' a '+d.fim.toLocaleDateString('pt-BR')+'. As cores saem dela.'
+    : 'Sem data, o anúncio sai nas cores da marca.';
+  anDesenhar();
+};
+
+window.anBuscar=()=>{
+  const inp=document.getElementById('anBusca'), box=document.getElementById('anLista');
+  if(!inp||!box) return;
+  const t=cliNorm(inp.value);
+  // Só o que está anunciado e com preço: anúncio de oferta sem preço não é
+  // oferta, e máquina em estoque não anunciada não deveria ir pro Instagram.
+  const base=prods.filter(p=>p.status==='Anunciado' && !aguardandoP(p) && !reservadoP(p)
+                             && (parseFloat(p.venda)||0)>0);
+  const achados=(t.length<2 ? base.slice(0,8)
+                            : base.filter(p=>cliNorm(p.nome).includes(t)).slice(0,8));
+  if(!achados.length){
+    box.innerHTML='<div class="copia-vazio">Nenhuma anunciada com preço bate com isso.</div>';
+    box.style.display='block'; return;
+  }
+  box.innerHTML=achados.map(p=>{
+    const dentro=anEscolhidas.some(x=>x.id===p.id);
+    return `<div class="copia-it" onclick="anAlternar('${p.id}')">
+      <span class="nb">${p.num||'?'}</span>
+      <span class="cn">${esc(p.nome||'sem nome')}</span>
+      <span class="cv">${fmt(p.venda||0)}</span>
+      <span style="font-weight:800;color:${dentro?'var(--gr)':'var(--li)'}">${dentro?'✓':'+'}</span>
+    </div>`;
+  }).join('');
+  box.style.display='block';
+};
+window.anAlternar=async id=>{
+  const p=prods.find(x=>x.id===id); if(!p) return;
+  const i=anEscolhidas.findIndex(x=>x.id===id);
+  if(i>=0) anEscolhidas.splice(i,1);
+  else{
+    if(anEscolhidas.length>=4){ alert('Quatro é o limite. Mais que isso e cada máquina fica pequena demais pra ler no celular.'); return; }
+    anEscolhidas.push(p);
+    await anCarregarFoto(p.id);
+  }
+  anChips(); anBuscar(); anDesenhar();
+};
+function anChips(){
+  const box=document.getElementById('anEscolhidas'); if(!box) return;
+  box.innerHTML=anEscolhidas.map(p=>
+    `<span class="an-chip" onclick="anAlternar('${p.id}')" title="Tirar do anúncio">
+      <b>#${p.num||'?'}</b> ${esc((p.nome||'').slice(0,26))} <span class="x">✕</span></span>`).join('')
+    || '<span class="tipo-auto">Nenhuma escolhida — o anúncio sai só com a chamada.</span>';
+}
+// A foto vem do banco uma vez e fica em memória. Redesenhar a prévia a cada
+// tecla digitada não pode ir buscar imagem no Firestore de novo.
+async function anCarregarFoto(id){
+  if(anCacheFoto[id]!==undefined) return anCacheFoto[id];
+  anCacheFoto[id]=null;
+  try{
+    const snap=await getDocs(query(collection(db,'fotos'),where('produto_id','==',id)));
+    const fs=snap.docs.map(d=>d.data()).sort((a,b)=>(a.ordem||0)-(b.ordem||0)).filter(f=>f.dataUrl);
+    if(!fs.length) return null;
+    const img=new Image();
+    await new Promise((res)=>{ img.onload=res; img.onerror=res; img.src=fs[0].dataUrl; });
+    anCacheFoto[id]=img.width?img:null;
+  }catch(e){ anCacheFoto[id]=null; }
+  return anCacheFoto[id];
+}
+
+// Corta a foto no quadro sem distorcer: escala pelo lado que sobra e centra.
+function anFotoNoQuadro(ctx,img,x,y,w,h,raio){
+  ctx.save();
+  ctx.beginPath();
+  const r=Math.min(raio,w/2,h/2);
+  ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
+  ctx.clip();
+  if(img){
+    const e=Math.max(w/img.width, h/img.height);
+    const dw=img.width*e, dh=img.height*e;
+    ctx.drawImage(img, x+(w-dw)/2, y+(h-dh)/2, dw, dh);
+  }else{
+    ctx.fillStyle='#16202f'; ctx.fillRect(x,y,w,h);
+    ctx.fillStyle='#5c6b80'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.font='600 '+Math.round(h*0.09)+'px system-ui,sans-serif';
+    ctx.fillText('sem foto', x+w/2, y+h/2);
+  }
+  ctx.restore();
+}
+// Texto que não cabe é encurtado com reticências, em vez de vazar pra fora
+// do quadro ou ser desenhado por cima do preço.
+function anTexto(ctx,txt,x,y,max){
+  let t=String(txt||'');
+  if(ctx.measureText(t).width<=max){ ctx.fillText(t,x,y); return; }
+  while(t.length>1 && ctx.measureText(t+'…').width>max) t=t.slice(0,-1);
+  ctx.fillText(t+'…',x,y);
+}
+
+// A capa do WhatsApp tem duas restricoes que os outros formatos nao tem:
+// ela e muito baixa (3,2 por 1) e a FOTO DE PERFIL senta por cima do meio
+// de baixo. Entao ela ganha desenho proprio, com o miolo x 560-880 vazio de
+// proposito — texto ali fica escondido atras da foto.
+function anDesenharCapa(ctx,F,c1,c2,gf){
+  const m=60, esqW=480;                 // coluna de texto, longe do miolo
+  ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+
+  ctx.fillStyle='#1cf08f';
+  ctx.font='800 26px system-ui,sans-serif';
+  ctx.fillText('TECH CAMPINAS', m, 86);
+
+  const frase=(document.getElementById('anFrase').value||'').trim();
+  ctx.fillStyle='#ffffff';
+  ctx.font='800 34px system-ui,sans-serif';
+  let y=140;
+  const pal=frase.split(/\s+/), lin=[]; let ln='';
+  pal.forEach(w=>{ const t=ln?ln+' '+w:w;
+    if(ctx.measureText(t).width>esqW && ln){ lin.push(ln); ln=w; } else ln=t; });
+  if(ln) lin.push(ln);
+  // Quatro linhas cabem entre o nome da marca e o rodape. Com tres, frase de
+  // data comemorativa cortava no meio.
+  lin.slice(0,4).forEach(l=>{ ctx.fillText(l,m,y); y+=42; });
+
+  ctx.fillStyle='#8fa3bc';
+  ctx.font='600 19px system-ui,sans-serif';
+  ctx.fillText('✅ 90 dias de garantia · 📍 Campinas e região', m, 372);
+  ctx.fillStyle='#1cf08f';
+  ctx.font='700 19px system-ui,sans-serif';
+  const zap=(catCfg&&catCfg.whatsapp)?String(catCfg.whatsapp).replace(/\D/g,''):'';
+  ctx.fillText((catCfg&&catCfg.instagram?'@'+catCfg.instagram:'@tech.campinas')+(zap?'  ·  '+zap:''), m, 408);
+
+  // selo no alto, do lado direito
+  const selo=(document.getElementById('anSelo').value||'').trim();
+  if(selo){
+    ctx.font='800 20px system-ui,sans-serif';
+    const lw=ctx.measureText(selo).width, ph=44, px=F.w-m-lw-26;
+    ctx.fillStyle=gf;
+    ctx.beginPath();
+    const ry=24, rr=ph/2;
+    ctx.moveTo(px+rr,ry); ctx.arcTo(px+lw+26,ry,px+lw+26,ry+ph,rr);
+    ctx.arcTo(px+lw+26,ry+ph,px,ry+ph,rr); ctx.arcTo(px,ry+ph,px,ry,rr);
+    ctx.arcTo(px,ry,px+lw+26,ry,rr); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='#08121f'; ctx.fillText(selo, px+13, ry+30);
+  }
+
+  // maquinas so na faixa da direita, depois do x=900
+  const dir0=900, dirW=F.w-m-dir0;
+  const n=Math.min(anEscolhidas.length,2);   // mais que duas nao se le aqui
+  if(n){
+    const gap=18, cw=(dirW-gap*(n-1))/n, hF=Math.min(cw*0.75, 176);
+    anEscolhidas.slice(0,n).forEach((p,i)=>{
+      const cx=dir0+i*(cw+gap), cy=100;
+      anFotoNoQuadro(ctx, anCacheFoto[p.id], cx, cy, cw, hF, 14);
+      ctx.fillStyle='#c8d5e4'; ctx.font='600 16px system-ui,sans-serif';
+      anTexto(ctx, p.nome, cx, cy+hF+26, cw);
+      ctx.fillStyle='#ffffff'; ctx.font='800 26px system-ui,sans-serif';
+      ctx.fillText(fmt(p.venda||0), cx, cy+hF+58);
+    });
+  }
+}
+
+window.anDesenhar=()=>{
+  const cv=document.getElementById('anCanvas'); if(!cv) return;
+  const fmtSel=document.getElementById('anFmt').value;
+  const F=AN_FMT[fmtSel]||AN_FMT.feed;
+  cv.width=F.w; cv.height=F.h;
+  // A prévia encolhe pela tela; o arquivo baixado sai no tamanho cheio.
+  cv.style.width=Math.min(F.w, fmtSel==='capa'?520:340)+'px';
+  const ctx=cv.getContext('2d');
+  const d=anDatas().find(x=>x.id===document.getElementById('anData').value);
+  const c1=d?d.cor1:'#0b1221', c2=d?d.cor2:'#00b368';
+
+  // fundo
+  const g=ctx.createLinearGradient(0,0,F.w,F.h);
+  g.addColorStop(0,'#0b1221'); g.addColorStop(1,'#111c2e');
+  ctx.fillStyle=g; ctx.fillRect(0,0,F.w,F.h);
+  // faixa de cor da data no topo
+  const gf=ctx.createLinearGradient(0,0,F.w,0);
+  gf.addColorStop(0,c1); gf.addColorStop(1,c2);
+  ctx.fillStyle=gf; ctx.fillRect(0,0,F.w,Math.round(F.h*0.012));
+
+  if(fmtSel==='capa'){ anDesenharCapa(ctx,F,c1,c2,gf); return; }
+
+  const m=Math.round(F.w*0.06);                 // margem
+  const capa=false;
+  let y=Math.round(F.h*(capa?0.16:0.10));
+
+  // marca
+  ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+  ctx.fillStyle='#1cf08f';
+  ctx.font='800 '+Math.round(F.w*(capa?0.022:0.032))+'px system-ui,sans-serif';
+  ctx.fillText('TECH CAMPINAS', m, y);
+
+  // selo do canto
+  const selo=(document.getElementById('anSelo').value||'').trim();
+  if(selo){
+    ctx.font='800 '+Math.round(F.w*(capa?0.019:0.026))+'px system-ui,sans-serif';
+    const lw=ctx.measureText(selo).width, ph=Math.round(F.w*(capa?0.042:0.056));
+    const px=F.w-m-lw-Math.round(F.w*0.036);
+    ctx.fillStyle=gf;
+    ctx.beginPath();
+    const ry=y-ph*0.72, rr=ph/2;
+    ctx.moveTo(px+rr,ry); ctx.arcTo(px+lw+ph*0.6,ry,px+lw+ph*0.6,ry+ph,rr);
+    ctx.arcTo(px+lw+ph*0.6,ry+ph,px,ry+ph,rr); ctx.arcTo(px,ry+ph,px,ry,rr);
+    ctx.arcTo(px,ry,px+lw+ph*0.6,ry,rr); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='#08121f';
+    ctx.fillText(selo, px+ph*0.3, ry+ph*0.68);
+  }
+
+  // chamada
+  y+=Math.round(F.h*(capa?0.10:0.055));
+  ctx.fillStyle='#ffffff';
+  const tam=Math.round(F.w*(capa?0.036:0.055));
+  ctx.font='800 '+tam+'px system-ui,sans-serif';
+  const frase=(document.getElementById('anFrase').value||'').trim();
+  // quebra por palavra, no máximo 3 linhas
+  const larg=F.w-m*2, palavras=frase.split(/\s+/), linhas=[];
+  let ln='';
+  palavras.forEach(w=>{
+    const t=ln?ln+' '+w:w;
+    if(ctx.measureText(t).width>larg && ln){ linhas.push(ln); ln=w; } else ln=t;
+  });
+  if(ln) linhas.push(ln);
+  linhas.slice(0,3).forEach(l=>{ ctx.fillText(l,m,y); y+=Math.round(tam*1.22); });
+
+  // as máquinas
+  const n=anEscolhidas.length;
+  if(n){
+    const topo=y+Math.round(F.h*(capa?0.02:0.035));
+    const rodape=Math.round(F.h*(capa?0.16:0.13));
+    const alt=F.h-topo-rodape;
+    // Story é muito alto: com duas máquinas lado a lado o quadro fica estreito
+    // e comprido, e foto de notebook é deitada — cortaria as laterais fora.
+    // Então no story pouca máquina empilha em vez de dividir.
+    const cols = capa ? n
+               : (fmtSel==='story' ? (n<=2?1:2)
+               : (n===1?1:2));
+    const rows = Math.ceil(n/cols);
+    const gap=Math.round(F.w*0.022);
+    const cw=(F.w-m*2-gap*(cols-1))/cols;
+    const tn=Math.round(F.w*(capa?0.016:(n>2?0.021:0.026)));
+    const tp=Math.round(F.w*(capa?0.024:(n>2?0.032:0.040)));
+    const hTxt=tn*1.5+tp*1.35+Math.round(F.h*0.008);
+    // A foto nunca passa de 3:4 da largura da célula. Sem esse teto ela
+    // esticaria pra preencher a altura e o notebook sairia recortado.
+    const hFoto=Math.max(1, Math.min((alt-gap*(rows-1))/rows-hTxt, cw*0.75));
+    const bloco=rows*(hFoto+hTxt)+gap*(rows-1);
+    // Sobrou espaço? Centraliza, em vez de deixar tudo colado no topo e um
+    // vazio grande embaixo.
+    const topo2=topo+Math.max(0,(alt-bloco)/2);
+    anEscolhidas.forEach((p,i)=>{
+      const cx=m+(i%cols)*(cw+gap);
+      const cy=topo2+Math.floor(i/cols)*(hFoto+hTxt+gap);
+      anFotoNoQuadro(ctx, anCacheFoto[p.id], cx, cy, cw, hFoto, Math.round(F.w*0.018));
+      ctx.textAlign='left';
+      ctx.fillStyle='#c8d5e4';
+      ctx.font='600 '+tn+'px system-ui,sans-serif';
+      anTexto(ctx, p.nome, cx, cy+hFoto+tn*1.5, cw);
+      ctx.fillStyle='#ffffff';
+      ctx.font='800 '+tp+'px system-ui,sans-serif';
+      ctx.fillText(fmt(p.venda||0), cx, cy+hFoto+tn*1.5+tp*1.35);
+    });
+  }
+
+  // rodapé
+  ctx.textAlign='left'; ctx.fillStyle='#8fa3bc';
+  ctx.font='600 '+Math.round(F.w*(capa?0.016:0.022))+'px system-ui,sans-serif';
+  ctx.fillText('✅ 90 dias de garantia · 📍 Campinas e envio pro Brasil', m, F.h-Math.round(F.h*(capa?0.10:0.065)));
+  ctx.fillStyle='#1cf08f';
+  ctx.font='700 '+Math.round(F.w*(capa?0.016:0.022))+'px system-ui,sans-serif';
+  const zap=(catCfg&&catCfg.whatsapp)?String(catCfg.whatsapp).replace(/\D/g,''):'';
+  const linha2=(catCfg&&catCfg.instagram?'@'+catCfg.instagram:'@tech.campinas')+(zap?'  ·  '+zap:'');
+  ctx.fillText(linha2, m, F.h-Math.round(F.h*(capa?0.045:0.032)));
+};
+
+window.anBaixar=()=>{
+  const cv=document.getElementById('anCanvas'); if(!cv) return;
+  const st=document.getElementById('anStatus');
+  const F=AN_FMT[document.getElementById('anFmt').value]||AN_FMT.feed;
+  const d=anDatas().find(x=>x.id===document.getElementById('anData').value);
+  const nome='anuncio-'+(d?d.id:'promo')+'-'+F.nome+'-'+new Date().toISOString().slice(0,10)+'.png';
+  // PNG de 1080x1920 leva um instante pra sair. Sem isso o botão parece morto
+  // e ele clica de novo, gerando dois downloads.
+  const bt=document.getElementById('anBaixarBt');
+  if(bt){ bt.disabled=true; bt.textContent='Gerando...'; }
+  const soltar=()=>{ if(bt){ bt.disabled=false; bt.textContent='⬇️ Baixar imagem'; } };
+  try{
+    cv.toBlob(b=>{
+      soltar();
+      if(!b){ if(st) st.textContent='Não consegui gerar o arquivo.'; return; }
+      const url=URL.createObjectURL(b);
+      const a=document.createElement('a');
+      a.href=url; a.download=nome; document.body.appendChild(a); a.click();
+      // Solta a memória depois: imagem de 1080x1920 não é pequena, e ele vai
+      // gerar várias seguidas.
+      setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); },1500);
+      if(st) st.textContent='Baixado como '+nome;
+    },'image/png');
+  }catch(e){ soltar(); if(st) st.textContent='Falhou: '+(e.message||e); }
+};
+
 // ── Camada de animação ─────────────────────────────────────────────────
 // Um observador só, em vez de mexer em cada lugar que escreve um número.
 // Quando o texto de um indicador muda, ele pisca — assim dá pra ver o que
