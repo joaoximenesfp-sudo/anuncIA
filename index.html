@@ -629,9 +629,13 @@ input[type=number].inp{padding-left:32px}
 #anDesc{min-height:56px;font-size:.78rem;line-height:1.5}
 .an-prev canvas{cursor:grab;touch-action:none}
 .an-prev canvas:active{cursor:grabbing}
-.lote-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;
-  padding:8px 10px;border:1px solid var(--b);border-radius:8px;background:var(--bbg);
-  font-size:.74rem;color:var(--mu)}
+/* Barra presa no rodape da tela, e nao dentro da aba de produtos: ele marca
+   maquina na lista de Anunciados tambem, e uma barra escondida numa aba so era
+   justamente o motivo de ele nunca ter achado a venda em lote. */
+.lote-bar{position:fixed;left:0;right:0;bottom:0;z-index:60;display:none;
+  align-items:center;gap:8px;flex-wrap:wrap;
+  padding:10px 14px 12px;border-top:1px solid var(--b2);background:var(--cd);
+  box-shadow:0 -6px 22px rgba(15,23,42,.14);font-size:.74rem;color:var(--mu)}
 /* As marcadas aparecem aqui como etiqueta. Sem isso, marcar uma maquina e
    depois mudar a busca esconderia a marcacao — e ele venderia sem ver o que. */
 .lote-chips{display:flex;flex-wrap:wrap;gap:4px;flex:1;min-width:120px}
@@ -641,8 +645,20 @@ input[type=number].inp{padding-left:32px}
 .lote-chip .n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
 .lote-chip .x{opacity:.5}
 .lote-chip:hover .x{opacity:1;color:var(--vm)}
-.lote-ck{width:28px;text-align:center}
-.lote-ck input{width:15px;height:15px;cursor:pointer;accent-color:var(--gr)}
+/* A bolinha fica colada no nome da maquina, e nao numa coluna propria: coluna
+   a mais aperta a tabela no celular, e o alvo de toque some. 24px e o minimo
+   pra acertar com o dedo. */
+.lote-bola{flex:none;width:24px;height:24px;border-radius:50%;
+  border:2px solid var(--b2);background:var(--cd);color:transparent;
+  display:inline-flex;align-items:center;justify-content:center;
+  font-size:.78rem;font-weight:800;line-height:1;cursor:pointer;
+  transition:transform .1s,background .12s,border-color .12s;user-select:none}
+.lote-bola:hover{border-color:var(--gr);transform:scale(1.12)}
+.lote-bola.on{background:var(--gr);border-color:var(--gr);color:#fff}
+.pn-lin{display:flex;align-items:flex-start;gap:9px}
+.pn-lin>div{min-width:0}
+tr.marcada>td{background:var(--gbg)}
+tr.marcada>td:first-child{box-shadow:inset 3px 0 0 var(--gr)}
 .lote-bar .inp{width:auto;padding:4px 8px;font-size:.74rem}
 .lote-bt{border:1px solid var(--bl);background:var(--bl);color:#fff;font-family:inherit;
   font-size:.74rem;font-weight:700;padding:5px 12px;border-radius:6px;cursor:pointer}
@@ -1789,25 +1805,6 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
           <div style="padding:0 16px 10px">
             <input class="inp" type="text" id="pBusca" placeholder="🔎 Buscar por nome, specs, cliente, fornecedor... (ex: i5 16gb, thinkpad, dell ssd)" oninput="render()" style="width:100%">
             <div id="pBuscaInfo" style="font-size:.7rem;color:var(--li);margin-top:4px;display:none"></div>
-            <!-- Mudar o status de um punhado de máquinas de uma vez. Só aparece
-                 quando a lista já está estreitada por busca ou filtro: em cima
-                 de "Todos" sem busca, isso mexeria no estoque inteiro. -->
-            <div class="lote-bar" id="loteBar" style="display:none">
-              <span id="loteLbl"></span>
-              <div class="lote-chips" id="loteChips"></div>
-              <button class="lote-bt" id="loteTodosBt" onclick="loteMarcarTodos()">Marcar todas da lista</button>
-              <button class="lote-bt" id="loteLimparBt" style="display:none" onclick="loteLimpar()">Desmarcar tudo</button>
-              <select class="inp" id="loteAlvo">
-                <option value="">mudar status para…</option>
-                <option value="Anunciado">Anunciado</option>
-                <option value="Estoque">Estoque</option>
-                <option value="Reservado">🤝 Reservado</option>
-                <option value="Aguardando">🚚 Aguardando chegar</option>
-              </select>
-              <button class="lote-bt" id="loteAplicarBt" onclick="loteAplicar()">Aplicar</button>
-              <button class="lote-bt" style="background:var(--gr);border-color:var(--gr)" onclick="lvAbrir()">💰 Vender em lote</button>
-              <span class="lote-obs" id="loteObs">Marque as caixinhas pra escolher máquina por máquina, ou deixe sem marcar nenhuma pra valer a lista inteira. Vendido nunca entra.</span>
-            </div>
           </div>
           <div id="PL"><div class="esq"><div class="esq-ln"></div><div class="esq-ln m"></div><div class="esq-ln c"></div></div>
             <div class="esq"><div class="esq-ln"></div><div class="esq-ln m"></div><div class="esq-ln c"></div></div>
@@ -3216,6 +3213,26 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
       <button class="bsav" onclick="concluirEdit()">Concluir</button>
     </div>
   </div>
+</div>
+
+<!-- ── BARRA DE SELEÇÃO ─────────────────────────────────────────────────
+     Fica fora das abas, presa no rodapé: ele marca máquina tanto na lista de
+     produtos quanto na de anunciados, e a barra precisa aparecer nas duas. -->
+<div class="lote-bar" id="loteBar">
+  <span id="loteLbl"></span>
+  <div class="lote-chips" id="loteChips"></div>
+  <button class="lote-bt" id="loteTodosBt" onclick="loteMarcarTodos()">Marcar todas da lista</button>
+  <button class="lote-bt" id="loteLimparBt" style="display:none" onclick="loteLimpar()">Desmarcar tudo</button>
+  <select class="inp" id="loteAlvo">
+    <option value="">mudar status para…</option>
+    <option value="Anunciado">Anunciado</option>
+    <option value="Estoque">Estoque</option>
+    <option value="Reservado">🤝 Reservado</option>
+    <option value="Aguardando">🚚 Aguardando chegar</option>
+  </select>
+  <button class="lote-bt" id="loteAplicarBt" onclick="loteAplicar()">Aplicar</button>
+  <button class="lote-bt" style="background:var(--gr);border-color:var(--gr)" onclick="lvAbrir()">💰 Vender em lote</button>
+  <span class="lote-obs" id="loteObs"></span>
 </div>
 
 <!-- SELL MODAL -->
@@ -7276,9 +7293,9 @@ function renderTabela(lista, tipo){
       const custoTag = tipo!=='vendidos' ? `<span class="custo-tag">${fmt(p.custo)}</span>` : '';
 
       const _busca=alvoBusca(p).replace(/"/g,'');
-      return`<tr data-busca="${_busca}">
+      return`<tr data-busca="${_busca}" class="${loteSel.has(p.id)?'marcada':''}">
         <td><span class="nb">${p.num||'?'}</span></td>
-        <td><div class="pn">${esc(p.nome)}</div>${compChips}<div style="display:flex;gap:4px;margin-top:3px;flex-wrap:wrap">${diasBadge}${custoTag}${badgeDevTroca(p)}</div></td>
+        <td><div class="pn-lin">${loteBolaHTML(p)}<div><div class="pn">${esc(p.nome)}</div>${compChips}<div style="display:flex;gap:4px;margin-top:3px;flex-wrap:wrap">${diasBadge}${custoTag}${badgeDevTroca(p)}</div></div></div></td>
         <td>${invBadge}</td>
         <td style="color:var(--li);font-size:.75rem">${dcDisplay}${autorTag}</td>
         <td style="color:var(--li);font-size:.75rem">${tipo==='vendidos'?fdt(p.data_venda):'—'}</td>
@@ -7390,14 +7407,9 @@ function render(){
       const dcDisplay=p.data_compra?(p.data_compra.length>7?new Date(p.data_compra+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'2-digit'}):fdt(p.data_compra)):'—';
       const autorTag=p.addedByName?`<span title="Cadastrado por ${esc(p.addedByName)}" style="font-size:.62rem;color:var(--li);margin-left:3px">· ${esc(p.addedByName)}</span>`:'';
       const _busca=alvoBusca(p).replace(/"/g,'');
-      // Vendida não ganha caixinha: não dá pra revender nem mudar o status dela
-      // por aqui, então a caixinha só prometeria o que não acontece.
-      const ck=p.status==='Vendido' ? ''
-        : `<input type="checkbox" ${loteSel.has(p.id)?'checked':''} onclick="event.stopPropagation();loteMarcar('${p.id}',this.checked)">`;
-      return`<tr data-busca="${_busca}">
-        <td class="lote-ck">${ck}</td>
+      return`<tr data-busca="${_busca}" class="${loteSel.has(p.id)?'marcada':''}">
         <td><span class="nb">${p.num||'?'}</span></td>
-        <td><div class="pn">${esc(p.nome)}</div>${compChips}${badgeDevTroca(p)?`<div style="display:flex;gap:4px;margin-top:3px;flex-wrap:wrap">${badgeDevTroca(p)}</div>`:''}</td>
+        <td><div class="pn-lin">${loteBolaHTML(p)}<div><div class="pn">${esc(p.nome)}</div>${compChips}${badgeDevTroca(p)?`<div style="display:flex;gap:4px;margin-top:3px;flex-wrap:wrap">${badgeDevTroca(p)}</div>`:''}</div></div></td>
         <td>${invBadge}</td>
         <td style="color:var(--li);font-size:.75rem">${dcDisplay}${autorTag}</td>
         <td style="color:var(--li);font-size:.75rem">${fdt(p.data_venda)}</td>
@@ -7420,7 +7432,6 @@ function render(){
         <span class="marca-busca-info"></span>
       </div>
       <table class="tb"><thead><tr>
-      <th class="lote-ck"></th>
       <th style="width:36px">#</th><th>Produto</th><th>Investidor</th><th>Compra</th><th>Venda</th>
       <th>Custo</th><th>Preço</th><th>Lucro</th><th>Status</th><th>Alterar</th><th style="width:30px"></th><th style="width:30px"></th>
     </tr></thead><tbody>${rows}</tbody></table></div></div>`;
@@ -7863,6 +7874,7 @@ function buildCharts(){
 
 
 window.sp2=p=>{
+  pgAtual=p;
   document.querySelectorAll('.pg').forEach(x=>x.classList.remove('on'));
   document.querySelectorAll('.nt').forEach(t=>t.classList.remove('on'));
   document.getElementById('pg-'+p).classList.add('on');
@@ -10985,9 +10997,18 @@ function piscarLinha(id){
 // ── Mudar o status de várias de uma vez ────────────────────────────────
 // Cadastrar dez máquinas de uma vez e depois trocar o status de uma em uma
 // desfaz o ganho. A barra age sobre a lista que está na tela, e só sobre ela.
+let pgAtual='produtos';   // aba aberta agora — sp2() mantém isto em dia
 let loteLista=[];
 let loteFiltrada=[];        // o que está na tela agora, antes da marcação
 let loteFiltroAtivo=false;  // há busca ou filtro de status valendo?
+
+// As duas listas com bolinha (produtos e anunciados) são desenhadas por
+// funções diferentes. Quem mexe na seleção em massa precisa repintar as duas,
+// senão a bolinha some de uma e continua acesa na outra.
+function loteRepintar(){
+  try{ render(); }catch(e){}
+  try{ renderSecoes(); }catch(e){}
+}
 // Máquinas marcadas a mão. Vale por cima do filtro de propósito: ele pode
 // marcar uma Dell, buscar "lenovo" e marcar outra — se a seleção fosse cortada
 // pela busca, a primeira sumiria calada e ele venderia só metade do combinado.
@@ -11002,28 +11023,52 @@ function loteRecalcular(){
   loteLista = mk.length ? mk : loteFiltrada;
   return mk;
 }
+// A bolinha de marcar, colada no nome da máquina. Vendida não tem: não dá pra
+// revender nem mudar o status dela por ali.
+function loteBolaHTML(p){
+  if(!p || p.status==='Vendido') return '';
+  return `<span class="lote-bola${loteSel.has(p.id)?' on':''}" data-lote="${p.id}"
+    onclick="event.stopPropagation();loteBolinha(this,'${p.id}')"
+    title="Marcar pra mudar status ou vender junto">✓</span>`;
+}
 window.loteMarcar=(id,on)=>{
   if(on) loteSel.add(id); else loteSel.delete(id);
   loteBarra();   // só a barra: refazer a lista inteira perderia a rolagem
 };
+// Clique na bolinha: muda o estado e pinta na hora, sem redesenhar a lista.
+// A mesma máquina pode ter bolinha em duas listas na página, então pinta todas.
+window.loteBolinha=(el,id)=>{
+  const on=!loteSel.has(id);
+  loteMarcar(id,on);
+  document.querySelectorAll('.lote-bola[data-lote="'+id+'"]').forEach(b=>{
+    b.classList.toggle('on',on);
+    const tr=b.closest('tr'); if(tr) tr.classList.toggle('marcada',on);
+  });
+};
 window.loteMarcarTodos=()=>{
   loteFiltrada.forEach(p=>{ if(p.status!=='Vendido') loteSel.add(p.id); });
-  render();
+  loteRepintar();
 };
-window.loteLimpar=()=>{ loteSel.clear(); render(); };
+window.loteLimpar=()=>{ loteSel.clear(); loteRepintar(); };
 
 function loteBarra(mostrar){
   const bar=document.getElementById('loteBar'), lbl=document.getElementById('loteLbl');
   if(!bar||!lbl) return;
-  if(mostrar===undefined) mostrar=loteFiltroAtivo;
+  // A lista filtrada só manda enquanto ele está na aba de produtos: marcar na
+  // aba de anunciados não pode fazer a barra falar de um filtro de outra tela.
+  if(mostrar===undefined) mostrar = loteFiltroAtivo && pgAtual==='produtos';
   const mk=loteRecalcular();
   // Máquina vendida não entra: mudar o status dela por aqui deixaria data de
   // venda e lucro pendurados sem venda nenhuma.
   const n=loteLista.filter(p=>p.status!=='Vendido').length;
-  // Marcar à mão faz a barra aparecer mesmo em "Todos" sem busca — é a única
-  // forma de ele juntar máquinas de marcas diferentes pro mesmo cliente.
-  if((!mostrar && !mk.length) || !n){ bar.style.display='none'; return; }
+  // Marcar à mão faz a barra aparecer em qualquer aba — é a única forma de ele
+  // juntar máquinas de marcas diferentes pro mesmo cliente.
+  // A barra é fixa no rodapé, então ela tapa o fim da lista. Empurrar o corpo
+  // é o que deixa a última máquina alcançável.
+  const folga=v=>{ try{ document.body.style.paddingBottom=v; }catch(e){} };
+  if((!mostrar && !mk.length) || !n){ bar.style.display='none'; folga(''); return; }
   bar.style.display='flex';
+  folga((bar.offsetHeight||64)+12+'px');
   lbl.innerHTML = mk.length
     ? `<strong>${mk.length}</strong> marcada${mk.length!==1?'s':''}:`
     : `<strong>${n}</strong> máquina${n!==1?'s':''} na lista:`;
@@ -11033,16 +11078,18 @@ function loteBarra(mostrar){
        <b>#${p.num||'?'}</b><span class="n">${esc((p.nome||'').slice(0,22))}</span><span class="x">✕</span></span>`).join('');
   const lb=document.getElementById('loteLimparBt');
   if(lb) lb.style.display=mk.length?'':'none';
+  // "Marcar todas" fala da lista da aba de produtos. Fora dela, esconde: seria
+  // um botão prometendo mexer numa lista que ele não está vendo.
   const tb=document.getElementById('loteTodosBt');
-  if(tb) tb.style.display=loteFiltrada.length?'':'none';
+  if(tb) tb.style.display=(pgAtual==='produtos' && loteFiltrada.length)?'':'none';
   const obs=document.getElementById('loteObs');
   if(obs) obs.textContent = mk.length
-    ? 'Vale só as marcadas, mesmo as que sumiram da busca. Vendido nunca entra.'
-    : 'Marque as caixinhas pra escolher máquina por máquina, ou deixe sem marcar nenhuma pra valer a lista inteira. Vendido nunca entra.';
+    ? 'Vale só as marcadas, mesmo as que sumiram da busca.'
+    : 'Marque a bolinha ao lado da máquina, ou deixe sem marcar nenhuma pra valer a lista inteira.';
 }
 // Tirar pela etiqueta: a máquina pode não estar na tela, então a caixinha
 // correspondente talvez nem exista pra desmarcar.
-window.loteDesmarcar=id=>{ loteSel.delete(id); render(); };
+window.loteDesmarcar=id=>{ loteSel.delete(id); loteRepintar(); };
 window.loteAplicar=async()=>{
   const sel=document.getElementById('loteAlvo'); if(!sel) return;
   const alvo=sel.value;
