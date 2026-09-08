@@ -1787,6 +1787,20 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
           <div id="PL-anunc"><div style="text-align:center;padding:32px;color:var(--li)">Carregando...</div></div>
         </div>
 
+        <!-- RESERVADOS -->
+        <!-- Faixa própria: reservada não é estoque livre (já tem dono) nem
+             anunciada (não está mais à venda). Misturada em qualquer uma das
+             duas, ela mentia sobre o que ainda dá pra vender. Some da tela
+             quando não há nenhuma, pra não ocupar espaço sem assunto. -->
+        <div id="sec-res-cab" style="display:none;align-items:center;gap:10px;margin-bottom:8px;margin-top:18px">
+          <div style="font-family:'Instrument Serif',serif;font-size:1.1rem;color:var(--tx)">🤝 Reservados</div>
+          <span id="sec-res-count" style="font-size:.72rem;background:#f5f3ff;color:#6d28d9;border:1px solid #c4b5fd;padding:2px 8px;border-radius:10px;font-weight:600"></span>
+          <span id="sec-res-val" style="font-size:.72rem;color:#6d28d9;font-weight:500"></span>
+        </div>
+        <div class="cd" id="sec-res-box" style="display:none;border-left:3px solid #7c3aed">
+          <div id="PL-res"></div>
+        </div>
+
         <!-- ESTOQUE PARA VENDA -->
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;margin-top:18px">
           <div style="font-family:'Instrument Serif',serif;font-size:1.1rem;color:var(--tx)">📦 Em estoque</div>
@@ -4202,6 +4216,13 @@ window.addProd=async()=>{
   const nome=g('pN'),custo=parseFloat(document.getElementById('pC').value)||0,venda=parseFloat(document.getElementById('pV').value)||0,status=document.getElementById('pS').value,dc=document.getElementById('pDC').value,investidor=document.getElementById('pInv').value;
   const canal=document.getElementById('pCanal').value;
   if(!nome){alert('Digite o nome!');return;}
+  // Máquina sem data de compra some de TODO relatório mensal — comprados do
+  // mês, gasto por sócio, receita vs gasto — e some sem dizer nada. Foi assim
+  // que um lote inteiro cadastrado por cópia ficou fora dos números.
+  if(!dc && !confirm(
+      'Sem data de compra, esta máquina não vai aparecer em nenhum relatório mensal '
+      +'(comprados do mês, gasto por sócio, receita vs gasto).\n\n'
+      +'Cadastrar assim mesmo?')) return;
   // Vincular fornecedor (existente ou novo)
   let fornId=document.getElementById('pFornId').value||'';
   let fornNome=(document.getElementById('pForn').value||'').trim();
@@ -6967,15 +6988,20 @@ function renderSecoes(){
   // em branco ou escrito de outro jeito não caía em lista nenhuma: sumia da
   // aba inicial e só aparecia em "Tudo". Agora o que não é Anunciado nem
   // Vendido cai no estoque — que é a verdade física: a máquina está com você.
-  const anunciados = prods.filter(p=>p.status==='Anunciado');
+  // Reservada sai das duas listas e ganha faixa própria: ela já tem dono, então
+  // contá-la no estoque inflava o que ainda dá pra vender, e deixá-la em
+  // anunciados anunciava máquina que não está mais à venda.
+  const reservados = prods.filter(reservadoP);
+  const anunciados = prods.filter(p=>p.status==='Anunciado' && !reservadoP(p));
   const vendidos   = prods.filter(p=>p.status==='Vendido');
-  const estoque    = prods.filter(p=>p.status!=='Anunciado' && p.status!=='Vendido');
+  const estoque    = prods.filter(p=>p.status!=='Anunciado' && p.status!=='Vendido' && !reservadoP(p));
   const hoje       = new Date();
 
   // Update tab counts
   const hn = document.getElementById('vstab-hoje-n');
   const vn = document.getElementById('vstab-vendidos-n');
-  if(hn) hn.textContent = '('+(anunciados.length+estoque.length)+')';
+  // As reservadas continuam "na mão hoje": ainda não saíram, o Pix ainda não caiu.
+  if(hn) hn.textContent = '('+(anunciados.length+reservados.length+estoque.length)+')';
   if(vn) vn.textContent = '('+vendidos.length+')';
 
   // ── ANUNCIADOS ──
@@ -6993,6 +7019,27 @@ function renderSecoes(){
     } else {
       listAnunc.innerHTML = renderTabela(anunciados, 'anunciados');
     }
+  }
+
+  // ── RESERVADOS ──
+  // A faixa inteira some quando não há reservada nenhuma: um bloco vazio
+  // permanente na tela vira ruído e ele para de enxergar.
+  const cabRes = document.getElementById('sec-res-cab');
+  const boxRes = document.getElementById('sec-res-box');
+  const listRes = document.getElementById('PL-res');
+  const temRes = reservados.length>0;
+  if(cabRes) cabRes.style.display = temRes?'flex':'none';
+  if(boxRes) boxRes.style.display = temRes?'':'none';
+  if(temRes){
+    const cRes = document.getElementById('sec-res-count');
+    const vRes = document.getElementById('sec-res-val');
+    if(cRes) cRes.textContent = reservados.length + (reservados.length!==1?' máquinas':' máquina');
+    if(vRes){
+      // O que está combinado, não o que entrou: reservada ainda não virou dinheiro.
+      const soma = reservados.reduce((s,p)=>s+(Number(p.venda)||0),0);
+      vRes.textContent = soma>0 ? '· '+fmt(soma)+' combinados, a receber' : '';
+    }
+    if(listRes) listRes.innerHTML = renderTabela(reservados, 'reservados');
   }
 
   // ── ESTOQUE ──
@@ -7087,10 +7134,14 @@ function resumoNecessidades(lista){
   // "testar bateria" também entram aqui, por isso o nome não fala em compra.
   const compras=document.getElementById('listaCompras');
   if(compras){
-    const comFalta=[...estoque,...anunciados].filter(p=>p.falta_comprar&&p.falta_comprar.trim());
+    // Reservada entra aqui mesmo tendo saído das outras listas: ela ainda
+    // precisa ser montada antes de entregar, e agora com prazo — é a que mais
+    // urge, não a que menos.
+    const aFazer=[...estoque,...anunciados,...reservados];
+    const comFalta=aFazer.filter(p=>p.falta_comprar&&p.falta_comprar.trim());
     const pend=comFalta.filter(p=>!p.falta_feito);
     const feitas=comFalta.filter(p=>p.falta_feito);
-    const necHTML=resumoNecessidades([...estoque,...anunciados]);
+    const necHTML=resumoNecessidades(aFazer);
     if(comFalta.length || necHTML){
       const linha=(p)=>`<div class="compras-item${p.falta_feito?' feita':''}">
           <button class="ci-check${p.falta_feito?' on':''}" title="${p.falta_feito?'Reabrir':'Marcar como feito'}"
@@ -8140,12 +8191,39 @@ window.salvarMetas3=async()=>{
 };
 
 // ── ALERTAS INTELIGENTES ──
+// Reaproveita a busca da lista pra juntar na tela quem está sem data. É a via
+// mais curta entre "existem 8 máquinas invisíveis" e "estão aqui, arrume".
+window.verSemData=()=>{
+  const semData=prods.filter(p=>p.status!=='Vendido' && !getMesCompra(p));
+  if(!semData.length){ alert('Nenhuma máquina sem data de compra. Está tudo nos relatórios.'); return; }
+  ultimoCadastro={ids:semData.map(p=>p.id), status:''};
+  verUltimoCadastro();
+  const box=document.getElementById('addOk');
+  if(box){
+    box.style.display='block';
+    box.innerHTML=`📅 <b>${semData.length}</b> máquina${semData.length>1?'s':''} sem data de compra`
+      +` — ${semData.length>1?'estão':'está'} piscando na lista. Abra no <b>✎</b> e preencha a data.`;
+  }
+};
+
 function renderAlertas(){
   const row=document.getElementById('alertsRow');
   if(!row)return;
   const alertas=[];
   const hoje=new Date();
   const mesAtual=hoje.toISOString().slice(0,7);
+  // Máquina sem data de compra não aparece em nenhum relatório mensal, e some
+  // sem avisar. Este alerta existe porque isso já aconteceu com um lote inteiro
+  // cadastrado por cópia — o dinheiro tinha saído e não constava em lugar nenhum.
+  const semData=prods.filter(p=>p.status!=='Vendido' && !getMesCompra(p));
+  if(semData.length){
+    const custoCego=semData.reduce((s,p)=>s+custoRealDe(p),0);
+    alertas.push({tipo:'warn',ic:'📅',txt:
+      `<strong>${semData.length} máquina${semData.length>1?'s':''} sem data de compra</strong> — `
+      +`${semData.length>1?'não aparecem':'não aparece'} em nenhum relatório mensal`
+      +(custoCego>0?`, e são ${fmt(custoCego)} de custo fora das contas`:'')
+      +`. <a href="#" onclick="event.preventDefault();verSemData()" style="font-weight:700;color:inherit;text-decoration:underline">Ver quais</a> e preencher a data no ✎.`});
+  }
   const mesAnterior=new Date(hoje.getFullYear(),hoje.getMonth()-1,1).toISOString().slice(0,7);
   const parados=prods.filter(p=>p.status!=='Vendido'&&p.data_compra).map(p=>{
     const dcRaw=p.data_compra||'';
@@ -11037,7 +11115,8 @@ window.verUltimoCadastro=()=>{
     .find(b=>(b.getAttribute('onclick')||'').includes("setF('"+v+"'"));
   // Sem status escolhido não há aba própria; "Todos" é o único lugar onde ela
   // aparece com certeza.
-  const chip=achaChip(status)||achaChip('todos');
+  // Status vazio não tem aba própria; sem ele, "Todos" é o único lugar seguro.
+  const chip=(status && achaChip(status))||achaChip('todos');
   if(chip) chip.click(); else { filt='todos'; render(); }
   setTimeout(()=>{
     const sel=document.querySelector('.sel[data-id="'+ids[0]+'"]');
@@ -11419,6 +11498,12 @@ window.copiarDe=id=>{
   // procura o que está à venda. Máquina copiada é máquina pra vender: entra
   // anunciada, e quem quiser guardar muda no campo Status ao lado.
   const st=document.getElementById('pS'); if(st) st.value='Anunciado';
+  // Data de compra: antes ficava em branco de propósito, porque a máquina nova
+  // não foi comprada no dia da antiga. Só que máquina SEM data some de todo
+  // relatório mensal — comprados do mês, gasto por sócio, tudo — e some calada.
+  // Hoje é o palpite certo (ele está cadastrando agora) e fica editável.
+  const dc=document.getElementById('pDC');
+  if(dc && !dc.value) dc.value=new Date().toISOString().slice(0,10);
   set('pCopiaBusca','');
   const box=document.getElementById('pCopiaLista'); if(box){ box.style.display='none'; box.innerHTML=''; }
   copiaHint();
