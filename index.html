@@ -624,6 +624,9 @@ input[type=number].inp{padding-left:32px}
   border:1px solid var(--b);border-radius:6px;background:var(--bbg);color:var(--tx)}
 .an-edit-bt button:hover{background:var(--b)}
 .an-edit input[type=range]{width:100%;accent-color:var(--gr)}
+/* O .inp de textarea tem 120px de altura minima, feita pros 600 caracteres do
+   cadastro. Aqui cabem tres linhas na arte, entao o campo tambem e baixo. */
+#anDesc{min-height:56px;font-size:.78rem;line-height:1.5}
 .an-prev canvas{cursor:grab;touch-action:none}
 .an-prev canvas:active{cursor:grabbing}
 .lote-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;
@@ -2687,6 +2690,11 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
             </div>
             <div class="fc"><span class="fla">Chamada</span>
               <input class="inp" type="text" id="anFrase" maxlength="90" oninput="anDesenhar()">
+            </div>
+            <div class="fc"><span class="fla">Descrição <span style="font-size:.62rem;color:var(--li)">vem do cadastro da máquina — dá pra editar aqui sem mexer lá</span></span>
+              <textarea class="inp" id="anDesc" maxlength="240" oninput="anDesenhar()"
+                        placeholder="Ex.: Bateria segura 4h, tela sem risco, teclado retroiluminado."></textarea>
+              <div class="tipo-auto" id="anDescHint"></div>
             </div>
             <div class="fc"><span class="fla">Selo <span style="font-size:.62rem;color:var(--li)">o canto colorido — deixe vazio pra não aparecer</span></span>
               <input class="inp" type="text" id="anSelo" maxlength="22" placeholder="Ex: OFERTA DA SEMANA" oninput="anDesenhar()">
@@ -10273,6 +10281,7 @@ window.anAlternar=async id=>{
       alert('Quatro é o limite. Mais que isso e cada máquina fica pequena demais pra ler no celular.'); return;
     }
     anEscolhidas.push(p);
+    anPuxarDesc(p);
     await anCarregarFoto(p.id);
   }
   anChips(); anBuscar(); anDesenhar();
@@ -10339,6 +10348,7 @@ window.anTrocouModo=()=>{
     : 'Máquinas <span style="font-size:.62rem;color:var(--li)">até 4 — clique pra adicionar ou tirar</span>';
   const ob=document.getElementById('anOutraBt');
   if(ob) ob.style.display= uma?'none':'';
+  if(uma) anPuxarDesc(anEscolhidas[0]);
   anSel=''; anEditor(); anChips(); anBuscar(); anDesenhar();
 };
 
@@ -10569,6 +10579,44 @@ function anLigarEditor(){
   });
 }
 
+// Quebra o texto em linhas que cabem na largura, no máximo `max` delas. Devolve
+// também quantas linhas ficaram de fora: quem chama precisa poder avisar, senão
+// a frase some pela metade e ele não descobre olhando a prévia no celular.
+function anQuebrar(ctx,txt,larg,max){
+  const pal=String(txt||'').trim().split(/\s+/).filter(Boolean);
+  const lin=[]; let ln='';
+  for(const w of pal){
+    const t=ln?ln+' '+w:w;
+    if(ctx.measureText(t).width>larg && ln){ lin.push(ln); ln=w; } else ln=t;
+  }
+  if(ln) lin.push(ln);
+  return {linhas:lin.slice(0,max), sobrou:Math.max(0,lin.length-max)};
+}
+const anDesc=()=>(document.getElementById('anDesc')?.value||'').trim();
+
+// Cabem 3 linhas no anúncio de uma máquina e 2 no de várias. O resto é cortado
+// — mas cortar calado é o pior dos mundos: ele veria a frase pela metade só
+// depois de postar. Então o painel diz quantas linhas ficaram de fora.
+function anDescAviso(fmtSel,sobrou){
+  const h=document.getElementById('anDescHint'); if(!h) return;
+  if(!anDesc()){ h.textContent='Vazio: o anúncio sai sem descrição.'; return; }
+  if(fmtSel==='capa'){
+    h.textContent='⚠️ A capa do WhatsApp é baixa demais — a descrição não sai nela.'; return;
+  }
+  h.textContent = sobrou
+    ? '⚠️ Cabem '+(anModo()==='uma'?3:2)+' linhas na arte — '+sobrou+
+      (sobrou>1?' linhas ficam':' linha fica')+' de fora. Encurte o texto.'
+    : '✓ Cabe inteira na arte.';
+}
+// Puxa a descrição do cadastro da máquina, sem passar por cima do que ele já
+// escreveu aqui. Só no modo de uma máquina: com várias, o campo é legenda do
+// anúncio inteiro e herdar o texto de uma delas confundiria.
+function anPuxarDesc(p){
+  const el=document.getElementById('anDesc');
+  if(!el || !p || anModo()!=='uma' || el.value.trim()) return;
+  el.value=String(p.descricao||'').slice(0,240);
+}
+
 // Texto que não cabe é encurtado com reticências, em vez de vazar pra fora
 // do quadro ou ser desenhado por cima do preço.
 function anTexto(ctx,txt,x,y,max){
@@ -10677,7 +10725,7 @@ window.anDesenhar=(recorte)=>{
   gf.addColorStop(0,c1); gf.addColorStop(1,c2);
   ctx.fillStyle=gf; ctx.fillRect(0,0,F.w,Math.round(F.h*0.012));
 
-  if(fmtSel==='capa'){ anDesenharCapa(ctx,F,c1,c2,gf,cels); return; }
+  if(fmtSel==='capa'){ anDescAviso('capa',0); anDesenharCapa(ctx,F,c1,c2,gf,cels); return; }
 
   const m=Math.round(F.w*0.06);                 // margem
   const capa=false;
@@ -10711,15 +10759,22 @@ window.anDesenhar=(recorte)=>{
   const tam=Math.round(F.w*(capa?0.036:0.055));
   ctx.font='800 '+tam+'px system-ui,sans-serif';
   const frase=(document.getElementById('anFrase').value||'').trim();
-  // quebra por palavra, no máximo 3 linhas
-  const larg=F.w-m*2, palavras=frase.split(/\s+/), linhas=[];
-  let ln='';
-  palavras.forEach(w=>{
-    const t=ln?ln+' '+w:w;
-    if(ctx.measureText(t).width>larg && ln){ linhas.push(ln); ln=w; } else ln=t;
-  });
-  if(ln) linhas.push(ln);
-  linhas.slice(0,3).forEach(l=>{ ctx.fillText(l,m,y); y+=Math.round(tam*1.22); });
+  const larg=F.w-m*2;
+  anQuebrar(ctx,frase,larg,3).linhas.forEach(l=>{ ctx.fillText(l,m,y); y+=Math.round(tam*1.22); });
+
+  // A descrição fica logo abaixo da chamada quando são várias máquinas: ali é o
+  // único lugar sobrando, já que cada célula tem nome e preço próprios.
+  let descSobrou=0;
+  const desc=anDesc();
+  if(desc && !uma){
+    const td=Math.round(F.w*0.024);
+    ctx.fillStyle='#8fa3bc';
+    ctx.font='500 '+td+'px system-ui,sans-serif';
+    y+=Math.round(td*0.5);
+    const q=anQuebrar(ctx,desc,larg,2);
+    descSobrou=q.sobrou;
+    q.linhas.forEach(l=>{ ctx.fillText(l,m,y); y+=Math.round(td*1.35); });
+  }
 
   // No modo de uma máquina, o nome e o preço saem uma vez só, aqui em cima —
   // as fotos abaixo são todas do mesmo produto e não precisam de legenda cada.
@@ -10732,7 +10787,20 @@ window.anDesenhar=(recorte)=>{
     anTexto(ctx, p.nome, m, y, F.w-m*2);
     y+=Math.round(tp*(anPreco(p).de?1.5:1.02));
     anDesenharPreco(ctx, p, m, y, tp);
+    // Aqui a descrição tem lugar de verdade: é anúncio de um produto só, e é o
+    // texto que responde "por que essa máquina" antes de ele chamar no zap.
+    if(desc){
+      const td=Math.round(F.w*0.026);
+      ctx.fillStyle='#8fa3bc';
+      ctx.font='500 '+td+'px system-ui,sans-serif';
+      y+=Math.round(td*1.5);
+      const q=anQuebrar(ctx,desc,F.w-m*2,3);
+      descSobrou=q.sobrou;
+      q.linhas.forEach(l=>{ ctx.fillText(l,m,y); y+=Math.round(td*1.35); });
+      y-=Math.round(td*1.35);
+    }
   }
+  anDescAviso(fmtSel,descSobrou);
 
   // as fotos
   const n=cels.length;
