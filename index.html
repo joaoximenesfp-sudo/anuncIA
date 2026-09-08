@@ -648,6 +648,15 @@ input[type=number].inp{padding-left:32px}
 /* A bolinha fica colada no nome da maquina, e nao numa coluna propria: coluna
    a mais aperta a tabela no celular, e o alvo de toque some. 24px e o minimo
    pra acertar com o dedo. */
+/* Confirmacao do cadastro, logo abaixo do botao de adicionar. */
+.add-ok{margin-top:10px;padding:10px 12px;border-radius:8px;
+  background:var(--gbg);border:1px solid var(--gbd);color:var(--gr);
+  font-size:.78rem;font-weight:600;line-height:1.5}
+.add-ok b{font-weight:800}
+.add-ok button{margin-left:8px;font-size:.72rem;font-weight:700;cursor:pointer;
+  padding:3px 10px;border-radius:6px;border:1px solid var(--gr);
+  background:var(--gr);color:#fff}
+.add-ok button:hover{filter:brightness(1.08)}
 .lote-bola{flex:none;width:24px;height:24px;border-radius:50%;
   border:2px solid var(--b2);background:var(--cd);color:transparent;
   display:inline-flex;align-items:center;justify-content:center;
@@ -1757,6 +1766,10 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
               </div>
             </div>
             <div class="fc"><span class="fla" style="opacity:0">.</span><button class="ba" onclick="addProd()">+ Adicionar</button></div>
+            <!-- Cadastrou e o formulário só esvaziava. A máquina existia, mas
+                 nada na tela dizia qual número ela recebeu nem onde ela foi
+                 parar — e com uma busca antiga ativa ela nem aparecia. -->
+            <div class="add-ok full" id="addOk" style="display:none"></div>
           </div>
         </div>
       </div>
@@ -4220,8 +4233,12 @@ window.addProd=async()=>{
   const falta=(document.getElementById('pFalta')?.value||'').trim();
   const obj={userId:'shared_ijx',addedBy:user.uid,addedByName:user.displayName||user.email.split('@')[0],nome,custo:custoTotal,custo_base:custo,custo_pecas:custoPecas,custo_gasolina:custoGas,gas_pagante:gasPag,venda,lucro:venda-custoTotal,status,investidor,data_compra:dc,data_compra_mes:dcMes,data_venda:'',data:dcMes,canal_compra:canal,...hwCampos('p'),falta_comprar:falta,falta_feito:false,falta_feito_em:'',aporte_joao:(parseFloat(document.getElementById('pApJoao')?.value)||0),aporte_igor:(parseFloat(document.getElementById('pApIgor')?.value)||0),fornecedor_id:fornId,fornecedor_nome:fornNome,num,fotos_n:fotosPend.prod.length,descricao,...herdado,copiado_de:(molde?molde.id:''),createdAt:new Date().toISOString()};
   let prodId='l'+Date.now();
+  // Os ids do que acabou de nascer, pra conseguir levar ele até as máquinas
+  // depois — inclusive as do lote, que não têm nada na tela apontando pra elas.
+  const novosIds=[];
   try{const r=await addDoc(collection(db,'products'),obj);prodId=r.id;prods.push({...obj,id:r.id});}
   catch(e){ await gravar(Promise.reject(e), 'Cadastrar "'+nome+'"'); prods.push({...obj,id:prodId}); }
+  novosIds.push(prodId);
   // Fotos escolhidas no formulário entram junto com a máquina recém-cadastrada
   await fpGravar('prod', prodId, nome);
   // Grava as peças na aba Peças, já vinculadas a esta máquina.
@@ -4259,10 +4276,11 @@ window.addProd=async()=>{
       const cop={...obj, custo:custo, custo_base:custo, custo_pecas:0, custo_gasolina:0,
                  lucro:venda-custo, aporte_joao:0, aporte_igor:0, fotos_n:0,
                  num:++ult, createdAt:new Date().toISOString()};
-      try{ const r=await addDoc(collection(db,'products'),cop); prods.push({...cop,id:r.id}); criadas++; }
+      try{ const r=await addDoc(collection(db,'products'),cop); prods.push({...cop,id:r.id}); novosIds.push(r.id); criadas++; }
       catch(e){
         await gravar(Promise.reject(e),'Cadastrar cópia '+(k+1)+' de "'+nome+'"');
-        prods.push({...cop,id:'l'+Date.now()+'_'+k}); criadas++;
+        const lid='l'+Date.now()+'_'+k;
+        prods.push({...cop,id:lid}); novosIds.push(lid); criadas++;
       }
     }
   }
@@ -4287,6 +4305,9 @@ window.addProd=async()=>{
   // Notificar o sócio sobre o novo produto
   criarAviso('produto_adicionado', criadas>1 ? (criadas+'x '+nome) : nome);
   render();renderSecoes();calcStats();renderAlertas();renderMeta();
+  // Diz o que foi criado e leva até lá. Sem isso, cadastrar em lote era um
+  // formulário que esvaziava e mais nada.
+  try{ cadastrouOk(novosIds, status, nome); }catch(e){ console.error('cadastrouOk:',e); }
   if(typeof renderPecas==='function') renderPecas();
   if(document.getElementById('fornView')&&document.getElementById('fornView').style.display!=='none')renderFornecedores();
 };
@@ -10982,6 +11003,61 @@ function ligarPiscaNumeros(){
 
 // A linha que acabou de mudar acende por um segundo. O aviso aparece onde a
 // coisa aconteceu, e não num canto da tela que ele nem está olhando.
+// ── Onde a máquina recém-cadastrada foi parar ──────────────────────────
+// Antes disso, cadastrar era um formulário que esvaziava: nada dizia qual
+// número a máquina recebeu, em que status entrou, nem onde procurá-la. Com uma
+// busca antiga ainda na caixa, ela nem aparecia na lista.
+let ultimoCadastro=null;
+function cadastrouOk(ids, status, nome){
+  ultimoCadastro={ids:(ids||[]).slice(), status:status||''};
+  const box=document.getElementById('addOk'); if(!box) return;
+  const novos=prods.filter(p=>ultimoCadastro.ids.includes(p.id))
+                   .sort((a,b)=>(a.num||0)-(b.num||0));
+  if(!novos.length){ box.style.display='none'; return; }
+  const nums=novos.map(p=>'#'+(p.num||'?'));
+  // Com muitas, o intervalo lê melhor que a lista inteira de números.
+  const faixa = nums.length>3 ? nums[0]+' a '+nums[nums.length-1] : nums.join(', ');
+  const rot=(STATUS_OPC.find(([v])=>v===status)||[null,status||'Estoque'])[1];
+  const q=novos.length;
+  box.style.display='block';
+  box.innerHTML=`✅ <b>${q}</b> máquina${q!==1?'s':''} cadastrada${q!==1?'s':''}: `
+    +`<b>${faixa}</b> · entraram em <b>${esc(rot)}</b>`
+    +`<button onclick="verUltimoCadastro()">Ver na lista</button>`;
+  verUltimoCadastro();
+}
+// Tira a busca da frente, põe o filtro no status em que elas entraram, abre o
+// grupo da marca e rola até a primeira. Cada um desses passos já foi, sozinho,
+// motivo de máquina "sumir".
+window.verUltimoCadastro=()=>{
+  if(!ultimoCadastro || !ultimoCadastro.ids.length) return;
+  const {ids,status}=ultimoCadastro;
+  const bu=document.getElementById('pBusca');
+  if(bu && bu.value){ bu.value=''; }
+  const achaChip=v=>[...document.querySelectorAll('.fc2')]
+    .find(b=>(b.getAttribute('onclick')||'').includes("setF('"+v+"'"));
+  // Sem status escolhido não há aba própria; "Todos" é o único lugar onde ela
+  // aparece com certeza.
+  const chip=achaChip(status)||achaChip('todos');
+  if(chip) chip.click(); else { filt='todos'; render(); }
+  setTimeout(()=>{
+    const sel=document.querySelector('.sel[data-id="'+ids[0]+'"]');
+    const tr=sel && sel.closest('tr');
+    if(tr){
+      // A linha pode existir dentro de um grupo de marca fechado: existir e
+      // não estar visível é o mesmo que não existir, pra quem procura. Os dois
+      // formatos de grupo entram aqui — a lista (bg_) e as seções (bg2_).
+      const cont=tr.closest('div[id^="bg_"], div[id^="bg2_"]');
+      if(cont && cont.style.display==='none'){
+        cont.style.display='block';
+        const arr=document.getElementById(cont.id.replace(/^bg/,'arr'));
+        if(arr) arr.textContent='▾';
+      }
+      try{ tr.scrollIntoView({behavior:'smooth',block:'center'}); }catch(e){ tr.scrollIntoView(); }
+    }
+    ids.forEach(id=>piscarLinha(id));
+  },80);
+};
+
 function piscarLinha(id){
   try{
     const sel=document.querySelector('.sel[data-id="'+id+'"]');
@@ -10997,7 +11073,7 @@ function piscarLinha(id){
 // ── Mudar o status de várias de uma vez ────────────────────────────────
 // Cadastrar dez máquinas de uma vez e depois trocar o status de uma em uma
 // desfaz o ganho. A barra age sobre a lista que está na tela, e só sobre ela.
-let pgAtual='produtos';   // aba aberta agora — sp2() mantém isto em dia
+let pgAtual='vendas';     // aba aberta agora — sp2() mantém isto em dia
 let loteLista=[];
 let loteFiltrada=[];        // o que está na tela agora, antes da marcação
 let loteFiltroAtivo=false;  // há busca ou filtro de status valendo?
@@ -11054,9 +11130,10 @@ window.loteLimpar=()=>{ loteSel.clear(); loteRepintar(); };
 function loteBarra(mostrar){
   const bar=document.getElementById('loteBar'), lbl=document.getElementById('loteLbl');
   if(!bar||!lbl) return;
-  // A lista filtrada só manda enquanto ele está na aba de produtos: marcar na
-  // aba de anunciados não pode fazer a barra falar de um filtro de outra tela.
-  if(mostrar===undefined) mostrar = loteFiltroAtivo && pgAtual==='produtos';
+  // A lista filtrada só manda enquanto ele está na aba de vendas, que é onde a
+  // busca e os filtros existem. Noutra aba, a barra falaria de um filtro que
+  // ele não está vendo.
+  if(mostrar===undefined) mostrar = loteFiltroAtivo && pgAtual==='vendas';
   const mk=loteRecalcular();
   // Máquina vendida não entra: mudar o status dela por aqui deixaria data de
   // venda e lucro pendurados sem venda nenhuma.
@@ -11078,10 +11155,10 @@ function loteBarra(mostrar){
        <b>#${p.num||'?'}</b><span class="n">${esc((p.nome||'').slice(0,22))}</span><span class="x">✕</span></span>`).join('');
   const lb=document.getElementById('loteLimparBt');
   if(lb) lb.style.display=mk.length?'':'none';
-  // "Marcar todas" fala da lista da aba de produtos. Fora dela, esconde: seria
-  // um botão prometendo mexer numa lista que ele não está vendo.
+  // "Marcar todas" fala da lista filtrada da aba de vendas. Fora dela, some:
+  // seria um botão prometendo mexer numa lista que ele não está vendo.
   const tb=document.getElementById('loteTodosBt');
-  if(tb) tb.style.display=(pgAtual==='produtos' && loteFiltrada.length)?'':'none';
+  if(tb) tb.style.display=(pgAtual==='vendas' && loteFiltrada.length)?'':'none';
   const obs=document.getElementById('loteObs');
   if(obs) obs.textContent = mk.length
     ? 'Vale só as marcadas, mesmo as que sumiram da busca.'
