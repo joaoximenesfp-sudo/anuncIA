@@ -601,6 +601,31 @@ input[type=number].inp{padding-left:32px}
 .an-chip b{font-weight:800}
 .an-chip .x{font-size:.8rem;opacity:.6}
 .an-chip:hover .x{opacity:1}
+/* Uma linha por maquina escolhida, com o campo de promocao do lado. O preco
+   de tabela fica visivel ao lado do campo: e o "de" que vai sair riscado na
+   arte, entao ele ve os dois numeros antes de gerar. */
+.an-item{display:flex;align-items:center;gap:6px;font-size:.72rem;font-weight:600;
+  background:var(--bbg);border:1px solid var(--b);border-radius:8px;padding:5px 7px;margin-top:5px}
+.an-item .nb{font-weight:800;color:var(--mu);flex:none}
+.an-item .cn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.an-item .de{flex:none;color:var(--li);text-decoration:line-through;font-size:.68rem}
+.an-item .de.off{text-decoration:none}
+.an-item input{width:88px;flex:none;padding:3px 6px;font-size:.72rem;font-weight:700;
+  border:1px solid var(--b);border-radius:6px;background:var(--cd);color:var(--tx)}
+.an-item .x{flex:none;cursor:pointer;opacity:.5;font-size:.85rem;padding:0 2px}
+.an-item .x:hover{opacity:1;color:var(--vm)}
+/* O editor de foto so aparece depois que ele clica num quadro da previa. */
+.an-edit{width:100%;display:none;flex-direction:column;gap:6px;
+  background:var(--cd);border:1px solid var(--b);border-radius:8px;padding:9px 11px}
+.an-edit.on{display:flex}
+.an-edit-top{display:flex;align-items:center;gap:8px;font-size:.72rem;font-weight:700;color:var(--mu)}
+.an-edit-bt{display:flex;gap:5px;flex-wrap:wrap}
+.an-edit-bt button{font-size:.68rem;font-weight:700;padding:3px 8px;cursor:pointer;
+  border:1px solid var(--b);border-radius:6px;background:var(--bbg);color:var(--tx)}
+.an-edit-bt button:hover{background:var(--b)}
+.an-edit input[type=range]{width:100%;accent-color:var(--gr)}
+.an-prev canvas{cursor:grab;touch-action:none}
+.an-prev canvas:active{cursor:grabbing}
 .lote-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;
   padding:8px 10px;border:1px solid var(--b);border-radius:8px;background:var(--bbg);
   font-size:.74rem;color:var(--mu)}
@@ -2666,17 +2691,37 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
             <div class="fc"><span class="fla">Selo <span style="font-size:.62rem;color:var(--li)">o canto colorido — deixe vazio pra não aparecer</span></span>
               <input class="inp" type="text" id="anSelo" maxlength="22" placeholder="Ex: OFERTA DA SEMANA" oninput="anDesenhar()">
             </div>
-            <div class="fc"><span class="fla">Máquinas <span style="font-size:.62rem;color:var(--li)">até 4 — clique pra adicionar ou tirar</span></span>
+            <div class="fc"><span class="fla">O que mostrar</span>
+              <select class="inp" id="anModo" onchange="anTrocouModo()">
+                <option value="varias">🖥️ Várias máquinas — uma foto de cada</option>
+                <option value="uma">🔍 Uma máquina — até 4 fotos dela</option>
+              </select>
+            </div>
+            <div class="fc"><span class="fla" id="anMaqLbl">Máquinas <span style="font-size:.62rem;color:var(--li)">até 4 — clique pra adicionar ou tirar</span></span>
               <input class="inp" type="text" id="anBusca" placeholder="Buscar no que está anunciado..." autocomplete="off" oninput="anBuscar()" onfocus="anBuscar()">
               <div class="copia-lista" id="anLista"></div>
               <div id="anEscolhidas" class="an-chips"></div>
+              <div class="tipo-auto" id="anPromoHint">Deixe o campo de promoção vazio pra sair só o preço normal.</div>
             </div>
             <button class="bok" style="width:100%" onclick="anBaixar()" id="anBaixarBt">⬇️ Baixar imagem</button>
+            <button class="bcan" style="width:100%" onclick="anBaixarPar()" id="anBaixarParBt">🗂️ Baixar em 2 partes (carrossel)</button>
             <div class="tipo-auto" id="anStatus"></div>
           </div>
           <div class="an-prev">
             <canvas id="anCanvas"></canvas>
-            <div class="tipo-auto" style="text-align:center">Prévia — a imagem baixada sai no tamanho cheio.</div>
+            <div class="an-edit" id="anEdit">
+              <div class="an-edit-top"><span id="anEditNome">Foto</span></div>
+              <input type="range" id="anZoom" min="100" max="320" value="100" oninput="anZoomMudou(this.value)">
+              <div class="an-edit-bt">
+                <button onclick="anMover(0,-1)">↑</button>
+                <button onclick="anMover(0,1)">↓</button>
+                <button onclick="anMover(-1,0)">←</button>
+                <button onclick="anMover(1,0)">→</button>
+                <button onclick="anCentralizar()">Centralizar</button>
+                <button onclick="anOutraFoto()" id="anOutraBt">Outra foto</button>
+              </div>
+            </div>
+            <div class="tipo-auto" style="text-align:center" id="anPrevHint">Prévia — clique numa foto pra dar zoom e arrastar. A imagem baixada sai no tamanho cheio.</div>
           </div>
         </div>
       </div>
@@ -7804,7 +7849,7 @@ window.sp2=p=>{
   if(p==='painel'){ try{ buildPainel(); }catch(e){ console.error('buildPainel:',e); } buildPainelCharts(); }
   if(p==='financas'){renderFinLabel();checkNotificacoes();}
   if(p==='admin'){carregarAvisos();}
-  if(p==='anuncio'){ try{ anMontarSelect(); anChips(); anBuscar(); }catch(e){ console.error('anuncio:',e); } }
+  if(p==='anuncio'){ try{ anMontarSelect(); anTrocouModo(); anLigarEditor(); }catch(e){ console.error('anuncio:',e); } }
   if(p==='clientes'){ if(cliAba==='fornecedores')renderFornecedores(); else renderClientes(); }
   else{const bar=document.getElementById('notifBar');if(bar){bar.innerHTML='';bar.classList.remove('on');adjustPageTop();}}
 };
@@ -10117,7 +10162,36 @@ const AN_FMT={
   capa:  {w:1440, h:448,  nome:'capa'},
 };
 let anEscolhidas=[];          // produtos escolhidos, na ordem em que entraram
-const anCacheFoto={};         // id do produto -> Image ja carregada
+const anCacheFoto={};         // id do produto -> lista de Images (ate 4)
+const anFotoIdx={};           // id -> qual das fotos usar no modo "varias"
+const anPromo={};             // id -> preco promocional digitado
+// Zoom e enquadramento de cada foto, por 'idDoProduto#indiceDaFoto'. z e o
+// zoom (1 = a foto cobrindo o quadro), dx/dy vao de -1 a 1 e sao a fracao da
+// sobra que ele empurrou pro lado. Guardar em fracao, e nao em pixel, faz o
+// enquadramento continuar igual quando o mesmo anuncio troca de formato.
+const anAjuste={};
+let anQuadros=[];             // retangulos desenhados, pra saber onde ele clicou
+let anSel='';                 // foto selecionada no editor
+let anArrasto=null;
+let anExportando=false;       // durante o download, nada de marca de selecao
+
+function anModo(){ const s=document.getElementById('anModo'); return s?s.value:'varias'; }
+function anAj(key){
+  if(!anAjuste[key]) anAjuste[key]={z:1,dx:0,dy:0};
+  return anAjuste[key];
+}
+const anTrava=(v,min,max)=>Math.max(min,Math.min(max,v));
+
+// Preco que vai pra arte. So vira "de/por" quando a promocao existe e e menor
+// que o preco de tabela — promocao mais cara que o normal seria mentira, e
+// promocao igual nao e promocao.
+function anPreco(p){
+  const de=parseFloat(p.venda)||0;
+  const por=parseFloat(anPromo[p.id])||0;
+  if(por>0 && por<de) return {de, por, pct:Math.round((1-por/de)*100)};
+  return {de:0, por:de, pct:0};
+}
+function anTemPromo(){ return anEscolhidas.some(p=>anPreco(p).de>0); }
 
 // As datas do ano vêm do tema.js, o mesmo arquivo que pinta o catálogo. Uma
 // lista só: se um dia entrar data nova, ela aparece nos dois lugares.
@@ -10185,49 +10259,144 @@ window.anBuscar=()=>{
 window.anAlternar=async id=>{
   const p=prods.find(x=>x.id===id); if(!p) return;
   const i=anEscolhidas.findIndex(x=>x.id===id);
-  if(i>=0) anEscolhidas.splice(i,1);
-  else{
-    if(anEscolhidas.length>=4){ alert('Quatro é o limite. Mais que isso e cada máquina fica pequena demais pra ler no celular.'); return; }
+  if(i>=0){
+    anEscolhidas.splice(i,1);
+    delete anPromo[id];
+    // O enquadramento morre junto com a máquina: se ele tirar e puser de novo,
+    // é melhor voltar centralizado do que herdar um zoom que ele já esqueceu.
+    Object.keys(anAjuste).forEach(k=>{ if(k.split('#')[0]===id) delete anAjuste[k]; });
+    if(anSel.split('#')[0]===id){ anSel=''; anEditor(); }
+  }else{
+    // No modo "uma máquina", escolher outra troca em vez de somar.
+    if(anModo()==='uma') anEscolhidas=[];
+    else if(anEscolhidas.length>=4){
+      alert('Quatro é o limite. Mais que isso e cada máquina fica pequena demais pra ler no celular.'); return;
+    }
     anEscolhidas.push(p);
     await anCarregarFoto(p.id);
   }
   anChips(); anBuscar(); anDesenhar();
 };
+// Uma linha por máquina, com o preço de tabela do lado e um campo pra promoção.
+// Era chip antes; virou linha porque agora tem um número pra digitar em cada uma.
 function anChips(){
   const box=document.getElementById('anEscolhidas'); if(!box) return;
-  box.innerHTML=anEscolhidas.map(p=>
-    `<span class="an-chip" onclick="anAlternar('${p.id}')" title="Tirar do anúncio">
-      <b>#${p.num||'?'}</b> ${esc((p.nome||'').slice(0,26))} <span class="x">✕</span></span>`).join('')
-    || '<span class="tipo-auto">Nenhuma escolhida — o anúncio sai só com a chamada.</span>';
+  if(!anEscolhidas.length){
+    box.innerHTML='<span class="tipo-auto">Nenhuma escolhida — o anúncio sai só com a chamada.</span>';
+    return;
+  }
+  box.innerHTML=anEscolhidas.map(p=>{
+    const pr=anPreco(p);
+    return `<div class="an-item">
+      <span class="nb">#${p.num||'?'}</span>
+      <span class="cn">${esc(p.nome||'sem nome')}</span>
+      <span class="de ${pr.de?'':'off'}">${fmt(p.venda||0)}</span>
+      <input type="number" min="0" step="10" placeholder="promo" value="${anPromo[p.id]||''}"
+             oninput="anPromoMudou('${p.id}',this.value)">
+      <span class="x" onclick="anAlternar('${p.id}')" title="Tirar do anúncio">✕</span>
+    </div>`;
+  }).join('');
+  anPromoAviso();
 }
-// A foto vem do banco uma vez e fica em memória. Redesenhar a prévia a cada
-// tecla digitada não pode ir buscar imagem no Firestore de novo.
+// Promoção que não é menor que o preço de tabela é ignorada no desenho. Se
+// ficasse só nisso, ele digitaria 3200 numa máquina de 2800, veria 2800 na arte
+// e acharia que o campo está quebrado. Então o painel diz o que fez e por quê.
+function anPromoAviso(){
+  const h=document.getElementById('anPromoHint'); if(!h) return;
+  const ruins=anEscolhidas.filter(p=>{
+    const por=parseFloat(anPromo[p.id])||0;
+    return por>0 && por>=(parseFloat(p.venda)||0);
+  });
+  h.textContent = !ruins.length
+    ? 'Deixe o campo de promoção vazio pra sair só o preço normal.'
+    : '⚠️ '+(ruins.length===1
+        ? 'A promoção da #'+(ruins[0].num||'?')+' não é menor que o preço de tabela'
+        : ruins.length+' promoções não são menores que o preço de tabela')
+      +' — essas saem no anúncio com o preço normal.';
+}
+window.anPromoMudou=(id,v)=>{
+  const n=parseFloat(v);
+  if(n>0) anPromo[id]=n; else delete anPromo[id];
+  const p=prods.find(x=>x.id===id);
+  const box=document.getElementById('anEscolhidas');
+  // Só repinta o "de" riscado da linha mexida: refazer a lista inteira tiraria
+  // o cursor do campo no meio da digitação.
+  if(p&&box){
+    const it=[...box.querySelectorAll('.an-item')][anEscolhidas.findIndex(x=>x.id===id)];
+    const de=it&&it.querySelector('.de');
+    if(de) de.className='de '+(anPreco(p).de?'':'off');
+  }
+  anPromoAviso();
+  anDesenhar();
+};
+window.anTrocouModo=()=>{
+  const uma=anModo()==='uma';
+  // No modo de uma máquina só, tudo que passa da primeira vira ruído.
+  if(uma && anEscolhidas.length>1) anEscolhidas=anEscolhidas.slice(0,1);
+  const lbl=document.getElementById('anMaqLbl');
+  if(lbl) lbl.innerHTML= uma
+    ? 'Máquina <span style="font-size:.62rem;color:var(--li)">uma só — o anúncio mostra até 4 fotos dela</span>'
+    : 'Máquinas <span style="font-size:.62rem;color:var(--li)">até 4 — clique pra adicionar ou tirar</span>';
+  const ob=document.getElementById('anOutraBt');
+  if(ob) ob.style.display= uma?'none':'';
+  anSel=''; anEditor(); anChips(); anBuscar(); anDesenhar();
+};
+
+// As fotos vêm do banco uma vez e ficam em memória. Redesenhar a prévia a cada
+// tecla digitada não pode ir buscar imagem no Firestore de novo. Traz até 4:
+// é o teto do anúncio, e mais que isso só ocuparia memória à toa.
 async function anCarregarFoto(id){
   if(anCacheFoto[id]!==undefined) return anCacheFoto[id];
-  anCacheFoto[id]=null;
+  anCacheFoto[id]=[];
   try{
     const snap=await getDocs(query(collection(db,'fotos'),where('produto_id','==',id)));
-    const fs=snap.docs.map(d=>d.data()).sort((a,b)=>(a.ordem||0)-(b.ordem||0)).filter(f=>f.dataUrl);
-    if(!fs.length) return null;
-    const img=new Image();
-    await new Promise((res)=>{ img.onload=res; img.onerror=res; img.src=fs[0].dataUrl; });
-    anCacheFoto[id]=img.width?img:null;
-  }catch(e){ anCacheFoto[id]=null; }
+    const fs=snap.docs.map(d=>d.data()).sort((a,b)=>(a.ordem||0)-(b.ordem||0))
+                      .filter(f=>f.dataUrl).slice(0,4);
+    const imgs=[];
+    for(const f of fs){
+      const img=new Image();
+      await new Promise(res=>{ img.onload=res; img.onerror=res; img.src=f.dataUrl; });
+      if(img.width) imgs.push(img);
+    }
+    anCacheFoto[id]=imgs;
+  }catch(e){ anCacheFoto[id]=[]; }
   return anCacheFoto[id];
+}
+const anFotosDe=id=>anCacheFoto[id]||[];
+
+// As células do anúncio: cada uma é uma foto com um quadro próprio. No modo
+// "várias" é uma foto por máquina; no modo "uma" são as fotos da mesma máquina,
+// e aí o nome e o preço saem uma vez só, acima da grade.
+function anCelulas(){
+  if(anModo()==='uma'){
+    const p=anEscolhidas[0]; if(!p) return [];
+    const fs=anFotosDe(p.id);
+    const n=Math.max(1,Math.min(4,fs.length));
+    return Array.from({length:n},(_,i)=>({key:p.id+'#'+i, img:fs[i]||null, prod:p, rot:false}));
+  }
+  return anEscolhidas.map(p=>{
+    const i=anFotoIdx[p.id]||0;
+    return {key:p.id+'#'+i, img:anFotosDe(p.id)[i]||null, prod:p, rot:true};
+  });
 }
 
 // Corta a foto no quadro sem distorcer: escala pelo lado que sobra e centra.
-function anFotoNoQuadro(ctx,img,x,y,w,h,raio){
+// Com zoom e deslocamento, aplica os dois por cima disso — e guarda o retângulo
+// e a sobra, que é o que o arrastar da prévia precisa pra saber o quanto andar.
+function anFotoNoQuadro(ctx,img,x,y,w,h,raio,key){
+  const aj=key?anAj(key):{z:1,dx:0,dy:0};
   ctx.save();
   ctx.beginPath();
   const r=Math.min(raio,w/2,h/2);
   ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
   ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
   ctx.clip();
+  let folgaX=0, folgaY=0;
   if(img){
-    const e=Math.max(w/img.width, h/img.height);
+    const e=Math.max(w/img.width, h/img.height)*aj.z;
     const dw=img.width*e, dh=img.height*e;
-    ctx.drawImage(img, x+(w-dw)/2, y+(h-dh)/2, dw, dh);
+    folgaX=Math.max(0,(dw-w)/2); folgaY=Math.max(0,(dh-h)/2);
+    ctx.drawImage(img, x+(w-dw)/2+aj.dx*folgaX, y+(h-dh)/2+aj.dy*folgaY, dw, dh);
   }else{
     ctx.fillStyle='#16202f'; ctx.fillRect(x,y,w,h);
     ctx.fillStyle='#5c6b80'; ctx.textAlign='center'; ctx.textBaseline='middle';
@@ -10235,7 +10404,171 @@ function anFotoNoQuadro(ctx,img,x,y,w,h,raio){
     ctx.fillText('sem foto', x+w/2, y+h/2);
   }
   ctx.restore();
+  if(key){
+    anQuadros.push({key,x,y,w,h,folgaX,folgaY});
+    // Contorno na foto que ele está editando, pra saber qual vai mexer. Some
+    // no arquivo baixado porque lá o editor está sempre fechado.
+    if(key===anSel && !anExportando){
+      ctx.save();
+      ctx.strokeStyle='#1cf08f'; ctx.lineWidth=Math.max(2,Math.round(w*0.012));
+      ctx.setLineDash([Math.round(w*0.05),Math.round(w*0.035)]);
+      ctx.strokeRect(x+2,y+2,w-4,h-4);
+      ctx.restore();
+    }
+  }
 }
+
+// "De R$ 2.800" riscado em cima, o preço novo embaixo, em verde. Devolve quanto
+// subiu acima da linha de base, porque o layout precisa reservar esse espaço.
+// A folga entre o "De" e o preço novo é 0,95 do corpo da fonte grande, não
+// menos: o preço em 800 sobe uns 0,72 acima da linha de base, e com folga menor
+// o riscado do preço velho cai em cima do preço novo. Deu exatamente isso na
+// primeira renderização — a promoção saía com o número novo riscado também.
+const AN_FOLGA_DE=0.95;
+function anDesenharPreco(ctx,p,x,y,tp){
+  const pr=anPreco(p);
+  if(pr.de){
+    const td=Math.round(tp*0.5);
+    ctx.fillStyle='#7d8ea6';
+    ctx.font='600 '+td+'px system-ui,sans-serif';
+    const t='De '+fmt(pr.de);
+    const yd=y-Math.round(tp*AN_FOLGA_DE);
+    ctx.fillText(t,x,yd);
+    const lw=ctx.measureText(t).width;
+    ctx.fillRect(x, yd-Math.round(td*0.3), lw, Math.max(2,Math.round(td*0.09)));
+  }
+  ctx.fillStyle=pr.de?'#1cf08f':'#ffffff';
+  ctx.font='800 '+tp+'px system-ui,sans-serif';
+  ctx.fillText(fmt(pr.por), x, y);
+}
+// Etiqueta de desconto no canto da foto. Só aparece quando há promoção.
+function anSeloDesconto(ctx,p,x,y,w){
+  const pr=anPreco(p); if(!pr.de||!pr.pct) return;
+  const t='-'+pr.pct+'%';
+  // Proporcional à célula, mas com teto: no story de uma coluna a célula tem a
+  // largura toda, e sem teto o selo saía do tamanho de um cartaz por cima da foto.
+  const ts=anTrava(Math.round(w*0.09), 16, 54);
+  ctx.save();
+  ctx.font='800 '+ts+'px system-ui,sans-serif';
+  ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+  const pw=ctx.measureText(t).width+ts*0.7, ph=ts*1.5;
+  const px=x+w-pw-ts*0.35, py=y+ts*0.35;
+  ctx.fillStyle='#e11d48';
+  ctx.beginPath();
+  const rr=ph/2;
+  ctx.moveTo(px+rr,py); ctx.arcTo(px+pw,py,px+pw,py+ph,rr);
+  ctx.arcTo(px+pw,py+ph,px,py+ph,rr); ctx.arcTo(px,py+ph,px,py,rr);
+  ctx.arcTo(px,py,px+pw,py,rr); ctx.closePath(); ctx.fill();
+  ctx.fillStyle='#ffffff';
+  ctx.fillText(t, px+ts*0.35, py+ph*0.72);
+  ctx.restore();
+}
+// ── Editor de enquadramento ────────────────────────────────────────────
+// A prévia é a mesma imagem que vai ser baixada, só encolhida pela tela. Então
+// dá pra editar direto nela: clicar escolhe a foto, arrastar reposiciona, a
+// roda dá zoom. Os botões existem porque no celular não tem roda do mouse.
+function anEditor(){
+  const box=document.getElementById('anEdit'); if(!box) return;
+  const cel=anCelulas().find(c=>c.key===anSel);
+  if(!cel){ box.className='an-edit'; return; }
+  box.className='an-edit on';
+  const aj=anAj(anSel);
+  const nome=document.getElementById('anEditNome');
+  const i=parseInt(anSel.split('#')[1])||0;
+  const tot=anFotosDe(cel.prod.id).length;
+  if(nome) nome.textContent='📷 Foto '+(i+1)+(tot>1?' de '+tot:'')+' · #'+(cel.prod.num||'?')
+    +(aj.z>1?'  ·  zoom '+Math.round(aj.z*100)+'%':'');
+  const z=document.getElementById('anZoom');
+  if(z) z.value=Math.round(aj.z*100);
+  const ob=document.getElementById('anOutraBt');
+  if(ob) ob.style.display=(anModo()==='uma'||tot<2)?'none':'';
+}
+window.anZoomMudou=v=>{
+  if(!anSel) return;
+  anAj(anSel).z=anTrava((parseFloat(v)||100)/100, 1, 3.2);
+  anDesenhar(); anEditor();
+};
+window.anMover=(hx,hy)=>{
+  if(!anSel) return;
+  const aj=anAj(anSel);
+  aj.dx=anTrava(aj.dx+hx*0.15,-1,1);
+  aj.dy=anTrava(aj.dy+hy*0.15,-1,1);
+  anDesenhar();
+};
+window.anCentralizar=()=>{
+  if(!anSel) return;
+  anAjuste[anSel]={z:1,dx:0,dy:0};
+  anDesenhar(); anEditor();
+};
+// Máquina com mais de uma foto: troca qual delas vai pro anúncio. Só faz
+// sentido no modo "várias", onde cada máquina entra com uma foto só.
+window.anOutraFoto=()=>{
+  if(!anSel||anModo()==='uma') return;
+  const id=anSel.split('#')[0];
+  const tot=anFotosDe(id).length;
+  if(tot<2) return;
+  anFotoIdx[id]=((anFotoIdx[id]||0)+1)%tot;
+  anSel=id+'#'+anFotoIdx[id];
+  anDesenhar(); anEditor();
+};
+
+function anPonto(ev){
+  const cv=document.getElementById('anCanvas');
+  const r=cv.getBoundingClientRect();
+  const k=r.width?cv.width/r.width:1;
+  return {x:(ev.clientX-r.left)*k, y:(ev.clientY-r.top)*k};
+}
+const anQuadroEm=p=>anQuadros.find(q=>p.x>=q.x&&p.x<=q.x+q.w&&p.y>=q.y&&p.y<=q.y+q.h);
+
+function anLigarEditor(){
+  const cv=document.getElementById('anCanvas'); if(!cv||cv._anLigado) return;
+  cv._anLigado=true;
+  cv.addEventListener('pointerdown',ev=>{
+    const q=anQuadroEm(anPonto(ev));
+    // Clicar fora de qualquer foto fecha o editor: é como ele desmarca.
+    if(!q){ anSel=''; anEditor(); anDesenhar(); return; }
+    anSel=q.key; anEditor();
+    anArrasto={q, ...anPonto(ev)};
+    cv.setPointerCapture(ev.pointerId);
+    ev.preventDefault();
+    anDesenhar();
+  });
+  cv.addEventListener('pointermove',ev=>{
+    if(!anArrasto) return;
+    const p=anPonto(ev), aj=anAj(anArrasto.q.key), q=anArrasto.q;
+    // O arrasto anda em pixel; o ajuste é guardado em fração da sobra. Sem
+    // sobra (zoom 1 no lado que já cobre) não há pra onde ir, e aí não mexe.
+    if(q.folgaX>0) aj.dx=anTrava(aj.dx+(p.x-anArrasto.x)/q.folgaX,-1,1);
+    if(q.folgaY>0) aj.dy=anTrava(aj.dy+(p.y-anArrasto.y)/q.folgaY,-1,1);
+    anArrasto.x=p.x; anArrasto.y=p.y;
+    ev.preventDefault();
+    anDesenhar();
+    // O retângulo é refeito a cada desenho; pega a folga nova pro próximo passo.
+    const novo=anQuadros.find(x=>x.key===q.key);
+    if(novo) anArrasto.q=novo;
+  });
+  const soltar=ev=>{
+    if(!anArrasto) return;
+    anArrasto=null;
+    try{ cv.releasePointerCapture(ev.pointerId); }catch(e){}
+  };
+  cv.addEventListener('pointerup',soltar);
+  cv.addEventListener('pointercancel',soltar);
+  cv.addEventListener('wheel',ev=>{
+    const q=anQuadroEm(anPonto(ev)); if(!q) return;
+    ev.preventDefault();
+    anSel=q.key;
+    const aj=anAj(q.key);
+    aj.z=anTrava(aj.z*(ev.deltaY<0?1.12:1/1.12),1,3.2);
+    anDesenhar(); anEditor();
+  },{passive:false});
+  cv.addEventListener('dblclick',ev=>{
+    const q=anQuadroEm(anPonto(ev)); if(!q) return;
+    anAjuste[q.key]={z:1,dx:0,dy:0};
+    anDesenhar(); anEditor();
+  });
+}
+
 // Texto que não cabe é encurtado com reticências, em vez de vazar pra fora
 // do quadro ou ser desenhado por cima do preço.
 function anTexto(ctx,txt,x,y,max){
@@ -10249,8 +10582,9 @@ function anTexto(ctx,txt,x,y,max){
 // ela e muito baixa (3,2 por 1) e a FOTO DE PERFIL senta por cima do meio
 // de baixo. Entao ela ganha desenho proprio, com o miolo x 560-880 vazio de
 // proposito — texto ali fica escondido atras da foto.
-function anDesenharCapa(ctx,F,c1,c2,gf){
+function anDesenharCapa(ctx,F,c1,c2,gf,cels){
   const m=60, esqW=480;                 // coluna de texto, longe do miolo
+  const uma=anModo()==='uma';
   ctx.textAlign='left'; ctx.textBaseline='alphabetic';
 
   ctx.fillStyle='#1cf08f';
@@ -10266,8 +10600,16 @@ function anDesenharCapa(ctx,F,c1,c2,gf){
     if(ctx.measureText(t).width>esqW && ln){ lin.push(ln); ln=w; } else ln=t; });
   if(ln) lin.push(ln);
   // Quatro linhas cabem entre o nome da marca e o rodape. Com tres, frase de
-  // data comemorativa cortava no meio.
-  lin.slice(0,4).forEach(l=>{ ctx.fillText(l,m,y); y+=42; });
+  // data comemorativa cortava no meio. No modo de uma maquina so, a frase cede
+  // uma linha pro nome e pro preco, que passam a morar nessa mesma coluna.
+  lin.slice(0,uma?3:4).forEach(l=>{ ctx.fillText(l,m,y); y+=42; });
+
+  if(uma && anEscolhidas[0]){
+    const p=anEscolhidas[0];
+    ctx.fillStyle='#c8d5e4'; ctx.font='600 20px system-ui,sans-serif';
+    anTexto(ctx, p.nome, m, 262, esqW);
+    anDesenharPreco(ctx, p, m, 330, 38);
+  }
 
   ctx.fillStyle='#8fa3bc';
   ctx.font='600 19px system-ui,sans-serif';
@@ -10293,24 +10635,32 @@ function anDesenharCapa(ctx,F,c1,c2,gf){
 
   // maquinas so na faixa da direita, depois do x=900
   const dir0=900, dirW=F.w-m-dir0;
-  const n=Math.min(anEscolhidas.length,2);   // mais que duas nao se le aqui
+  const lista=cels.slice(0,2);               // mais que duas nao se le aqui
+  const n=lista.length;
   if(n){
-    const gap=18, cw=(dirW-gap*(n-1))/n, hF=Math.min(cw*0.75, 176);
-    anEscolhidas.slice(0,n).forEach((p,i)=>{
-      const cx=dir0+i*(cw+gap), cy=100;
-      anFotoNoQuadro(ctx, anCacheFoto[p.id], cx, cy, cw, hF, 14);
+    const gap=18, cw=(dirW-gap*(n-1))/n, hF=Math.min(cw*0.75, uma?250:176);
+    lista.forEach((c,i)=>{
+      const cx=dir0+i*(cw+gap), cy=uma?100:100;
+      anFotoNoQuadro(ctx, c.img, cx, cy, cw, hF, 14, c.key);
+      if(i===0) anSeloDesconto(ctx, c.prod, cx, cy, cw);
+      // No modo de uma maquina o nome e o preco ja sairam na coluna da esquerda.
+      if(!c.rot) return;
       ctx.fillStyle='#c8d5e4'; ctx.font='600 16px system-ui,sans-serif';
-      anTexto(ctx, p.nome, cx, cy+hF+26, cw);
-      ctx.fillStyle='#ffffff'; ctx.font='800 26px system-ui,sans-serif';
-      ctx.fillText(fmt(p.venda||0), cx, cy+hF+58);
+      anTexto(ctx, c.prod.nome, cx, cy+hF+26, cw);
+      anDesenharPreco(ctx, c.prod, cx, cy+hF+(anTemPromo()?84:58), 26);
     });
   }
 }
 
-window.anDesenhar=()=>{
+// Aceita uma lista de células pronta: é assim que o download em duas partes
+// desenha metade do anúncio sem mexer no que ele escolheu na tela.
+window.anDesenhar=(recorte)=>{
   const cv=document.getElementById('anCanvas'); if(!cv) return;
   const fmtSel=document.getElementById('anFmt').value;
   const F=AN_FMT[fmtSel]||AN_FMT.feed;
+  const cels=Array.isArray(recorte)?recorte:anCelulas();
+  const uma=anModo()==='uma';
+  anQuadros=[];
   cv.width=F.w; cv.height=F.h;
   // A prévia encolhe pela tela; o arquivo baixado sai no tamanho cheio.
   cv.style.width=Math.min(F.w, fmtSel==='capa'?520:340)+'px';
@@ -10327,7 +10677,7 @@ window.anDesenhar=()=>{
   gf.addColorStop(0,c1); gf.addColorStop(1,c2);
   ctx.fillStyle=gf; ctx.fillRect(0,0,F.w,Math.round(F.h*0.012));
 
-  if(fmtSel==='capa'){ anDesenharCapa(ctx,F,c1,c2,gf); return; }
+  if(fmtSel==='capa'){ anDesenharCapa(ctx,F,c1,c2,gf,cels); return; }
 
   const m=Math.round(F.w*0.06);                 // margem
   const capa=false;
@@ -10371,24 +10721,37 @@ window.anDesenhar=()=>{
   if(ln) linhas.push(ln);
   linhas.slice(0,3).forEach(l=>{ ctx.fillText(l,m,y); y+=Math.round(tam*1.22); });
 
-  // as máquinas
-  const n=anEscolhidas.length;
+  // No modo de uma máquina, o nome e o preço saem uma vez só, aqui em cima —
+  // as fotos abaixo são todas do mesmo produto e não precisam de legenda cada.
+  if(uma && anEscolhidas[0]){
+    const p=anEscolhidas[0];
+    const tn=Math.round(F.w*0.028), tp=Math.round(F.w*0.062);
+    y+=Math.round(F.h*0.022);
+    ctx.fillStyle='#c8d5e4';
+    ctx.font='600 '+tn+'px system-ui,sans-serif';
+    anTexto(ctx, p.nome, m, y, F.w-m*2);
+    y+=Math.round(tp*(anPreco(p).de?1.5:1.02));
+    anDesenharPreco(ctx, p, m, y, tp);
+  }
+
+  // as fotos
+  const n=cels.length;
   if(n){
-    const topo=y+Math.round(F.h*(capa?0.02:0.035));
-    const rodape=Math.round(F.h*(capa?0.16:0.13));
+    const topo=y+Math.round(F.h*0.035);
+    const rodape=Math.round(F.h*0.13);
     const alt=F.h-topo-rodape;
-    // Story é muito alto: com duas máquinas lado a lado o quadro fica estreito
+    // Story é muito alto: com duas fotos lado a lado o quadro fica estreito
     // e comprido, e foto de notebook é deitada — cortaria as laterais fora.
-    // Então no story pouca máquina empilha em vez de dividir.
-    const cols = capa ? n
-               : (fmtSel==='story' ? (n<=2?1:2)
-               : (n===1?1:2));
+    // Então no story pouca foto empilha em vez de dividir.
+    const cols = fmtSel==='story' ? (n<=2?1:2) : (n===1?1:2);
     const rows = Math.ceil(n/cols);
     const gap=Math.round(F.w*0.022);
     const cw=(F.w-m*2-gap*(cols-1))/cols;
-    const tn=Math.round(F.w*(capa?0.016:(n>2?0.021:0.026)));
-    const tp=Math.round(F.w*(capa?0.024:(n>2?0.032:0.040)));
-    const hTxt=tn*1.5+tp*1.35+Math.round(F.h*0.008);
+    const tn=Math.round(F.w*(n>2?0.021:0.026));
+    const tp=Math.round(F.w*(n>2?0.032:0.040));
+    // Com promoção cada célula ganha uma linha a mais: o "De R$ x" riscado.
+    const hPromo=anTemPromo()?Math.round(tp*AN_FOLGA_DE):0;
+    const hTxt=uma?0:(tn*1.5+tp*1.35+hPromo+Math.round(F.h*0.008));
     // A foto nunca passa de 3:4 da largura da célula. Sem esse teto ela
     // esticaria pra preencher a altura e o notebook sairia recortado.
     const hFoto=Math.max(1, Math.min((alt-gap*(rows-1))/rows-hTxt, cw*0.75));
@@ -10396,17 +10759,19 @@ window.anDesenhar=()=>{
     // Sobrou espaço? Centraliza, em vez de deixar tudo colado no topo e um
     // vazio grande embaixo.
     const topo2=topo+Math.max(0,(alt-bloco)/2);
-    anEscolhidas.forEach((p,i)=>{
+    cels.forEach((c,i)=>{
       const cx=m+(i%cols)*(cw+gap);
       const cy=topo2+Math.floor(i/cols)*(hFoto+hTxt+gap);
-      anFotoNoQuadro(ctx, anCacheFoto[p.id], cx, cy, cw, hFoto, Math.round(F.w*0.018));
+      anFotoNoQuadro(ctx, c.img, cx, cy, cw, hFoto, Math.round(F.w*0.018), c.key);
+      // No modo de uma máquina o selo vai só na primeira foto: repetido em
+      // quatro quadros do mesmo produto vira poluição.
+      if(!uma || i===0) anSeloDesconto(ctx, c.prod, cx, cy, cw);
+      if(!c.rot) return;
       ctx.textAlign='left';
       ctx.fillStyle='#c8d5e4';
       ctx.font='600 '+tn+'px system-ui,sans-serif';
-      anTexto(ctx, p.nome, cx, cy+hFoto+tn*1.5, cw);
-      ctx.fillStyle='#ffffff';
-      ctx.font='800 '+tp+'px system-ui,sans-serif';
-      ctx.fillText(fmt(p.venda||0), cx, cy+hFoto+tn*1.5+tp*1.35);
+      anTexto(ctx, c.prod.nome, cx, cy+hFoto+tn*1.5, cw);
+      anDesenharPreco(ctx, c.prod, cx, cy+hFoto+tn*1.5+tp*1.35+hPromo, tp);
     });
   }
 
@@ -10421,30 +10786,75 @@ window.anDesenhar=()=>{
   ctx.fillText(linha2, m, F.h-Math.round(F.h*(capa?0.045:0.032)));
 };
 
-window.anBaixar=()=>{
-  const cv=document.getElementById('anCanvas'); if(!cv) return;
-  const st=document.getElementById('anStatus');
+function anNomeArquivo(sufixo){
   const F=AN_FMT[document.getElementById('anFmt').value]||AN_FMT.feed;
   const d=anDatas().find(x=>x.id===document.getElementById('anData').value);
-  const nome='anuncio-'+(d?d.id:'promo')+'-'+F.nome+'-'+new Date().toISOString().slice(0,10)+'.png';
+  return 'anuncio-'+(d?d.id:'promo')+'-'+F.nome+(sufixo||'')
+        +'-'+new Date().toISOString().slice(0,10)+'.png';
+}
+// Desenha o recorte pedido, salva o PNG e devolve o nome do arquivo. Durante a
+// exportação a marca da foto selecionada some — ela é ajuda de tela, não faz
+// parte do anúncio.
+function anSalvar(recorte,sufixo){
+  return new Promise(res=>{
+    const cv=document.getElementById('anCanvas'); if(!cv) return res('');
+    anExportando=true;
+    anDesenhar(recorte);
+    const nome=anNomeArquivo(sufixo);
+    try{
+      cv.toBlob(b=>{
+        if(!b) return res('');
+        const url=URL.createObjectURL(b);
+        const a=document.createElement('a');
+        a.href=url; a.download=nome; document.body.appendChild(a); a.click();
+        // Solta a memória depois: imagem de 1080x1920 não é pequena, e ele vai
+        // gerar várias seguidas.
+        setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); },1500);
+        res(nome);
+      },'image/png');
+    }catch(e){ res(''); }
+  });
+}
+window.anBaixar=async()=>{
+  const st=document.getElementById('anStatus');
   // PNG de 1080x1920 leva um instante pra sair. Sem isso o botão parece morto
   // e ele clica de novo, gerando dois downloads.
   const bt=document.getElementById('anBaixarBt');
   if(bt){ bt.disabled=true; bt.textContent='Gerando...'; }
-  const soltar=()=>{ if(bt){ bt.disabled=false; bt.textContent='⬇️ Baixar imagem'; } };
-  try{
-    cv.toBlob(b=>{
-      soltar();
-      if(!b){ if(st) st.textContent='Não consegui gerar o arquivo.'; return; }
-      const url=URL.createObjectURL(b);
-      const a=document.createElement('a');
-      a.href=url; a.download=nome; document.body.appendChild(a); a.click();
-      // Solta a memória depois: imagem de 1080x1920 não é pequena, e ele vai
-      // gerar várias seguidas.
-      setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); },1500);
-      if(st) st.textContent='Baixado como '+nome;
-    },'image/png');
-  }catch(e){ soltar(); if(st) st.textContent='Falhou: '+(e.message||e); }
+  let nome='';
+  try{ nome=await anSalvar(null,''); }catch(e){}
+  anExportando=false; anDesenhar();
+  if(bt){ bt.disabled=false; bt.textContent='⬇️ Baixar imagem'; }
+  if(st) st.textContent = nome ? 'Baixado como '+nome : 'Não consegui gerar o arquivo.';
+};
+// Duas imagens em vez de uma: metade das fotos em cada. É o carrossel do
+// Instagram — o mesmo anúncio, com as fotos maiores em cada parte.
+window.anBaixarPar=async()=>{
+  const st=document.getElementById('anStatus');
+  const cels=anCelulas();
+  if(document.getElementById('anFmt').value==='capa'){
+    alert('A capa do WhatsApp é uma imagem só — não existe carrossel lá. Escolha post ou story.'); return;
+  }
+  if(cels.length<2){
+    alert(anModo()==='uma'
+      ? 'Essa máquina só tem uma foto no sistema. Pra dividir em duas imagens ela precisa de pelo menos duas.'
+      : 'Escolha pelo menos duas máquinas pra dividir em duas imagens.'); return;
+  }
+  const bt=document.getElementById('anBaixarParBt');
+  if(bt){ bt.disabled=true; bt.textContent='Gerando as duas...'; }
+  const meio=Math.ceil(cels.length/2);
+  let feitas=0;
+  for(const [i,parte] of [cels.slice(0,meio), cels.slice(meio)].entries()){
+    if(await anSalvar(parte,'-'+(i+1)+'de2')) feitas++;
+    // Dois downloads disparados no mesmo instante: alguns navegadores engolem
+    // o segundo. Um respiro entre eles resolve.
+    await new Promise(r=>setTimeout(r,600));
+  }
+  anExportando=false; anDesenhar();
+  if(bt){ bt.disabled=false; bt.textContent='🗂️ Baixar em 2 partes (carrossel)'; }
+  if(st) st.textContent = feitas===2 ? 'Baixadas as 2 imagens — poste na ordem, 1 e depois 2.'
+        : feitas===1 ? 'Só a primeira saiu. Tente a segunda de novo.'
+        : 'Não consegui gerar os arquivos.';
 };
 
 // ── Camada de animação ─────────────────────────────────────────────────
