@@ -2763,6 +2763,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
                 <button onclick="anMover(0,1)">↓</button>
                 <button onclick="anMover(-1,0)">←</button>
                 <button onclick="anMover(1,0)">→</button>
+                <button onclick="anEncaixe()" id="anEncBt">Foto inteira</button>
                 <button onclick="anCentralizar()">Centralizar</button>
                 <button onclick="anOutraFoto()" id="anOutraBt">Outra foto</button>
               </div>
@@ -10301,6 +10302,11 @@ const AN_FMT={
   story: {w:1080, h:1920, nome:'story'},
   capa:  {w:1440, h:448,  nome:'capa'},
 };
+// Quantas fotos cabem BEM em cada formato, no modo de uma máquina. Não é
+// limite técnico: é que num quadrado de 1080, com marca, chamada, nome, preço
+// e rodapé, quatro fotos deixam cada célula em 2:1 — e notebook não aparece
+// numa tira. O que passa disso vai pro carrossel, e o painel avisa.
+const AN_CAP={feed:2, story:4, capa:2};
 let anEscolhidas=[];          // produtos escolhidos, na ordem em que entraram
 const anCacheFoto={};         // id do produto -> lista de Images (ate 4)
 const anFotoIdx={};           // id -> qual das fotos usar no modo "varias"
@@ -10535,7 +10541,14 @@ function anFotoNoQuadro(ctx,img,x,y,w,h,raio,key){
   ctx.clip();
   let folgaX=0, folgaY=0;
   if(img){
-    const e=Math.max(w/img.width, h/img.height)*aj.z;
+    // Cobrir = preenche a célula e corta o que sobra. Inteira = cabe a foto
+    // toda e sobra fundo. Foto de notebook tirada de longe perde o notebook
+    // no corte; é pra ela que "inteira" existe.
+    ctx.fillStyle='#16202f'; ctx.fillRect(x,y,w,h);
+    const cobre=aj.enc!=='inteira';
+    const base=cobre ? Math.max(w/img.width, h/img.height)
+                     : Math.min(w/img.width, h/img.height);
+    const e=base*aj.z;
     const dw=img.width*e, dh=img.height*e;
     folgaX=Math.max(0,(dw-w)/2); folgaY=Math.max(0,(dh-h)/2);
     ctx.drawImage(img, x+(w-dw)/2+aj.dx*folgaX, y+(h-dh)/2+aj.dy*folgaY, dw, dh);
@@ -10624,6 +10637,8 @@ function anEditor(){
   if(z) z.value=Math.round(aj.z*100);
   const ob=document.getElementById('anOutraBt');
   if(ob) ob.style.display=(anModo()==='uma'||tot<2)?'none':'';
+  const eb=document.getElementById('anEncBt');
+  if(eb) eb.textContent = aj.enc==='inteira' ? 'Cortar pra preencher' : 'Foto inteira';
 }
 window.anZoomMudou=v=>{
   if(!anSel) return;
@@ -10639,7 +10654,15 @@ window.anMover=(hx,hy)=>{
 };
 window.anCentralizar=()=>{
   if(!anSel) return;
-  anAjuste[anSel]={z:1,dx:0,dy:0};
+  anAjuste[anSel]={z:1,dx:0,dy:0,enc:anAj(anSel).enc};
+  anDesenhar(); anEditor();
+};
+// Alterna entre cortar pra preencher e caber inteira. Zera o enquadramento
+// junto: o zoom que servia num modo quase nunca serve no outro.
+window.anEncaixe=()=>{
+  if(!anSel) return;
+  const aj=anAj(anSel);
+  anAjuste[anSel]={z:1,dx:0,dy:0,enc:aj.enc==='inteira'?'cobrir':'inteira'};
   anDesenhar(); anEditor();
 };
 // Máquina com mais de uma foto: troca qual delas vai pro anúncio. Só faz
@@ -10729,6 +10752,17 @@ const anDesc=()=>(document.getElementById('anDesc')?.value||'').trim();
 // Cabem 3 linhas no anúncio de uma máquina e 2 no de várias. O resto é cortado
 // — mas cortar calado é o pior dos mundos: ele veria a frase pela metade só
 // depois de postar. Então o painel diz quantas linhas ficaram de fora.
+// Foto que não entrou não some calada: o painel diz quantas ficaram e onde
+// elas cabem. Sem isso ele escolheria quatro fotos e veria duas, sem explicação.
+function anFotosAviso(fmtSel,fora){
+  const h=document.getElementById('anPrevHint'); if(!h) return;
+  const base='Prévia — clique numa foto pra dar zoom e arrastar. A imagem baixada sai no tamanho cheio.';
+  h.textContent = fora>0
+    ? '⚠️ '+fora+' foto'+(fora>1?'s não cabem':' não cabe')+' neste formato — no quadrado, quatro '
+      +'fotos deixam cada uma achatada demais. Use "Baixar em 2 partes" que elas saem na segunda '
+      +'imagem, ou troque pra Story, onde cabem as quatro.'
+    : base;
+}
 function anDescAviso(fmtSel,sobrou){
   const h=document.getElementById('anDescHint'); if(!h) return;
   if(!anDesc()){ h.textContent='Vazio: o anúncio sai sem descrição.'; return; }
@@ -10838,7 +10872,11 @@ window.anDesenhar=(recorte)=>{
   const cv=document.getElementById('anCanvas'); if(!cv) return;
   const fmtSel=document.getElementById('anFmt').value;
   const F=AN_FMT[fmtSel]||AN_FMT.feed;
-  const cels=Array.isArray(recorte)?recorte:anCelulas();
+  const todasCels=Array.isArray(recorte)?recorte:anCelulas();
+  // Um recorte explícito (o carrossel) já vem do tamanho certo e não é cortado.
+  const cels=Array.isArray(recorte)?todasCels
+            :todasCels.slice(0, AN_CAP[fmtSel]||2);
+  const fotosDeFora=todasCels.length-cels.length;
   const uma=anModo()==='uma';
   anQuadros=[];
   cv.width=F.w; cv.height=F.h;
@@ -10919,27 +10957,14 @@ window.anDesenhar=(recorte)=>{
     anTexto(ctx, p.nome, m, y, F.w-m*2);
     y+=Math.round(tp*(anPreco(p).de?1.5:1.02));
     anDesenharPreco(ctx, p, m, y, tp);
-    // Aqui a descrição tem lugar de verdade: é anúncio de um produto só, e é o
-    // texto que responde "por que essa máquina" antes de ele chamar no zap.
-    if(desc){
-      const td=Math.round(F.w*0.026);
-      ctx.fillStyle='#8fa3bc';
-      ctx.font='500 '+td+'px system-ui,sans-serif';
-      y+=Math.round(td*1.5);
-      const q=anQuebrar(ctx,desc,F.w-m*2,3);
-      descSobrou=q.sobrou;
-      q.linhas.forEach(l=>{ ctx.fillText(l,m,y); y+=Math.round(td*1.35); });
-      y-=Math.round(td*1.35);
-    }
   }
-  anDescAviso(fmtSel,descSobrou);
 
   // as fotos
   const n=cels.length;
   if(n){
-    const topo=y+Math.round(F.h*0.035);
     const rodape=Math.round(F.h*0.13);
-    const alt=F.h-topo-rodape;
+    let topo=y+Math.round(F.h*0.035);
+    let alt=F.h-topo-rodape;
     // Story é muito alto: com duas fotos lado a lado o quadro fica estreito
     // e comprido, e foto de notebook é deitada — cortaria as laterais fora.
     // Então no story pouca foto empilha em vez de dividir.
@@ -10952,9 +10977,37 @@ window.anDesenhar=(recorte)=>{
     // Com promoção cada célula ganha uma linha a mais: o "De R$ x" riscado.
     const hPromo=anTemPromo()?Math.round(tp*AN_FOLGA_DE):0;
     const hTxt=uma?0:(tn*1.5+tp*1.35+hPromo+Math.round(F.h*0.008));
-    // A foto nunca passa de 3:4 da largura da célula. Sem esse teto ela
-    // esticaria pra preencher a altura e o notebook sairia recortado.
-    const hFoto=Math.max(1, Math.min((alt-gap*(rows-1))/rows-hTxt, cw*0.75));
+    // A grade de fotos manda no espaço, e não o texto. Antes era o contrário:
+    // a descrição comia a altura, a célula virava uma tira de 460x250 e o
+    // notebook não cabia inteiro nela. Agora a foto reserva a altura ideal
+    // primeiro e a descrição fica com o que sobra.
+    // Story é bem mais alto que largo: ali a célula pode crescer sem empurrar
+    // nada, e foto grande é o que faz a máquina aparecer no celular.
+    const teto=fmtSel==='story'?0.95:0.78;
+    const idealF=cw*(teto-0.10), minF=cw*0.50, maxF=cw*teto;
+    const blocoDe=hf=>rows*(hf+hTxt)+gap*(rows-1);
+
+    // No modo de uma máquina a descrição divide o espaço com a grade: cabem
+    // as linhas que sobrarem depois de reservada a foto, no máximo três.
+    if(uma && desc){
+      const td=Math.round(F.w*0.026), passo=Math.round(td*1.35);
+      const sobra=alt-blocoDe(idealF)-gap;
+      const cabem=Math.max(0, Math.min(3, Math.floor(sobra/passo)));
+      ctx.fillStyle='#8fa3bc';
+      ctx.font='500 '+td+'px system-ui,sans-serif';
+      const q=anQuebrar(ctx,desc,F.w-m*2,cabem);
+      descSobrou=q.sobrou;
+      if(q.linhas.length){
+        let yd=y+Math.round(td*1.9);
+        q.linhas.forEach(l=>{ ctx.fillText(l,m,yd); yd+=passo; });
+        topo=yd-passo+Math.round(F.h*0.035);
+        alt=F.h-topo-rodape;
+      }
+    }
+    // O teto vale sempre; o piso, só quando cabe. Forçar o piso empurrava o
+    // bloco por cima do rodapé — a garantia saía escrita em cima da foto.
+    const cabeNaAltura=(alt-gap*(rows-1))/rows-hTxt;
+    const hFoto=Math.max(1, Math.min(maxF, Math.max(Math.min(minF,cabeNaAltura), cabeNaAltura)));
     const bloco=rows*(hFoto+hTxt)+gap*(rows-1);
     // Sobrou espaço? Centraliza, em vez de deixar tudo colado no topo e um
     // vazio grande embaixo.
@@ -10974,6 +11027,9 @@ window.anDesenhar=(recorte)=>{
       anDesenharPreco(ctx, c.prod, cx, cy+hFoto+tn*1.5+tp*1.35+hPromo, tp);
     });
   }
+
+  anDescAviso(fmtSel,descSobrou);
+  anFotosAviso(fmtSel,fotosDeFora);
 
   // rodapé
   ctx.textAlign='left'; ctx.fillStyle='#8fa3bc';
