@@ -2746,6 +2746,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
               <textarea class="inp" id="anDesc" maxlength="240" oninput="anDesenhar()"
                         placeholder="Ex.: Bateria segura 4h, tela sem risco, teclado retroiluminado."></textarea>
               <div class="tipo-auto" id="anDescHint"></div>
+              <div class="tipo-auto" id="anDescTroca" style="display:none"></div>
             </div>
             <div class="fc"><span class="fla">Selo <span style="font-size:.62rem;color:var(--li)">o canto colorido — deixe vazio pra não aparecer</span></span>
               <input class="inp" type="text" id="anSelo" maxlength="22" placeholder="Ex: OFERTA DA SEMANA" oninput="anDesenhar()">
@@ -10427,9 +10428,16 @@ window.anAlternar=async id=>{
     // é melhor voltar centralizado do que herdar um zoom que ele já esqueceu.
     Object.keys(anAjuste).forEach(k=>{ if(k.split('#')[0]===id) delete anAjuste[k]; });
     delete anFotoSel[id];
+    // Se o texto no campo era o que o sistema puxou dessa máquina, ele sai
+    // junto: descrição órfã vira ficha técnica errada no próximo anúncio.
+    const elD=document.getElementById('anDesc');
+    if(elD && anDescAuto && elD.value.trim()===anDescAuto.trim()){
+      elD.value=''; anDescAuto='';
+    }
     if(anSel.split('#')[0]===id){ anSel=''; anEditor(); }
   }else{
-    // No modo "uma máquina", escolher outra troca em vez de somar.
+    // No modo "uma máquina", escolher outra troca em vez de somar — e a
+    // descrição vai junto, senão o anúncio sai com a ficha técnica da anterior.
     if(anModo()==='uma') anEscolhidas=[];
     else if(anEscolhidas.length>=4){
       alert('Quatro é o limite. Mais que isso e cada máquina fica pequena demais pra ler no celular.'); return;
@@ -10831,14 +10839,50 @@ function anDescAviso(fmtSel,sobrou){
       (sobrou>1?' linhas ficam':' linha fica')+' de fora. Encurte o texto.'
     : '✓ Cabe inteira na arte.';
 }
-// Puxa a descrição do cadastro da máquina, sem passar por cima do que ele já
-// escreveu aqui. Só no modo de uma máquina: com várias, o campo é legenda do
-// anúncio inteiro e herdar o texto de uma delas confundiria.
+// Última descrição que o SISTEMA pôs no campo. É o que distingue "ele não
+// mexeu" de "ele escreveu algo": sem isso, ou eu jogava fora o texto dele, ou
+// deixava a descrição da máquina anterior — que é pior, porque aí o anúncio
+// sai com a ficha técnica de outra máquina.
+let anDescAuto='';
+// A descrição segue a máquina. Só no modo de uma máquina: com várias, o campo
+// é legenda do anúncio inteiro e herdar o texto de uma delas confundiria.
+// Devolve true quando trocou.
 function anPuxarDesc(p){
   const el=document.getElementById('anDesc');
-  if(!el || !p || anModo()!=='uma' || el.value.trim()) return;
-  el.value=String(p.descricao||'').slice(0,240);
+  if(!el || anModo()!=='uma') return false;
+  const nova=String((p&&p.descricao)||'').slice(0,240);
+  const atual=el.value.trim();
+  // Campo vazio, ou ainda com o texto que o próprio sistema pôs: pode trocar.
+  // Inclusive pra vazio — máquina sem descrição não herda a da anterior.
+  if(!atual || atual===anDescAuto.trim()){
+    el.value=nova; anDescAuto=nova;
+    try{ anDescTrocaAviso(p,true); }catch(e){}
+    return true;
+  }
+  try{ anDescTrocaAviso(p,false); }catch(e){}
+  return false;
 }
+// Quando ele escreveu o texto à mão, a troca não acontece calada: o painel
+// diz que manteve o dele e oferece o da máquina nova num clique.
+function anDescTrocaAviso(p,trocou){
+  const box=document.getElementById('anDescTroca'); if(!box) return;
+  const nova=String((p&&p.descricao)||'').trim();
+  if(trocou || !p || nova===anDesc()){
+    box.style.display='none'; box.innerHTML=''; return;
+  }
+  box.style.display='block';
+  box.innerHTML='✏️ Mantive o texto que você escreveu. '
+    + (nova ? `<button class="lote-bt" onclick="anUsarDescDaMaquina()">Usar a descrição da #${p.num||'?'}</button>`
+            : `A #${p.num||'?'} não tem descrição no cadastro.`);
+}
+window.anUsarDescDaMaquina=()=>{
+  const p=anEscolhidas[0], el=document.getElementById('anDesc');
+  if(!p||!el) return;
+  el.value=String(p.descricao||'').slice(0,240);
+  anDescAuto=el.value;
+  anDescTrocaAviso(p,true);
+  anDesenhar();
+};
 
 // Texto que não cabe é encurtado com reticências, em vez de vazar pra fora
 // do quadro ou ser desenhado por cima do preço.
