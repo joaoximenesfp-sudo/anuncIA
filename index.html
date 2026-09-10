@@ -614,6 +614,19 @@ input[type=number].inp{padding-left:32px}
   border:1px solid var(--b);border-radius:6px;background:var(--cd);color:var(--tx)}
 .an-item .x{flex:none;cursor:pointer;opacity:.5;font-size:.85rem;padding:0 2px}
 .an-item .x:hover{opacity:1;color:var(--vm)}
+/* Miniaturas de todas as fotos da maquina, pra ele escolher quais entram.
+   O numero no canto mostra a ORDEM em que vao sair na arte. */
+.an-fotos{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}
+.an-fgm{width:100%;font-size:.66rem;font-weight:700;color:var(--mu);margin:4px 0 -2px}
+.an-fg{position:relative;width:54px;height:54px;border-radius:7px;overflow:hidden;flex:none;
+  border:2px solid var(--b);background:#0b1221;cursor:pointer;transition:border-color .12s}
+.an-fg:hover{border-color:var(--gr)}
+.an-fg img{width:100%;height:100%;object-fit:cover;display:block;opacity:.55;transition:opacity .12s}
+.an-fg.on{border-color:var(--gr)}
+.an-fg.on img{opacity:1}
+.an-fg .n{position:absolute;top:2px;left:2px;min-width:16px;height:16px;padding:0 3px;
+  border-radius:9px;background:var(--gr);color:#fff;font-size:.58rem;font-weight:800;
+  display:flex;align-items:center;justify-content:center}
 /* O editor de foto so aparece depois que ele clica num quadro da previa. */
 .an-edit{width:100%;display:none;flex-direction:column;gap:6px;
   background:var(--cd);border:1px solid var(--b);border-radius:8px;padding:9px 11px}
@@ -2748,6 +2761,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
               <div class="copia-lista" id="anLista"></div>
               <div id="anEscolhidas" class="an-chips"></div>
               <div class="tipo-auto" id="anPromoHint">Deixe o campo de promoção vazio pra sair só o preço normal.</div>
+              <div class="an-fotos" id="anFotoGrade"></div>
             </div>
             <button class="bok" style="width:100%" onclick="anBaixar()" id="anBaixarBt">⬇️ Baixar imagem</button>
             <button class="bcan" style="width:100%" onclick="anBaixarPar()" id="anBaixarParBt">🗂️ Baixar em 2 partes (carrossel)</button>
@@ -2765,7 +2779,6 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
                 <button onclick="anMover(1,0)">→</button>
                 <button onclick="anEncaixe()" id="anEncBt">Foto inteira</button>
                 <button onclick="anCentralizar()">Centralizar</button>
-                <button onclick="anOutraFoto()" id="anOutraBt">Outra foto</button>
               </div>
             </div>
             <div class="tipo-auto" style="text-align:center" id="anPrevHint">Prévia — clique numa foto pra dar zoom e arrastar. A imagem baixada sai no tamanho cheio.</div>
@@ -7963,7 +7976,7 @@ window.sp2=p=>{
   if(p==='painel'){ try{ buildPainel(); }catch(e){ console.error('buildPainel:',e); } buildPainelCharts(); }
   if(p==='financas'){renderFinLabel();checkNotificacoes();}
   if(p==='admin'){carregarAvisos();}
-  if(p==='anuncio'){ try{ anMontarSelect(); anTrocouModo(); anLigarEditor(); }catch(e){ console.error('anuncio:',e); } }
+  if(p==='anuncio'){ try{ anMontarSelect(); anTrocouModo(); anGradeFotos(); anLigarEditor(); }catch(e){ console.error('anuncio:',e); } }
   if(p==='clientes'){ if(cliAba==='fornecedores')renderFornecedores(); else renderClientes(); }
   else{const bar=document.getElementById('notifBar');if(bar){bar.innerHTML='';bar.classList.remove('on');adjustPageTop();}}
 };
@@ -10309,7 +10322,9 @@ const AN_FMT={
 const AN_CAP={feed:2, story:4, capa:2};
 let anEscolhidas=[];          // produtos escolhidos, na ordem em que entraram
 const anCacheFoto={};         // id do produto -> lista de Images (ate 4)
-const anFotoIdx={};           // id -> qual das fotos usar no modo "varias"
+// id -> índices das fotos escolhidas, NA ORDEM em que ele clicou. A ordem é
+// dele: a primeira clicada é a que abre o anúncio.
+const anFotoSel={};
 const anPromo={};             // id -> preco promocional digitado
 // Zoom e enquadramento de cada foto, por 'idDoProduto#indiceDaFoto'. z e o
 // zoom (1 = a foto cobrindo o quadro), dx/dy vao de -1 a 1 e sao a fracao da
@@ -10411,6 +10426,7 @@ window.anAlternar=async id=>{
     // O enquadramento morre junto com a máquina: se ele tirar e puser de novo,
     // é melhor voltar centralizado do que herdar um zoom que ele já esqueceu.
     Object.keys(anAjuste).forEach(k=>{ if(k.split('#')[0]===id) delete anAjuste[k]; });
+    delete anFotoSel[id];
     if(anSel.split('#')[0]===id){ anSel=''; anEditor(); }
   }else{
     // No modo "uma máquina", escolher outra troca em vez de somar.
@@ -10422,7 +10438,7 @@ window.anAlternar=async id=>{
     anPuxarDesc(p);
     await anCarregarFoto(p.id);
   }
-  anChips(); anBuscar(); anDesenhar();
+  anChips(); anGradeFotos(); anBuscar(); anDesenhar();
 };
 // Uma linha por máquina, com o preço de tabela do lado e um campo pra promoção.
 // Era chip antes; virou linha porque agora tem um número pra digitar em cada uma.
@@ -10484,22 +10500,21 @@ window.anTrocouModo=()=>{
   if(lbl) lbl.innerHTML= uma
     ? 'Máquina <span style="font-size:.62rem;color:var(--li)">uma só — o anúncio mostra até 4 fotos dela</span>'
     : 'Máquinas <span style="font-size:.62rem;color:var(--li)">até 4 — clique pra adicionar ou tirar</span>';
-  const ob=document.getElementById('anOutraBt');
-  if(ob) ob.style.display= uma?'none':'';
   if(uma) anPuxarDesc(anEscolhidas[0]);
-  anSel=''; anEditor(); anChips(); anBuscar(); anDesenhar();
+  anSel=''; anEditor(); anChips(); anGradeFotos(); anBuscar(); anDesenhar();
 };
 
 // As fotos vêm do banco uma vez e ficam em memória. Redesenhar a prévia a cada
-// tecla digitada não pode ir buscar imagem no Firestore de novo. Traz até 4:
-// é o teto do anúncio, e mais que isso só ocuparia memória à toa.
+// tecla digitada não pode ir buscar imagem no Firestore de novo.
 async function anCarregarFoto(id){
   if(anCacheFoto[id]!==undefined) return anCacheFoto[id];
   anCacheFoto[id]=[];
   try{
     const snap=await getDocs(query(collection(db,'fotos'),where('produto_id','==',id)));
+    // Todas, não só as quatro primeiras: a grade de miniaturas existe pra ele
+    // escolher, e escolher entre as quatro primeiras não é escolher.
     const fs=snap.docs.map(d=>d.data()).sort((a,b)=>(a.ordem||0)-(b.ordem||0))
-                      .filter(f=>f.dataUrl).slice(0,4);
+                      .filter(f=>f.dataUrl).slice(0,12);
     const imgs=[];
     for(const f of fs){
       const img=new Image();
@@ -10511,6 +10526,61 @@ async function anCarregarFoto(id){
   return anCacheFoto[id];
 }
 const anFotosDe=id=>anCacheFoto[id]||[];
+// Escolha atual, já limpa de índice que não existe mais. Sem escolha, o padrão
+// são as primeiras — que é o que o gerador fazia antes de existir a grade.
+function anSelDe(id){
+  const n=anFotosDe(id).length;
+  if(!anFotoSel[id]) anFotoSel[id]=Array.from({length:Math.min(4,n)},(_,i)=>i);
+  const s=anFotoSel[id].filter(i=>i<n);
+  return s.length?s:(n?[0]:[]);
+}
+// Clicar numa miniatura. Com várias máquinas cada uma entra com UMA foto, então
+// clicar troca; com uma máquina só, clicar soma ou tira, até quatro.
+window.anTogFoto=(id,i)=>{
+  const n=anFotosDe(id).length; if(i>=n) return;
+  if(anModo()!=='uma'){ anFotoSel[id]=[i]; }
+  else{
+    const s=anSelDe(id).slice();
+    const j=s.indexOf(i);
+    if(j>=0){
+      // Nunca deixa zerar: anúncio de uma máquina sem foto nenhuma não é anúncio.
+      if(s.length>1) s.splice(j,1);
+    } else if(s.length>=4){
+      alert('Quatro fotos é o limite do anúncio. Tire uma antes de pôr outra.'); return;
+    } else s.push(i);
+    anFotoSel[id]=s;
+  }
+  // O enquadramento é por foto; trocar de foto não pode herdar o zoom da outra.
+  anSel=''; anEditor();
+  anGradeFotos(); anDesenhar();
+};
+// A grade: no modo de uma máquina, as fotos dela; no de várias, uma tira por
+// máquina escolhida, porque cada uma entra com uma foto só.
+function anGradeFotos(){
+  const box=document.getElementById('anFotoGrade'); if(!box) return;
+  const uma=anModo()==='uma';
+  const lista=uma?anEscolhidas.slice(0,1):anEscolhidas;
+  const partes=[];
+  lista.forEach(p=>{
+    const fs=anFotosDe(p.id);
+    if(!fs.length){
+      partes.push(`<div class="an-fgm">#${p.num||'?'} — sem foto no cadastro</div>`);
+      return;
+    }
+    const sel=anSelDe(p.id);
+    partes.push(`<div class="an-fgm">#${p.num||'?'} · ${fs.length} foto${fs.length!==1?'s':''}`
+      + (uma?` — clique pra escolher até 4, na ordem que quiser`:` — clique pra trocar`)+`</div>`);
+    fs.forEach((img,i)=>{
+      const pos=sel.indexOf(i);
+      partes.push(`<span class="an-fg${pos>=0?' on':''}" onclick="anTogFoto('${p.id}',${i})"
+        title="Foto ${i+1}"><img src="${img.src}" alt="">`
+        + (pos>=0 && uma ? `<span class="n">${pos+1}</span>` : '')
+        + (pos>=0 && !uma ? `<span class="n">✓</span>` : '') + `</span>`);
+    });
+  });
+  box.innerHTML = partes.join('') ||
+    '<div class="an-fgm">Escolha uma máquina pra ver as fotos dela.</div>';
+}
 
 // As células do anúncio: cada uma é uma foto com um quadro próprio. No modo
 // "várias" é uma foto por máquina; no modo "uma" são as fotos da mesma máquina,
@@ -10519,11 +10589,11 @@ function anCelulas(){
   if(anModo()==='uma'){
     const p=anEscolhidas[0]; if(!p) return [];
     const fs=anFotosDe(p.id);
-    const n=Math.max(1,Math.min(4,fs.length));
-    return Array.from({length:n},(_,i)=>({key:p.id+'#'+i, img:fs[i]||null, prod:p, rot:false}));
+    if(!fs.length) return [{key:p.id+'#0', img:null, prod:p, rot:false}];
+    return anSelDe(p.id).map(i=>({key:p.id+'#'+i, img:fs[i]||null, prod:p, rot:false}));
   }
   return anEscolhidas.map(p=>{
-    const i=anFotoIdx[p.id]||0;
+    const i=anSelDe(p.id)[0]||0;
     return {key:p.id+'#'+i, img:anFotosDe(p.id)[i]||null, prod:p, rot:true};
   });
 }
@@ -10635,8 +10705,6 @@ function anEditor(){
     +(aj.z>1?'  ·  zoom '+Math.round(aj.z*100)+'%':'');
   const z=document.getElementById('anZoom');
   if(z) z.value=Math.round(aj.z*100);
-  const ob=document.getElementById('anOutraBt');
-  if(ob) ob.style.display=(anModo()==='uma'||tot<2)?'none':'';
   const eb=document.getElementById('anEncBt');
   if(eb) eb.textContent = aj.enc==='inteira' ? 'Cortar pra preencher' : 'Foto inteira';
 }
@@ -10663,17 +10731,6 @@ window.anEncaixe=()=>{
   if(!anSel) return;
   const aj=anAj(anSel);
   anAjuste[anSel]={z:1,dx:0,dy:0,enc:aj.enc==='inteira'?'cobrir':'inteira'};
-  anDesenhar(); anEditor();
-};
-// Máquina com mais de uma foto: troca qual delas vai pro anúncio. Só faz
-// sentido no modo "várias", onde cada máquina entra com uma foto só.
-window.anOutraFoto=()=>{
-  if(!anSel||anModo()==='uma') return;
-  const id=anSel.split('#')[0];
-  const tot=anFotosDe(id).length;
-  if(tot<2) return;
-  anFotoIdx[id]=((anFotoIdx[id]||0)+1)%tot;
-  anSel=id+'#'+anFotoIdx[id];
   anDesenhar(); anEditor();
 };
 
