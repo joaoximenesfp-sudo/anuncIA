@@ -12963,6 +12963,18 @@ function buildPainel(){
     const roiJoao = joaoTotalInv>0 ? Math.round(lucroJoao/joaoTotalInv*100) : 0;
     const roiIgor = igorTotalInv>0 ? Math.round(lucroIgor/igorTotalInv*100) : 0;
 
+    // QUANTO JÁ VOLTOU. O painel mostrava só o quanto cada um colocou, e capital
+    // colocado, visto sozinho, parece gasto. Máquina vendida devolve o custo ao
+    // bolso de quem pagou E mais a metade do lucro — é isso que esta conta mede.
+    const joaoVoltou = joaoInvV + lucroJoao;
+    const igorVoltou = igorInvV + lucroIgor;
+    // Por real colocado: 1,00 é empatar; acima disso é o capital trabalhando.
+    const porRealJoao = joaoTotalInv>0 ? joaoVoltou/joaoTotalInv : 0;
+    const porRealIgor = igorTotalInv>0 ? igorVoltou/igorTotalInv : 0;
+    // Máquina sem data de compra fica de fora de qualquer recorte por período.
+    // Numa conta que dois sócios vão discutir, isso precisa aparecer.
+    const semData = prods.filter(p=>!getMC(p)).length;
+
     // Lucro Igor antes da parceria (só dele, Jan-Mar/2025)
     const antesParc = prods.filter(p=>getMC(p) < INICIO && getMC(p) !== '');
     const lucroIgorAntes = antesParc.filter(p=>p.status==='Vendido').reduce((s,p)=>s+(p.lucro!==undefined?p.lucro:p.venda-p.custo),0);
@@ -12971,6 +12983,8 @@ function buildPainel(){
 
     return {
       joaoTotalInv, igorTotalInv,
+      joaoInvV, igorInvV,
+      joaoVoltou, igorVoltou, porRealJoao, porRealIgor, semData,
       joaoAtual, igorAtual,
       lucroJoao, lucroIgor, lucroTotal,
       roiJoao, roiIgor,
@@ -12993,6 +13007,9 @@ function buildPainel(){
     const luc     = isJoao ? dados.lucroJoao    : dados.lucroIgor;
     const roi     = isJoao ? dados.roiJoao      : dados.roiIgor;
     const sal     = isJoao ? dados.saldoJoao    : dados.saldoIgor;
+    const devolvido = isJoao ? dados.joaoInvV   : dados.igorInvV;
+    const voltou    = isJoao ? dados.joaoVoltou : dados.igorVoltou;
+    const porReal   = isJoao ? dados.porRealJoao: dados.porRealIgor;
     const regra   = isJoao
       ? `Desde abr/2025 · ${dados.qtdJoao} só João + ${dados.qtdAmbos} divididos`
       : `${dados.qtdIgor} só Igor + ${dados.qtdAmbos} divididos`;
@@ -13003,10 +13020,14 @@ function buildPainel(){
     const pctRealizado = Math.min(Math.round(luc/totalBase*100), 100);
 
     const rows = [
-      {l:'Total investido (desde abr/2025)',  v:fmt(invHist),  cls:'',  sep:false},
-      {l:'Capital atual em estoque/anunciado',v:fmt(invAtual), cls:'am',sep:false},
-      {l:'Lucro da parceria (50/50)',         v:fmt(luc),      cls:'g', sep:false},
-      {l:'ROI sobre investimento',            v:roi+'%',       cls: roi>=50?'g':roi>=20?'am':'re', sep:false},
+      {l:'Total colocado (desde abr/2025)',   v:fmt(invHist),  cls:'',  sep:false},
+      {l:'↩ Capital devolvido pelas vendidas',v:fmt(devolvido),cls:'g', sep:false},
+      {l:'↩ + metade do lucro',               v:fmt(luc),      cls:'g', sep:false},
+      {l:'= JÁ VOLTOU PRO BOLSO',             v:fmt(voltou),   cls:'g', sep:false},
+      {l:'De cada R$ 1 colocado, voltou',     v:'R$ '+porReal.toFixed(2),
+       cls: porReal>=1?'g':porReal>=0.7?'am':'re', sep:true},
+      {l:'Capital ainda parado em estoque',   v:fmt(invAtual), cls:'am',sep:false},
+      {l:'ROI sobre o colocado',              v:roi+'%',       cls: roi>=50?'g':roi>=20?'am':'re', sep:false},
       {l:'Saldo líquido (lucro − parado)',    v:fmt(sal),      cls: sal>=0?'g':'re', sep:true},
       ...(!isJoao && dados.lucroIgorAntes>0 ? [{l:'+ Lucro pré-parceria (só Igor)',v:fmt(dados.lucroIgorAntes),cls:'g',sep:false}] : []),
     ];
@@ -13014,6 +13035,9 @@ function buildPainel(){
       <div style="font-size:.67rem;color:var(--li);margin-bottom:10px;padding:4px 8px;background:var(--bg);border-radius:5px;border:1px solid var(--b)">
         📋 ${regra}
       </div>
+      ${dados.semData>0?`<div style="font-size:.67rem;color:var(--re);margin-bottom:10px;padding:4px 8px;background:var(--rbg);border-radius:5px;border:1px solid #fecaca">
+        ⚠️ ${dados.semData} máquina${dados.semData>1?'s':''} sem data de compra ${dados.semData>1?'ficam':'fica'} de fora desta conta.
+        Corrija antes de usar estes números numa conversa.</div>`:''}
       <div style="margin-bottom:10px">
         <div style="display:flex;justify-content:space-between;font-size:.67rem;color:var(--li);margin-bottom:3px">
           <span>Parado em estoque</span><span>Lucro realizado</span>
