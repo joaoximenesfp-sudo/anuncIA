@@ -3271,6 +3271,8 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
     <option value="Estoque">Estoque</option>
     <option value="Reservado">🤝 Reservado</option>
     <option value="Aguardando">🚚 Aguardando chegar</option>
+    <option value="" disabled>──────────</option>
+    <option value="" disabled>Vendido? use o botão 💰 ao lado</option>
   </select>
   <button class="lote-bt" id="loteAplicarBt" onclick="loteAplicar()">Aplicar</button>
   <button class="lote-bt" style="background:var(--gr);border-color:var(--gr)" onclick="lvAbrir()">💰 Vender em lote</button>
@@ -11396,9 +11398,10 @@ function loteBarra(mostrar){
   const tb=document.getElementById('loteTodosBt');
   if(tb) tb.style.display=(pgAtual==='vendas' && loteFiltrada.length)?'':'none';
   const obs=document.getElementById('loteObs');
-  if(obs) obs.textContent = mk.length
-    ? 'Vale só as marcadas, mesmo as que sumiram da busca.'
-    : 'Marque a bolinha ao lado da máquina, ou deixe sem marcar nenhuma pra valer a lista inteira.';
+  if(obs) obs.textContent = (mk.length
+    ? 'Vale só as marcadas, mesmo as que sumiram da busca. '
+    : 'Marque a bolinha ao lado da máquina, ou deixe sem marcar nenhuma pra valer a lista inteira. ')
+    + 'Pra VENDER (inclusive reservadas), use o botão verde — venda pede cliente, data e valor.';
 }
 // Tirar pela etiqueta: a máquina pode não estar na tela, então a caixinha
 // correspondente talvez nem exista pra desmarcar.
