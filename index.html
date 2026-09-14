@@ -2292,6 +2292,33 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
         </div>
       </div>
 
+      <!-- ── CONTAGEM SOLO ────────────────────────────────────────────────
+           A parceria tem começo (abr/2025) e passa a ter fim. Sem uma marca
+           de fim, tudo o que ele comprar sozinho continua caindo na conta da
+           dupla e o lucro sai dividido no meio. Contagem separada, então. -->
+      <div class="cd" style="margin-bottom:12px">
+        <div class="cdh">
+          <span class="cdht">🧍 Operação do João sozinho</span>
+          <button class="metas3-gear" onclick="soloToggleConfig()" title="Definir quando começa">⚙️</button>
+        </div>
+        <div style="padding:16px 18px">
+          <div class="metas3-config" id="soloConfig" style="display:none">
+            <div class="metas3-cfg-row">
+              <label>A partir de que mês a operação é só sua<input class="meta-inp" type="month" id="soloInicioInp"></label>
+            </div>
+            <div style="font-size:.68rem;color:var(--li);margin:2px 0 8px">
+              Deste mês em diante o lucro conta 100% seu e não entra na conta da parceria.
+              O que veio antes continua dividido — mexer nisso mudaria números já acertados.
+              Deixe em branco para voltar a contar tudo como parceria.
+            </div>
+            <button class="meta-btn" onclick="salvarSolo()">💾 Salvar</button>
+            <button class="meta-btn" style="background:var(--b);color:var(--tx)" onclick="limparSolo()">Apagar marca</button>
+            <span style="font-size:.7rem;color:var(--gr);margin-left:8px" id="soloSaveMsg"></span>
+          </div>
+          <div id="soloBox"></div>
+        </div>
+      </div>
+
 
       <!-- ANÁLISE DE SÓCIOS -->
       <div class="cd" style="margin-bottom:12px">
@@ -3272,7 +3299,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
     <option value="Reservado">🤝 Reservado</option>
     <option value="Aguardando">🚚 Aguardando chegar</option>
     <option value="" disabled>──────────</option>
-    <option value="" disabled>Vendido? use o botão 💰 ao lado</option>
+    <option value="Vendido">💰 Vendido (abre a tela de venda)</option>
   </select>
   <button class="lote-bt" id="loteAplicarBt" onclick="loteAplicar()">Aplicar</button>
   <button class="lote-bt" style="background:var(--gr);border-color:var(--gr)" onclick="lvAbrir()">💰 Vender em lote</button>
@@ -3637,7 +3664,7 @@ onAuthStateChanged(auth,u=>{
     // Mostrar botão admin só para o dono
     const btnAdm = document.getElementById('btnAdmin');
     if(btnAdm) btnAdm.style.display = perfilAtual==='joao' ? '' : 'none';
-    loadProds();loadFinancas();loadPecas();loadClientes();loadFornecedores();loadMetas3();loadMilhao();loadReciboCfg();try{montarHw();}catch(e){}
+    loadProds();loadFinancas();loadPecas();loadClientes();loadFornecedores();loadMetas3();loadMilhao();loadSolo();loadReciboCfg();try{montarHw();}catch(e){}
     try{ initSpecBuilder(); loadCpuOutros(); }catch(e){}
     setTimeout(carregarAvisos, 2000); // carregar avisos após login
     // Depois do login os cards já existem na tela; antes disso não havia o
@@ -8069,6 +8096,55 @@ window.salvarMilhao=async()=>{
   const m=document.getElementById('mlSaveMsg'); if(m){m.textContent='✓ Salvo';setTimeout(()=>m.textContent='',2000);}
 };
 
+// ── OPERAÇÃO SOLO ──────────────────────────────────────────────────────
+// Um mês só: a partir dele, a operação é do João sozinho. É a fronteira entre
+// as duas contagens, e por isso mora no Firestore junto com as outras
+// configurações — não no navegador dele, que some se trocar de celular.
+let opSolo = { inicio:'', _docId:null };
+
+async function loadSolo(){
+  try{ const ls=JSON.parse(localStorage.getItem('bj_opsolo')||'null'); if(ls) opSolo={...opSolo,...ls}; }catch(e){}
+  try{
+    const snap=await getDocs(query(collection(db,'config'),where('userId','==','shared_ijx')));
+    const d0=snap.docs.find(d=>d.data().tipo==='op_solo');
+    if(d0){ opSolo={...opSolo,...(d0.data().dados||{})}; opSolo._docId=d0.id; }
+  }catch(e){}
+  const inp=document.getElementById('soloInicioInp'); if(inp) inp.value=opSolo.inicio||'';
+  try{ buildPainel(); }catch(e){}
+}
+window.soloToggleConfig=()=>{
+  const c=document.getElementById('soloConfig'); if(!c) return;
+  const abrir = c.style.display==='none';
+  c.style.display = abrir?'block':'none';
+  const inp=document.getElementById('soloInicioInp'); if(inp && abrir) inp.value=opSolo.inicio||'';
+};
+async function gravarSolo(inicio){
+  const dados={inicio};
+  opSolo={...opSolo,...dados};
+  localStorage.setItem('bj_opsolo',JSON.stringify(dados));
+  try{
+    if(opSolo._docId){ await updateDoc(doc(db,'config',opSolo._docId),{dados}); }
+    else { const r=await addDoc(collection(db,'config'),{userId:'shared_ijx',tipo:'op_solo',dados}); opSolo._docId=r.id; }
+  }catch(e){}
+  try{ buildPainel(); }catch(e){}
+  const m=document.getElementById('soloSaveMsg'); if(m){ m.textContent='✓ Salvo'; setTimeout(()=>m.textContent='',2000); }
+}
+window.salvarSolo=async()=>{
+  const inicio=(document.getElementById('soloInicioInp')?.value||'').slice(0,7);
+  if(!inicio){ alert('Escolha o mês, ou use "Apagar marca" pra voltar a contar tudo como parceria.'); return; }
+  if(inicio < '2025-04'){
+    alert('A parceria começou em abr/2025. Um mês anterior a isso deixaria a contagem da dupla vazia.');
+    return;
+  }
+  await gravarSolo(inicio);
+};
+window.limparSolo=async()=>{
+  if(!opSolo.inicio){ return; }
+  if(!confirm('Apagar a marca? Tudo volta a ser contado como parceria, com o lucro dividido no meio.')) return;
+  await gravarSolo('');
+  const inp=document.getElementById('soloInicioInp'); if(inp) inp.value='';
+};
+
 function renderMilhao(){
   const wrap=document.getElementById('milhaoWrap'); if(!wrap)return;
   const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
@@ -11401,7 +11477,8 @@ function loteBarra(mostrar){
   if(obs) obs.textContent = (mk.length
     ? 'Vale só as marcadas, mesmo as que sumiram da busca. '
     : 'Marque a bolinha ao lado da máquina, ou deixe sem marcar nenhuma pra valer a lista inteira. ')
-    + 'Pra VENDER (inclusive reservadas), use o botão verde — venda pede cliente, data e valor.';
+    + 'Pra VENDER (inclusive reservadas), escolha "Vendido" na lista ou use o botão verde — '
+    + 'os dois abrem a mesma tela, que pede cliente, data e valor.';
 }
 // Tirar pela etiqueta: a máquina pode não estar na tela, então a caixinha
 // correspondente talvez nem exista pra desmarcar.
@@ -11410,6 +11487,11 @@ window.loteAplicar=async()=>{
   const sel=document.getElementById('loteAlvo'); if(!sel) return;
   const alvo=sel.value;
   if(!alvo){ alert('Escolha para qual status.'); return; }
+  // "Vendido" não é troca de status, é venda. Gravar só o status deixaria a
+  // máquina sem cliente, sem data, sem valor e sem forma de pagamento — e o
+  // lucro dela sairia do preço de tabela, que quase nunca é o que ele recebeu.
+  // Então a opção fica onde ele procura, mas abre a tela que pergunta isso.
+  if(alvo==='Vendido'){ sel.value=''; lvAbrir(); return; }
   const mexer=loteLista.filter(p=>p.status!=='Vendido' && p.status!==alvo);
   const jaEstavam=loteLista.filter(p=>p.status===alvo).length;
   const vendidas=loteLista.filter(p=>p.status==='Vendido').length;
@@ -12905,8 +12987,6 @@ function buildPainel(){
   renderMarcasPlat();
 
   // ── Capital por sócio ──
-  const joaoProds = prods.filter(p=>p.investidor==='João');
-  const igorProds = prods.filter(p=>p.investidor==='Igor');
   function calcCapitalSocios(){
     // REGRA:
     // Parceria começa em 04/2025 (primeiro * na planilha)
@@ -12916,18 +12996,22 @@ function buildPainel(){
     //   Lucro sempre 50/50
 
     const INICIO = '2025-04';
+    // A parceria também tem fim. Depois que ele passa a tocar sozinho, máquina
+    // comprada por ele não é capital da dupla e o lucro não é 50/50 — deixar
+    // tudo junto continuaria pagando metade pro Igor de uma conta que não é dele.
+    const FIM = (typeof opSolo!=='undefined' && opSolo.inicio) || '';
 
-    // Filtrar só produtos da parceria (abr/2025+)
+    // Filtrar só produtos da parceria (abr/2025 até o fim, se houver)
     const getMC = p => {
       const dc = p.data_compra || p.data_compra_mes || '';
       const dt = p.data || '';
       const m = dc ? dc.slice(0,7) : dt ? dt.slice(0,7) : '';
       return m;
     };
-    // Na parceria: produtos com data >= abr/2025 OU sem data mas com * (co-investimento)
+    // Na parceria: produtos com data dentro do período OU sem data mas com * (co-investimento)
     const naParc = prods.filter(p => {
       const m = getMC(p);
-      if(m >= INICIO) return true;
+      if(m >= INICIO && (!FIM || m < FIM)) return true;
       // Sem data mas com marcador de parceria (* ou João) = provavelmente da parceria
       if(!m && investidorDe(p)!=='igor') return true;
       return false;
@@ -12999,7 +13083,94 @@ function buildPainel(){
       qtdAmbos: ambosV.length + ambosE.length,
       qtdJoao: joaoV.length + joaoE.length,
       qtdIgor: igorV.length + igorE.length,
+      inicioParc: INICIO, fimParc: FIM,
     };
+  }
+
+  // ── A contagem do João sozinho ───────────────────────────────────────
+  // Mesma estrutura da conta da parceria, com duas diferenças que mudam tudo:
+  // o capital é todo dele e o lucro não é dividido. Devolve null enquanto ele
+  // não marcar o mês — inventar uma data de rompimento não é papel do sistema.
+  function calcSolo(){
+    const FIM = (typeof opSolo!=='undefined' && opSolo.inicio) || '';
+    if(!FIM) return null;
+    const getMC = p => {
+      const dc = p.data_compra || p.data_compra_mes || '';
+      const dt = p.data || '';
+      return dc ? dc.slice(0,7) : dt ? dt.slice(0,7) : '';
+    };
+    const doSolo = prods.filter(p => { const m=getMC(p); return m && m >= FIM; });
+    const vend  = doSolo.filter(p=>p.status==='Vendido');
+    const emMao = doSolo.filter(p=>p.status!=='Vendido');
+
+    const invV = vend.reduce((s,p)=>s+custoRealDe(p),0);
+    const invE = emMao.reduce((s,p)=>s+custoRealDe(p),0);
+    const inv  = invV + invE;
+    const lucro   = vend.reduce((s,p)=>s+getLucro(p),0);
+    const receita = vend.reduce((s,p)=>s+(Number(p.venda)||0),0);
+    // Aqui o lucro volta inteiro: não há metade pra ninguém.
+    const voltou  = invV + lucro;
+    const porReal = inv>0 ? voltou/inv : 0;
+    const potencial = emMao.reduce((s,p)=>s+getLucro(p),0);
+
+    // Meses corridos desde o começo, contando o atual. Sem isso a média mensal
+    // fica dividida por um número inventado.
+    const nm = s => (+s.slice(0,4))*12 + (+s.slice(5,7));
+    const hojeM = new Date().toISOString().slice(0,7);
+    const meses = Math.max(1, nm(hojeM) - nm(FIM) + 1);
+
+    // Máquina do período solo ainda marcada como dinheiro do Igor: ou a marcação
+    // ficou do jeito antigo, ou entrou capital dele depois do fim. As duas coisas
+    // mudam a conta — então o sistema mostra e deixa ele decidir, não chuta.
+    const comIgor = doSolo.filter(p=>investidorDe(p)!=='joao').length;
+    const semData = prods.filter(p=>!getMC(p)).length;
+
+    return {
+      inicio:FIM, meses, qtd:doSolo.length, qtdVend:vend.length,
+      inv, invV, invE, lucro, receita, voltou, porReal, potencial,
+      margem: receita>0 ? Math.round(lucro/receita*100) : 0,
+      lucroMes: lucro/meses, comIgor, semData,
+    };
+  }
+
+  // Mês anterior a 'YYYY-MM' — vira janeiro pra dezembro do ano de trás.
+  const mesAntes = m => {
+    const y=+m.slice(0,4), mo=+m.slice(5,7);
+    return mo===1 ? (y-1)+'-12' : y+'-'+String(mo-1).padStart(2,'0');
+  };
+
+  function soloCard(d){
+    if(!d) return `<div style="font-size:.74rem;color:var(--li);line-height:1.6">
+      Nenhum mês marcado ainda. Clique no ⚙️ e escolha a partir de que mês a operação passa a ser só sua.<br>
+      Daí pra frente o lucro conta inteiro pra você, e a conta da parceria para de crescer no mês anterior.
+    </div>`;
+    const mesNm = fdt(d.inicio);
+    const rows = [
+      {l:'Máquinas desde '+mesNm,            v:d.qtd+(d.qtdVend?' ('+d.qtdVend+' vendida'+(d.qtdVend!==1?'s':'')+')':''), cls:'', sep:false},
+      {l:'Capital que você colocou',          v:fmt(d.inv),      cls:'',   sep:false},
+      {l:'↩ Capital devolvido pelas vendidas',v:fmt(d.invV),     cls:'g',  sep:false},
+      {l:'↩ + lucro (inteiro, sem dividir)',  v:fmt(d.lucro),    cls:'g',  sep:false},
+      {l:'= JÁ VOLTOU PRO BOLSO',             v:fmt(d.voltou),   cls:'g',  sep:false},
+      {l:'De cada R$ 1 colocado, voltou',     v:'R$ '+d.porReal.toFixed(2),
+       cls: d.porReal>=1?'g':d.porReal>=0.7?'am':'re', sep:true},
+      {l:'Capital ainda parado em estoque',   v:fmt(d.invE),     cls:'am', sep:false},
+      {l:'Lucro por mês, na média',           v:fmt(Math.round(d.lucroMes))+' · '+d.meses+' '+(d.meses!==1?'meses':'mês'), cls:'', sep:false},
+      {l:'Margem sobre o que vendeu',         v:d.margem+'%',    cls: d.margem>=25?'g':d.margem>=15?'am':'re', sep:false},
+      {l:'Lucro ainda na prateleira',         v:fmt(d.potencial),cls:'am', sep:true},
+    ];
+    return `
+      <div style="font-size:.67rem;color:var(--li);margin-bottom:10px;padding:4px 8px;background:var(--bg);border-radius:5px;border:1px solid var(--b)">
+        📋 Conta só sua, de ${mesNm} em diante · lucro 100% seu · a conta da parceria vai até ${fdt(mesAntes(d.inicio))}
+      </div>
+      ${d.comIgor>0?`<div style="font-size:.67rem;color:var(--am);margin-bottom:10px;padding:4px 8px;background:var(--abg);border-radius:5px;border:1px solid var(--abd)">
+        ⚠️ ${d.comIgor} máquina${d.comIgor>1?'s':''} deste período ainda ${d.comIgor>1?'estão marcadas':'está marcada'} como dinheiro do Igor (ou dividido).
+        Ou a marcação ficou do jeito antigo, ou ele entrou com capital depois do fim — os dois casos mudam esta conta.</div>`:''}
+      ${d.semData>0?`<div style="font-size:.67rem;color:var(--re);margin-bottom:10px;padding:4px 8px;background:var(--rbg);border-radius:5px;border:1px solid #fecaca">
+        ⚠️ ${d.semData} máquina${d.semData>1?'s':''} sem data de compra ${d.semData>1?'ficam':'fica'} de fora dos dois períodos.</div>`:''}
+      ${rows.map(r=>`<div class="cap-row" ${r.sep?'style="border-top:1px solid var(--b);margin-top:4px;padding-top:8px"':''}>
+        <span class="cap-row-lbl">${r.l}</span>
+        <span class="cap-row-val ${r.cls}">${r.v}</span>
+      </div>`).join('')}`;
   }
 
 
@@ -13013,9 +13184,14 @@ function buildPainel(){
     const devolvido = isJoao ? dados.joaoInvV   : dados.igorInvV;
     const voltou    = isJoao ? dados.joaoVoltou : dados.igorVoltou;
     const porReal   = isJoao ? dados.porRealJoao: dados.porRealIgor;
+    // Quando existe data de fim, o cartão precisa dizer isso: senão ele olha um
+    // número parado e acha que a conta bugou, quando ela só fechou o período.
+    const periodo = dados.fimParc
+      ? `abr/2025 → ${fdt(mesAntes(dados.fimParc))} (parceria encerrada)`
+      : 'desde abr/2025';
     const regra   = isJoao
-      ? `Desde abr/2025 · ${dados.qtdJoao} só João + ${dados.qtdAmbos} divididos`
-      : `${dados.qtdIgor} só Igor + ${dados.qtdAmbos} divididos`;
+      ? `${periodo} · ${dados.qtdJoao} só João + ${dados.qtdAmbos} divididos`
+      : `${periodo} · ${dados.qtdIgor} só Igor + ${dados.qtdAmbos} divididos`;
 
     // Barra visual de proporção: parado vs realizado
     const totalBase = invHist || 1;
@@ -13023,7 +13199,7 @@ function buildPainel(){
     const pctRealizado = Math.min(Math.round(luc/totalBase*100), 100);
 
     const rows = [
-      {l:'Total colocado (desde abr/2025)',   v:fmt(invHist),  cls:'',  sep:false},
+      {l:'Total colocado ('+periodo.replace(' (parceria encerrada)','')+')', v:fmt(invHist), cls:'', sep:false},
       {l:'↩ Capital devolvido pelas vendidas',v:fmt(devolvido),cls:'g', sep:false},
       {l:'↩ + metade do lucro',               v:fmt(luc),      cls:'g', sep:false},
       {l:'= JÁ VOLTOU PRO BOLSO',             v:fmt(voltou),   cls:'g', sep:false},
@@ -13061,9 +13237,16 @@ function buildPainel(){
   }
 
 
+  // socioHTML() nunca existiu: as duas linhas abaixo estouravam um ReferenceError
+  // e derrubavam o resto do buildPainel. Por isso o cartão de capital por sócio
+  // vinha em branco — inclusive a conta do que já voltou pro bolso de cada um.
   const elJ = document.getElementById('capJoao'), elI = document.getElementById('capIgor');
-  if(elJ) elJ.innerHTML = socioHTML(joaoProds);
-  if(elI) elI.innerHTML = socioHTML(igorProds);
+  const dSoc = calcCapitalSocios();
+  if(elJ) elJ.innerHTML = socioCard('João','joao',dSoc);
+  if(elI) elI.innerHTML = socioCard('Igor','igor',dSoc);
+
+  const elSolo = document.getElementById('soloBox');
+  if(elSolo) elSolo.innerHTML = soloCard(calcSolo());
 
 
   // ── Relatório mensal ──
