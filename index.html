@@ -343,6 +343,7 @@ input[type=number].inp{padding-left:32px}
 .rc-lote-bts{display:flex;gap:6px;flex-wrap:wrap}
 .rc-lote-bt{flex:1;min-width:130px;background:var(--w);border:1px solid var(--b);color:var(--mu);border-radius:7px;padding:6px 9px;font-size:.73rem;font-weight:600;cursor:pointer}
 .rc-lote-bt.on{background:var(--bl);border-color:var(--bl);color:#fff}
+.rc-extra-obs{font-size:.68rem;color:var(--li);line-height:1.45;margin-top:6px;flex-basis:100%}
 .marca-busca-inp{flex:1;border:1px solid var(--b2);background:var(--w);border-radius:8px;padding:6px 11px;font-size:.78rem;color:var(--tx);font-family:inherit;outline:none;transition:border-color .12s}
 .marca-busca-inp:focus{border-color:var(--tx)}
 .marca-busca-inp::placeholder{color:var(--li)}
@@ -3003,8 +3004,10 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
         </div>
         <div class="rc-extra">
           <label>Nº de série / etiqueta<input class="inp" id="rcSerial" placeholder="identifica a máquina na garantia"></label>
-          <label>CPF do comprador<input class="inp" id="rcCpf" placeholder="opcional"></label>
-          <button class="bcan rc-extra-bt" onclick="salvarRecDados()">Guardar nesta máquina</button>
+          <label>CPF ou CNPJ do comprador<input class="inp" id="rcCpf" placeholder="pessoa física ou empresa"></label>
+          <label>Endereço do comprador<input class="inp" id="rcEnd" placeholder="rua, nº, bairro, cidade — opcional"></label>
+          <button class="bcan rc-extra-bt" onclick="salvarRecDados()">Guardar</button>
+          <div class="rc-extra-obs" id="rcExtraObs"></div>
         </div>
         <div class="rc-lote" id="rcLote" style="display:none"></div>
         <textarea id="rcTexto" class="tv-texto" readonly></textarea>
@@ -12320,11 +12323,13 @@ function textoRecibo(p){
   L.push('*RECIBO DE VENDA*');
   L.push('');
   L.push('*Vendedor:* '+(reciboCfg.vendedor||'—'));
-  if(reciboCfg.doc) L.push('*CPF/CNPJ:* '+reciboCfg.doc);
+  if(reciboCfg.doc) L.push('*'+rotuloDocBR(reciboCfg.doc)+':* '+fmtDocBR(reciboCfg.doc));
   if(reciboCfg.fone) L.push('*Contato:* '+reciboCfg.fone);
   L.push('');
   L.push('*Comprador:* '+((p.cliente_nome||'').trim()||'—'));
-  if(p.cliente_cpf) L.push('*CPF:* '+p.cliente_cpf);
+  const docC1=docComprador(p), endC1=endComprador(p);
+  if(docC1) L.push('*'+rotuloDocBR(docC1)+':* '+fmtDocBR(docC1));
+  if(endC1) L.push('*Endereço:* '+endC1);
   if(cli&&cli.whatsapp) L.push('*Contato:* '+cli.whatsapp);
   L.push('');
   L.push('*Equipamento:* '+(p.nome||'—')+' (usado/seminovo)');
@@ -12349,6 +12354,40 @@ function textoRecibo(p){
   L.push(((p.cliente_nome||'').trim()||'Comprador'));
   return L.join('\n');
 }
+// ── DOCUMENTO DO COMPRADOR ─────────────────────────────────────────────
+// Pessoa física e empresa não são a mesma linha num recibo. O campo é um só,
+// mas o rótulo segue o que foi digitado: 11 dígitos é CPF, 14 é CNPJ. Chamar
+// o CNPJ de uma empresa de "CPF" num recibo de vinte mil reais é o tipo de
+// detalhe que faz o comprador devolver o papel.
+function fmtDocBR(v){
+  const d=String(v||'').replace(/\D/g,'');
+  if(d.length===11) return d.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/,'$1.$2.$3-$4');
+  if(d.length===14) return d.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,'$1.$2.$3/$4-$5');
+  return String(v||'').trim();
+}
+function rotuloDocBR(v){
+  const d=String(v||'').replace(/\D/g,'');
+  return d.length===14 ? 'CNPJ' : d.length===11 ? 'CPF' : 'CPF/CNPJ';
+}
+// O documento e o endereço do comprador ficam no cliente, não na máquina:
+// numa venda de onze máquinas eles são os mesmos onze vezes. A máquina ainda
+// é lida primeiro, pros recibos antigos que guardaram o dado lá.
+function clienteDe(p){
+  if(!p) return null;
+  if(typeof clientes==='undefined'||!Array.isArray(clientes)) return null;
+  return clientes.find(c=>c.id===p.cliente_id)
+      || clientes.find(c=>(c.nome||'').trim().toLowerCase()===(p.cliente_nome||'').trim().toLowerCase())
+      || null;
+}
+function docComprador(p){
+  const c=clienteDe(p);
+  return (p&&p.cliente_cpf) || (c&&c.doc) || '';
+}
+function endComprador(p){
+  const c=clienteDe(p);
+  return (p&&p.cliente_end) || (c&&c.endereco) || '';
+}
+
 // ── RECIBO DE LOTE ─────────────────────────────────────────────────────
 // Onze máquinas num Pix só não são onze recibos. O comprador quer um papel
 // com o total que ele pagou; emitir um por máquina obriga ele a somar e abre
@@ -12383,11 +12422,13 @@ function textoReciboLote(itens){
   L.push('*RECIBO DE VENDA*');
   L.push('');
   L.push('*Vendedor:* '+(reciboCfg.vendedor||'—'));
-  if(reciboCfg.doc) L.push('*CPF/CNPJ:* '+reciboCfg.doc);
+  if(reciboCfg.doc) L.push('*'+rotuloDocBR(reciboCfg.doc)+':* '+fmtDocBR(reciboCfg.doc));
   if(reciboCfg.fone) L.push('*Contato:* '+reciboCfg.fone);
   L.push('');
   L.push('*Comprador:* '+((p0.cliente_nome||'').trim()||'—'));
-  if(p0.cliente_cpf) L.push('*CPF/CNPJ:* '+p0.cliente_cpf);
+  const docC=docComprador(p0), endC=endComprador(p0);
+  if(docC) L.push('*'+rotuloDocBR(docC)+':* '+fmtDocBR(docC));
+  if(endC) L.push('*Endereço:* '+endC);
   if(cli&&cli.whatsapp) L.push('*Contato:* '+cli.whatsapp);
   L.push('');
   L.push('*EQUIPAMENTOS ('+itens.length+')*');
@@ -12457,6 +12498,15 @@ function montarRecibo(){
         </div>`;
     }
   }
+  // Diz o alcance do botão Guardar: série é desta máquina, documento e
+  // endereço valem pro lote inteiro e pro cadastro do cliente.
+  const obs=document.getElementById('rcExtraObs');
+  if(obs){
+    const alvo = r.ehLote
+      ? 'A série é só desta máquina. O documento e o endereço valem para as '+r.grupo.length+' do lote.'
+      : 'A série fica nesta máquina; o documento e o endereço ficam também no cadastro do cliente.';
+    obs.textContent=alvo;
+  }
   const st=document.getElementById('rcStatus'); if(st) st.textContent='';
 }
 function reciboResumoLote(itens){
@@ -12474,7 +12524,7 @@ window.abrirRecibo=async(id)=>{
   const set=(i,v)=>{const e=document.getElementById(i);if(e)e.value=v||'';};
   set('rcVendedor',reciboCfg.vendedor); set('rcDoc',reciboCfg.doc);
   set('rcFone',reciboCfg.fone); set('rcCidade',reciboCfg.cidade);
-  set('rcSerial',p.serial); set('rcCpf',p.cliente_cpf);
+  set('rcSerial',p.serial); set('rcCpf',docComprador(p)); set('rcEnd',endComprador(p));
   const cfg=document.getElementById('rcCfg');
   // Primeira vez, sem os dados do vendedor: já abre a configuração
   if(cfg) cfg.style.display=(reciboCfg.vendedor&&reciboCfg.doc)?'none':'block';
@@ -12484,14 +12534,39 @@ window.abrirRecibo=async(id)=>{
 window.fecharRecibo=()=>{ document.getElementById('RCO').classList.add('h'); reciboId=null; };
 // Série e CPF ficam gravados na máquina/no recibo: quem digita uma vez não digita de novo
 window.salvarRecDados=async()=>{
-  const p=(typeof prods!=='undefined'?prods:[]).find(x=>x.id===reciboId);
-  if(!p) return;
+  const r=reciboItens(); if(!r) return;
+  const p=r.p;
   const serial=(document.getElementById('rcSerial')?.value||'').trim();
   const cpf=(document.getElementById('rcCpf')?.value||'').trim();
-  p.serial=serial; p.cliente_cpf=cpf;
-  if(!idLocal(p.id)) await gravar(updateDoc(doc(db,'products',p.id),{serial,cliente_cpf:cpf}), 'Dados do recibo: '+(p.nome||''));
+  const end=(document.getElementById('rcEnd')?.value||'').trim();
+
+  // Série é da máquina: só desta. Documento e endereço são do comprador, então
+  // valem pro lote inteiro — digitar o CNPJ onze vezes é onde o erro entra.
+  p.serial=serial;
+  if(!idLocal(p.id)) await gravar(updateDoc(doc(db,'products',p.id),{serial}), 'Série: '+(p.nome||''));
+
+  let nMaq=0;
+  for(const m of r.grupo){
+    if(m.cliente_cpf===cpf && m.cliente_end===end) continue;
+    m.cliente_cpf=cpf; m.cliente_end=end; nMaq++;
+    if(!idLocal(m.id)) await gravar(updateDoc(doc(db,'products',m.id),{cliente_cpf:cpf,cliente_end:end}),
+                                    'Dados do comprador: '+(m.nome||''));
+  }
+  // E no cadastro do cliente, pra próxima venda já vir preenchido.
+  const cli=clienteDe(p);
+  if(cli && (cli.doc!==cpf || cli.endereco!==end)){
+    cli.doc=cpf; cli.endereco=end;
+    if(!idLocal(cli.id)){
+      try{ await updateDoc(doc(db,'clientes',cli.id),{doc:cpf,endereco:end}); }catch(e){}
+    }
+  }
   montarRecibo();
-  const st=document.getElementById('rcStatus'); if(st){ st.textContent='✓ Guardado nesta máquina'; setTimeout(()=>{if(st)st.textContent='';},2500); }
+  const st=document.getElementById('rcStatus');
+  if(st){
+    st.textContent='✓ Guardado'+(nMaq>1?' nas '+nMaq+' máquinas do lote':'')
+      +(cli?' e no cadastro de '+(cli.nome||'cliente'):'');
+    setTimeout(()=>{if(st)st.textContent='';},3000);
+  }
 };
 window.copiarRecibo=async()=>{
   const txt=document.getElementById('rcTexto').value;
