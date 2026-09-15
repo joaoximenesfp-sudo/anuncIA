@@ -12630,10 +12630,10 @@ window.imprimirRecibo=()=>{
   // arquivo. Não precisa de biblioteca nenhuma e funciona no celular também.
   const texto = r.usarLote ? textoReciboLote(r.grupo) : textoRecibo(p);
   const titulo = r.usarLote
-    ? 'Recibo lote '+r.grupo.length+' maquinas'+(p.cliente_nome?' - '+p.cliente_nome:'')
+    ? 'Recibo lote '+r.grupo.length+' maquinas'+(nomeComprador(p)?' - '+nomeComprador(p):'')
     : 'Recibo '+(p.nome||'');
   const linhas=texto.split('\n');
-  const corpo=linhas.map(l=>{
+  const render=l=>{
     if(l==='') return '<div class="sp"></div>';
     if(/^\*.+\*$/.test(l)) return '<h2>'+esc(l.replace(/\*/g,''))+'</h2>';
     const neg=esc(l).replace(/\*([^*]+)\*/g,'<strong>$1</strong>').replace(/_([^_]+)_/g,'<em>$1</em>');
@@ -12641,7 +12641,15 @@ window.imprimirRecibo=()=>{
     // à direita, pra conferência item a item não virar parede de texto.
     if(/^\d+\. /.test(l)) return '<p class="it">'+neg+'</p>';
     return '<p>'+neg+'</p>';
-  }).join('');
+  };
+  // Declaração, data e as duas assinaturas viajam juntas: assinatura do
+  // comprador sozinha na página 2 é assinatura que se contesta. Num lote de 11
+  // máquinas a lista empurrava o bloco pra fora da folha.
+  const iFim=linhas.findIndex(l=>/^Declaro ter recebido/.test(l));
+  const corpo = iFim<0
+    ? linhas.map(render).join('')
+    : linhas.slice(0,iFim).map(render).join('')
+      + '<div class="fim">'+linhas.slice(iFim).map(render).join('')+'</div>';
   const w=window.open('','_blank','width=800,height=900');
   if(!w){ const st=document.getElementById('rcStatus'); if(st) st.textContent='O navegador bloqueou a janela de impressão. Libere pop-ups pra este site.'; return; }
   const st0=document.getElementById('rcStatus');
@@ -12651,7 +12659,10 @@ window.imprimirRecibo=()=>{
     +'h2{font-size:14px;letter-spacing:.06em;margin:18px 0 6px;padding-bottom:4px;border-bottom:1px solid #ddd}'
     +'h2:first-child{font-size:17px;text-align:center;border:0}p{margin:2px 0}.sp{height:9px}em{color:#555}'
     +'p.it{margin:3px 0;padding-left:14px;text-indent:-14px}'
-    +'@media print{body{margin:0}}</style>'+corpo);
+    +'.fim{page-break-inside:avoid;break-inside:avoid}'
+    +'h2{page-break-after:avoid;break-after:avoid}'
+    +'@page{margin:12mm}@media print{body{margin:0;font-size:12px;line-height:1.55}'
+    +'h2{margin:14px 0 5px}.sp{height:7px}}</style>'+corpo);
   w.document.close();
   setTimeout(()=>{ try{ w.focus(); w.print(); }catch(e){} }, 250);
 };
