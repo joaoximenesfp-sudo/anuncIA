@@ -337,6 +337,12 @@ input[type=number].inp{padding-left:32px}
 .marca-busca{display:flex;align-items:center;gap:8px;padding:7px 12px 4px}
 .dias-badge.estimado{background:var(--bg);color:var(--li);border:1px dashed var(--b2)}
 .rk-aviso{font-size:.72rem;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:7px 11px;margin-bottom:8px;line-height:1.45}
+/* Seletor lote x máquina única no recibo */
+.rc-lote{background:var(--bbg);border:1px solid var(--bbd);border-radius:8px;padding:9px 11px;margin-bottom:9px}
+.rc-lote-tit{font-size:.74rem;color:var(--bl);line-height:1.45;margin-bottom:7px}
+.rc-lote-bts{display:flex;gap:6px;flex-wrap:wrap}
+.rc-lote-bt{flex:1;min-width:130px;background:var(--w);border:1px solid var(--b);color:var(--mu);border-radius:7px;padding:6px 9px;font-size:.73rem;font-weight:600;cursor:pointer}
+.rc-lote-bt.on{background:var(--bl);border-color:var(--bl);color:#fff}
 .marca-busca-inp{flex:1;border:1px solid var(--b2);background:var(--w);border-radius:8px;padding:6px 11px;font-size:.78rem;color:var(--tx);font-family:inherit;outline:none;transition:border-color .12s}
 .marca-busca-inp:focus{border-color:var(--tx)}
 .marca-busca-inp::placeholder{color:var(--li)}
@@ -3000,11 +3006,12 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
           <label>CPF do comprador<input class="inp" id="rcCpf" placeholder="opcional"></label>
           <button class="bcan rc-extra-bt" onclick="salvarRecDados()">Guardar nesta máquina</button>
         </div>
+        <div class="rc-lote" id="rcLote" style="display:none"></div>
         <textarea id="rcTexto" class="tv-texto" readonly></textarea>
         <div class="tv-bts">
           <button class="bok" onclick="copiarRecibo()">📋 Copiar</button>
           <button class="bcan" onclick="zapRecibo()">💬 Mandar no WhatsApp</button>
-          <button class="bcan" onclick="imprimirRecibo()">🖨️ Imprimir / PDF</button>
+          <button class="bcan" onclick="imprimirRecibo()">🖨️ Salvar PDF / Imprimir</button>
         </div>
         <div class="tv-status" id="rcStatus"></div>
       </div>
@@ -8479,8 +8486,16 @@ function renderRanking(){
     const _sel=rkSeletorMes(mesesComCompra);
     const mesRef=_sel.mesRef, nomeMes=_sel.nomeMes, seletor=_sel.html;
     const doMes=prods.filter(p=>getMesCompra(p)===mesRef);
+    // Máquina sem data de compra não cai em mês nenhum e sumia daqui calada —
+    // foi assim que um lote inteiro deixou de aparecer no mês em que entrou.
+    // O painel conta quantas são e leva até elas, em vez de fingir que não existem.
+    const semDataC=prods.filter(p=>!getMesCompra(p)).length;
+    const avisoSemData = semDataC>0
+      ? `<div class="rk-aviso">📅 <strong>${semDataC} máquina${semDataC!==1?'s':''} sem data de compra</strong> ${semDataC!==1?'ficam':'fica'} de fora desta aba e de todo relatório mensal — inclusive de lote inteiro comprado de uma vez.
+         <a href="#" onclick="event.preventDefault();verSemData()" style="font-weight:700;color:inherit;text-decoration:underline">Ver quais</a> e preencher a data no ✎.</div>`
+      : '';
     if(!doMes.length){
-      body.innerHTML=seletor+`<div style="padding:24px;text-align:center;color:var(--li);font-size:.8rem">Nenhuma compra registrada em ${nomeMes}.<br><span style="font-size:.72rem">Escolha outro mês no seletor acima.</span></div>`;
+      body.innerHTML=seletor+avisoSemData+`<div style="padding:24px;text-align:center;color:var(--li);font-size:.8rem">Nenhuma compra registrada em ${nomeMes}.<br><span style="font-size:.72rem">Escolha outro mês no seletor acima.</span></div>`;
       return;
     }
     const hojeC=new Date();
@@ -8511,7 +8526,7 @@ function renderRanking(){
     const linhaVolta = vendidasDoMes.length
       ? `<div class="rk-compra-volta">↩️ <strong>${vendidasDoMes.length} de ${doMes.length}</strong> já venderam: ${fmt(totVolta)} de volta (<strong>${pctVolta}%</strong> do investido) · lucro ${fmt(totLucC)}${naMao.length?`<br>Faltam <strong>${naMao.length}</strong> com ${fmt(parado)} ainda em mão.`:'<br>Lote inteiro girado. 🎯'}</div>`
       : `<div class="rk-compra-volta">Nenhuma dessas ${doMes.length>1?'máquinas':'máquina'} vendeu ainda — ${fmt(parado)} em mão.</div>`;
-    resumo=seletor+`<div class="rk-resumo"><strong>${doMes.length} compra${doMes.length!==1?'s':''}</strong> em ${nomeMes} · investido ${fmt(totInv)} · ${fmt(medio)} por máquina<br><span style="color:var(--li)">Lista completa, da compra mais cara para a mais barata.</span></div>${linhaVolta}`;
+    resumo=seletor+avisoSemData+`<div class="rk-resumo"><strong>${doMes.length} compra${doMes.length!==1?'s':''}</strong> em ${nomeMes} · investido ${fmt(totInv)} · ${fmt(medio)} por máquina<br><span style="color:var(--li)">Lista completa, da compra mais cara para a mais barata.</span></div>${linhaVolta}`;
   } else if(rkMode==='giro'){
     // Só entram vendas com data EXATA (dia) nos dois lados — senão o ranking vira chute.
     const todos=prods.filter(p=>p.status==='Vendido').map(p=>({p,g:diasGiro(p)})).filter(x=>x.g);
@@ -12334,6 +12349,79 @@ function textoRecibo(p){
   L.push(((p.cliente_nome||'').trim()||'Comprador'));
   return L.join('\n');
 }
+// ── RECIBO DE LOTE ─────────────────────────────────────────────────────
+// Onze máquinas num Pix só não são onze recibos. O comprador quer um papel
+// com o total que ele pagou; emitir um por máquina obriga ele a somar e abre
+// espaço pra discussão sobre quanto foi o negócio. Então: um recibo, todas as
+// máquinas listadas, o total por extenso uma vez só.
+function loteDaVenda(p){
+  if(!p || !p.venda_lote || !p.data_venda) return [p];
+  const chaveCli = p.cliente_id || (p.cliente_nome||'').trim();
+  if(!chaveCli) return [p];
+  const irmas=(typeof prods!=='undefined'?prods:[]).filter(x=>
+    x.venda_lote && x.data_venda===p.data_venda &&
+    (x.cliente_id||(x.cliente_nome||'').trim())===chaveCli);
+  return irmas.length>1 ? irmas.slice().sort((a,b)=>(a.num||0)-(b.num||0)) : [p];
+}
+function reciboPendenciasLote(itens){
+  const f=[];
+  if(!reciboCfg.vendedor) f.push('seu nome/razão social');
+  if(!reciboCfg.doc) f.push('seu CPF ou CNPJ');
+  if(!(itens[0].cliente_nome||'').trim()) f.push('nome do comprador');
+  const tot=itens.reduce((s,p)=>s+(parseFloat(p.venda)||0),0);
+  if(!(tot>0)) f.push('valor da venda');
+  if(!itens[0].data_venda) f.push('data da venda');
+  return f;
+}
+function textoReciboLote(itens){
+  const p0=itens[0];
+  const cli=(typeof clientes!=='undefined'&&Array.isArray(clientes))?clientes.find(c=>c.id===p0.cliente_id):null;
+  const total=itens.reduce((s,p)=>s+(parseFloat(p.venda)||0),0);
+  const g=garantiaInfo(p0.data_venda);
+  const cidade=reciboCfg.cidade||'—';
+  const L=[];
+  L.push('*RECIBO DE VENDA*');
+  L.push('');
+  L.push('*Vendedor:* '+(reciboCfg.vendedor||'—'));
+  if(reciboCfg.doc) L.push('*CPF/CNPJ:* '+reciboCfg.doc);
+  if(reciboCfg.fone) L.push('*Contato:* '+reciboCfg.fone);
+  L.push('');
+  L.push('*Comprador:* '+((p0.cliente_nome||'').trim()||'—'));
+  if(p0.cliente_cpf) L.push('*CPF/CNPJ:* '+p0.cliente_cpf);
+  if(cli&&cli.whatsapp) L.push('*Contato:* '+cli.whatsapp);
+  L.push('');
+  L.push('*EQUIPAMENTOS ('+itens.length+')*');
+  // Cada linha traz o valor da máquina: o comprador confere item a item, e o
+  // rateio que o sistema fez deixa de ser número interno e vira documento.
+  itens.forEach((p,i)=>{
+    L.push((i+1)+'. '+(p.nome||'sem nome')
+      +(p.num?' · nº '+p.num:'')
+      +(p.serial?' · série '+p.serial:'')
+      +' — '+fmt(parseFloat(p.venda)||0));
+  });
+  L.push('');
+  L.push('Todos usados/seminovos.');
+  L.push('*VALOR TOTAL:* '+fmt(total)+' ('+valorExtenso(total)+')');
+  L.push('*Pagamento:* '+formaPagRecibo(p0));
+  L.push('*Data da venda:* '+(dataLonga(p0.data_venda)||'—'));
+  L.push('');
+  L.push('*GARANTIA*');
+  L.push('Garantia legal de '+GARANTIA_DIAS+' dias contra vício ou defeito, na forma do art. 26, II do Código de Defesa do Consumidor, valendo para cada equipamento listado acima.');
+  if(g) L.push('Válida até '+g.vencFmt+'.');
+  L.push('Não cobre mau uso, queda, líquido, violação do equipamento nem desgaste natural da bateria.');
+  L.push('');
+  L.push('Declaro ter recebido os '+itens.length+' equipamentos acima em pleno funcionamento, testados no ato da entrega, e o valor correspondente foi pago ao vendedor.');
+  L.push('');
+  L.push(cidade+', '+(dataLonga(p0.data_venda)||dataLonga(new Date().toISOString().slice(0,10)))+'.');
+  L.push('');
+  L.push('_____________________________');
+  L.push((reciboCfg.vendedor||'Vendedor'));
+  L.push('');
+  L.push('_____________________________');
+  L.push(((p0.cliente_nome||'').trim()||'Comprador'));
+  return L.join('\n');
+}
+
 function reciboResumo(p){
   const falta=reciboPendencias(p);
   if(!falta.length) return '<span class="rc-ok">✅ Recibo completo — pode enviar ou imprimir.</span>';
@@ -12341,15 +12429,45 @@ function reciboResumo(p){
        + 'O recibo sai com <strong>—</strong> nesses campos até você completar.';
 }
 let reciboId=null;
-function montarRecibo(){
+let reciboLote=true;   // venda em lote abre no recibo do lote: é o que o comprador pede
+function reciboItens(){
   const p=(typeof prods!=='undefined'?prods:[]).find(x=>x.id===reciboId);
-  if(!p) return;
-  const el=document.getElementById('rcTexto'); if(el) el.value=textoRecibo(p);
-  const res=document.getElementById('rcResumo'); if(res) res.innerHTML=reciboResumo(p);
+  if(!p) return null;
+  const grupo=loteDaVenda(p);
+  return {p, grupo, ehLote: grupo.length>1, usarLote: grupo.length>1 && reciboLote};
+}
+window.rcModoLote=v=>{ reciboLote=!!v; montarRecibo(); };
+function montarRecibo(){
+  const r=reciboItens(); if(!r) return;
+  const el=document.getElementById('rcTexto');
+  if(el) el.value = r.usarLote ? textoReciboLote(r.grupo) : textoRecibo(r.p);
+  const res=document.getElementById('rcResumo');
+  if(res) res.innerHTML = r.usarLote ? reciboResumoLote(r.grupo) : reciboResumo(r.p);
+  // O seletor só existe quando a venda foi mesmo em lote. Sem lote, nada aparece.
+  const box=document.getElementById('rcLote');
+  if(box){
+    if(!r.ehLote){ box.style.display='none'; box.innerHTML=''; }
+    else {
+      const tot=r.grupo.reduce((s,x)=>s+(parseFloat(x.venda)||0),0);
+      box.style.display='block';
+      box.innerHTML=`<div class="rc-lote-tit">📦 Esta venda foi um lote de <strong>${r.grupo.length} máquinas</strong> — ${fmt(tot)} no total.</div>
+        <div class="rc-lote-bts">
+          <button class="rc-lote-bt${reciboLote?' on':''}" onclick="rcModoLote(true)">Recibo do lote inteiro</button>
+          <button class="rc-lote-bt${reciboLote?'':' on'}" onclick="rcModoLote(false)">Só esta máquina</button>
+        </div>`;
+    }
+  }
   const st=document.getElementById('rcStatus'); if(st) st.textContent='';
+}
+function reciboResumoLote(itens){
+  const falta=reciboPendenciasLote(itens);
+  if(!falta.length) return '<span class="rc-ok">✅ Recibo completo — pode enviar, imprimir ou salvar em PDF.</span>';
+  return '⚠️ Falta preencher: <strong>'+falta.map(f=>esc(f)).join('</strong>, <strong>')+'</strong>. '
+       + 'O recibo sai com <strong>—</strong> nesses campos até você completar.';
 }
 window.abrirRecibo=async(id)=>{
   reciboId=id;
+  reciboLote=true;   // sempre reabre no lote: o recibo por máquina é a exceção
   const p=(typeof prods!=='undefined'?prods:[]).find(x=>x.id===id);
   if(!p) return;
   if(!reciboCfg.vendedor && !reciboCfg._docId) await loadReciboCfg();
@@ -12397,21 +12515,33 @@ window.zapRecibo=()=>{
 // Versão de papel: abre janela própria e manda imprimir. "Salvar como PDF" na
 // janela de impressão é o que gera o arquivo pra guardar/mandar por e-mail.
 window.imprimirRecibo=()=>{
-  const p=(typeof prods!=='undefined'?prods:[]).find(x=>x.id===reciboId);
-  if(!p) return;
-  const linhas=textoRecibo(p).split('\n');
+  const r=reciboItens(); if(!r) return;
+  const p=r.p;
+  // O PDF sai daqui: na janela de impressão, o destino "Salvar como PDF" gera o
+  // arquivo. Não precisa de biblioteca nenhuma e funciona no celular também.
+  const texto = r.usarLote ? textoReciboLote(r.grupo) : textoRecibo(p);
+  const titulo = r.usarLote
+    ? 'Recibo lote '+r.grupo.length+' maquinas'+(p.cliente_nome?' - '+p.cliente_nome:'')
+    : 'Recibo '+(p.nome||'');
+  const linhas=texto.split('\n');
   const corpo=linhas.map(l=>{
     if(l==='') return '<div class="sp"></div>';
     if(/^\*.+\*$/.test(l)) return '<h2>'+esc(l.replace(/\*/g,''))+'</h2>';
     const neg=esc(l).replace(/\*([^*]+)\*/g,'<strong>$1</strong>').replace(/_([^_]+)_/g,'<em>$1</em>');
+    // Linha de item do lote ("1. Dell ... — R$ 1.900") ganha respiro e o valor
+    // à direita, pra conferência item a item não virar parede de texto.
+    if(/^\d+\. /.test(l)) return '<p class="it">'+neg+'</p>';
     return '<p>'+neg+'</p>';
   }).join('');
   const w=window.open('','_blank','width=800,height=900');
   if(!w){ const st=document.getElementById('rcStatus'); if(st) st.textContent='O navegador bloqueou a janela de impressão. Libere pop-ups pra este site.'; return; }
-  w.document.write('<!doctype html><meta charset="utf-8"><title>Recibo '+esc(p.nome||'')+'</title>'
+  const st0=document.getElementById('rcStatus');
+  if(st0) st0.textContent='Na janela que abriu, escolha o destino "Salvar como PDF" pra gerar o arquivo.';
+  w.document.write('<!doctype html><meta charset="utf-8"><title>'+esc(titulo)+'</title>'
     +'<style>body{font:13px/1.7 -apple-system,Segoe UI,Roboto,sans-serif;color:#111;max-width:640px;margin:32px auto;padding:0 24px}'
     +'h2{font-size:14px;letter-spacing:.06em;margin:18px 0 6px;padding-bottom:4px;border-bottom:1px solid #ddd}'
     +'h2:first-child{font-size:17px;text-align:center;border:0}p{margin:2px 0}.sp{height:9px}em{color:#555}'
+    +'p.it{margin:3px 0;padding-left:14px;text-indent:-14px}'
     +'@media print{body{margin:0}}</style>'+corpo);
   w.document.close();
   setTimeout(()=>{ try{ w.focus(); w.print(); }catch(e){} }, 250);
