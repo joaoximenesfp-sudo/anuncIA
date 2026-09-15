@@ -3007,6 +3007,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
           <label>Empresa / razão social<input class="inp" id="rcRazao" placeholder="deixe vazio se o comprador é pessoa física"></label>
           <label>CPF ou CNPJ do comprador<input class="inp" id="rcCpf" placeholder="pessoa física ou empresa"></label>
           <label>Endereço do comprador<input class="inp" id="rcEnd" placeholder="rua, nº, bairro, cidade — opcional"></label>
+          <label id="rcContatoBox" style="display:none">Contato no recibo<select class="inp" id="rcContato"></select></label>
           <button class="bcan rc-extra-bt" onclick="salvarRecDados()">Guardar</button>
           <div class="rc-extra-obs" id="rcExtraObs"></div>
         </div>
@@ -12346,7 +12347,8 @@ function textoRecibo(p){
   const docC1=docComprador(p), endC1=endComprador(p);
   if(docC1) L.push('*'+rotuloDocBR(docC1)+':* '+fmtDocBR(docC1));
   if(endC1) L.push('*Endereço:* '+endC1);
-  if(cli&&cli.whatsapp) L.push('*Contato:* '+cli.whatsapp);
+  const fo=foneComprador(p);
+  if(fo) L.push('*Contato:* '+fo.numero+(fo.nome&&fo.nome!=='Principal'?' ('+fo.nome+')':''));
   L.push('');
   L.push('*Equipamento:* '+(p.nome||'—')+' (usado/seminovo)');
   if(p.serial) L.push('*Nº de série:* '+p.serial);
@@ -12409,6 +12411,28 @@ function razaoComprador(p){
 function nomeComprador(p){
   return razaoComprador(p) || ((p&&p.cliente_nome)||'').trim() || '';
 }
+// Cliente com mais de um número: o recibo vinha pegando o principal calado.
+// Numa empresa, o principal costuma ser o celular de quem atende — e nem sempre
+// é esse que deve ir no documento. Então ele escolhe, inclusive "nenhum".
+const RC_SEM_CONTATO='__nenhum__';
+function contatosDe(c){
+  if(!c) return [];
+  const out=[];
+  if((c.whatsapp||'').trim()) out.push({nome:'Principal', numero:String(c.whatsapp).trim()});
+  (Array.isArray(c.contatos)?c.contatos:[]).forEach(ct=>{
+    const n=String(ct&&ct.numero||'').trim();
+    if(n && !out.some(x=>x.numero===n)) out.push({nome:(ct.nome||'').trim()||'Contato', numero:n});
+  });
+  return out;
+}
+function foneComprador(p){
+  const c=clienteDe(p); if(!c) return null;
+  const lista=contatosDe(c);
+  const esc=c.contato_recibo||'';
+  if(esc===RC_SEM_CONTATO) return null;
+  const achado=esc ? lista.find(x=>x.numero===esc) : null;
+  return achado || lista[0] || null;
+}
 function endComprador(p){
   const c=clienteDe(p);
   return (p&&p.cliente_end) || (c&&c.endereco) || '';
@@ -12455,7 +12479,8 @@ function textoReciboLote(itens){
   const docC=docComprador(p0), endC=endComprador(p0);
   if(docC) L.push('*'+rotuloDocBR(docC)+':* '+fmtDocBR(docC));
   if(endC) L.push('*Endereço:* '+endC);
-  if(cli&&cli.whatsapp) L.push('*Contato:* '+cli.whatsapp);
+  const fo=foneComprador(p0);
+  if(fo) L.push('*Contato:* '+fo.numero+(fo.nome&&fo.nome!=='Principal'?' ('+fo.nome+')':''));
   L.push('');
   L.push('*EQUIPAMENTOS ('+itens.length+')*');
   // Cada linha traz o valor da máquina: o comprador confere item a item, e o
@@ -12504,6 +12529,32 @@ function reciboItens(){
   return {p, grupo, ehLote: grupo.length>1, usarLote: grupo.length>1 && reciboLote};
 }
 window.rcModoLote=v=>{ reciboLote=!!v; montarRecibo(); };
+// O seletor só aparece quando há de fato o que escolher: um contato só não é
+// escolha, é enfeite. Mas "não incluir" vale sempre — num recibo de empresa,
+// o celular pessoal de quem atendeu às vezes não deve ir no papel.
+function rcMontarContatos(p){
+  const box=document.getElementById('rcContatoBox'), sel=document.getElementById('rcContato');
+  if(!box||!sel) return;
+  const c=clienteDe(p);
+  const lista=contatosDe(c);
+  if(!lista.length){ box.style.display='none'; sel.innerHTML=''; return; }
+  box.style.display='';
+  const atual=foneComprador(p);
+  const escolhido=(c&&c.contato_recibo)||'';
+  sel.innerHTML=lista.map(x=>{
+    const marca = escolhido ? x.numero===escolhido : (atual&&atual.numero===x.numero);
+    return `<option value="${esc(x.numero)}"${marca?' selected':''}>${esc(x.nome)} · ${esc(x.numero)}</option>`;
+  }).join('')
+    +`<option value="${RC_SEM_CONTATO}"${escolhido===RC_SEM_CONTATO?' selected':''}>— não incluir telefone —</option>`;
+  sel.onchange=()=>{ rcAplicarContato(p); };
+}
+// Troca na hora, pra ele ver o recibo mudar antes de gravar.
+function rcAplicarContato(p){
+  const c=clienteDe(p), sel=document.getElementById('rcContato');
+  if(!c||!sel) return;
+  c.contato_recibo=sel.value;
+  montarRecibo();
+}
 function montarRecibo(){
   const r=reciboItens(); if(!r) return;
   const el=document.getElementById('rcTexto');
@@ -12555,6 +12606,7 @@ window.abrirRecibo=async(id)=>{
   set('rcFone',reciboCfg.fone); set('rcCidade',reciboCfg.cidade);
   set('rcSerial',p.serial); set('rcCpf',docComprador(p)); set('rcEnd',endComprador(p));
   set('rcRazao',razaoComprador(p));
+  rcMontarContatos(p);
   const cfg=document.getElementById('rcCfg');
   // Primeira vez, sem os dados do vendedor: já abre a configuração
   if(cfg) cfg.style.display=(reciboCfg.vendedor&&reciboCfg.doc)?'none':'block';
@@ -12586,10 +12638,13 @@ window.salvarRecDados=async()=>{
   // A empresa mora no cadastro do cliente, não na máquina: o contato continua
   // sendo o Rodrigo na base dele, e o recibo sai no nome de quem pagou.
   const cli=clienteDe(p);
-  if(cli && (cli.doc!==cpf || cli.endereco!==end || cli.razao_social!==razao)){
-    cli.doc=cpf; cli.endereco=end; cli.razao_social=razao;
+  const contato_recibo=(document.getElementById('rcContato')?.value)||(cli&&cli.contato_recibo)||'';
+  if(cli && (cli.doc!==cpf || cli.endereco!==end || cli.razao_social!==razao
+             || cli.contato_recibo!==contato_recibo)){
+    cli.doc=cpf; cli.endereco=end; cli.razao_social=razao; cli.contato_recibo=contato_recibo;
     if(!idLocal(cli.id)){
-      try{ await updateDoc(doc(db,'clientes',cli.id),{doc:cpf,endereco:end,razao_social:razao}); }catch(e){}
+      try{ await updateDoc(doc(db,'clientes',cli.id),
+            {doc:cpf,endereco:end,razao_social:razao,contato_recibo}); }catch(e){}
     }
   }
   montarRecibo();
