@@ -3004,6 +3004,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
         </div>
         <div class="rc-extra">
           <label>Nº de série / etiqueta<input class="inp" id="rcSerial" placeholder="identifica a máquina na garantia"></label>
+          <label>Empresa / razão social<input class="inp" id="rcRazao" placeholder="deixe vazio se o comprador é pessoa física"></label>
           <label>CPF ou CNPJ do comprador<input class="inp" id="rcCpf" placeholder="pessoa física ou empresa"></label>
           <label>Endereço do comprador<input class="inp" id="rcEnd" placeholder="rua, nº, bairro, cidade — opcional"></label>
           <button class="bcan rc-extra-bt" onclick="salvarRecDados()">Guardar</button>
@@ -5195,6 +5196,18 @@ function cliEditorHTML(c){
     </div>
     <div class="cli-ie-grid">
       <div class="cli-ie-field">
+        <label>🏢 Empresa / razão social <span class="cli-ie-hint">sai no recibo no lugar do nome do contato</span></label>
+        <input class="inp" id="cliRazao_${c.id}" value="${esc(c.razao_social||'')}" placeholder="Ex.: CARNIELLI E CARNIELLI ALUGUEL DE EQUIPAMENTOS LTDA">
+      </div>
+      <div class="cli-ie-field">
+        <label>🧾 CNPJ ou CPF</label>
+        <input class="inp" id="cliDoc_${c.id}" value="${esc(c.doc||'')}" placeholder="só números">
+      </div>
+      <div class="cli-ie-field">
+        <label>📍 Endereço</label>
+        <input class="inp" id="cliEnd_${c.id}" value="${esc(c.endereco||'')}" placeholder="rua, nº, bairro, cidade">
+      </div>
+      <div class="cli-ie-field">
         <label>🔍 Procurando</label>
         <input class="inp" id="cliProc_${c.id}" value="${esc(c.procurando||'')}" placeholder="Ex.: i5 16GB até R$2.000 pra faculdade">
       </div>
@@ -5240,7 +5253,10 @@ window.salvarClienteInfo=async(id)=>{
       if(numero) contatos.push({nome,numero});
     });
   }
-  const upd={procurando:proc,obs,whatsapp,contatos};
+  const razao_social=(document.getElementById('cliRazao_'+id)?.value||'').trim();
+  const docCli=(document.getElementById('cliDoc_'+id)?.value||'').trim();
+  const endereco=(document.getElementById('cliEnd_'+id)?.value||'').trim();
+  const upd={procurando:proc,obs,whatsapp,contatos,razao_social,doc:docCli,endereco};
   try{ if(!idLocal(id)) await updateDoc(doc(db,'clientes',id),upd); }catch(e){}
   Object.assign(c,upd);
   renderClientes();
@@ -12309,7 +12325,7 @@ function reciboPendencias(p){
   const f=[];
   if(!reciboCfg.vendedor) f.push('seu nome/razão social');
   if(!reciboCfg.doc) f.push('seu CPF ou CNPJ');
-  if(!(p.cliente_nome||'').trim()) f.push('nome do comprador');
+  if(!nomeComprador(p)) f.push('nome do comprador');
   if(!((parseFloat(p.venda)||0)>0)) f.push('valor da venda');
   if(!p.data_venda) f.push('data da venda');
   return f;
@@ -12326,10 +12342,11 @@ function textoRecibo(p){
   if(reciboCfg.doc) L.push('*'+rotuloDocBR(reciboCfg.doc)+':* '+fmtDocBR(reciboCfg.doc));
   if(reciboCfg.fone) L.push('*Contato:* '+reciboCfg.fone);
   L.push('');
-  L.push('*Comprador:* '+((p.cliente_nome||'').trim()||'—'));
-  const docC1=docComprador(p), endC1=endComprador(p);
+  L.push('*Comprador:* '+(nomeComprador(p)||'—'));
+  const docC1=docComprador(p), endC1=endComprador(p), acC1=acComprador(p);
   if(docC1) L.push('*'+rotuloDocBR(docC1)+':* '+fmtDocBR(docC1));
   if(endC1) L.push('*Endereço:* '+endC1);
+  if(acC1) L.push('*A/C:* '+acC1);
   if(cli&&cli.whatsapp) L.push('*Contato:* '+cli.whatsapp);
   L.push('');
   L.push('*Equipamento:* '+(p.nome||'—')+' (usado/seminovo)');
@@ -12351,7 +12368,7 @@ function textoRecibo(p){
   L.push((reciboCfg.vendedor||'Vendedor'));
   L.push('');
   L.push('_____________________________');
-  L.push(((p.cliente_nome||'').trim()||'Comprador'));
+  L.push(nomeComprador(p)||'Comprador');
   return L.join('\n');
 }
 // ── DOCUMENTO DO COMPRADOR ─────────────────────────────────────────────
@@ -12383,6 +12400,22 @@ function docComprador(p){
   const c=clienteDe(p);
   return (p&&p.cliente_cpf) || (c&&c.doc) || '';
 }
+// Quem compra é a empresa; quem atende o telefone é o Rodrigo. A base de
+// clientes guarda o contato, porque é com ele que ele fala — mas o recibo tem
+// que sair no nome de quem pagou, senão o documento não serve pra empresa.
+function razaoComprador(p){
+  const c=clienteDe(p);
+  return (c&&(c.razao_social||'').trim()) || '';
+}
+function nomeComprador(p){
+  return razaoComprador(p) || ((p&&p.cliente_nome)||'').trim() || '';
+}
+// Só vira linha "A/C" quando o contato é uma pessoa diferente da empresa.
+function acComprador(p){
+  const rz=razaoComprador(p);
+  const pessoa=((p&&p.cliente_nome)||'').trim();
+  return (rz && pessoa && pessoa.toLowerCase()!==rz.toLowerCase()) ? pessoa : '';
+}
 function endComprador(p){
   const c=clienteDe(p);
   return (p&&p.cliente_end) || (c&&c.endereco) || '';
@@ -12406,7 +12439,7 @@ function reciboPendenciasLote(itens){
   const f=[];
   if(!reciboCfg.vendedor) f.push('seu nome/razão social');
   if(!reciboCfg.doc) f.push('seu CPF ou CNPJ');
-  if(!(itens[0].cliente_nome||'').trim()) f.push('nome do comprador');
+  if(!nomeComprador(itens[0])) f.push('nome do comprador');
   const tot=itens.reduce((s,p)=>s+(parseFloat(p.venda)||0),0);
   if(!(tot>0)) f.push('valor da venda');
   if(!itens[0].data_venda) f.push('data da venda');
@@ -12425,10 +12458,11 @@ function textoReciboLote(itens){
   if(reciboCfg.doc) L.push('*'+rotuloDocBR(reciboCfg.doc)+':* '+fmtDocBR(reciboCfg.doc));
   if(reciboCfg.fone) L.push('*Contato:* '+reciboCfg.fone);
   L.push('');
-  L.push('*Comprador:* '+((p0.cliente_nome||'').trim()||'—'));
-  const docC=docComprador(p0), endC=endComprador(p0);
+  L.push('*Comprador:* '+(nomeComprador(p0)||'—'));
+  const docC=docComprador(p0), endC=endComprador(p0), acC=acComprador(p0);
   if(docC) L.push('*'+rotuloDocBR(docC)+':* '+fmtDocBR(docC));
   if(endC) L.push('*Endereço:* '+endC);
+  if(acC) L.push('*A/C:* '+acC);
   if(cli&&cli.whatsapp) L.push('*Contato:* '+cli.whatsapp);
   L.push('');
   L.push('*EQUIPAMENTOS ('+itens.length+')*');
@@ -12459,7 +12493,7 @@ function textoReciboLote(itens){
   L.push((reciboCfg.vendedor||'Vendedor'));
   L.push('');
   L.push('_____________________________');
-  L.push(((p0.cliente_nome||'').trim()||'Comprador'));
+  L.push(nomeComprador(p0)||'Comprador');
   return L.join('\n');
 }
 
@@ -12502,10 +12536,13 @@ function montarRecibo(){
   // endereço valem pro lote inteiro e pro cadastro do cliente.
   const obs=document.getElementById('rcExtraObs');
   if(obs){
-    const alvo = r.ehLote
-      ? 'A série é só desta máquina. O documento e o endereço valem para as '+r.grupo.length+' do lote.'
-      : 'A série fica nesta máquina; o documento e o endereço ficam também no cadastro do cliente.';
-    obs.textContent=alvo;
+    const rz=razaoComprador(r.p), ac=acComprador(r.p);
+    obs.textContent = (r.ehLote
+      ? 'A série é só desta máquina. Empresa, documento e endereço valem para as '+r.grupo.length+' do lote. '
+      : 'A série fica nesta máquina. Empresa, documento e endereço ficam no cadastro do cliente. ')
+      + (rz
+        ? 'O recibo sai no nome de "'+rz+'"'+(ac?', com '+ac+' como contato.':'.')
+        : 'Sem razão social, o recibo sai no nome do contato.');
   }
   const st=document.getElementById('rcStatus'); if(st) st.textContent='';
 }
@@ -12525,6 +12562,7 @@ window.abrirRecibo=async(id)=>{
   set('rcVendedor',reciboCfg.vendedor); set('rcDoc',reciboCfg.doc);
   set('rcFone',reciboCfg.fone); set('rcCidade',reciboCfg.cidade);
   set('rcSerial',p.serial); set('rcCpf',docComprador(p)); set('rcEnd',endComprador(p));
+  set('rcRazao',razaoComprador(p));
   const cfg=document.getElementById('rcCfg');
   // Primeira vez, sem os dados do vendedor: já abre a configuração
   if(cfg) cfg.style.display=(reciboCfg.vendedor&&reciboCfg.doc)?'none':'block';
@@ -12539,6 +12577,7 @@ window.salvarRecDados=async()=>{
   const serial=(document.getElementById('rcSerial')?.value||'').trim();
   const cpf=(document.getElementById('rcCpf')?.value||'').trim();
   const end=(document.getElementById('rcEnd')?.value||'').trim();
+  const razao=(document.getElementById('rcRazao')?.value||'').trim();
 
   // Série é da máquina: só desta. Documento e endereço são do comprador, então
   // valem pro lote inteiro — digitar o CNPJ onze vezes é onde o erro entra.
@@ -12552,20 +12591,23 @@ window.salvarRecDados=async()=>{
     if(!idLocal(m.id)) await gravar(updateDoc(doc(db,'products',m.id),{cliente_cpf:cpf,cliente_end:end}),
                                     'Dados do comprador: '+(m.nome||''));
   }
-  // E no cadastro do cliente, pra próxima venda já vir preenchido.
+  // A empresa mora no cadastro do cliente, não na máquina: o contato continua
+  // sendo o Rodrigo na base dele, e o recibo sai no nome de quem pagou.
   const cli=clienteDe(p);
-  if(cli && (cli.doc!==cpf || cli.endereco!==end)){
-    cli.doc=cpf; cli.endereco=end;
+  if(cli && (cli.doc!==cpf || cli.endereco!==end || cli.razao_social!==razao)){
+    cli.doc=cpf; cli.endereco=end; cli.razao_social=razao;
     if(!idLocal(cli.id)){
-      try{ await updateDoc(doc(db,'clientes',cli.id),{doc:cpf,endereco:end}); }catch(e){}
+      try{ await updateDoc(doc(db,'clientes',cli.id),{doc:cpf,endereco:end,razao_social:razao}); }catch(e){}
     }
   }
   montarRecibo();
   const st=document.getElementById('rcStatus');
   if(st){
-    st.textContent='✓ Guardado'+(nMaq>1?' nas '+nMaq+' máquinas do lote':'')
-      +(cli?' e no cadastro de '+(cli.nome||'cliente'):'');
-    setTimeout(()=>{if(st)st.textContent='';},3000);
+    st.textContent = cli
+      ? '✓ Guardado no cadastro de '+(cli.nome||'cliente')+(nMaq>1?' e nas '+nMaq+' máquinas do lote':'')
+      : '⚠️ Esta venda não tem cliente vinculado — os dados ficaram só nas máquinas. '
+        +'Vincule um cliente pra reaproveitar na próxima venda.';
+    setTimeout(()=>{if(st)st.textContent='';},4000);
   }
 };
 window.copiarRecibo=async()=>{
