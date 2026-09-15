@@ -12343,10 +12343,9 @@ function textoRecibo(p){
   if(reciboCfg.fone) L.push('*Contato:* '+reciboCfg.fone);
   L.push('');
   L.push('*Comprador:* '+(nomeComprador(p)||'—'));
-  const docC1=docComprador(p), endC1=endComprador(p), acC1=acComprador(p);
+  const docC1=docComprador(p), endC1=endComprador(p);
   if(docC1) L.push('*'+rotuloDocBR(docC1)+':* '+fmtDocBR(docC1));
   if(endC1) L.push('*Endereço:* '+endC1);
-  if(acC1) L.push('*A/C:* '+acC1);
   if(cli&&cli.whatsapp) L.push('*Contato:* '+cli.whatsapp);
   L.push('');
   L.push('*Equipamento:* '+(p.nome||'—')+' (usado/seminovo)');
@@ -12410,12 +12409,6 @@ function razaoComprador(p){
 function nomeComprador(p){
   return razaoComprador(p) || ((p&&p.cliente_nome)||'').trim() || '';
 }
-// Só vira linha "A/C" quando o contato é uma pessoa diferente da empresa.
-function acComprador(p){
-  const rz=razaoComprador(p);
-  const pessoa=((p&&p.cliente_nome)||'').trim();
-  return (rz && pessoa && pessoa.toLowerCase()!==rz.toLowerCase()) ? pessoa : '';
-}
 function endComprador(p){
   const c=clienteDe(p);
   return (p&&p.cliente_end) || (c&&c.endereco) || '';
@@ -12459,10 +12452,9 @@ function textoReciboLote(itens){
   if(reciboCfg.fone) L.push('*Contato:* '+reciboCfg.fone);
   L.push('');
   L.push('*Comprador:* '+(nomeComprador(p0)||'—'));
-  const docC=docComprador(p0), endC=endComprador(p0), acC=acComprador(p0);
+  const docC=docComprador(p0), endC=endComprador(p0);
   if(docC) L.push('*'+rotuloDocBR(docC)+':* '+fmtDocBR(docC));
   if(endC) L.push('*Endereço:* '+endC);
-  if(acC) L.push('*A/C:* '+acC);
   if(cli&&cli.whatsapp) L.push('*Contato:* '+cli.whatsapp);
   L.push('');
   L.push('*EQUIPAMENTOS ('+itens.length+')*');
@@ -12536,12 +12528,12 @@ function montarRecibo(){
   // endereço valem pro lote inteiro e pro cadastro do cliente.
   const obs=document.getElementById('rcExtraObs');
   if(obs){
-    const rz=razaoComprador(r.p), ac=acComprador(r.p);
+    const rz=razaoComprador(r.p);
     obs.textContent = (r.ehLote
       ? 'A série é só desta máquina. Empresa, documento e endereço valem para as '+r.grupo.length+' do lote. '
       : 'A série fica nesta máquina. Empresa, documento e endereço ficam no cadastro do cliente. ')
       + (rz
-        ? 'O recibo sai no nome de "'+rz+'"'+(ac?', com '+ac+' como contato.':'.')
+        ? 'O recibo sai só no nome de "'+rz+'".'
         : 'Sem razão social, o recibo sai no nome do contato.');
   }
   const st=document.getElementById('rcStatus'); if(st) st.textContent='';
