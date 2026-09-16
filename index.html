@@ -344,6 +344,8 @@ input[type=number].inp{padding-left:32px}
 .rc-lote-bt{flex:1;min-width:130px;background:var(--w);border:1px solid var(--b);color:var(--mu);border-radius:7px;padding:6px 9px;font-size:.73rem;font-weight:600;cursor:pointer}
 .rc-lote-bt.on{background:var(--bl);border-color:var(--bl);color:#fff}
 .rc-extra-obs{font-size:.68rem;color:var(--li);line-height:1.45;margin-top:6px;flex-basis:100%}
+.fin-marco{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:.73rem;color:var(--am);
+  background:var(--abg);border:1px solid var(--abd);border-radius:8px;padding:9px 12px;margin-bottom:12px;line-height:1.5}
 .marca-busca-inp{flex:1;border:1px solid var(--b2);background:var(--w);border-radius:8px;padding:6px 11px;font-size:.78rem;color:var(--tx);font-family:inherit;outline:none;transition:border-color .12s}
 .marca-busca-inp:focus{border-color:var(--tx)}
 .marca-busca-inp::placeholder{color:var(--li)}
@@ -2032,6 +2034,14 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
         </div>
       </div>
 
+      <div class="fin-marco" id="finMarco" style="display:none"></div>
+
+      <!-- PATRIMÔNIO -->
+      <div class="cd" style="margin-bottom:12px">
+        <div class="cdh"><span class="cdht">💼 Seu patrimônio hoje</span></div>
+        <div style="padding:14px 18px" id="finPatrimonio"></div>
+      </div>
+
       <!-- CARTEIRAS -->
       <div class="wal-row">
         <div class="wal-card c6">
@@ -3676,7 +3686,7 @@ onAuthStateChanged(auth,u=>{
     // Mostrar botão admin só para o dono
     const btnAdm = document.getElementById('btnAdmin');
     if(btnAdm) btnAdm.style.display = perfilAtual==='joao' ? '' : 'none';
-    loadProds();loadFinancas();loadPecas();loadClientes();loadFornecedores();loadMetas3();loadMilhao();loadSolo();loadReciboCfg();try{montarHw();}catch(e){}
+    loadProds();loadFinancas();loadPecas();loadClientes();loadFornecedores();loadMetas3();loadMilhao();loadSolo();loadFinInicio();loadReciboCfg();try{montarHw();}catch(e){}
     try{ initSpecBuilder(); loadCpuOutros(); }catch(e){}
     setTimeout(carregarAvisos, 2000); // carregar avisos após login
     // Depois do login os cards já existem na tela; antes disso não havia o
@@ -8863,6 +8873,94 @@ async function addExtrato(obj){
   renderExtrato();
 }
 
+// ── PATRIMÔNIO ─────────────────────────────────────────────────────────
+// Dinheiro que virou máquina não sumiu: mudou de lugar. O painel só mostrava
+// "lucro − gastos", como se comprar estoque fosse despesa — e é justamente por
+// isso que mês de compra grande parece mês ruim. Aqui o capital aparece onde
+// ele está: parte em caixa, parte na prateleira.
+function capitalEmEstoqueDele(ehSolo){
+  const naMao=(typeof prods!=='undefined'?prods:[]).filter(p=>p.status!=='Vendido');
+  const soloDesde=(typeof opSolo!=='undefined' && opSolo.inicio)||'';
+  const mesDe=p=>{ const dc=p.data_compra||p.data_compra_mes||''; const dt=p.data||'';
+                   return dc?dc.slice(0,7):dt?dt.slice(0,7):''; };
+  let val=0, qtd=0;
+  naMao.forEach(p=>{
+    const m=mesDe(p);
+    // Comprada no período solo: o custo é todo dele. Antes disso, só a parte dele.
+    const dele = (soloDesde && m && m>=soloDesde)
+      ? custoRealDe(p)
+      : (typeof custoSplit==='function' ? custoSplit(p).joao : 0);
+    if(dele>0){ val+=dele; qtd++; }
+  });
+  return {val, qtd, semData: naMao.filter(p=>!mesDe(p)).length};
+}
+function renderPatrimonio(ehSolo){
+  const box=document.getElementById('finPatrimonio'); if(!box) return;
+  const caixa=getSaldoCarteira('c6')+getSaldoCarteira('mp');
+  const est=capitalEmEstoqueDele(ehSolo);
+  const total=caixa+est.val;
+  const linha=(l,v,cls,sep)=>`<div class="cap-row"${sep?' style="border-top:1px solid var(--b);margin-top:4px;padding-top:8px"':''}>
+      <span class="cap-row-lbl">${l}</span><span class="cap-row-val ${cls||''}">${v}</span></div>`;
+  box.innerHTML =
+    linha('Em caixa (C6 + Mercado Pago)', fmt(caixa), caixa>=0?'':'re')
+  + linha('+ Capital em estoque'+(est.qtd?' ('+est.qtd+' máquina'+(est.qtd!==1?'s':'')+')':''), fmt(est.val), 'am')
+  + linha('= PATRIMÔNIO', fmt(total), 'g', true)
+  + `<div style="font-size:.68rem;color:var(--li);line-height:1.5;margin-top:8px">
+       Comprar máquina não é gasto: o dinheiro sai do caixa e entra no estoque, e volta quando vende.
+       Por isso mês de compra grande aparece com saldo baixo sem você ter ficado mais pobre.</div>`
+  + (est.semData>0?`<div style="font-size:.67rem;color:var(--re);margin-top:8px;padding:4px 8px;background:var(--rbg);border-radius:5px;border:1px solid #fecaca">
+       ⚠️ ${est.semData} máquina${est.semData>1?'s':''} em estoque sem data de compra — ${est.semData>1?'não dá':'não dá'} pra saber se ${est.semData>1?'são':'é'} do período solo ou da parceria.</div>`:'');
+}
+
+// ── MARCO DO CONTROLE PESSOAL ──────────────────────────────────────────
+// A data em que ele passou a lançar tudo. Sem isso, o primeiro mês parece
+// baratíssimo — porque só metade dele foi registrada — e estraga qualquer média.
+let finInicio={ data:'', _docId:null };
+async function loadFinInicio(){
+  try{ const ls=JSON.parse(localStorage.getItem('bj_fin_inicio')||'null'); if(ls) finInicio={...finInicio,...ls}; }catch(e){}
+  try{
+    const snap=await getDocs(query(collection(db,'config'),where('userId','==','shared_ijx')));
+    const d0=snap.docs.find(d=>d.data().tipo==='fin_inicio');
+    if(d0){ finInicio={...finInicio,...(d0.data().dados||{})}; finInicio._docId=d0.id; }
+  }catch(e){}
+  try{ renderFinancas(); }catch(e){}
+}
+window.marcarInicioFin=async()=>{
+  const hoje=new Date().toISOString().slice(0,10);
+  if(finInicio.data && !confirm('Já existe marco em '+fdtDia(finInicio.data)+'. Trocar para hoje?')) return;
+  const dados={data:hoje};
+  finInicio={...finInicio,...dados};
+  localStorage.setItem('bj_fin_inicio',JSON.stringify(dados));
+  try{
+    if(finInicio._docId){ await updateDoc(doc(db,'config',finInicio._docId),{dados}); }
+    else { const r=await addDoc(collection(db,'config'),{userId:'shared_ijx',tipo:'fin_inicio',dados}); finInicio._docId=r.id; }
+  }catch(e){}
+  renderFinancas();
+};
+function fdtDia(d){
+  if(!d) return '—';
+  const dt=new Date(d+'T12:00:00');
+  return isNaN(dt)?d:dt.toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
+}
+function renderFinMarco(){
+  const el=document.getElementById('finMarco'); if(!el) return;
+  if(!finInicio.data){
+    el.innerHTML=`<span>Você ainda não marcou desde quando lança tudo aqui. Sem isso, o primeiro mês parece barato só porque metade dele não foi registrada.</span>
+      <button class="fin-add-btn" onclick="marcarInicioFin()">Começar a contar de hoje</button>`;
+    el.style.display='flex'; return;
+  }
+  const mesIni=finInicio.data.slice(0,7);
+  if(finMes<mesIni){
+    el.innerHTML=`<span>📅 ${MES_NOMES[+finMes.slice(5,7)-1]}/${finMes.slice(2,4)} é <strong>anterior ao seu controle</strong>, que começou em ${fdtDia(finInicio.data)}. Os gastos daqui não foram lançados — este mês não serve de comparação.</span>`;
+    el.style.display='flex'; return;
+  }
+  if(finMes===mesIni && finInicio.data.slice(8)!=='01'){
+    el.innerHTML=`<span>📅 Mês <strong>parcial</strong>: você começou a lançar em ${fdtDia(finInicio.data)}, então o que veio antes não está aqui. Use o mês que vem como o primeiro completo.</span>`;
+    el.style.display='flex'; return;
+  }
+  el.style.display='none';
+}
+
 function getSaldoCarteira(wal){
   return extrato.filter(x=>x.carteira===wal).reduce((s,x)=>s+(x.tipo==='entrada'?x.valor:-x.valor),0);
 }
@@ -9022,7 +9120,11 @@ function renderFinancas(){
   document.getElementById('finMesLabel').textContent=mesNome;
   document.getElementById('finVarMesLabel').textContent='· '+mesNome;
   const lucroMesTotal=prods.filter(p=>p.status==='Vendido'&&(p.data_venda||'').startsWith(finMes)).reduce((s,p)=>s+getLucro(p),0);
-  const lucroMes=lucroMesTotal/2; // sua parte (50%)
+  // A metade era da sociedade. A partir do mês em que ele toca sozinho, o lucro
+  // é inteiro dele — deixar 50% fixo mostraria metade da renda dele pra sempre.
+  const soloDesde=(typeof opSolo!=='undefined' && opSolo.inicio)||'';
+  const ehSolo = !!soloDesde && finMes>=soloDesde;
+  const lucroMes = ehSolo ? lucroMesTotal : lucroMesTotal/2;
   const totalFixas=fixas.reduce((s,x)=>s+x.valor,0);
   const varsDoMes=variaveis.filter(x=>x.mes===finMes);
   const totalVar=varsDoMes.reduce((s,x)=>s+x.valor,0);
@@ -9030,8 +9132,14 @@ function renderFinancas(){
   const saldo=lucroMes-totalGastos;
   document.getElementById('finLucro').textContent=fmt(lucroMes);
   document.getElementById('finLucroSub').textContent=prods.filter(p=>p.status==='Vendido'&&(p.data_venda||'').startsWith(finMes)).length+' vendas em '+mesNome;
+  const elLucroLbl=document.querySelector('#pg-financas .fin-card.lucro .fin-lbl');
+  if(elLucroLbl) elLucroLbl.textContent = ehSolo ? 'Seu lucro (100%)' : 'Sua parte do lucro (50%)';
   const finLucroTotalEl=document.getElementById('finLucroTotal');
-  if(finLucroTotalEl) finLucroTotalEl.textContent='Valor cheio (negócio): '+fmt(lucroMesTotal);
+  if(finLucroTotalEl) finLucroTotalEl.textContent = ehSolo
+    ? 'Operação sua · lucro inteiro'
+    : 'Valor cheio (negócio): '+fmt(lucroMesTotal);
+  renderPatrimonio(ehSolo);
+  renderFinMarco();
   document.getElementById('finGastos').textContent=fmt(totalGastos);
   document.getElementById('finGastosSub').textContent=fmt(totalFixas)+' fixo · '+fmt(totalVar)+' variável';
   const saldoEl=document.getElementById('finSaldo');
