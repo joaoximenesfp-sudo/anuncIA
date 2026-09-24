@@ -10,7 +10,7 @@
 :root{--bg:#f9f8f6;--w:#fff;--b:#e8e5df;--b2:#d6d2c8;--tx:#1c1917;--mu:#78716c;--li:#a8a29e;
   --gr:#15803d;--gbg:#f0fdf4;--gbd:#bbf7d0;--am:#b45309;--abg:#fffbeb;--abd:#fde68a;
   --re:#b91c1c;--rbg:#fef2f2;--bl:#1d4ed8;--bbg:#eff6ff;--bbd:#bfdbfe;
-  --rad:10px;--sh:0 1px 2px rgba(0,0,0,.06),0 1px 3px rgba(0,0,0,.04);--shm:0 4px 16px rgba(0,0,0,.07),0 1px 4px rgba(0,0,0,.04);}
+  --rad:10px;--cd:#fff;--sh:0 1px 2px rgba(0,0,0,.06),0 1px 3px rgba(0,0,0,.04);--shm:0 4px 16px rgba(0,0,0,.07),0 1px 4px rgba(0,0,0,.04);}
 *{margin:0;padding:0;box-sizing:border-box;}
 body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;line-height:1.5;min-height:100vh;}
 ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:var(--b2);border-radius:3px}
@@ -655,12 +655,25 @@ input[type=number].inp{padding-left:32px}
    maquina na lista de Anunciados tambem, e uma barra escondida numa aba so era
    justamente o motivo de ele nunca ter achado a venda em lote. */
 .lote-bar{position:fixed;left:0;right:0;bottom:0;z-index:60;display:none;
-  align-items:center;gap:8px;flex-wrap:wrap;
-  padding:10px 14px 12px;border-top:1px solid var(--b2);background:var(--cd);
-  box-shadow:0 -6px 22px rgba(15,23,42,.14);font-size:.74rem;color:var(--mu)}
+  flex-direction:column;gap:9px;
+  padding:12px 16px 14px;border-top:1px solid var(--b2);
+  /* Translúcida com desfoque: ele precisa enxergar a lista por baixo pra saber
+     o que está marcando. Fundo chapado escondia a última linha da tabela. */
+  background:rgba(255,255,255,.90);
+  -webkit-backdrop-filter:blur(16px) saturate(1.25);
+  backdrop-filter:blur(16px) saturate(1.25);
+  box-shadow:0 -8px 30px rgba(15,23,42,.13);font-size:.74rem;color:var(--mu)}
+/* Duas faixas em vez de uma: etiquetas em cima, ações embaixo. Tudo na mesma
+   linha fazia as etiquetas e os botões brigarem pelo espaço e a barra crescia
+   pra cima, tapando a tabela. */
+.lote-topo{display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0}
+.lote-acoes{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.lote-acoes .lote-sep{flex:1;min-width:0}
 /* As marcadas aparecem aqui como etiqueta. Sem isso, marcar uma maquina e
    depois mudar a busca esconderia a marcacao — e ele venderia sem ver o que. */
-.lote-chips{display:flex;flex-wrap:wrap;gap:4px;flex:1;min-width:120px}
+/* Teto de altura: marcando 20 máquinas, as etiquetas comiam meia tela. */
+.lote-chips{display:flex;flex-wrap:wrap;gap:5px;flex:1;min-width:120px;
+  max-height:58px;overflow-y:auto}
 .lote-chip{display:inline-flex;align-items:center;gap:5px;font-size:.68rem;font-weight:700;
   background:var(--cd);color:var(--tx);border:1px solid var(--b2);border-radius:20px;
   padding:2px 7px 2px 9px;cursor:pointer;max-width:190px}
@@ -690,11 +703,14 @@ input[type=number].inp{padding-left:32px}
 .pn-lin>div{min-width:0}
 tr.marcada>td{background:var(--gbg)}
 tr.marcada>td:first-child{box-shadow:inset 3px 0 0 var(--gr)}
-.lote-bar .inp{width:auto;padding:4px 8px;font-size:.74rem}
+.lote-bar .inp{width:auto;padding:5px 9px;font-size:.74rem}
 .lote-bt{border:1px solid var(--bl);background:var(--bl);color:#fff;font-family:inherit;
-  font-size:.74rem;font-weight:700;padding:5px 12px;border-radius:6px;cursor:pointer}
+  font-size:.74rem;font-weight:700;padding:6px 13px;border-radius:6px;cursor:pointer}
 .lote-bt:hover{filter:brightness(1.08)}
-.lote-obs{font-size:.68rem;color:var(--li);flex:1;min-width:180px}
+/* Linha própria, pequena: é texto de apoio e estava roubando a largura dos
+   botões quando dividia a faixa com eles. */
+.lote-obs{font-size:.68rem;color:var(--li);line-height:1.45;
+  padding-top:2px;border-top:1px solid var(--b)}
 .lv-prev{max-height:190px;overflow-y:auto;border:1px solid var(--b);border-radius:8px}
 .lv-lin{display:flex;align-items:center;gap:8px;padding:5px 9px;font-size:.72rem;
   border-bottom:1px solid var(--b)}
@@ -3310,21 +3326,26 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
      Fica fora das abas, presa no rodapé: ele marca máquina tanto na lista de
      produtos quanto na de anunciados, e a barra precisa aparecer nas duas. -->
 <div class="lote-bar" id="loteBar">
-  <span id="loteLbl"></span>
-  <div class="lote-chips" id="loteChips"></div>
-  <button class="lote-bt" id="loteTodosBt" onclick="loteMarcarTodos()">Marcar todas da lista</button>
-  <button class="lote-bt" id="loteLimparBt" style="display:none" onclick="loteLimpar()">Desmarcar tudo</button>
-  <select class="inp" id="loteAlvo">
-    <option value="">mudar status para…</option>
-    <option value="Anunciado">Anunciado</option>
-    <option value="Estoque">Estoque</option>
-    <option value="Reservado">🤝 Reservado</option>
-    <option value="Aguardando">🚚 Aguardando chegar</option>
-    <option value="" disabled>──────────</option>
-    <option value="Vendido">💰 Vendido (abre a tela de venda)</option>
-  </select>
-  <button class="lote-bt" id="loteAplicarBt" onclick="loteAplicar()">Aplicar</button>
-  <button class="lote-bt" style="background:var(--gr);border-color:var(--gr)" onclick="lvAbrir()">💰 Vender em lote</button>
+  <div class="lote-topo">
+    <span id="loteLbl"></span>
+    <div class="lote-chips" id="loteChips"></div>
+  </div>
+  <div class="lote-acoes">
+    <button class="lote-bt" id="loteTodosBt" onclick="loteMarcarTodos()">Marcar todas da lista</button>
+    <button class="lote-bt" id="loteLimparBt" style="display:none" onclick="loteLimpar()">Desmarcar tudo</button>
+    <select class="inp" id="loteAlvo">
+      <option value="">mudar status para…</option>
+      <option value="Anunciado">Anunciado</option>
+      <option value="Estoque">Estoque</option>
+      <option value="Reservado">🤝 Reservado</option>
+      <option value="Aguardando">🚚 Aguardando chegar</option>
+      <option value="" disabled>──────────</option>
+      <option value="Vendido">💰 Vendido (abre a tela de venda)</option>
+    </select>
+    <button class="lote-bt" id="loteAplicarBt" onclick="loteAplicar()">Aplicar</button>
+    <span class="lote-sep"></span>
+    <button class="lote-bt" style="background:var(--gr);border-color:var(--gr)" onclick="lvAbrir()">💰 Vender em lote</button>
+  </div>
   <span class="lote-obs" id="loteObs"></span>
 </div>
 
