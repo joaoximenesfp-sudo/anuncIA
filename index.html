@@ -806,6 +806,8 @@ tr.marcada>td:first-child{box-shadow:inset 3px 0 0 var(--gr)}
 
 .hw-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(108px,1fr));gap:8px}
 .hw-f{display:flex;flex-direction:column;gap:3px;font-size:.66rem;font-weight:600;color:var(--mu)}
+.ficha-acoes{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:7px}
+.ficha-hint{font-size:.67rem;color:var(--am);line-height:1.4}
 .hw-f .inp{width:100%}
 .hw-chk{grid-column:1/-1;display:flex;align-items:center;gap:7px;font-size:.72rem;color:var(--tx);cursor:pointer}
 .hw-chk input{width:15px;height:15px;accent-color:#16a34a;cursor:pointer}
@@ -1685,6 +1687,10 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
                   <div class="spec-group">
                     <span class="spec-lbl">💾 Armazenamento</span>
                     <div class="spec-chips" id="chipsSsd"></div>
+                  </div>
+                  <div class="spec-group">
+                    <span class="spec-lbl">🖥️ Tela</span>
+                    <div class="spec-chips" id="chipsTela"></div>
                   </div>
                 </div>
               </div>
@@ -3155,6 +3161,14 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
     </div>
     <div class="mcb">
       <div class="fc full"><label class="fl">Nome do produto</label><input class="inp" id="eN" type="text"></div>
+      <div class="fc full" id="eFichaWrap">
+        <label class="fl">📋 Ficha técnica <span style="font-size:.67rem;color:var(--li);font-weight:400">cada spec no seu campo — é o que a busca e o Mercado Livre usam</span></label>
+        <div id="eFichaMount"></div>
+        <div class="ficha-acoes">
+          <button type="button" class="aporte-bt" onclick="eFichaDoNome()">↻ Ler do nome</button>
+          <span class="ficha-hint" id="eFichaHint"></span>
+        </div>
+      </div>
       <div class="fc"><label class="fl">Custo R$</label><input class="inp" id="eC" type="number" min="0" oninput="eAporteHint()"></div>
       <div class="fc"><label class="fl">Preço de venda R$</label><input class="inp" id="eV" type="number" min="0"></div>
       <div class="fc"><label class="fl">Status</label>
@@ -3877,9 +3891,12 @@ const SPEC_ARMAZ={
   'SSD SATA':['SSD 120GB','SSD 240GB','SSD 480GB'],
   'SSD NVMe':['NVMe 128GB','NVMe 256GB','NVMe 512GB','NVMe 1TB']
 };
+// Polegada com ” tipográfico, não ": nome de máquina vai parar dentro de
+// value="..." no HTML, e a aspa reta fecharia o atributo no meio.
+const SPEC_TELA=['11.6”','12.5”','13.3”','14”','15.6”','17.3”'];
 // Processadores "Outros" aprendidos com o uso (persistidos)
 let SPEC_CPU_OUTROS=[];
-let specSel={cpu:'',ger:'',ram:'',ramtipo:'',ssd:''};
+let specSel={cpu:'',ger:'',ram:'',ramtipo:'',ssd:'',tela:''};
 let nomeManual=false;
 
 function initSpecBuilder(){
@@ -3889,6 +3906,8 @@ function initSpecBuilder(){
   const ramT=document.getElementById('chipsRamTipo');
   if(ramT) ramT.innerHTML=SPEC_RAM_TIPO.map(v=>`<button type="button" class="spec-chip sm" data-v="${v}" onclick="pickSpec('ramtipo','${v}',this)">${v}</button>`).join('');
   renderChipsArmaz();
+  const tela=document.getElementById('chipsTela');
+  if(tela) tela.innerHTML=SPEC_TELA.map(v=>`<button type="button" class="spec-chip sm" data-v="${v}" onclick="pickSpec('tela','${v}',this)">${v}</button>`).join('');
 }
 function renderChipsCpu(){
   const box=document.getElementById('chipsCpu'); if(!box)return;
@@ -3999,17 +4018,176 @@ window.montarNome=(fromChip)=>{
     // "8GB DDR4 RAM" quando o tipo estiver escolhido; senão "8GB RAM"
     partes.push(specSel.ram + (specSel.ramtipo?(' '+specSel.ramtipo):'') + ' RAM');
   }
+  if(specSel.tela) partes.push(specSel.tela);
   const nome=partes.join(' · ');
   const campo=document.getElementById('pN');
   if(campo && (fromChip || !nomeManual)){ campo.value=nome; nomeManual=false; }
 };
 function resetSpecBuilder(){
-  specSel={cpu:'',ger:'',ram:'',ramtipo:'',ssd:''}; nomeManual=false;
+  specSel={cpu:'',ger:'',ram:'',ramtipo:'',ssd:'',tela:''}; nomeManual=false;
   const m=document.getElementById('pMarca'); if(m)m.value='';
   const mo=document.getElementById('pModelo'); if(mo)mo.value='';
   document.querySelectorAll('.spec-chip.on').forEach(b=>b.classList.remove('on'));
   montarGeracoes(false);
 }
+
+// ── FICHA TÉCNICA ──
+// O montador acima só escrevia o nome: marca, processador, RAM e SSD não ficavam
+// gravados em lugar nenhum. Filtro por configuração e anúncio no Mercado Livre
+// (que pede cada atributo num campo próprio) precisam deles separados. O cadastro
+// agora grava a ficha; máquina antiga sem ficha tem ela lida do nome até alguém
+// conferir na edição.
+const FICHA_CAMPOS=['marca','modelo','cpu','ger','ram','ram_tipo','armaz','tela'];
+const FICHA_MARCAS=['Dell','Lenovo','HP','Acer','Asus','Samsung','Positivo','Vaio','LG','Apple'];
+const FICHA_FAMILIA={latitude:'Latitude',vostro:'Vostro',inspiron:'Inspiron',precision:'Precision',xps:'XPS',optiplex:'OptiPlex',
+  thinkpad:'ThinkPad',thinkbook:'ThinkBook',thinkcentre:'ThinkCentre',ideapad:'IdeaPad',ideacentre:'IdeaCentre',legion:'Legion',yoga:'Yoga',
+  elitebook:'EliteBook',probook:'ProBook',elitedesk:'EliteDesk',prodesk:'ProDesk',pavilion:'Pavilion',zbook:'ZBook',
+  aspire:'Aspire',nitro:'Nitro',travelmate:'TravelMate',swift:'Swift',extensa:'Extensa',
+  vivobook:'VivoBook',zenbook:'ZenBook',expertbook:'ExpertBook',galaxybook:'Galaxy Book',macbook:'MacBook'};
+// Família + número do modelo. O número não pode ser processador ("Latitude i5"),
+// memória ("Latitude 16GB"), geração ("Latitude 10ª") nem tela ("Latitude 14”").
+const RE_FICHA_MODELO=new RegExp('\\b(latitude|vostro|inspiron|precision|xps|optiplex|think\\s?pad|think\\s?book|think\\s?centre|idea\\s?pad|idea\\s?centre|legion|yoga|elite\\s?book|pro\\s?book|elite\\s?desk|pro\\s?desk|pavilion|zbook|aspire|nitro|travel\\s?mate|swift|extensa|vivo\\s?book|zen\\s?book|expert\\s?book|galaxy\\s?book|mac\\s?book)\\b'
+  +'(?:\\s+(?!i[3579]\\b)(?!\\d+\\s?(?:gb|tb)\\b)(?!\\d{1,2}\\s?[ªº°])(?!\\d{2}(?:[.,]\\d)?\\s?(?:"|”|pol))'
+  +'(air|pro|x1(?:\\s?(?:carbon|yoga))?|[a-z]{0,2}\\d{2,4}[a-z]{0,3}(?:\\s?g\\d\\b|\\s?gen\\s?\\d{1,2}\\b)?))?','i');
+const _fichaCache=new Map();
+function fichaDoNome(nome){
+  const n=String(nome||'');
+  if(_fichaCache.has(n)) return {..._fichaCache.get(n)};
+  const s=n.toLowerCase();
+  const f={marca:'',modelo:'',cpu:'',ger:'',ram:'',ram_tipo:'',armaz:'',tela:''};
+  let m;
+  // Marca: brand() já conhece as famílias de modelo; as marcas sem família vêm aqui
+  const b=brand(n);
+  if(b!=='Outros') f.marca=b;
+  else if(/\bpositivo\b/.test(s)) f.marca='Positivo';
+  else if(/\bvaio\b/.test(s)) f.marca='Vaio';
+  else if(/\b(apple|mac\s?book)\b/.test(s)) f.marca='Apple';
+  else if(/\blg\b/.test(s)) f.marca='LG';
+  // Modelo: família conhecida + número; senão o primeiro trecho do nome montado
+  if((m=s.match(RE_FICHA_MODELO))){
+    const fam=FICHA_FAMILIA[m[1].replace(/\s/g,'')]||m[1];
+    const num=(m[2]||'').replace(/\b([a-z])/g,c=>c.toUpperCase());
+    f.modelo=(fam+(num?' '+num:'')).trim();
+  } else if(n.includes(' · ')){
+    const seg=n.split(' · ')[0];
+    if(!/\b(i[3579]|ryzen|celeron|\d+\s?gb)\b/i.test(seg)){
+      const resto=f.marca?seg.replace(new RegExp('\\b'+f.marca+'\\b','i'),'').trim():seg.trim();
+      if(resto) f.modelo=resto;
+    }
+  }
+  // Processador
+  if((m=s.match(/\b(?:core\s?)?i([3579])\b/))) f.cpu='i'+m[1];
+  else if((m=s.match(/\bryzen\s?([3579])\b/))) f.cpu='Ryzen '+m[1];
+  else if(/\bceleron\b/.test(s)) f.cpu='Celeron';
+  else if(/\bpentium\b/.test(s)) f.cpu='Pentium';
+  // Geração Intel / série Ryzen. O número do modelo do chip diz a geração:
+  // 4 dígitos começando em 1 é 10ª em diante (1135G7 = 11ª), 5 dígitos são os
+  // dois primeiros (10210U = 10ª), o resto é o primeiro dígito (8350U = 8ª).
+  if(/^Ryzen/.test(f.cpu)){
+    if((m=s.match(/\bryzen\s?[3579]\s?(?:pro\s?)?(\d)\d{3}[a-z]{0,2}\b/))) f.ger=m[1]+'000';
+  } else if(/^i[3579]$/.test(f.cpu)){
+    let g=0;
+    if((m=s.match(/\bi[3579][-\s]?(\d{4,5})[a-z]{0,2}\d?\b/))){
+      const d=m[1];
+      g = d.length===5 ? parseInt(d.slice(0,2)) : (d[0]==='1' ? 10+parseInt(d[1]) : parseInt(d[0]));
+    }
+    if(!g && (m=s.match(/\b(\d{1,2})\s?(?:ª|º|°|a|th)?\s?(?:gera[cç][aã]o|ger\b|gen\b)/))) g=parseInt(m[1]);
+    if(!g && (m=s.match(/\b(\d{1,2})\s?[ªº°]/))) g=parseInt(m[1]);
+    if(g>=2 && g<=14) f.ger=g+'ª';
+  }
+  // Armazenamento: tipo + tamanho. Tamanho que não é de disco (o 15 de
+  // "tela HD 15.6") é descartado. Guarda onde o disco está escrito, pra RAM
+  // não ler o número dele.
+  const tipoDisco=t=>/nvme|m\.?2/.test(t)?'NVMe':/ssd/.test(t)?'SSD':/emmc/.test(t)?'eMMC':'HD';
+  const tamDisco=(v,u)=>{ v=parseInt(v); u=(u||'').toLowerCase();
+    if(u==='tb'||(!u&&v>=1&&v<=4)) return v<=8?v+'TB':'';
+    return v>=32?v+'GB':''; };
+  let disco=[-1,-1];
+  if((m=s.match(/\b(ssd\s?nvme|ssd\s?m\.?2|nvme|m\.?2|ssd|hdd|hd|emmc)\s?(?:sata\s?)?(?:de\s)?(\d{1,4})\s?(gb|tb)?\b/))){
+    const t=tamDisco(m[2],m[3]); if(t){ f.armaz=tipoDisco(m[1])+' '+t; disco=[m.index,m.index+m[0].length]; }
+  }
+  if(!f.armaz && (m=s.match(/\b(\d{1,4})\s?(gb|tb)\s?(?:de\s)?(nvme|ssd|hdd|hd|m\.?2|emmc)\b/))){
+    const t=tamDisco(m[1],m[2]); if(t){ f.armaz=tipoDisco(m[3])+' '+t; disco=[m.index,m.index+m[0].length]; }
+  }
+  // RAM: primeiro o que está escrito como RAM; senão o primeiro "NGB" de pente
+  // comum fora do trecho do disco ("8GB SSD 512GB": o 8 é RAM, o 512 é disco)
+  if((m=s.match(/\b(\d{1,2})\s?gb\s?(?:de\s)?(?:ram|ddr[345]l?|mem[oó]ria)\b/))) f.ram=m[1]+'GB';
+  else if((m=s.match(/\b(?:ram|mem[oó]ria)\s?(?:de\s)?(\d{1,2})\s?gb\b/))) f.ram=m[1]+'GB';
+  else {
+    for(const mm of s.matchAll(/\b(\d{1,4})\s?gb\b/g)){
+      if(mm.index>=disco[0] && mm.index<disco[1]) continue;
+      const v=parseInt(mm[1]);
+      if([2,4,6,8,12,16,20,24,32,40,48,64].includes(v)){ f.ram=v+'GB'; break; }
+    }
+  }
+  if((m=s.match(/\bddr(3l|[345])\b/))) f.ram_tipo='DDR'+m[1].toUpperCase();
+  // Tela
+  if((m=s.match(/\b(1[0-7](?:[.,]\d)?)\s?(?:"|”|''|pol\b|pol\.|polegadas)/))) f.tela=m[1].replace(',','.')+'”';
+  _fichaCache.set(n,f);
+  return {...f};
+}
+// Ficha gravada vale como está (alguém conferiu ou montou no cadastro);
+// sem ficha gravada, a lida do nome.
+function fichaDe(p){
+  if(p && p.ficha && typeof p.ficha==='object'){
+    const f={}; for(const k of FICHA_CAMPOS) f[k]=String(p.ficha[k]||''); return f;
+  }
+  return fichaDoNome(p&&p.nome);
+}
+function fichaTexto(p){ return FICHA_CAMPOS.map(k=>fichaDe(p)[k]).filter(Boolean).join(' '); }
+// O que o cadastro grava: o que deu pra ler do nome, com o que foi escolhido
+// nos botões por cima (a escolha manda).
+function fichaDoCadastro(nome){
+  const f=fichaDoNome(nome);
+  const marca=document.getElementById('pMarca')?.value||'';
+  const escolha={marca:(marca==='Outro'?'':marca), modelo:(document.getElementById('pModelo')?.value.trim()||''),
+    cpu:specSel.cpu, ger:specSel.ger, ram:specSel.ram, ram_tipo:specSel.ramtipo, armaz:specSel.ssd, tela:specSel.tela};
+  for(const k of FICHA_CAMPOS) if(escolha[k]) f[k]=escolha[k];
+  return f;
+}
+const FICHA_ID={marca:'Marca',modelo:'Modelo',cpu:'Cpu',ger:'Ger',ram:'Ram',ram_tipo:'RamTipo',armaz:'Armaz',tela:'Tela'};
+function fichaListas(){
+  return {marca:FICHA_MARCAS, cpu:[...SPEC_CPU,...SPEC_CPU_OUTROS,'Pentium'], ger:[...SPEC_GER,...SPEC_SERIE_RYZEN],
+    ram:SPEC_RAM, ram_tipo:SPEC_RAM_TIPO, armaz:Object.values(SPEC_ARMAZ).flat(), tela:SPEC_TELA};
+}
+const escAttr=s=>esc(String(s)).replace(/"/g,'&quot;');
+function fichaHTML(pre){
+  const campo=(k,rot)=> k==='modelo'
+    ? `<label class="hw-f"><span>${rot}</span><input class="inp" type="text" id="${pre}Ficha${FICHA_ID[k]}" placeholder="Latitude 5490" autocomplete="off"></label>`
+    : `<label class="hw-f"><span>${rot}</span><select class="inp" id="${pre}Ficha${FICHA_ID[k]}"></select></label>`;
+  return `<div class="hw-grid">${campo('marca','Marca')}${campo('modelo','Modelo')}${campo('cpu','Processador')}${campo('ger','Geração / série')}${campo('ram','RAM')}${campo('ram_tipo','Tipo de RAM')}${campo('armaz','Armazenamento')}${campo('tela','Tela')}</div>`;
+}
+// Valor gravado que não está na lista entra como opção, senão o <select>
+// ficaria em branco e salvar apagaria o dado sem avisar.
+function fichaPreencher(pre,f){
+  const L=fichaListas();
+  for(const k of FICHA_CAMPOS){
+    const el=document.getElementById(pre+'Ficha'+FICHA_ID[k]); if(!el) continue;
+    const v=String(f[k]||'');
+    if(el.tagName==='SELECT'){
+      const vals=[...(L[k]||[])];
+      if(v && !vals.includes(v)) vals.unshift(v);
+      el.innerHTML='<option value="">—</option>'+vals.map(x=>`<option value="${escAttr(x)}">${esc(x)}</option>`).join('');
+    }
+    el.value=v;
+  }
+}
+function fichaCampos(pre){
+  const f={};
+  for(const k of FICHA_CAMPOS){
+    const el=document.getElementById(pre+'Ficha'+FICHA_ID[k]);
+    f[k]=el?String(el.value||'').trim():'';
+  }
+  return f;
+}
+window.eFichaDoNome=()=>{
+  const lida=fichaDoNome(document.getElementById('eN')?.value||'');
+  const atual=fichaCampos('e');
+  const f={}; for(const k of FICHA_CAMPOS) f[k]=lida[k]||atual[k]||'';
+  fichaPreencher('e',f);
+  const h=document.getElementById('eFichaHint');
+  if(h) h.textContent='Preenchido com o que deu pra ler do nome. Confira antes de salvar.';
+};
 
 // ── PEÇAS NO CADASTRO DE PRODUTO ──
 // Peça aplicada aumenta o custo real da máquina E vai pro estoque de peças (aba Peças).
@@ -4339,7 +4517,7 @@ window.addProd=async()=>{
   // Pendência anotada já no cadastro. Máquina recém-comprada nunca nasce com a
   // pendência resolvida, então aqui não existe o check de 'já foi feito'.
   const falta=(document.getElementById('pFalta')?.value||'').trim();
-  const obj={userId:'shared_ijx',addedBy:user.uid,addedByName:user.displayName||user.email.split('@')[0],nome,custo:custoTotal,custo_base:custo,custo_pecas:custoPecas,custo_gasolina:custoGas,gas_pagante:gasPag,venda,lucro:venda-custoTotal,status,investidor,data_compra:dc,data_compra_mes:dcMes,data_venda:'',data:dcMes,canal_compra:canal,...hwCampos('p'),falta_comprar:falta,falta_feito:false,falta_feito_em:'',aporte_joao:(parseFloat(document.getElementById('pApJoao')?.value)||0),aporte_igor:(parseFloat(document.getElementById('pApIgor')?.value)||0),fornecedor_id:fornId,fornecedor_nome:fornNome,num,fotos_n:fotosPend.prod.length,descricao,...herdado,copiado_de:(molde?molde.id:''),createdAt:new Date().toISOString()};
+  const obj={userId:'shared_ijx',addedBy:user.uid,addedByName:user.displayName||user.email.split('@')[0],nome,ficha:fichaDoCadastro(nome),custo:custoTotal,custo_base:custo,custo_pecas:custoPecas,custo_gasolina:custoGas,gas_pagante:gasPag,venda,lucro:venda-custoTotal,status,investidor,data_compra:dc,data_compra_mes:dcMes,data_venda:'',data:dcMes,canal_compra:canal,...hwCampos('p'),falta_comprar:falta,falta_feito:false,falta_feito_em:'',aporte_joao:(parseFloat(document.getElementById('pApJoao')?.value)||0),aporte_igor:(parseFloat(document.getElementById('pApIgor')?.value)||0),fornecedor_id:fornId,fornecedor_nome:fornNome,num,fotos_n:fotosPend.prod.length,descricao,...herdado,copiado_de:(molde?molde.id:''),createdAt:new Date().toISOString()};
   let prodId='l'+Date.now();
   // Os ids do que acabou de nascer, pra conseguir levar ele até as máquinas
   // depois — inclusive as do lote, que não têm nada na tela apontando pra elas.
@@ -5770,6 +5948,13 @@ window.openEdit=id=>{
   eDescCalc();
   // Nota "o que falta comprar" — só para itens ainda não vendidos
   montarHw(); hwPreencher('e',p); eHwSugerir();
+  {
+    const fm=document.getElementById('eFichaMount');
+    if(fm && !fm.dataset.montado){ fm.innerHTML=fichaHTML('e'); fm.dataset.montado='1'; }
+    fichaPreencher('e', fichaDe(p));
+    const fh=document.getElementById('eFichaHint');
+    if(fh) fh.textContent = p.ficha ? '' : 'Lida do nome. Confira e salve pra gravar.';
+  }
   const eRev=document.getElementById('eRevisado'); if(eRev) eRev.checked=!!p.revisado;
   const eRObs=document.getElementById('eRevObs'); if(eRObs) eRObs.value=p.revisao_obs||'';
   eAguHint();
@@ -6011,7 +6196,7 @@ window.saveEdit=async()=>{
   const custoFinal=baseMaquina+somaJa+somaNovas;
   const totalPecas=somaJa+somaNovas;
 
-  const upd={nome,custo:custoFinal,custo_base:baseMaquina,custo_pecas:totalPecas,venda,lucro:venda-custoFinal,status,investidor,plataforma:(status==='Vendido'?(document.getElementById('ePlat')?.value||''):''),repasse_socio:(status==='Vendido'?(parseFloat(document.getElementById('eRepasse')?.value)||0):0),falta_comprar:(status!=='Vendido'?(document.getElementById('eFalta')?.value.trim()||''):''),falta_feito:(status!=='Vendido'&&!!document.getElementById('eFaltaFeito')?.checked),falta_feito_em:((status!=='Vendido'&&document.getElementById('eFaltaFeito')?.checked)?((_pAtual&&_pAtual.falta_feito&&_pAtual.falta_feito_em)||new Date().toISOString().slice(0,10)):''),...hwCampos('e'),revisado:!!document.getElementById('eRevisado')?.checked,revisado_em:(document.getElementById('eRevisado')?.checked?((_pAtual&&_pAtual.revisado&&_pAtual.revisado_em)||new Date().toISOString().slice(0,10)):''),revisao_obs:(document.getElementById('eRevObs')?.value.trim()||''),descricao:(document.getElementById('eDescricao')?.value.trim()||''),tipo_catalogo:(document.getElementById('eTipoCat')?.value||''),num_planilha:(document.getElementById('eNumPlan')?.value.trim()||''),fornecedor_id:fornId,fornecedor_nome:fornNome,data_compra:dc,data_compra_mes:dcMes,data_venda:dv,data:(dv?dv.slice(0,7):dcMes),gas_pagante:(document.getElementById('eGasPag')?.value||'ambos'),aporte_joao:(parseFloat(document.getElementById('eApJoao')?.value)||0),aporte_igor:(parseFloat(document.getElementById('eApIgor')?.value)||0),cliente_id:cliId,cliente_nome:cliNome,preco_cheio:(status==='Vendido'?(parseFloat(document.getElementById('ePrecoCheio')?.value)||0):0),nota_venda:(status==='Vendido'?(document.getElementById('eNotaVenda')?.value.trim()||''):'')};
+  const upd={nome,...(document.getElementById('eFichaMarca')?{ficha:fichaCampos('e')}:{}),custo:custoFinal,custo_base:baseMaquina,custo_pecas:totalPecas,venda,lucro:venda-custoFinal,status,investidor,plataforma:(status==='Vendido'?(document.getElementById('ePlat')?.value||''):''),repasse_socio:(status==='Vendido'?(parseFloat(document.getElementById('eRepasse')?.value)||0):0),falta_comprar:(status!=='Vendido'?(document.getElementById('eFalta')?.value.trim()||''):''),falta_feito:(status!=='Vendido'&&!!document.getElementById('eFaltaFeito')?.checked),falta_feito_em:((status!=='Vendido'&&document.getElementById('eFaltaFeito')?.checked)?((_pAtual&&_pAtual.falta_feito&&_pAtual.falta_feito_em)||new Date().toISOString().slice(0,10)):''),...hwCampos('e'),revisado:!!document.getElementById('eRevisado')?.checked,revisado_em:(document.getElementById('eRevisado')?.checked?((_pAtual&&_pAtual.revisado&&_pAtual.revisado_em)||new Date().toISOString().slice(0,10)):''),revisao_obs:(document.getElementById('eRevObs')?.value.trim()||''),descricao:(document.getElementById('eDescricao')?.value.trim()||''),tipo_catalogo:(document.getElementById('eTipoCat')?.value||''),num_planilha:(document.getElementById('eNumPlan')?.value.trim()||''),fornecedor_id:fornId,fornecedor_nome:fornNome,data_compra:dc,data_compra_mes:dcMes,data_venda:dv,data:(dv?dv.slice(0,7):dcMes),gas_pagante:(document.getElementById('eGasPag')?.value||'ambos'),aporte_joao:(parseFloat(document.getElementById('eApJoao')?.value)||0),aporte_igor:(parseFloat(document.getElementById('eApIgor')?.value)||0),cliente_id:cliId,cliente_nome:cliNome,preco_cheio:(status==='Vendido'?(parseFloat(document.getElementById('ePrecoCheio')?.value)||0):0),nota_venda:(status==='Vendido'?(document.getElementById('eNotaVenda')?.value.trim()||''):'')};
   await vincularTroca(editId, upd);
   if(!idLocal(editId)) await gravar(updateDoc(doc(db,'products',editId),upd), 'Editar "'+nome+'"');
   // Grava as peças novas na aba Peças, vinculadas a esta máquina
@@ -6062,7 +6247,7 @@ function brand(n){
 // Texto onde toda busca de produto procura. Um lugar só, pra busca da tela,
 // busca dentro do grupo e contagem nunca discordarem entre si.
 function alvoBusca(p){
-  return [p.nome,p.cliente_nome,p.fornecedor_nome,p.investidor,p.status,p.plataforma,p.canal_compra,p.num]
+  return [p.nome,fichaTexto(p),p.cliente_nome,p.fornecedor_nome,p.investidor,p.status,p.plataforma,p.canal_compra,p.num]
     .filter(Boolean).join(' ').toLowerCase();
 }
 function casaBusca(p,termos){ const a=alvoBusca(p); return termos.every(t=>a.includes(t)); }
