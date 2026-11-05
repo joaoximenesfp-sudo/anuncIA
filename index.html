@@ -12161,7 +12161,15 @@ window.eDescContar=()=>descContar('e');
 const CAT_CFG_ID='loja';
 let catCfg={nome:'',whatsapp:'',cidade:'',instagram:'',email:''};
 
+// Os endereços de deploy e de branch da Vercel (anunc-xxxx-...vercel.app,
+// anunc-ia-git-main-...vercel.app) ficam atrás do login da Vercel; só o domínio
+// de produção é público. Abrindo o sistema por um deles, o link do catálogo
+// copiado pro cliente caía na tela de login, e pra ele (logado na Vercel)
+// abria normal. O link sai sempre pelo endereço público.
+const CAT_ORIGEM_PUBLICA='https://anunc-ia.vercel.app';
 function catUrl(){
+  const h=location.hostname;
+  if(/\.vercel\.app$/.test(h) && h!=='anunc-ia.vercel.app') return CAT_ORIGEM_PUBLICA+'/catalogo.html';
   return location.origin+location.pathname.replace(/[^/]*$/,'')+'catalogo.html';
 }
 

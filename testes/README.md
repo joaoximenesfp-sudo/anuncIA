@@ -8,6 +8,7 @@ simulado. É feio, mas pega bug de verdade sem precisar de navegador.
 node testes/checar.js          # estrutura: tags, CSS, parse, ids órfãos
 node testes/test-barra-lote.js
 node testes/test-ficha.js      # leitura da ficha técnica a partir do nome
+node testes/test-link-catalogo.js  # link do catálogo sai sempre pelo endereço público
 ```
 
 Rode o `checar.js` sempre antes de subir. Tag desbalanceada ou chave de CSS
