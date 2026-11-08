@@ -1017,6 +1017,26 @@ body.arrastando-foto{user-select:none;-webkit-user-select:none;cursor:grabbing}
 .fin-inp::placeholder{color:var(--li)}
 select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath fill='%2378716c' d='M4 5L0 0h8z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center;padding-right:24px;-webkit-appearance:none}
 .fin-add-btn{height:32px;padding:0 14px;background:var(--tx);color:#fff;border:none;border-radius:6px;font-size:.76rem;font-weight:600;cursor:pointer;white-space:nowrap;font-family:'DM Sans',sans-serif;transition:opacity .15s;flex-shrink:0}
+/* Gasto rápido: um campo, de qualquer tela */
+.gr-fab{position:fixed;z-index:55;right:calc(16px + env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));height:46px;padding:0 18px;border:none;border-radius:23px;background:var(--tx);color:#fff;font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:700;box-shadow:var(--shm);cursor:pointer}
+.gr-fundo{position:fixed;inset:0;z-index:70;background:rgba(28,25,23,.35)}
+.gr-caixa{position:fixed;z-index:71;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));width:min(440px,calc(100vw - 24px));display:grid;gap:10px;padding:16px;background:var(--w);border:1px solid var(--b2);border-radius:14px;box-shadow:var(--shm)}
+.gr-fundo[hidden],.gr-caixa[hidden]{display:none}
+.gr-topo{display:flex;align-items:center;justify-content:space-between;font-size:.95rem;color:var(--tx)}
+.gr-x{width:32px;height:32px;border:none;background:none;color:var(--mu);font-size:1rem;cursor:pointer}
+.gr-texto{font-size:1.05rem;padding:12px 14px}
+.gr-previa{font-size:.78rem;color:var(--li);min-height:1.2em}
+.gr-previa.ok{color:var(--tx);font-weight:600}
+.gr-linha{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.gr-lbl{font-size:.72rem;font-weight:600;color:var(--mu);min-width:70px}
+.gr-chips{display:flex;gap:6px;flex-wrap:wrap}
+.gr-chip{height:32px;padding:0 12px;border:1px solid var(--b2);border-radius:16px;background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:600;cursor:pointer}
+.gr-chip.on{background:var(--tx);border-color:var(--tx);color:#fff}
+.gr-sel{width:auto;flex:1;min-width:140px;padding:8px 10px}
+.gr-ok{height:44px;width:100%}
+.gr-msg{font-size:.76rem;color:var(--mu);min-height:1em}
+.gr-msg.ok{color:var(--gr);font-weight:600}
+.gr-msg.erro{color:var(--re)}
 .fin-add-btn:hover{opacity:.85}
 .fin-list{max-height:320px;overflow-y:auto}
 .fin-item{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--b);transition:background .1s}
@@ -3723,6 +3743,7 @@ onAuthStateChanged(auth,u=>{
     if(btnAdm) btnAdm.style.display = perfilAtual==='joao' ? '' : 'none';
     loadProds();loadFinancas();loadPecas();loadClientes();loadFornecedores();loadMetas3();loadMilhao();loadSolo();loadFinInicio();loadReciboCfg();try{montarHw();}catch(e){}
     try{ initSpecBuilder(); loadCpuOutros(); }catch(e){}
+    try{ grMontar(); }catch(e){}
     setTimeout(carregarAvisos, 2000); // carregar avisos após login
     // Depois do login os cards já existem na tela; antes disso não havia o
     // que observar.
@@ -9310,6 +9331,123 @@ window.delVar=async(id)=>{
   if(!idLocal(id)){try{await deleteDoc(doc(db,'financas_var',id));}catch(e){}}
   variaveis=variaveis.filter(x=>x.id!==id);
   renderFinancas();
+};
+
+// ── GASTO RÁPIDO ──
+// Lançar gasto exigia abrir a aba Finanças e preencher cinco campos (nome,
+// valor, categoria, pagamento, parcelas). Ninguém faz isso na fila do mercado,
+// e o gasto que não entra na hora não entra nunca. Aqui é um campo só, de
+// qualquer tela: "45 gasolina", Enter. A categoria sai das palavras.
+const GR_PALAVRAS={
+  'Alimentação':'mercado supermercado ifood lanche almoco janta jantar restaurante padaria acougue pizza hamburguer burger sushi cafe comida feira bebida cerveja acai sorvete doce marmita',
+  'Transporte':'gasolina combustivel etanol alcool uber pedagio estacionamento onibus buser passagem metro oficina pneu mecanico oleo',
+  'Saúde':'farmacia remedio consulta exame academia medico dentista suplemento whey creatina psicologo',
+  'Casa':'aluguel luz energia agua internet condominio gas limpeza movel',
+  'Vestuário':'roupa tenis camiseta camisa calca sapato bermuda blusa cueca meia',
+  'Lazer':'cinema show bar balada viagem hopi ingresso jogo netflix spotify streaming passeio presente motel',
+};
+const GR_PGTO=['Pix','Débito','Crédito','Dinheiro'];
+function grSemAcento(s){ return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase(); }
+function grCategoria(texto){
+  const ps=new Set(grSemAcento(texto).split(/[^a-z0-9]+/).filter(Boolean));
+  for(const [cat,lista] of Object.entries(GR_PALAVRAS)) if(lista.split(' ').some(w=>ps.has(w))) return cat;
+  return 'Outro';
+}
+// "45 gasolina", "gasolina 45,90", "R$ 1.200 aluguel", "tênis 600 3x"
+function grLer(texto){
+  let s=String(texto||'').trim(), parcelas=0, m;
+  if((m=s.match(/\b(\d{1,2})\s?x\b/i))){ parcelas=parseInt(m[1]); s=s.replace(m[0],' '); }
+  m=s.match(/(?:r\$\s*)?(\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?|\d+(?:[.,]\d{1,2})?)/i);
+  if(!m) return null;
+  let num=m[1];
+  if(num.includes(',')) num=num.replace(/\./g,'').replace(',','.');
+  else if(/^\d{1,3}(\.\d{3})+$/.test(num)) num=num.replace(/\./g,'');
+  const valor=Math.round(parseFloat(num)*100)/100;
+  if(!isFinite(valor)||valor<=0) return null;
+  const nome=s.replace(m[0],' ').replace(/\s+/g,' ').trim();
+  return {valor, nome:nome?nome.charAt(0).toUpperCase()+nome.slice(1):'', parcelas:(parcelas>=2&&parcelas<=24)?parcelas:0};
+}
+function grMesLocal(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
+function grHojeLocal(){ const d=new Date(); return grMesLocal()+'-'+String(d.getDate()).padStart(2,'0'); }
+const grReais=v=>'R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:v%1?2:0,maximumFractionDigits:2});
+let grPgtoSel='Pix', grCatManual=false;
+function grMontar(){
+  if(document.getElementById('grFab')) return;
+  try{ const p=localStorage.getItem('gr_pgto'); if(GR_PGTO.includes(p)) grPgtoSel=p; }catch(e){}
+  const cats=['Alimentação','Transporte','Saúde','Casa','Vestuário','Lazer','Outro'];
+  const alvo=document.getElementById('APP')||document.body;
+  alvo.insertAdjacentHTML('beforeend',
+    '<button type="button" class="gr-fab" id="grFab" onclick="grAbrir()" aria-label="Lançar gasto">+ Gasto</button>'
+    +'<div class="gr-fundo" id="grFundo" hidden onclick="grFechar()"></div>'
+    +'<div class="gr-caixa" id="grCaixa" role="dialog" aria-modal="true" aria-labelledby="grTit" hidden>'
+    +  '<div class="gr-topo"><strong id="grTit">Gasto rápido</strong><button type="button" class="gr-x" onclick="grFechar()" aria-label="Fechar">✕</button></div>'
+    +  '<input id="grTexto" class="inp gr-texto" type="text" autocomplete="off" placeholder="45 gasolina" enterkeyhint="done" oninput="grPrevia()">'
+    +  '<div class="gr-previa" id="grPrevia"></div>'
+    +  '<div class="gr-linha"><span class="gr-lbl">Pagou com</span><div class="gr-chips" id="grPgto">'
+    +    GR_PGTO.map(p=>`<button type="button" class="gr-chip" data-p="${p}" onclick="grPgtoEscolher('${p}')">${p}</button>`).join('')
+    +  '</div></div>'
+    +  '<div class="gr-linha"><span class="gr-lbl">Categoria</span><select class="inp gr-sel" id="grCat" onchange="grCatManual=!!this.value;grPrevia()">'
+    +    '<option value="">Automática</option>'+cats.map(c=>`<option value="${c}">${c}</option>`).join('')
+    +  '</select></div>'
+    +  '<button type="button" class="ba gr-ok" onclick="grSalvar()">Lançar</button>'
+    +  '<div class="gr-msg" id="grMsg" role="status"></div>'
+    +'</div>');
+  document.getElementById('grTexto').addEventListener('keydown',e=>{
+    if(e.key==='Enter'){ e.preventDefault(); grSalvar(); }
+    else if(e.key==='Escape') grFechar();
+  });
+  grPgtoEscolher(grPgtoSel);
+}
+window.grPgtoEscolher=p=>{
+  grPgtoSel=p;
+  try{ localStorage.setItem('gr_pgto',p); }catch(e){}
+  document.querySelectorAll('#grPgto .gr-chip').forEach(b=>b.classList.toggle('on',b.dataset.p===p));
+};
+function grDoDia(){
+  const hj=grHojeLocal();
+  return variaveis.filter(v=>v.origem==='rapido' && String(v.criadoEm||'').slice(0,10)===hj);
+}
+window.grPrevia=()=>{
+  const el=document.getElementById('grPrevia'); if(!el) return;
+  const r=grLer(document.getElementById('grTexto').value);
+  if(!r){ el.textContent='Valor e o que foi. Ex: 45 gasolina · 1.200 aluguel · tênis 600 3x'; el.classList.remove('ok'); return; }
+  const catSel=document.getElementById('grCat');
+  if(!grCatManual) catSel.value='';
+  const cat=catSel.value||grCategoria(r.nome);
+  el.textContent=grReais(r.valor)+' · '+(r.nome||'Gasto')+' · '+cat+(r.parcelas?' · '+r.parcelas+'x':'');
+  el.classList.add('ok');
+};
+window.grAbrir=()=>{
+  grMontar();
+  document.getElementById('grFundo').hidden=false;
+  document.getElementById('grCaixa').hidden=false;
+  const ds=grDoDia(), tot=ds.reduce((s,v)=>s+(v.valor||0),0);
+  document.getElementById('grMsg').textContent = ds.length ? 'Hoje: '+ds.length+' gasto'+(ds.length>1?'s':'')+' · '+grReais(tot) : '';
+  grPrevia();
+  setTimeout(()=>document.getElementById('grTexto').focus(),30);
+};
+window.grFechar=()=>{
+  const f=document.getElementById('grFundo'), c=document.getElementById('grCaixa');
+  if(f) f.hidden=true; if(c) c.hidden=true;
+};
+window.grSalvar=async()=>{
+  const inp=document.getElementById('grTexto'), msg=document.getElementById('grMsg');
+  const r=grLer(inp.value);
+  if(!r){ msg.textContent='Escreva o valor e o que foi, por exemplo: 45 gasolina'; msg.className='gr-msg erro'; inp.focus(); return; }
+  if(!user){ msg.textContent='Entre na sua conta pra lançar.'; msg.className='gr-msg erro'; return; }
+  const categoria=document.getElementById('grCat').value||grCategoria(r.nome);
+  const pagamento=r.parcelas?'Crédito Parcelado':grPgtoSel;
+  const obj={userId:user.uid,nome:r.nome||'Gasto',valor:r.valor,categoria,pagamento,mes:grMesLocal(),
+    parcelas:r.parcelas,parcelaAtual:r.parcelas>0?1:0,origem:'rapido',criadoEm:new Date().toISOString()};
+  try{ const d=await addDoc(collection(db,'financas_var'),obj); variaveis.push({...obj,id:d.id}); }
+  catch(e){ await gravar(Promise.reject(e),'Lançar gasto "'+obj.nome+'"'); variaveis.push({...obj,id:'l'+Date.now()}); }
+  inp.value=''; grCatManual=false; document.getElementById('grCat').value='';
+  const ds=grDoDia(), tot=ds.reduce((s,v)=>s+(v.valor||0),0);
+  msg.className='gr-msg ok';
+  msg.textContent='✓ Lançado: '+grReais(obj.valor)+' · '+obj.nome+' · '+categoria+'  —  hoje: '+ds.length+' gasto'+(ds.length>1?'s':'')+', '+grReais(tot);
+  grPrevia();
+  try{ renderFinancas(); }catch(e){}
+  inp.focus();
 };
 
 window.saveFinMeta=()=>{
