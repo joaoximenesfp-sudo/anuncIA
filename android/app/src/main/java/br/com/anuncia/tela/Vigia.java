@@ -118,7 +118,13 @@ public class Vigia extends Service {
             Estado.estavaFixado(this, false);
         }
         PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-        if (Estado.modoCarro(this) && !MainActivity.visivel && pm.isInteractive()) trazer();
+        if (!Estado.modoCarro(this)) return;
+        // o aviso de "tela apagou" pode demorar: a ronda também confere
+        if (!pm.isInteractive()) {
+            if (carregando()) acender();
+        } else if (!MainActivity.visivel) {
+            trazer();
+        }
     }
 
     private void trazer() {

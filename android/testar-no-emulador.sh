@@ -10,7 +10,7 @@ topo() { adb shell dumpsys activity activities | grep -m1 -E 'topResumedActivity
 trava() { adb shell dumpsys activity | grep -m1 -o 'mLockTaskModeState=[A-Z]*' | cut -d= -f2 | tr -d '\r'; }
 na_frente() { topo | grep -q "$PKG/"; }
 foto() { adb exec-out screencap -p > "$SAIDA/$1.png"; }
-tarefa() { adb shell dumpsys activity activities | grep -m1 -o "$PKG/.MainActivity t[0-9]*" | grep -o '[0-9]*$'; }
+tarefa() { adb shell dumpsys activity activities | grep -m1 "A=[0-9]*:$PKG" | grep -o '#[0-9]*' | head -1 | tr -d '#\r'; }
 pergunta() { adb shell dumpsys window windows | grep -q 'ScreenPinning'; }
 logs() { echo "    --- log do app ---"; adb logcat -d -s Tela:V | tail -n "${1:-15}" | sed 's/^/    /'; }
 acordado() { adb shell dumpsys power | grep -q 'mWakefulness=Awake'; }
@@ -70,7 +70,7 @@ for k in 4:Voltar 3:Home 187:Recentes; do
 done
 
 echo "== botão Liga/Desliga"
-adb shell input keyevent 26; sleep 5
+adb shell input keyevent 26; sleep 10
 ok acordado "no carregador, apertar Liga/Desliga: a tela acende de novo sozinha"
 ok na_frente "e o app continua na frente, fixado"
 logs 8
