@@ -84,6 +84,11 @@ ok(Math.abs(C('C01').bonus - 58.83) < 0.011, 'C01 leva a parte dele: ' + C('C01'
 const hamb = r.anuncios.find(a => a.anuncio === 'hamb');
 ok(hamb.exib === 20 && hamb.faixas.pico === 20 && hamb.scans === 1 && hamb.carros.size === 2, 'relatório do anunciante: exibições no pico, scans e carros');
 ok(r.anuncios.find(a => a.anuncio === 'tech').exibQR === 10, 'conta as vezes que o QR da Tech apareceu nas dicas');
+const r2 = N.resumoMes({ lotes: [lote('C01', 3600, 3600), lote('C02', 3600, 1800), lote('C03', 3600, 0, { horas: { 19: { t: 3600, v: [0, 0, 0, 0, 0], e: {} } } })],
+  scans: [s('C01', 'a'), s('C01', 'b'), s('C02', 'c', 19, 'hamb'), s('X', 'd'), s('ZZZ', 'e'), s('ZZZ', 'f')], pesoHora: 1, pesoScan: 2, valorBonus: 100,
+  cadastrados: ['C01', 'C02', 'C03'] });
+ok(!r2.carros.some(c => c.carro === 'X' || c.carro === 'ZZZ') && r2.foraDoCadastro === 3, 'scan de carro fora do cadastro (X, código inventado) não entra');
+ok(r2.carros.find(c => c.carro === 'C01').bonus === C('C01').bonus, 'e não muda o bônus de quem é do cadastro');
 
 console.log('\npacote publicado (tela/pacote.json)');
 const pacote = JSON.parse(fs.readFileSync(path.join(RAIZ, 'tela/pacote.json'), 'utf8'));

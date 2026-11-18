@@ -206,12 +206,16 @@
   // Junta o mês. Pontos do motorista = pesoHora × horas com o carro andando e a
   // tela ligada + pesoScan × scans. O bônus do mês é dividido pelos pontos.
   // Tablet sem sensor de movimento conta as horas de tela (e fica marcado).
-  function resumoMes({ lotes = [], scans = [], pesoHora = 1, pesoScan = 2, valorBonus = 0, faixaMovimento = FAIXA_MOVIMENTO }) {
+  // cadastrados: códigos dos carros do painel. Scan de carro fora do cadastro
+  // (tablet não pareado = X, ou código inventado no link) não entra em nada.
+  function resumoMes({ lotes = [], scans = [], pesoHora = 1, pesoScan = 2, valorBonus = 0, faixaMovimento = FAIXA_MOVIMENTO, cadastrados = null }) {
+    const dentro = id => !cadastrados || cadastrados.includes(id);
     const carros = {}, anuncios = {};
     const C = id => carros[id] || (carros[id] = { carro: id, cidade: '', dias: new Set(), tela: 0, mov: 0, janelas: 0, exib: 0, scans: 0 });
     const A = id => anuncios[id] || (anuncios[id] = { anuncio: id, exib: 0, segundos: 0, exibQR: 0, scans: 0,
       faixas: Object.fromEntries(FAIXAS_HORARIO.map(f => [f.id, 0])), cidades: {}, carros: new Set() });
     for (const l of lotes) {
+      if (!dentro(l.carro)) continue;
       const c = C(l.carro);
       if (l.cidade) c.cidade = l.cidade;
       for (const [h, v] of Object.entries(l.horas || {})) {
@@ -234,7 +238,7 @@
         }
       }
     }
-    const validos = scansValidos(scans);
+    const validos = scansValidos(scans.filter(s => dentro(s.carro)));
     for (const s of validos) { C(s.carro).scans += 1; A(s.anuncio).scans += 1; }
 
     const lista = Object.values(carros);
@@ -255,7 +259,8 @@
     const maior = lista.slice().sort((a, b) => b.pontos - a.pontos)[0];
     if (maior && total > 0) maior.bonus = Math.round((maior.bonus * 100) + (cent - soma)) / 100;
     lista.sort((a, b) => b.pontos - a.pontos);
-    return { carros: lista, anuncios: Object.values(anuncios).sort((a, b) => b.exib - a.exib), totalPontos: total, scansValidos: validos.length, scansBrutos: scans.length };
+    return { carros: lista, anuncios: Object.values(anuncios).sort((a, b) => b.exib - a.exib), totalPontos: total, scansValidos: validos.length, scansBrutos: scans.length,
+      foraDoCadastro: scans.filter(s => !dentro(s.carro)).length };
   }
 
   function diasSemSinal(visto, agora) {

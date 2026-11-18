@@ -256,7 +256,7 @@ function calcular() {
   const mes = $('mes').value;
   const conf = { valorBonus: +$('bonus').value || 0, pesoHora: +$('peso-hora').value || 0, pesoScan: +$('peso-scan').value || 0 };
   gravarLocal('tela.painel.' + mes, conf);
-  resumo = N.resumoMes({ lotes: dadosMes.lotes, scans: dadosMes.scans, ...conf });
+  resumo = N.resumoMes({ lotes: dadosMes.lotes, scans: dadosMes.scans, cadastrados: carros.map(c => c.id), ...conf });
   const nome = id => (carros.find(c => c.id === id) || {}).motorista || '—';
   const r = resumo.carros;
   const soma = k => r.reduce((a, c) => a + (c[k] || 0), 0);
@@ -264,7 +264,7 @@ function calcular() {
     [fmt(r.filter(c => c.horasTela > 0).length), 'carros com tela ligada'],
     [fmt(soma('horasTela'), 0), 'horas de tela'],
     [fmt(soma('exib')), 'exibições'],
-    [fmt(resumo.scansValidos), `scans (de ${fmt(resumo.scansBrutos)} brutos)`],
+    [fmt(resumo.scansValidos), `scans válidos (de ${fmt(resumo.scansBrutos)}${resumo.foraDoCadastro ? `; ${fmt(resumo.foraDoCadastro)} de carro fora do cadastro` : ''})`],
   ].map(([v, t]) => `<div class="kpi"><b>${v}</b><span>${t}</span></div>`).join('');
   $('tab-mes').innerHTML = `<thead><tr><th>Carro</th><th>Motorista</th><th>Cidade</th><th class="n">Dias</th><th class="n">Horas de tela</th><th class="n">Horas rodando</th>
     <th class="n">Exibições</th><th class="n">Scans</th><th class="n">Scans a cada 10 h</th><th class="n">Pontos</th><th class="n">Bônus</th></tr></thead><tbody>` +
