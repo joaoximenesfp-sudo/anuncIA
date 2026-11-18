@@ -15,6 +15,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.PowerManager;
+import android.util.Log;
 
 /**
  * Fica de olho enquanto o modo carro está ligado:
@@ -29,7 +30,12 @@ public class Vigia extends Service {
     private final BroadcastReceiver apagou = new BroadcastReceiver() {
         @Override
         public void onReceive(Context c, Intent i) {
-            if (Estado.modoCarro(c) && carregando()) h.postDelayed(Vigia.this::acender, 400);
+            boolean modo = Estado.modoCarro(c), carga = carregando();
+            Log.i(MainActivity.TAG, "tela apagou: modoCarro=" + modo + " carregando=" + carga);
+            if (modo && carga) {
+                h.postDelayed(Vigia.this::acender, 400);
+                h.postDelayed(Vigia.this::acender, 1500); // segunda tentativa, se a primeira não pegou
+            }
         }
     };
 
@@ -93,10 +99,11 @@ public class Vigia extends Service {
     private void acender() {
         PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
         if (pm.isInteractive()) return;
-        PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK
+        PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.FULL_WAKE_LOCK
             | PowerManager.ACQUIRE_CAUSES_WAKEUP | PowerManager.ON_AFTER_RELEASE, "tela:acender");
         wl.acquire(3000);
         trazer();
+        Log.i(MainActivity.TAG, "acender: tela ligada agora? " + pm.isInteractive());
     }
 
     private void verificar() {
@@ -106,6 +113,7 @@ public class Vigia extends Service {
             if (!Estado.estavaFixado(this)) Estado.estavaFixado(this, true);
         } else if (Estado.estavaFixado(this) && Estado.modoCarro(this) && !MainActivity.saindo) {
             // estava fixado e não está mais, sem ter sido o app: soltaram com o PIN do tablet
+            Log.i(MainActivity.TAG, "soltaram com o PIN: modo carro desligado");
             Estado.modoCarro(this, false);
             Estado.estavaFixado(this, false);
         }
@@ -118,8 +126,10 @@ public class Vigia extends Service {
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
         try {
             startActivity(i);
+            Log.i(MainActivity.TAG, "trazer: app de volta para a frente");
         } catch (Exception e) {
             // sem "Exibir sobre outros apps": o Android não deixa trazer de volta
+            Log.w(MainActivity.TAG, "trazer: o Android não deixou", e);
         }
     }
 }

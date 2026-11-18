@@ -10,6 +10,9 @@ topo() { adb shell dumpsys activity activities | grep -m1 -E 'topResumedActivity
 trava() { adb shell dumpsys activity | grep -m1 -o 'mLockTaskModeState=[A-Z]*' | cut -d= -f2 | tr -d '\r'; }
 na_frente() { topo | grep -q "$PKG/"; }
 foto() { adb exec-out screencap -p > "$SAIDA/$1.png"; }
+tarefa() { adb shell dumpsys activity activities | grep -m1 -o "$PKG/.MainActivity t[0-9]*" | grep -o '[0-9]*$'; }
+pergunta() { adb shell dumpsys window windows | grep -q 'ScreenPinning'; }
+logs() { echo "    --- log do app ---"; adb logcat -d -s Tela:V | tail -n "${1:-15}" | sed 's/^/    /'; }
 acordado() { adb shell dumpsys power | grep -q 'mWakefulness=Awake'; }
 # toca no botão de um diálogo do Android cujo texto ou id bate com o padrão
 tocar() {
@@ -52,9 +55,13 @@ ok na_frente "o app abre na frente"
 
 echo "== modo carro num tablet comum (o Android pergunta se pode fixar)"
 adb shell am start -n $PKG/.MainActivity --ez travar true >/dev/null
-sleep 3
+sleep 4
 foto 2-pergunta-fixar
-tocar "$OK_FIXAR"
+ok pergunta "o Android pergunta se pode fixar"
+logs 5
+# o motorista toca em OK; aqui, com vídeo rodando, o leitor de tela do teste não acha o botão:
+# fixa pelo sistema, como o OK faria
+tocar "$OK_FIXAR" || { adb shell am task lock "$(tarefa)" >/dev/null; adb shell input keyevent 4; }
 sleep 3
 ok '[ "$(trava)" = PINNED ]' "fixou o app"
 for k in 4:Voltar 3:Home 187:Recentes; do
@@ -66,11 +73,13 @@ echo "== botão Liga/Desliga"
 adb shell input keyevent 26; sleep 5
 ok acordado "no carregador, apertar Liga/Desliga: a tela acende de novo sozinha"
 ok na_frente "e o app continua na frente, fixado"
+logs 8
 foto 3-depois-do-liga-desliga
 adb shell dumpsys battery set ac 0
 adb shell dumpsys battery set usb 0
 adb shell input keyevent 26; sleep 5
 ok '! acordado' "fora do carregador o Liga/Desliga apaga normal"
+logs 8
 adb shell dumpsys battery set ac 1
 adb shell input keyevent KEYCODE_WAKEUP; sleep 3
 
@@ -109,6 +118,7 @@ foto 6-depois-de-reiniciar
 ok na_frente "depois de reiniciar, o app abre sozinho"
 ok '[ "$(trava)" = LOCKED ]' "e já travado"
 
+adb logcat -d > "$SAIDA/logcat.txt" 2>/dev/null
 echo
 if [ "$falhas" = 0 ]; then echo "tudo verde"; else echo "$falhas FALHA(S)"; fi
 exit "$falhas"

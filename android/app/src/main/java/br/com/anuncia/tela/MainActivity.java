@@ -15,6 +15,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.PowerManager;
 import android.provider.Settings;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -38,6 +39,7 @@ import org.json.JSONObject;
 public class MainActivity extends Activity {
     static final String SITE = "https://anunc-ia.vercel.app/tela/";
     static final String HOST = "anunc-ia.vercel.app";
+    static final String TAG = "Tela";
     private static final int PEDIR_PIN = 7;
 
     /** Lido pelo Vigia: modo carro ligado e app fora da frente = trazer de volta. */
@@ -145,8 +147,10 @@ public class MainActivity extends Activity {
         ultimoPedido = agora;
         try {
             startLockTask();
+            Log.i(TAG, "travar: pedido de fixar enviado (frota=" + Dono.eh(this) + ")");
         } catch (Exception e) {
             // fixação de aplicativos desligada nas configurações: o Vigia ainda traz o app de volta
+            Log.w(TAG, "travar: o Android recusou", e);
         }
     }
 
