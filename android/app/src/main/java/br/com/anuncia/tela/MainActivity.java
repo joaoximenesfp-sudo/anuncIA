@@ -112,7 +112,10 @@ public class MainActivity extends Activity {
         return SITE;
     }
 
-    /** Abrir pelo ícone (depois de configurado) ou pedir a trava liga o modo carro. */
+    /**
+     * Abrir pelo ícone (depois de configurado) ou pedir a trava liga o modo carro.
+     * A trava em si fica para o onResume: o Android só fixa app que já está na frente.
+     */
     private void tratar(Intent i) {
         boolean pediuTrava = i != null && i.getBooleanExtra("travar", false);
         boolean peloIcone = i != null && Intent.ACTION_MAIN.equals(i.getAction());
@@ -121,7 +124,6 @@ public class MainActivity extends Activity {
             Estado.modoCarro(this, true);
             ultimoPedido = 0;
         }
-        if (Estado.modoCarro(this)) travar();
     }
 
     @Override

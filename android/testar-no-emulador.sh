@@ -68,6 +68,7 @@ ok acordado "no carregador, apertar Liga/Desliga: a tela acende de novo sozinha"
 ok na_frente "e o app continua na frente, fixado"
 foto 3-depois-do-liga-desliga
 adb shell dumpsys battery set ac 0
+adb shell dumpsys battery set usb 0
 adb shell input keyevent 26; sleep 5
 ok '! acordado' "fora do carregador o Liga/Desliga apaga normal"
 adb shell dumpsys battery set ac 1
