@@ -205,7 +205,7 @@ function desenharCarros() {
 }
 function mostrarPareamento(c) {
   const link = N.linkPareamento(c.id, c.chave, c.cidade);
-  const msg = `Oi, ${c.motorista.split(' ')[0]}! Abra este link no tablet do carro (no Chrome) e toque em "Instalar app" ou "Adicionar à tela inicial":\n${link}`;
+  const msg = `Oi, ${c.motorista.split(' ')[0]}! No tablet do carro:\n1) Instale o app Tela do carro: ${N.SITE}/tela/app/tela-do-carro.apk\n2) Depois abra este link (ele abre direto no app): ${link}`;
   const tel = String(c.telefone || '').replace(/\D/g, '');
   $('pareamento').innerHTML = `<div class="par"><canvas id="qr-par" width="360" height="360"></canvas><div>
     <p><b>${esc(c.id)} · ${esc(c.motorista)}</b></p><p><code>${esc(link)}</code></p>

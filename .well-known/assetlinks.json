@@ -1,0 +1,8 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "br.com.anuncia.tela",
+    "sha256_cert_fingerprints": ["2E:C9:95:D9:13:E0:96:C7:72:1F:8F:5F:69:8F:F9:0D:E6:FC:8D:55:E1:F1:6A:28:71:AA:92:D8:25:97:3F:F1"]
+  }
+}]

@@ -43,6 +43,7 @@
   #menu details{margin-top:18px;color:#b9c3d6}
   #menu input{font:inherit;font-size:16px;width:100%;margin:6px 0 10px;padding:10px 12px;border-radius:10px;border:1px solid #34445f;background:#0a111d;color:#fff}
   .erro{color:#ff8a8a}
+  [hidden]{display:none!important}
   /* configurar a tela: aparece ao abrir pelo link do painel */
   #config{position:fixed;inset:0;z-index:9;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.82);padding:12px}
   #config.on{display:flex}
@@ -59,6 +60,10 @@
   #config button{font:inherit;font-size:16px;font-weight:700;border:0;border-radius:12px;padding:12px 18px;background:#2fd27a;color:#06130c}
   #config button.sec{background:#26344d;color:#fff}
   #config button.feito{background:#163a28;color:#7ff0b4}
+  #config li.feito::before{content:"✓";background:#2fd27a;color:#06130c}
+  #config .aviso{color:#ffcf7a;font-weight:700}
+  #config a.botao{display:inline-block;text-decoration:none;font-size:16px;font-weight:700;border-radius:12px;padding:12px 18px;background:#2fd27a;color:#06130c;margin:6px 10px 0 0}
+  #config a.botao.sec{background:#26344d;color:#fff}
 </style>
 </head>
 <body>
@@ -74,6 +79,9 @@
   <div class="caixa">
     <div class="topo"><h2>Configurar a tela do carro</h2><p class="sub" id="config-carro"></p></div>
     <ol>
+      <li id="passo-baixar" hidden><b class="t">App Tela do carro (recomendado)</b>
+        <span>Só o app trava de verdade: Voltar e Home não saem, volta sozinho se alguém tirar e reacende a tela se apertarem o Liga/Desliga.</span>
+        <span><a id="bt-abrir-app" class="botao" href="#">Abrir no app</a><a class="botao sec" href="app/tela-do-carro.apk">Baixar o app</a></span></li>
       <li id="passo-app" hidden><b class="t">Atalho na tela inicial (opcional)</b>
         <span>Abre direto em tela cheia, sem a barra do Chrome. Não baixa nada da Play Store: é só um atalho.</span>
         <button id="bt-cfg-app" class="sec">Criar atalho</button></li>
@@ -84,6 +92,20 @@
       <li id="passo-botoes"><b class="t">Botões da lateral</b>
         <span>Uma vez só: Configurações → Acessibilidade → Interação e destreza → <b>Controle de interação</b>. Ligue o atalho e a opção de desligar as teclas Liga/Desliga e Volume.</span>
         <span>Depois de tocar em <b>Pronto</b>, com o vídeo rodando, segure <b>Volume +</b> e <b>Liga/Desliga</b> juntos por 2 segundos. Para sair, o mesmo.</span></li>
+    </ol>
+    <ol id="passos-nativo" hidden>
+      <li id="n-pin"><b class="t">Fixação de aplicativos com PIN</b>
+        <span>Uma vez só: Configurações → Segurança e privacidade → Outras configurações de segurança → <b>Fixação de aplicativos</b>. Ligue, e ligue também pedir o PIN para liberar.</span>
+        <span id="n-pin-aviso" class="aviso" hidden>Este tablet não tem PIN: crie um em Configurações → Tela de bloqueio, senão qualquer um solta a trava.</span>
+        <button type="button" class="sec" data-ajuste="seguranca">Abrir configurações</button></li>
+      <li id="n-sobre"><b class="t">Voltar sozinho para a tela</b>
+        <span>Permita <b>Exibir sobre outros apps</b> para a Tela do carro. É o que traz o app de volta se alguém tirar e quando o tablet liga.</span>
+        <button type="button" class="sec" data-ajuste="sobreposicao">Permitir</button></li>
+      <li id="n-bateria"><b class="t">Não deixar o Android fechar o app</b>
+        <span>Libere a Tela do carro da economia de bateria.</span>
+        <button type="button" class="sec" data-ajuste="bateria">Permitir</button></li>
+      <li id="n-liga"><b class="t">Botão Liga/Desliga</b>
+        <span>Com o carregador ligado, se alguém apertar, a tela acende de novo sozinha.</span></li>
     </ol>
     <div class="rodape"><button id="bt-cfg-cheia" class="sec">Expandir tela</button><button id="bt-cfg-pronto">Pronto, começar</button></div>
   </div>
@@ -98,6 +120,7 @@
       <button id="bt-sinc">Baixar pacote agora</button>
       <button id="bt-cheia" class="sec">Tela cheia</button>
       <button id="bt-config" class="sec">Configurar tela e trava</button>
+      <button id="bt-sair-carro" class="sec" hidden>Sair do modo carro (pede o PIN)</button>
       <button id="bt-fechar" class="sec">Voltar ao vídeo</button>
     </div>
     <details>

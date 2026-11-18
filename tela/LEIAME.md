@@ -29,6 +29,25 @@ player só impede que Voltar saia da tela e volta para a tela cheia no próximo 
 
 Tablet perdido: no painel, **Trocar chave** (ou Desativar). O tablet antigo para de gravar na hora.
 
+## App Android "Tela do carro" (pasta android/)
+A página sozinha não consegue travar o tablet: o Android não deixa site fixar app,
+bloquear Home ou reabrir sozinho. O app nativo abre o mesmo player e garante:
+- **Voltar** não faz nada; **Home** e **Recentes** não saem (app fixado; só o PIN do tablet solta);
+- se alguém tirar o app da frente sem o PIN, ele volta em até 3 s (precisa de "Exibir sobre outros apps");
+- apertar o **Liga/Desliga** com o carregador ligado acende a tela de novo, com o app por cima do bloqueio;
+- ao ligar o tablet, o app abre sozinho;
+- **modo frota** (app dono do tablet, provisionado de fábrica): trava sem perguntar nada, sem barra
+  de notificação nem menu do Liga/Desliga, e vira a tela inicial.
+
+Sair do modo carro: segurar Voltar + Recentes e digitar o PIN, ou 5 toques no canto → "Sair do modo
+carro" (pede o PIN do tablet). O link do painel (`/tela/#parear=…`) abre direto no app
+(`/.well-known/assetlinks.json` liga o site ao app).
+
+O GitHub Actions (`.github/workflows/app-tela.yml`) monta o APK, testa a trava num tablet virtual
+Android 13 (`android/testar-no-emulador.sh`) e, se passar, publica em `tela/app/tela-do-carro.apk`.
+A chave de assinatura (`android/tela.jks`) fica no repositório porque o app é instalado à mão só nos
+tablets da rede; atualização precisa ser assinada com ela.
+
 ## Publicar as regras
 Uma vez, e sempre que o `firestore.rules` mudar: Firebase console → Firestore →
 Regras → colar o arquivo → Publicar. Sem isso os tablets tocam, mas não enviam nada.

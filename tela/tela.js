@@ -33,10 +33,13 @@
   const urlMidia = m => m.arquivo + '?v=' + m.hash;
 
   // ── PAREAMENTO: o painel gera .../tela/#parear=C07.chave.cidade ──
-  const par = N.lerPareamento(location.hash);
+  // Dentro do app Android "Tela do carro" existe window.TelaAndroid (trava de verdade)
+  const nativo = typeof window.TelaAndroid !== 'undefined';
+  const appEstado = () => { try { return JSON.parse(window.TelaAndroid.estado()); } catch (e) { return {}; } };
+  const par = N.lerPareamento(location.hash) || N.lerPareamento(location.search);
   if (par) {
     estado.carro = par; gravar('tela.carro', par);
-    history.replaceState(null, '', location.pathname + location.search);
+    history.replaceState(null, '', location.pathname);
   }
 
   // ── PACOTE: baixa tudo e só então troca ──
@@ -289,7 +292,8 @@
       ['Esperando envio', `${estado.fila.length} lote(s)` + (estado.erroEnvio ? ` · ${estado.erroEnvio}` : '')],
       ['Último envio', hora(estado.ultimoEnvio)],
       ['Internet', navigator.onLine ? 'conectado' : 'sem conexão'],
-      ['Versão do app', APP],
+      ['Trava', nativo ? (a => (a.fixado ? 'fixado' : 'solto') + (a.frota ? ' · modo frota' : '') + (a.modoCarro ? ' · modo carro ligado' : ''))(appEstado()) : 'no Chrome, sem o app'],
+      ['Versão do app', APP + (nativo ? ' · Android ' + (appEstado().app || '') : '')],
     ];
     const dl = $('menu-info');
     dl.textContent = '';
@@ -320,7 +324,7 @@
   }
 
   // ── TELA CHEIA E TELA ACESA ──
-  const modoApp = () => matchMedia('(display-mode: fullscreen)').matches || matchMedia('(display-mode: standalone)').matches;
+  const modoApp = () => nativo || matchMedia('(display-mode: fullscreen)').matches || matchMedia('(display-mode: standalone)').matches;
   function telaCheia() {
     const el = document.documentElement;
     if (document.fullscreenElement || !el.requestFullscreen) return;
@@ -348,6 +352,21 @@
       ? `Carro ${estado.carro.carro}${cidade() ? ' · ' + cidade() : ''}`
       : 'Este tablet ainda não está ligado a um carro (abra o link do painel).';
     $('passo-app').hidden = !pedidoAtalho || modoApp();
+    // no Chrome do Android: o app é que trava de verdade
+    $('passo-baixar').hidden = nativo || !/Android/i.test(navigator.userAgent);
+    $('bt-abrir-app').href = linkApp();
+    // dentro do app: a lista muda para o que o app precisa
+    document.querySelector('#config ol:not(#passos-nativo)').hidden = nativo;
+    $('passos-nativo').hidden = !nativo;
+    $('bt-cfg-cheia').hidden = nativo;
+    $('bt-cfg-pronto').textContent = nativo ? 'Pronto, travar a tela' : 'Pronto, começar';
+    if (nativo) {
+      const a = appEstado();
+      $('n-sobre').classList.toggle('feito', !!a.sobreposicao);
+      $('n-bateria').classList.toggle('feito', !!a.bateria);
+      $('n-pin').classList.toggle('feito', !!a.fixado);
+      $('n-pin-aviso').hidden = a.pin !== false;
+    }
     const cheia = modoApp() || !!document.fullscreenElement;
     $('bt-cfg-cheia').classList.toggle('feito', cheia);
     $('bt-cfg-cheia').textContent = cheia ? 'Tela cheia ligada ✓' : 'Expandir tela';
@@ -362,8 +381,24 @@
   $('bt-cfg-pronto').onclick = () => {
     gravar('tela.configurada', true);
     $('config').classList.remove('on');
-    if (!modoApp()) telaCheia();
+    if (nativo) window.TelaAndroid.travar();
+    else if (!modoApp()) telaCheia();
   };
+  // botões da lista do app: abrem o ajuste do Android e a lista se atualiza sozinha na volta
+  $('passos-nativo').addEventListener('click', e => {
+    const b = e.target.closest('button[data-ajuste]');
+    if (b && nativo) window.TelaAndroid.abrir(b.dataset.ajuste);
+  });
+  setInterval(atualizarConfig, 1500);
+  // link que abre o app já pareado (se não tiver o app, baixa)
+  function linkApp() {
+    const c = estado.carro;
+    const q = c ? `?parear=${c.carro}.${c.chave}.${c.cidade || ''}` : '';
+    return `intent://anunc-ia.vercel.app/tela/${q}#Intent;scheme=https;package=br.com.anuncia.tela;` +
+      `S.browser_fallback_url=${encodeURIComponent(new URL('app/tela-do-carro.apk', location.href).href)};end`;
+  }
+  $('bt-sair-carro').hidden = !nativo;
+  $('bt-sair-carro').onclick = () => { $('menu').classList.remove('on'); if (nativo) window.TelaAndroid.sair(); };
   document.addEventListener('fullscreenchange', atualizarConfig);
   $('bt-config').onclick = () => { $('menu').classList.remove('on'); abrirConfig(); };
   if (par || !ler('tela.configurada', false)) abrirConfig();

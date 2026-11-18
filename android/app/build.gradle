@@ -1,0 +1,28 @@
+plugins { id 'com.android.application' }
+
+android {
+    namespace 'br.com.anuncia.tela'
+    compileSdk 34
+    defaultConfig {
+        applicationId 'br.com.anuncia.tela'
+        minSdk 24
+        // 33 de propósito: no Android 14, app que mira 34 perde o "acender a tela" (ACQUIRE_CAUSES_WAKEUP)
+        targetSdk 33
+        versionCode 1
+        versionName '1.0'
+    }
+    // Chave fixa: o tablet só aceita atualização assinada pela mesma chave.
+    // Fica no repositório porque o app é instalado à mão, só nos tablets da rede.
+    signingConfigs {
+        tela { storeFile file('../tela.jks'); storePassword 'teladocarro'; keyAlias 'tela'; keyPassword 'teladocarro' }
+    }
+    buildTypes {
+        release { minifyEnabled false; signingConfig signingConfigs.tela }
+        debug { signingConfig signingConfigs.tela }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    lint { checkReleaseBuilds false; abortOnError false }
+}
