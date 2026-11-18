@@ -15,10 +15,17 @@ o carro estiver ativo. Só os sócios leem.
 
 ## Ligar um tablet
 1. Painel → **Novo carro** → mande o link para o motorista (botão do WhatsApp).
-2. No tablet, abra o link no Chrome → menu ⋮ → **Instalar app** (ou *Adicionar à tela inicial*).
-3. Abra pelo ícone **Tela**, no Wi-Fi, e espere a barra verde terminar.
-4. Fixe o app (Recentes → ícone do app → *Fixar este app*), como era com o VLC.
-5. Menu escondido do tablet: 5 toques rápidos no canto de cima, à esquerda.
+2. No tablet, abra o link no Chrome, no Wi-Fi. Abre a tela **Configurar a tela do carro**:
+   atalho na tela inicial (opcional, só tira a barra do Chrome), travar com o PIN do
+   tablet (Fixação de aplicativos) e os botões da lateral (Controle de interação).
+   **Expandir tela** liga a tela cheia; **Pronto, começar** fecha e começa o loop.
+3. O pacote baixa sozinho (barra verde) e depois roda sem internet.
+4. Menu escondido do tablet: 5 toques rápidos no canto de cima, à esquerda. Dali dá
+   para reabrir a configuração.
+
+Página da web não consegue fixar o app nem desligar o botão Liga/Desliga sozinha:
+isso é do Android (Fixação de aplicativos e Controle de interação, da Samsung). O
+player só impede que Voltar saia da tela e volta para a tela cheia no próximo toque.
 
 Tablet perdido: no painel, **Trocar chave** (ou Desativar). O tablet antigo para de gravar na hora.
 

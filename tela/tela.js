@@ -320,15 +320,53 @@
   }
 
   // ── TELA CHEIA E TELA ACESA ──
+  const modoApp = () => matchMedia('(display-mode: fullscreen)').matches || matchMedia('(display-mode: standalone)').matches;
   function telaCheia() {
     const el = document.documentElement;
-    if (!document.fullscreenElement && el.requestFullscreen) el.requestFullscreen({ navigationUI: 'hide' }).then(() => {
+    if (document.fullscreenElement || !el.requestFullscreen) return;
+    el.requestFullscreen({ navigationUI: 'hide' }).then(() => {
       try { screen.orientation.lock('landscape').catch(() => {}); } catch (e) { /* sem suporte */ }
     }).catch(() => {});
   }
+  // No Chrome (sem atalho), se a tela cheia cair, o próximo toque volta com ela
   document.addEventListener('pointerdown', () => {
-    if (!matchMedia('(display-mode: fullscreen)').matches && !matchMedia('(display-mode: standalone)').matches) telaCheia();
-  }, { once: true });
+    if (!modoApp() && !$('config').classList.contains('on') && !$('menu').classList.contains('on')) telaCheia();
+  });
+  // Voltar não sai da tela. Com o app fixado, só Voltar + Recentes com o PIN solta.
+  try { history.pushState({ tela: 1 }, ''); } catch (e) { /* segue */ }
+  addEventListener('popstate', () => { try { history.pushState({ tela: 1 }, ''); } catch (e) { /* segue */ } });
+
+  // ── CONFIGURAR A TELA: tela cheia e trava com o PIN do próprio tablet ──
+  // (página da web não consegue fixar o app sozinha: o passo a passo fica na tela)
+  let pedidoAtalho = null;
+  addEventListener('beforeinstallprompt', e => { e.preventDefault(); pedidoAtalho = e; atualizarConfig(); });
+  addEventListener('appinstalled', () => { pedidoAtalho = null; atualizarConfig(); });
+  function abrirConfig() { $('config').classList.add('on'); atualizarConfig(); }
+  function atualizarConfig() {
+    if (!$('config').classList.contains('on')) return;
+    $('config-carro').textContent = estado.carro
+      ? `Carro ${estado.carro.carro}${cidade() ? ' · ' + cidade() : ''}`
+      : 'Este tablet ainda não está ligado a um carro (abra o link do painel).';
+    $('passo-app').hidden = !pedidoAtalho || modoApp();
+    const cheia = modoApp() || !!document.fullscreenElement;
+    $('bt-cfg-cheia').classList.toggle('feito', cheia);
+    $('bt-cfg-cheia').textContent = cheia ? 'Tela cheia ligada ✓' : 'Expandir tela';
+  }
+  $('bt-cfg-cheia').onclick = telaCheia;
+  $('bt-cfg-app').onclick = async () => {
+    if (!pedidoAtalho) return;
+    pedidoAtalho.prompt();
+    try { await pedidoAtalho.userChoice; } catch (e) { /* segue */ }
+    pedidoAtalho = null; atualizarConfig();
+  };
+  $('bt-cfg-pronto').onclick = () => {
+    gravar('tela.configurada', true);
+    $('config').classList.remove('on');
+    if (!modoApp()) telaCheia();
+  };
+  document.addEventListener('fullscreenchange', atualizarConfig);
+  $('bt-config').onclick = () => { $('menu').classList.remove('on'); abrirConfig(); };
+  if (par || !ler('tela.configurada', false)) abrirConfig();
   async function manterAcesa() {
     try { if ('wakeLock' in navigator && document.visibilityState === 'visible') await navigator.wakeLock.request('screen'); } catch (e) { /* segue */ }
   }

@@ -43,6 +43,22 @@
   #menu details{margin-top:18px;color:#b9c3d6}
   #menu input{font:inherit;font-size:16px;width:100%;margin:6px 0 10px;padding:10px 12px;border-radius:10px;border:1px solid #34445f;background:#0a111d;color:#fff}
   .erro{color:#ff8a8a}
+  /* configurar a tela: aparece ao abrir pelo link do painel */
+  #config{position:fixed;inset:0;z-index:9;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.82);padding:12px}
+  #config.on{display:flex}
+  #config .caixa{background:#101826;border:1px solid #26344d;border-radius:20px;width:min(820px,96vw);max-height:96vh;display:flex;flex-direction:column;overflow:hidden}
+  #config .topo{padding:18px 24px 6px}
+  #config h2{margin:0;font-size:22px}
+  #config .sub{margin:2px 0 0;color:#8fa0bd;font-size:15px}
+  #config ol{margin:0;padding:8px 24px 14px;list-style:none;counter-reset:p;display:flex;flex-direction:column;gap:12px;overflow:auto;flex:1}
+  #config li{counter-increment:p;display:grid;grid-template-columns:32px 1fr;gap:2px 12px;font-size:15px;line-height:1.4;color:#c9d3e3}
+  #config li::before{content:counter(p);grid-row:span 9;width:30px;height:30px;border-radius:50%;background:#26344d;color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center}
+  #config li b.t{color:#fff;font-size:16px}
+  #config li button{justify-self:start;margin-top:4px}
+  #config .rodape{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;padding:12px 24px;border-top:1px solid #26344d;background:#0c131f}
+  #config button{font:inherit;font-size:16px;font-weight:700;border:0;border-radius:12px;padding:12px 18px;background:#2fd27a;color:#06130c}
+  #config button.sec{background:#26344d;color:#fff}
+  #config button.feito{background:#163a28;color:#7ff0b4}
 </style>
 </head>
 <body>
@@ -54,6 +70,25 @@
   <div id="barra"><i id="barra-i"></i></div>
 </div>
 
+<div id="config" role="dialog" aria-label="Configurar a tela">
+  <div class="caixa">
+    <div class="topo"><h2>Configurar a tela do carro</h2><p class="sub" id="config-carro"></p></div>
+    <ol>
+      <li id="passo-app" hidden><b class="t">Atalho na tela inicial (opcional)</b>
+        <span>Abre direto em tela cheia, sem a barra do Chrome. Não baixa nada da Play Store: é só um atalho.</span>
+        <button id="bt-cfg-app" class="sec">Criar atalho</button></li>
+      <li id="passo-pin"><b class="t">Travar com o PIN do tablet</b>
+        <span>Uma vez só: Configurações → Segurança e privacidade → Outras configurações de segurança → <b>Fixação de aplicativos</b>. Ligue, e ligue também a opção de pedir o PIN para liberar.</span>
+        <span>Agora: toque em <b>Recentes</b> (o botão ||| de baixo), toque no <b>ícone pequeno</b> em cima desta janela e escolha <b>Fixar este app</b>.</span>
+        <span>Para soltar: segure <b>Voltar</b> e <b>Recentes</b> juntos. O tablet pede o PIN.</span></li>
+      <li id="passo-botoes"><b class="t">Botões da lateral</b>
+        <span>Uma vez só: Configurações → Acessibilidade → Interação e destreza → <b>Controle de interação</b>. Ligue o atalho e a opção de desligar as teclas Liga/Desliga e Volume.</span>
+        <span>Depois de tocar em <b>Pronto</b>, com o vídeo rodando, segure <b>Volume +</b> e <b>Liga/Desliga</b> juntos por 2 segundos. Para sair, o mesmo.</span></li>
+    </ol>
+    <div class="rodape"><button id="bt-cfg-cheia" class="sec">Expandir tela</button><button id="bt-cfg-pronto">Pronto, começar</button></div>
+  </div>
+</div>
+
 <div id="canto"></div>
 <div id="menu" role="dialog" aria-label="Menu da tela">
   <div class="caixa">
@@ -62,6 +97,7 @@
     <div class="botoes">
       <button id="bt-sinc">Baixar pacote agora</button>
       <button id="bt-cheia" class="sec">Tela cheia</button>
+      <button id="bt-config" class="sec">Configurar tela e trava</button>
       <button id="bt-fechar" class="sec">Voltar ao vídeo</button>
     </div>
     <details>
