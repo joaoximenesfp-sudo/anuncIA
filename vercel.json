@@ -1,0 +1,5 @@
+{
+  "rewrites": [
+    { "source": "/q/:anuncio/:carro", "destination": "/api/q?anuncio=:anuncio&carro=:carro" }
+  ]
+}

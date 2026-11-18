@@ -42,6 +42,6 @@ function checar(arq){
   console.log('  ids orfaos: '+(orfaos.length?orfaos.join(', '):'nenhum'));
 }
 
-['index.html','catalogo.html'].forEach(checar);
+['index.html','catalogo.html','tela/index.html','tela/painel.html'].forEach(checar);
 console.log('\n'+(falhas?falhas+' FALHA(S)':'estrutura ok'));
 process.exit(falhas?1:0);

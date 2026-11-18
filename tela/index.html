@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<script>if(/\/tela$/.test(location.pathname))location.replace(location.pathname+'/'+location.search+location.hash)</script>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<meta name="robots" content="noindex">
+<title>Tela do carro</title>
+<link rel="manifest" href="app.webmanifest">
+<link rel="icon" href="icone-192.png">
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:#000;overflow:hidden;color:#fff;font-family:system-ui,-apple-system,Roboto,Arial,sans-serif;
+    -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+  /* quadro 16:9 no meio da tela; o resto fica preto */
+  #quadro{position:absolute;left:50%;top:50%;width:min(100vw,177.7778vh);height:min(56.25vw,100vh);transform:translate(-50%,-50%);
+    opacity:0;transition:opacity .25s linear}
+  #quadro.aceso{opacity:1}
+  #quadro img,#quadro video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:none;background:#000}
+  #quadro .qr{position:absolute;background:#fff;opacity:0;transition:opacity .3s linear}
+  #quadro .qr.on{opacity:1}
+  #quadro .qr canvas{display:block;width:100%;height:100%}
+  /* primeira vez: baixando o pacote */
+  #espera{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:18px;text-align:center;padding:40px;
+    background:radial-gradient(circle at 50% 35%,#13233f 0%,#05070d 70%)}
+  #espera.on{display:flex}
+  #espera h1{margin:0;font-size:clamp(28px,4vw,52px);font-weight:800;letter-spacing:-.5px}
+  #espera p{margin:0;font-size:clamp(16px,2vw,24px);color:#b9c3d6;max-width:900px;line-height:1.4}
+  #barra{width:min(520px,70vw);height:10px;border-radius:10px;background:#1e2a42;overflow:hidden}
+  #barra i{display:block;height:100%;width:0;background:#2fd27a;transition:width .3s}
+  /* canto escondido: 5 toques abre o menu */
+  #canto{position:fixed;left:0;top:0;width:120px;height:120px;z-index:5}
+  #menu{position:fixed;inset:0;z-index:10;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.78)}
+  #menu.on{display:flex}
+  #menu .caixa{background:#101826;border:1px solid #26344d;border-radius:20px;padding:26px 28px;width:min(620px,92vw);max-height:92vh;overflow:auto}
+  #menu h2{margin:0 0 14px;font-size:22px}
+  #menu dl{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;margin:0 0 18px;font-size:16px}
+  #menu dt{color:#8fa0bd}#menu dd{margin:0;word-break:break-word}
+  #menu .botoes{display:flex;flex-wrap:wrap;gap:10px}
+  #menu button{font:inherit;font-size:16px;font-weight:700;border:0;border-radius:12px;padding:12px 18px;background:#2fd27a;color:#06130c}
+  #menu button.sec{background:#26344d;color:#fff}
+  #menu details{margin-top:18px;color:#b9c3d6}
+  #menu input{font:inherit;font-size:16px;width:100%;margin:6px 0 10px;padding:10px 12px;border-radius:10px;border:1px solid #34445f;background:#0a111d;color:#fff}
+  .erro{color:#ff8a8a}
+</style>
+</head>
+<body>
+<div id="quadro"><img id="img" alt=""><video id="vid" muted playsinline preload="auto"></video><div id="qrs"></div></div>
+
+<div id="espera">
+  <h1 id="espera-titulo">Preparando a tela</h1>
+  <p id="espera-texto">Conecte o tablet no Wi-Fi. O pacote de vídeos baixa sozinho e depois roda sem internet.</p>
+  <div id="barra"><i id="barra-i"></i></div>
+</div>
+
+<div id="canto"></div>
+<div id="menu" role="dialog" aria-label="Menu da tela">
+  <div class="caixa">
+    <h2>Tela do carro</h2>
+    <dl id="menu-info"></dl>
+    <div class="botoes">
+      <button id="bt-sinc">Baixar pacote agora</button>
+      <button id="bt-cheia" class="sec">Tela cheia</button>
+      <button id="bt-fechar" class="sec">Voltar ao vídeo</button>
+    </div>
+    <details>
+      <summary>Ligar este tablet a um carro</summary>
+      <p>O jeito fácil é abrir o link de pareamento que o painel mostra. Se não der, digite aqui:</p>
+      <label>Código do carro<input id="par-carro" autocomplete="off" placeholder="C01"></label>
+      <label>Chave<input id="par-chave" autocomplete="off"></label>
+      <label>Cidade<input id="par-cidade" autocomplete="off" placeholder="campinas"></label>
+      <button id="bt-parear">Salvar</button>
+    </details>
+  </div>
+</div>
+
+<script src="nucleo.js"></script>
+<script src="qrcode.js"></script>
+<script src="tela.js"></script>
+</body>
+</html>

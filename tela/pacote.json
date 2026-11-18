@@ -1,0 +1,694 @@
+{
+ "versao": "2026-11-18.1",
+ "sobre": "Pacote do tablet nos carros. O player baixa tudo, roda sem internet e manda as exibições. Cotas por horário/cidade entram no loop como {\"cota\": nome, \"opcoes\": [...]} — veja tela/LEIAME.md.",
+ "anuncios": {
+  "tech": {
+   "nome": "Tech Campinas",
+   "destino": "https://wa.me/5519993956265?text=Oi!%20Vi%20o%20an%C3%BAncio%20no%20carro"
+  },
+  "vender": {
+   "nome": "Tech Campinas · compro notebook",
+   "destino": "https://wa.me/5519993956265?text=Oi!%20Quero%20vender%20meu%20notebook."
+  },
+  "manut": {
+   "nome": "Tech Campinas · manutenção",
+   "destino": "https://wa.me/5519993956265?text=Oi!%20Vi%20o%20an%C3%BAncio%20no%20carro%20e%20quero%20um%20or%C3%A7amento%20de%20manuten%C3%A7%C3%A3o."
+  },
+  "catalogo": {
+   "nome": "Tech Campinas · catálogo",
+   "destino": "https://anunc-ia.vercel.app/catalogo.html"
+  },
+  "gio": {
+   "nome": "Dra. Giovanna Molinari",
+   "destino": "https://wa.me/5519983895564?text=Ol%C3%A1%2C%20Dra.%20Giovanna!%20Vi%20o%20an%C3%BAncio%20no%20carro%20e%20quero%20agendar%20um%20atendimento%20em%20casa."
+  }
+ },
+ "midias": {
+  "v01": {
+   "arquivo": "midia/v01.webp",
+   "tipo": "imagem",
+   "bytes": 37514,
+   "hash": "7533226844f3"
+  },
+  "tech": {
+   "arquivo": "midia/tech.mp4",
+   "tipo": "video",
+   "duracao": 71.8,
+   "bytes": 9418751,
+   "hash": "5163f67744d0",
+   "dono": "tech",
+   "qr": [
+    {
+     "anuncio": "tech",
+     "x": 1076,
+     "y": 317,
+     "lado": 282,
+     "de": 0,
+     "ate": 8.5
+    },
+    {
+     "anuncio": "catalogo",
+     "x": 1473,
+     "y": 320,
+     "lado": 275,
+     "de": 0,
+     "ate": 8.5
+    },
+    {
+     "anuncio": "tech",
+     "x": 1332,
+     "y": 605,
+     "lado": 240,
+     "de": 7.9,
+     "ate": 22.9
+    },
+    {
+     "anuncio": "tech",
+     "x": 1564,
+     "y": 644,
+     "lado": 240,
+     "de": 22.3,
+     "ate": 63.5
+    },
+    {
+     "anuncio": "tech",
+     "x": 1076,
+     "y": 317,
+     "lado": 284,
+     "de": 62.7,
+     "ate": 71.8
+    },
+    {
+     "anuncio": "catalogo",
+     "x": 1473,
+     "y": 320,
+     "lado": 275,
+     "de": 62.7,
+     "ate": 71.8
+    }
+   ]
+  },
+  "t01": {
+   "arquivo": "midia/t01.webp",
+   "tipo": "imagem",
+   "bytes": 71532,
+   "hash": "6009280880a6",
+   "qr": [
+    {
+     "anuncio": "tech",
+     "x": 1603,
+     "y": 843,
+     "lado": 163
+    }
+   ]
+  },
+  "c01": {
+   "arquivo": "midia/c01.webp",
+   "tipo": "imagem",
+   "bytes": 50068,
+   "hash": "aa4cc6f887c7"
+  },
+  "p04": {
+   "arquivo": "midia/p04.webp",
+   "tipo": "imagem",
+   "bytes": 87616,
+   "hash": "fd7729c683d3",
+   "qr": [
+    {
+     "anuncio": "gio",
+     "x": 1601,
+     "y": 841,
+     "lado": 168
+    }
+   ]
+  },
+  "q01a": {
+   "arquivo": "midia/q01a.webp",
+   "tipo": "imagem",
+   "bytes": 36640,
+   "hash": "eff985fe8c94"
+  },
+  "q01b": {
+   "arquivo": "midia/q01b.webp",
+   "tipo": "imagem",
+   "bytes": 35392,
+   "hash": "92bf62034bc1"
+  },
+  "t02": {
+   "arquivo": "midia/t02.webp",
+   "tipo": "imagem",
+   "bytes": 74340,
+   "hash": "722e518f7835",
+   "qr": [
+    {
+     "anuncio": "tech",
+     "x": 1603,
+     "y": 843,
+     "lado": 163
+    }
+   ]
+  },
+  "c03": {
+   "arquivo": "midia/c03.webp",
+   "tipo": "imagem",
+   "bytes": 46876,
+   "hash": "189605b2301d"
+  },
+  "compro": {
+   "arquivo": "midia/compro.webp",
+   "tipo": "imagem",
+   "bytes": 74948,
+   "hash": "f72509bef5cb",
+   "dono": "vender",
+   "qr": [
+    {
+     "anuncio": "vender",
+     "x": 1300,
+     "y": 287,
+     "lado": 402
+    }
+   ]
+  },
+  "p01": {
+   "arquivo": "midia/p01.webp",
+   "tipo": "imagem",
+   "bytes": 90016,
+   "hash": "7d6594759b96",
+   "qr": [
+    {
+     "anuncio": "gio",
+     "x": 1601,
+     "y": 841,
+     "lado": 168
+    }
+   ]
+  },
+  "t03": {
+   "arquivo": "midia/t03.webp",
+   "tipo": "imagem",
+   "bytes": 75746,
+   "hash": "4ea81167d3db",
+   "qr": [
+    {
+     "anuncio": "tech",
+     "x": 1603,
+     "y": 843,
+     "lado": 163
+    }
+   ]
+  },
+  "q02a": {
+   "arquivo": "midia/q02a.webp",
+   "tipo": "imagem",
+   "bytes": 26692,
+   "hash": "3f529fbdf01b"
+  },
+  "q02b": {
+   "arquivo": "midia/q02b.webp",
+   "tipo": "imagem",
+   "bytes": 53210,
+   "hash": "1356d8a72667"
+  },
+  "c05": {
+   "arquivo": "midia/c05.webp",
+   "tipo": "imagem",
+   "bytes": 46760,
+   "hash": "b2a0b4ee2e90"
+  },
+  "p05": {
+   "arquivo": "midia/p05.webp",
+   "tipo": "imagem",
+   "bytes": 81248,
+   "hash": "d86d115373ae",
+   "qr": [
+    {
+     "anuncio": "gio",
+     "x": 1601,
+     "y": 841,
+     "lado": 168
+    }
+   ]
+  },
+  "t04": {
+   "arquivo": "midia/t04.webp",
+   "tipo": "imagem",
+   "bytes": 70686,
+   "hash": "ac4c74046af3",
+   "qr": [
+    {
+     "anuncio": "tech",
+     "x": 1603,
+     "y": 843,
+     "lado": 163
+    }
+   ]
+  },
+  "c06": {
+   "arquivo": "midia/c06.webp",
+   "tipo": "imagem",
+   "bytes": 39388,
+   "hash": "f6adaa4cfa6e"
+  },
+  "p06": {
+   "arquivo": "midia/p06.webp",
+   "tipo": "imagem",
+   "bytes": 89266,
+   "hash": "c4556054d8b4",
+   "qr": [
+    {
+     "anuncio": "gio",
+     "x": 1601,
+     "y": 841,
+     "lado": 168
+    }
+   ]
+  },
+  "t07": {
+   "arquivo": "midia/t07.webp",
+   "tipo": "imagem",
+   "bytes": 74306,
+   "hash": "7f21c361c68a",
+   "qr": [
+    {
+     "anuncio": "tech",
+     "x": 1603,
+     "y": 843,
+     "lado": 163
+    }
+   ]
+  },
+  "gio": {
+   "arquivo": "midia/gio.mp4",
+   "tipo": "video",
+   "duracao": 31.133,
+   "bytes": 3579137,
+   "hash": "bc2d44d1b8af",
+   "dono": "gio",
+   "qr": [
+    {
+     "anuncio": "gio",
+     "x": 1285,
+     "y": 286,
+     "lado": 442,
+     "de": 22.1,
+     "ate": 31.13
+    }
+   ]
+  },
+  "v02": {
+   "arquivo": "midia/v02.webp",
+   "tipo": "imagem",
+   "bytes": 38536,
+   "hash": "254e9181a017"
+  },
+  "t05": {
+   "arquivo": "midia/t05.webp",
+   "tipo": "imagem",
+   "bytes": 65534,
+   "hash": "a6b13d9ed576",
+   "qr": [
+    {
+     "anuncio": "tech",
+     "x": 1603,
+     "y": 843,
+     "lado": 163
+    }
+   ]
+  },
+  "q03a": {
+   "arquivo": "midia/q03a.webp",
+   "tipo": "imagem",
+   "bytes": 47958,
+   "hash": "61973cf1b771"
+  },
+  "q03b": {
+   "arquivo": "midia/q03b.webp",
+   "tipo": "imagem",
+   "bytes": 42336,
+   "hash": "a3ac69d4aa2c"
+  },
+  "p02": {
+   "arquivo": "midia/p02.webp",
+   "tipo": "imagem",
+   "bytes": 85874,
+   "hash": "2e2d561103c1",
+   "qr": [
+    {
+     "anuncio": "gio",
+     "x": 1601,
+     "y": 841,
+     "lado": 168
+    }
+   ]
+  },
+  "c02": {
+   "arquivo": "midia/c02.webp",
+   "tipo": "imagem",
+   "bytes": 59702,
+   "hash": "48f40bb2e80d"
+  },
+  "t06": {
+   "arquivo": "midia/t06.webp",
+   "tipo": "imagem",
+   "bytes": 76290,
+   "hash": "018726a3f5b9",
+   "qr": [
+    {
+     "anuncio": "tech",
+     "x": 1603,
+     "y": 843,
+     "lado": 163
+    }
+   ]
+  },
+  "p07": {
+   "arquivo": "midia/p07.webp",
+   "tipo": "imagem",
+   "bytes": 72610,
+   "hash": "a258586a5597",
+   "qr": [
+    {
+     "anuncio": "gio",
+     "x": 1601,
+     "y": 841,
+     "lado": 168
+    }
+   ]
+  },
+  "q04a": {
+   "arquivo": "midia/q04a.webp",
+   "tipo": "imagem",
+   "bytes": 40638,
+   "hash": "0592db612896"
+  },
+  "q04b": {
+   "arquivo": "midia/q04b.webp",
+   "tipo": "imagem",
+   "bytes": 41846,
+   "hash": "64ed5cb7b387"
+  },
+  "t08": {
+   "arquivo": "midia/t08.webp",
+   "tipo": "imagem",
+   "bytes": 61084,
+   "hash": "d9e1a6f6d424",
+   "qr": [
+    {
+     "anuncio": "tech",
+     "x": 1603,
+     "y": 843,
+     "lado": 163
+    }
+   ]
+  },
+  "p03": {
+   "arquivo": "midia/p03.webp",
+   "tipo": "imagem",
+   "bytes": 92100,
+   "hash": "4fea879aaf2c",
+   "qr": [
+    {
+     "anuncio": "gio",
+     "x": 1601,
+     "y": 841,
+     "lado": 168
+    }
+   ]
+  },
+  "c04": {
+   "arquivo": "midia/c04.webp",
+   "tipo": "imagem",
+   "bytes": 35812,
+   "hash": "97c122cb17c0"
+  },
+  "t09": {
+   "arquivo": "midia/t09.webp",
+   "tipo": "imagem",
+   "bytes": 68668,
+   "hash": "ba9e75e2d0d1",
+   "qr": [
+    {
+     "anuncio": "tech",
+     "x": 1603,
+     "y": 843,
+     "lado": 163
+    }
+   ]
+  },
+  "manut": {
+   "arquivo": "midia/manut.webp",
+   "tipo": "imagem",
+   "bytes": 67262,
+   "hash": "69791152c757",
+   "dono": "manut",
+   "qr": [
+    {
+     "anuncio": "manut",
+     "x": 1300,
+     "y": 287,
+     "lado": 402
+    }
+   ]
+  },
+  "p08": {
+   "arquivo": "midia/p08.webp",
+   "tipo": "imagem",
+   "bytes": 74952,
+   "hash": "281ceaffb850",
+   "qr": [
+    {
+     "anuncio": "gio",
+     "x": 1601,
+     "y": 841,
+     "lado": 168
+    }
+   ]
+  },
+  "t10": {
+   "arquivo": "midia/t10.webp",
+   "tipo": "imagem",
+   "bytes": 68828,
+   "hash": "7ca0aec11870",
+   "qr": [
+    {
+     "anuncio": "tech",
+     "x": 1603,
+     "y": 843,
+     "lado": 163
+    }
+   ]
+  },
+  "c07": {
+   "arquivo": "midia/c07.webp",
+   "tipo": "imagem",
+   "bytes": 52574,
+   "hash": "769375eb0387"
+  },
+  "p09": {
+   "arquivo": "midia/p09.webp",
+   "tipo": "imagem",
+   "bytes": 85166,
+   "hash": "ddcc845f500c",
+   "qr": [
+    {
+     "anuncio": "gio",
+     "x": 1601,
+     "y": 841,
+     "lado": 168
+    }
+   ]
+  },
+  "t11": {
+   "arquivo": "midia/t11.webp",
+   "tipo": "imagem",
+   "bytes": 76570,
+   "hash": "0137d10d42c5",
+   "qr": [
+    {
+     "anuncio": "tech",
+     "x": 1603,
+     "y": 843,
+     "lado": 163
+    }
+   ]
+  },
+  "v03": {
+   "arquivo": "midia/v03.webp",
+   "tipo": "imagem",
+   "bytes": 34534,
+   "hash": "694853b40eea"
+  }
+ },
+ "loop": [
+  {
+   "midia": "v01",
+   "segundos": 10
+  },
+  {
+   "midia": "tech"
+  },
+  {
+   "midia": "t01",
+   "segundos": 14
+  },
+  {
+   "midia": "c01",
+   "segundos": 13
+  },
+  {
+   "midia": "p04",
+   "segundos": 14
+  },
+  {
+   "midia": "q01a",
+   "segundos": 8
+  },
+  {
+   "midia": "q01b",
+   "segundos": 7
+  },
+  {
+   "midia": "t02",
+   "segundos": 14
+  },
+  {
+   "midia": "c03",
+   "segundos": 13
+  },
+  {
+   "midia": "compro",
+   "segundos": 12
+  },
+  {
+   "midia": "p01",
+   "segundos": 14
+  },
+  {
+   "midia": "t03",
+   "segundos": 14
+  },
+  {
+   "midia": "q02a",
+   "segundos": 8
+  },
+  {
+   "midia": "q02b",
+   "segundos": 7
+  },
+  {
+   "midia": "c05",
+   "segundos": 13
+  },
+  {
+   "midia": "p05",
+   "segundos": 14
+  },
+  {
+   "midia": "t04",
+   "segundos": 14
+  },
+  {
+   "midia": "c06",
+   "segundos": 13
+  },
+  {
+   "midia": "p06",
+   "segundos": 14
+  },
+  {
+   "midia": "t07",
+   "segundos": 14
+  },
+  {
+   "midia": "gio"
+  },
+  {
+   "midia": "v02",
+   "segundos": 10
+  },
+  {
+   "midia": "t05",
+   "segundos": 14
+  },
+  {
+   "midia": "q03a",
+   "segundos": 8
+  },
+  {
+   "midia": "q03b",
+   "segundos": 7
+  },
+  {
+   "midia": "p02",
+   "segundos": 14
+  },
+  {
+   "midia": "c02",
+   "segundos": 13
+  },
+  {
+   "midia": "t06",
+   "segundos": 14
+  },
+  {
+   "midia": "p07",
+   "segundos": 14
+  },
+  {
+   "midia": "compro",
+   "segundos": 12
+  },
+  {
+   "midia": "q04a",
+   "segundos": 8
+  },
+  {
+   "midia": "q04b",
+   "segundos": 7
+  },
+  {
+   "midia": "t08",
+   "segundos": 14
+  },
+  {
+   "midia": "p03",
+   "segundos": 14
+  },
+  {
+   "midia": "c04",
+   "segundos": 13
+  },
+  {
+   "midia": "t09",
+   "segundos": 14
+  },
+  {
+   "midia": "manut",
+   "segundos": 12
+  },
+  {
+   "midia": "p08",
+   "segundos": 14
+  },
+  {
+   "midia": "t10",
+   "segundos": 14
+  },
+  {
+   "midia": "c07",
+   "segundos": 13
+  },
+  {
+   "midia": "p09",
+   "segundos": 14
+  },
+  {
+   "midia": "t11",
+   "segundos": 14
+  },
+  {
+   "midia": "v03",
+   "segundos": 10
+  }
+ ]
+}

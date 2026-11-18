@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Painel da Tela</title>
+<link rel="icon" href="icone-192.png">
+<style>
+  :root{--fundo:#f4f6f9;--cartao:#fff;--texto:#16202e;--fraco:#5d6b80;--linha:#e3e8ef;--verde:#14945a;--verde-claro:#e5f6ee;
+    --amarelo:#a86b00;--amarelo-claro:#fff4dc;--vermelho:#c0392b;--vermelho-claro:#fdecea;--azul:#24508f}
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--fundo:#0e131b;--cartao:#161d28;--texto:#e8edf4;--fraco:#9aa8bd;--linha:#283244;
+    --verde:#3ccf8e;--verde-claro:#14301f;--amarelo:#f0b54a;--amarelo-claro:#33280f;--vermelho:#ff8a7a;--vermelho-claro:#3a1a17;--azul:#8cb4ff}}
+  :root[data-theme="dark"]{--fundo:#0e131b;--cartao:#161d28;--texto:#e8edf4;--fraco:#9aa8bd;--linha:#283244;
+    --verde:#3ccf8e;--verde-claro:#14301f;--amarelo:#f0b54a;--amarelo-claro:#33280f;--vermelho:#ff8a7a;--vermelho-claro:#3a1a17;--azul:#8cb4ff}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--fundo);color:var(--texto);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+  header{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:16px;max-width:1180px;margin:0 auto}
+  header h1{margin:0;font-size:20px;flex:1;min-width:180px}
+  header small{color:var(--fraco);font-weight:500}
+  main{max-width:1180px;margin:0 auto;padding:0 16px 40px}
+  nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+  nav button{border:1px solid var(--linha);background:var(--cartao);color:var(--texto);font:inherit;font-weight:600;padding:8px 14px;border-radius:999px;cursor:pointer}
+  nav button.on{background:var(--verde);border-color:var(--verde);color:#fff}
+  .cartao{background:var(--cartao);border:1px solid var(--linha);border-radius:14px;padding:16px;margin-bottom:14px}
+  .cartao h2{margin:0 0 6px;font-size:17px}
+  .cartao p.leg{margin:0 0 12px;color:var(--fraco);font-size:14px}
+  .rolar{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  table{border-collapse:collapse;width:100%;font-size:14px;font-variant-numeric:tabular-nums}
+  th,td{padding:8px 10px;border-bottom:1px solid var(--linha);text-align:left;white-space:nowrap}
+  th{color:var(--fraco);font-weight:600;font-size:13px}
+  td.n,th.n{text-align:right}
+  tfoot td{font-weight:700;border-bottom:0}
+  .selo{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:700}
+  .ok{background:var(--verde-claro);color:var(--verde)}.aviso{background:var(--amarelo-claro);color:var(--amarelo)}.ruim{background:var(--vermelho-claro);color:var(--vermelho)}
+  .linha{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+  label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--fraco);font-weight:600}
+  input,select{font:inherit;color:var(--texto);background:var(--fundo);border:1px solid var(--linha);border-radius:10px;padding:8px 10px;min-width:0}
+  button.acao{font:inherit;font-weight:700;border:0;border-radius:10px;padding:9px 14px;background:var(--verde);color:#fff;cursor:pointer}
+  button.sec{font:inherit;font-weight:600;border:1px solid var(--linha);border-radius:10px;padding:6px 10px;background:var(--cartao);color:var(--texto);cursor:pointer}
+  .par{display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin-top:12px}
+  .par canvas{width:180px;height:180px;background:#fff;border-radius:10px;padding:8px}
+  .par code{word-break:break-all;font-size:13px}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+  .kpi{background:var(--cartao);border:1px solid var(--linha);border-radius:14px;padding:12px 14px}
+  .kpi b{display:block;font-size:22px;font-variant-numeric:tabular-nums}.kpi span{color:var(--fraco);font-size:13px}
+  #entrar{max-width:380px;margin:40px auto}
+  #entrar form{display:flex;flex-direction:column;gap:10px}
+  .erro{color:var(--vermelho)}
+  .demo{background:var(--amarelo-claro);color:var(--amarelo);padding:8px 12px;border-radius:10px;font-weight:600;margin-bottom:12px}
+  [hidden]{display:none!important}
+</style>
+</head>
+<body>
+<header>
+  <h1>Painel da Tela <small>· rede de tablets nos carros</small></h1>
+  <span id="quem"></span>
+  <button class="sec" id="bt-sair" hidden>Sair</button>
+</header>
+<main>
+  <section id="entrar" class="cartao" hidden>
+    <h2>Entrar</h2>
+    <p class="leg">Mesmo login do sistema.</p>
+    <form id="form-entrar">
+      <label>E-mail<input id="email" type="email" autocomplete="username" required></label>
+      <label>Senha<input id="senha" type="password" autocomplete="current-password" required></label>
+      <button class="acao">Entrar</button>
+      <span id="erro-entrar" class="erro"></span>
+    </form>
+  </section>
+
+  <div id="app" hidden>
+    <div id="aviso-demo" class="demo" hidden>Modo demonstração: números inventados, nada é gravado.</div>
+    <nav>
+      <button data-aba="carros" class="on">Carros</button>
+      <button data-aba="mes">Eficiência e bônus</button>
+      <button data-aba="anuncios">Anunciantes</button>
+    </nav>
+
+    <section data-painel="carros">
+      <div class="kpis" id="kpis-carros"></div>
+      <div class="cartao">
+        <h2>Carros</h2>
+        <p class="leg">Sem sinal há 3 dias ou mais: ligue para o motorista. Tablet perdido? Use "Trocar chave": o tablet antigo para de valer na hora.</p>
+        <div class="rolar"><table id="tab-carros"></table></div>
+      </div>
+      <div class="cartao">
+        <h2>Novo carro</h2>
+        <p class="leg">Gera o código e a chave do tablet. Mande o link para o motorista abrir no tablet (ou aponte a câmera do tablet para o QR).</p>
+        <form class="linha" id="form-carro">
+          <label>Motorista<input id="nc-nome" required maxlength="60"></label>
+          <label>WhatsApp<input id="nc-tel" inputmode="tel" maxlength="20" placeholder="(19) 9…"></label>
+          <label>Cidade<input id="nc-cidade" required maxlength="40" placeholder="Campinas"></label>
+          <button class="acao">Cadastrar</button>
+        </form>
+        <div id="pareamento"></div>
+      </div>
+    </section>
+
+    <section data-painel="mes" hidden>
+      <div class="cartao">
+        <div class="linha">
+          <label>Mês<input id="mes" type="month"></label>
+          <label>Bônus a dividir (R$)<input id="bonus" type="number" min="0" step="10" value="0"></label>
+          <label>Pontos por hora rodando<input id="peso-hora" type="number" min="0" step="0.5" value="1"></label>
+          <label>Pontos por scan<input id="peso-scan" type="number" min="0" step="0.5" value="2"></label>
+          <button class="sec" id="bt-copiar-bonus">Copiar para o WhatsApp</button>
+        </div>
+      </div>
+      <div class="kpis" id="kpis-mes"></div>
+      <div class="cartao">
+        <h2>Eficiência por carro</h2>
+        <p class="leg">Horas rodando = tela ligada com o carro em movimento (sensor do tablet). Scans contam uma pessoa por dia, até 6 por hora em cada carro. Pontos = horas rodando × peso + scans × peso; o bônus é dividido pelos pontos. * tablet sem sensor: conta as horas de tela.</p>
+        <div class="rolar"><table id="tab-mes"></table></div>
+      </div>
+    </section>
+
+    <section data-painel="anuncios" hidden>
+      <div class="cartao">
+        <h2>Relatório por anunciante</h2>
+        <p class="leg">Do mês escolhido na aba anterior. Exibições = vezes que o anúncio passou inteiro numa tela. Com QR = vezes que o QR dele apareceu (inclusive nas dicas). Scans = pessoas que apontaram a câmera.</p>
+        <div class="rolar"><table id="tab-anuncios"></table></div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script src="nucleo.js"></script>
+<script src="qrcode.js"></script>
+<script type="module">
+const N = window.TelaNucleo;
+const $ = id => document.getElementById(id);
+const DEMO = new URLSearchParams(location.search).has('demo');
+const SOCIOS = ['joaoximenesfp@gmail.com', 'joaoximenes11@hotmail.com', 'joaoximenesfp+ijx@gmail.com', 'i155757@dac.unicamp.br'];
+const fmt = (n, d = 0) => Number(n || 0).toLocaleString('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d });
+const nomeCidade = slug => (carros.find(c => c.cidade === slug) || {}).cidadeNome || slug;
+const reais = n => Number(n || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const lerLocal = (k, p) => { try { return JSON.parse(localStorage.getItem(k)) ?? p; } catch (e) { return p; } };
+const gravarLocal = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+
+let pacote = { versao: '', anuncios: {}, midias: {}, loop: [] };
+let carros = [], status = {}, dadosMes = { lotes: [], scans: [] };
+let fb = null; // funções do Firebase (fora do modo demonstração)
+
+// ── DADOS ──
+async function carregarPacote() {
+  try { pacote = await (await fetch('pacote.json', { cache: 'no-store' })).json(); } catch (e) { /* segue sem nomes */ }
+}
+async function carregarBase() {
+  if (DEMO) { const d = demo(); carros = d.carros; status = d.status; return; }
+  const { db, collection, getDocs } = fb;
+  carros = (await getDocs(collection(db, 'tela_carros'))).docs.map(d => ({ id: d.id, ...d.data() }));
+  status = Object.fromEntries((await getDocs(collection(db, 'tela_status'))).docs.map(d => {
+    const s = d.data(); return [d.id, { ...s, visto: s.visto?.toMillis ? s.visto.toMillis() : 0 }];
+  }));
+}
+async function carregarMes(mes) {
+  if (DEMO) { dadosMes = demo(mes).mes; return; }
+  const { db, collection, getDocs, query, where } = fb;
+  const lotes = (await getDocs(query(collection(db, 'tela_horas'), where('mes', '==', mes)))).docs.map(d => d.data());
+  const scans = (await getDocs(query(collection(db, 'tela_scans'), where('mes', '==', mes)))).docs.map(d => {
+    const s = d.data(); return { ...s, em: s.em?.toMillis ? s.em.toMillis() : 0 };
+  });
+  dadosMes = { lotes, scans };
+}
+
+// ── CARROS ──
+function situacao(c) {
+  const s = status[c.id];
+  if (!c.ativo) return ['Desativado', 'aviso'];
+  if (!s) return ['Nunca conectou', 'aviso'];
+  const dias = N.diasSemSinal(s.visto, Date.now());
+  if (dias >= 3) return [`Sem sinal há ${dias} dias`, 'ruim'];
+  if (dias >= 1) return [`Sem sinal há ${dias} dia${dias > 1 ? 's' : ''}`, 'aviso'];
+  if (pacote.versao && s.pacote !== pacote.versao) return ['Pacote antigo', 'aviso'];
+  return ['Em dia', 'ok'];
+}
+function quando(ms) {
+  if (!ms) return '—';
+  const min = Math.round((Date.now() - ms) / 60000);
+  if (min < 60) return `há ${min} min`;
+  if (min < 48 * 60) return `há ${Math.round(min / 60)} h`;
+  return new Date(ms).toLocaleDateString('pt-BR');
+}
+function desenharCarros() {
+  const lista = carros.slice().sort((a, b) => a.id.localeCompare(b.id, 'pt-BR', { numeric: true }));
+  const sit = lista.map(situacao);
+  $('kpis-carros').innerHTML = [
+    [lista.filter(c => c.ativo).length, 'carros ativos'],
+    [sit.filter(s => s[1] === 'ok').length, 'em dia'],
+    [sit.filter(s => s[0].startsWith('Sem sinal há') && s[1] === 'ruim').length, 'sem sinal há 3+ dias'],
+    [new Set(lista.map(c => c.cidade)).size, 'cidades'],
+  ].map(([v, t]) => `<div class="kpi"><b>${fmt(v)}</b><span>${t}</span></div>`).join('');
+  $('tab-carros').innerHTML = `<thead><tr><th>Carro</th><th>Motorista</th><th>Cidade</th><th>Situação</th><th>Último sinal</th><th class="n">Bateria</th><th>Pacote</th><th></th></tr></thead><tbody>` +
+    lista.map((c, i) => {
+      const s = status[c.id] || {};
+      const bat = s.bateria >= 0 ? `${s.bateria}%${s.carregando ? ' ⚡' : ''}` : '—';
+      return `<tr><td><b>${esc(c.id)}</b></td><td>${esc(c.motorista)}</td><td>${esc(c.cidadeNome || c.cidade)}</td>
+        <td><span class="selo ${sit[i][1]}">${esc(sit[i][0])}</span></td><td>${quando(s.visto)}</td><td class="n">${bat}</td><td>${esc(s.pacote || '—')}</td>
+        <td><button class="sec" data-link="${esc(c.id)}">Link do tablet</button> <button class="sec" data-chave="${esc(c.id)}">Trocar chave</button>
+        <button class="sec" data-ativo="${esc(c.id)}">${c.ativo ? 'Desativar' : 'Ativar'}</button></td></tr>`;
+    }).join('') + '</tbody>';
+  if (!lista.length) $('tab-carros').innerHTML = '<tbody><tr><td>Nenhum carro ainda. Cadastre o primeiro abaixo.</td></tr></tbody>';
+}
+function mostrarPareamento(c) {
+  const link = N.linkPareamento(c.id, c.chave, c.cidade);
+  const msg = `Oi, ${c.motorista.split(' ')[0]}! Abra este link no tablet do carro (no Chrome) e toque em "Instalar app" ou "Adicionar à tela inicial":\n${link}`;
+  const tel = String(c.telefone || '').replace(/\D/g, '');
+  $('pareamento').innerHTML = `<div class="par"><canvas id="qr-par" width="360" height="360"></canvas><div>
+    <p><b>${esc(c.id)} · ${esc(c.motorista)}</b></p><p><code>${esc(link)}</code></p>
+    <p class="linha"><button class="sec" id="bt-copiar-link">Copiar link</button>
+    <a class="sec" style="text-decoration:none;padding:6px 10px;border:1px solid var(--linha);border-radius:10px;color:inherit" target="_blank" rel="noopener"
+       href="https://wa.me/${tel ? '55' + tel.replace(/^55/, '') : ''}?text=${encodeURIComponent(msg)}">Mandar no WhatsApp</a></p>
+    <p class="leg">O link leva a chave do carro: mande só para o motorista.</p></div></div>`;
+  const qr = qrcode(0, 'M'); qr.addData(link); qr.make();
+  const cv = $('qr-par'), ctx = cv.getContext('2d'), n = qr.getModuleCount(), m = Math.floor(cv.width / (n + 4)), off = Math.floor((cv.width - m * n) / 2);
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cv.width, cv.height); ctx.fillStyle = '#000';
+  for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) if (qr.isDark(y, x)) ctx.fillRect(off + x * m, off + y * m, m, m);
+  $('bt-copiar-link').onclick = () => navigator.clipboard.writeText(link).then(() => $('bt-copiar-link').textContent = 'Copiado');
+  $('pareamento').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+function proximoCodigo() {
+  const nums = carros.map(c => +(/^C(\d+)$/.exec(c.id) || [0, 0])[1]);
+  return 'C' + String(Math.max(0, ...nums) + 1).padStart(2, '0');
+}
+async function salvarCarro(c) {
+  if (DEMO) return;
+  const { db, doc, setDoc } = fb;
+  const { id, ...dados } = c;
+  await setDoc(doc(db, 'tela_carros', id), dados);
+}
+$('form-carro').onsubmit = async e => {
+  e.preventDefault();
+  const nome = $('nc-cidade').value.trim();
+  const c = { id: proximoCodigo(), motorista: $('nc-nome').value.trim(), telefone: $('nc-tel').value.trim(),
+    cidade: N.slug(nome), cidadeNome: nome, chave: N.novaChave(), ativo: true, criado: new Date() };
+  try { await salvarCarro(c); } catch (err) { alert('Não gravou: ' + err.message); return; }
+  carros.push(c); e.target.reset(); desenharCarros(); mostrarPareamento(c);
+};
+$('tab-carros').onclick = async e => {
+  const b = e.target.closest('button'); if (!b) return;
+  const c = carros.find(x => x.id === (b.dataset.link || b.dataset.chave || b.dataset.ativo)); if (!c) return;
+  if (b.dataset.link) return mostrarPareamento(c);
+  if (b.dataset.chave) {
+    if (!confirm(`Trocar a chave do ${c.id}? O tablet atual para de enviar até abrir o link novo.`)) return;
+    c.chave = N.novaChave();
+  } else c.ativo = !c.ativo;
+  try { await salvarCarro(c); } catch (err) { alert('Não gravou: ' + err.message); return; }
+  desenharCarros(); if (b.dataset.chave) mostrarPareamento(c);
+};
+
+// ── MÊS: EFICIÊNCIA E BÔNUS ──
+let resumo = null;
+function calcular() {
+  const mes = $('mes').value;
+  const conf = { valorBonus: +$('bonus').value || 0, pesoHora: +$('peso-hora').value || 0, pesoScan: +$('peso-scan').value || 0 };
+  gravarLocal('tela.painel.' + mes, conf);
+  resumo = N.resumoMes({ lotes: dadosMes.lotes, scans: dadosMes.scans, ...conf });
+  const nome = id => (carros.find(c => c.id === id) || {}).motorista || '—';
+  const r = resumo.carros;
+  const soma = k => r.reduce((a, c) => a + (c[k] || 0), 0);
+  $('kpis-mes').innerHTML = [
+    [fmt(r.filter(c => c.horasTela > 0).length), 'carros com tela ligada'],
+    [fmt(soma('horasTela'), 0), 'horas de tela'],
+    [fmt(soma('exib')), 'exibições'],
+    [fmt(resumo.scansValidos), `scans (de ${fmt(resumo.scansBrutos)} brutos)`],
+  ].map(([v, t]) => `<div class="kpi"><b>${v}</b><span>${t}</span></div>`).join('');
+  $('tab-mes').innerHTML = `<thead><tr><th>Carro</th><th>Motorista</th><th>Cidade</th><th class="n">Dias</th><th class="n">Horas de tela</th><th class="n">Horas rodando</th>
+    <th class="n">Exibições</th><th class="n">Scans</th><th class="n">Scans a cada 10 h</th><th class="n">Pontos</th><th class="n">Bônus</th></tr></thead><tbody>` +
+    r.map(c => `<tr><td><b>${esc(c.carro)}</b></td><td>${esc(nome(c.carro))}</td><td>${esc(nomeCidade(c.cidade))}</td><td class="n">${c.diasAtivos}</td>
+      <td class="n">${fmt(c.horasTela, 1)}</td><td class="n">${fmt(c.horasMov, 1)}${c.semSensor ? '*' : ''}</td><td class="n">${fmt(c.exib)}</td>
+      <td class="n">${fmt(c.scans)}</td><td class="n">${fmt(c.taxaScans, 1)}</td><td class="n">${fmt(c.pontos, 1)}</td><td class="n">${reais(c.bonus)}</td></tr>`).join('') +
+    `</tbody><tfoot><tr><td colspan="4">Total</td><td class="n">${fmt(soma('horasTela'), 1)}</td><td class="n">${fmt(soma('horasMov'), 1)}</td><td class="n">${fmt(soma('exib'))}</td>
+      <td class="n">${fmt(soma('scans'))}</td><td></td><td class="n">${fmt(resumo.totalPontos, 1)}</td><td class="n">${reais(soma('bonus'))}</td></tr></tfoot>`;
+  if (!r.length) $('tab-mes').innerHTML = '<tbody><tr><td>Nenhum tablet mandou dados neste mês ainda.</td></tr></tbody>';
+  desenharAnuncios();
+}
+$('bt-copiar-bonus').onclick = () => {
+  if (!resumo) return;
+  const nome = id => (carros.find(c => c.id === id) || {}).motorista || id;
+  const txt = `Bônus da rede · ${$('mes').value}\n` + resumo.carros.filter(c => c.bonus > 0)
+    .map((c, i) => `${i + 1}. ${nome(c.carro)} (${c.carro}): ${fmt(c.horasMov, 1)} h rodando, ${c.scans} scans → ${reais(c.bonus)}`).join('\n');
+  navigator.clipboard.writeText(txt).then(() => $('bt-copiar-bonus').textContent = 'Copiado');
+};
+
+// ── ANUNCIANTES ──
+function desenharAnuncios() {
+  const lista = resumo ? resumo.anuncios : [];
+  const faixas = N.FAIXAS_HORARIO;
+  $('tab-anuncios').innerHTML = `<thead><tr><th>Anunciante</th><th class="n">Exibições</th><th class="n">Tempo no ar</th><th class="n">Com QR</th><th class="n">Scans</th>` +
+    faixas.map(f => `<th class="n">${esc(f.nome)}</th>`).join('') + `<th class="n">Carros</th><th>Cidades</th><th></th></tr></thead><tbody>` +
+    lista.map(a => `<tr><td><b>${esc((pacote.anuncios[a.anuncio] || {}).nome || a.anuncio)}</b></td><td class="n">${fmt(a.exib)}</td>
+      <td class="n">${fmt(a.segundos / 3600, 1)} h</td><td class="n">${fmt(a.exibQR)}</td><td class="n">${fmt(a.scans)}</td>` +
+      faixas.map(f => `<td class="n">${fmt(a.faixas[f.id])}</td>`).join('') +
+      `<td class="n">${a.carros.size}</td><td>${esc(Object.keys(a.cidades).map(nomeCidade).join(', '))}</td><td><button class="sec" data-rel="${esc(a.anuncio)}">Copiar relatório</button></td></tr>`).join('') + '</tbody>';
+  if (!lista.length) $('tab-anuncios').innerHTML = '<tbody><tr><td>Sem exibições neste mês.</td></tr></tbody>';
+}
+$('tab-anuncios').onclick = e => {
+  const b = e.target.closest('button[data-rel]'); if (!b) return;
+  const a = resumo.anuncios.find(x => x.anuncio === b.dataset.rel); if (!a) return;
+  const nome = (pacote.anuncios[a.anuncio] || {}).nome || a.anuncio;
+  const melhor = N.FAIXAS_HORARIO.slice().sort((x, y) => a.faixas[y.id] - a.faixas[x.id])[0];
+  const txt = `Relatório da tela nos carros · ${$('mes').value}\n${nome}\n` +
+    `• ${fmt(a.exib)} exibições em ${a.carros.size} carro(s) (${fmt(a.segundos / 3600, 1)} h no ar)\n` +
+    `• ${fmt(a.scans)} pessoas apontaram a câmera para o QR\n` +
+    `• Horário com mais exibições: ${melhor.nome}\n• Cidades: ${Object.keys(a.cidades).map(nomeCidade).join(', ')}`;
+  navigator.clipboard.writeText(txt).then(() => b.textContent = 'Copiado');
+};
+
+// ── ABAS E PARTIDA ──
+document.querySelector('nav').onclick = e => {
+  const b = e.target.closest('button[data-aba]'); if (!b) return;
+  document.querySelectorAll('nav button').forEach(x => x.classList.toggle('on', x === b));
+  document.querySelectorAll('[data-painel]').forEach(p => p.hidden = p.dataset.painel !== b.dataset.aba);
+};
+async function trocarMes() {
+  const mes = $('mes').value;
+  const conf = lerLocal('tela.painel.' + mes, null);
+  if (conf) { $('bonus').value = conf.valorBonus; $('peso-hora').value = conf.pesoHora; $('peso-scan').value = conf.pesoScan; }
+  await carregarMes(mes); calcular();
+}
+['bonus', 'peso-hora', 'peso-scan'].forEach(id => $(id).oninput = calcular);
+$('mes').onchange = trocarMes;
+async function abrir() {
+  $('entrar').hidden = true; $('app').hidden = false;
+  $('mes').value = N.partesData(new Date()).mes;
+  await carregarPacote(); await carregarBase(); desenharCarros(); await trocarMes();
+}
+
+if (DEMO) {
+  $('aviso-demo').hidden = false; $('quem').textContent = 'demonstração';
+  abrir();
+} else {
+  iniciarFirebase().catch(err => { $('entrar').hidden = false; $('erro-entrar').textContent = 'Sem conexão com o Firebase: ' + err.message; });
+}
+
+async function iniciarFirebase() {
+  const V = 'https://www.gstatic.com/firebasejs/11.0.0/';
+  const [{ initializeApp }, auth, fs] = await Promise.all([import(V + 'firebase-app.js'), import(V + 'firebase-auth.js'), import(V + 'firebase-firestore.js')]);
+  const app = initializeApp({ apiKey: N.CHAVE_API, authDomain: 'anuncia-70b88.firebaseapp.com', projectId: N.PROJETO,
+    storageBucket: 'anuncia-70b88.firebasestorage.app', messagingSenderId: '325014740359', appId: '1:325014740359:web:eff4e874f9f18a2ba54722' });
+  const a = auth.getAuth(app);
+  fb = { db: fs.getFirestore(app), collection: fs.collection, getDocs: fs.getDocs, doc: fs.doc, setDoc: fs.setDoc, query: fs.query, where: fs.where };
+  $('form-entrar').onsubmit = async e => {
+    e.preventDefault(); $('erro-entrar').textContent = '';
+    try { await auth.signInWithEmailAndPassword(a, $('email').value.trim(), $('senha').value); }
+    catch (err) { $('erro-entrar').textContent = 'Não entrou: confira e-mail e senha.'; }
+  };
+  $('bt-sair').onclick = () => auth.signOut(a);
+  auth.onAuthStateChanged(a, u => {
+    $('bt-sair').hidden = !u;
+    $('quem').textContent = u ? u.email : '';
+    if (!u) { $('app').hidden = true; $('entrar').hidden = false; return; }
+    if (!SOCIOS.includes((u.email || '').toLowerCase())) { $('entrar').hidden = true; $('quem').textContent = u.email + ' · sem acesso'; return; }
+    abrir().catch(err => alert('Erro ao carregar: ' + err.message));
+  });
+}
+
+// ── DEMONSTRAÇÃO: 8 carros inventados, para ver o painel sem dados reais ──
+function demo(mes) {
+  let semente = 7; const rnd = () => (semente = (semente * 16807) % 2147483647) / 2147483647;
+  const cidades = [['campinas', 'Campinas'], ['campinas', 'Campinas'], ['campinas', 'Campinas'], ['sumare', 'Sumaré'], ['hortolandia', 'Hortolândia'],
+    ['campinas', 'Campinas'], ['valinhos', 'Valinhos'], ['campinas', 'Campinas']];
+  const nomes = ['Maria Aparecida', 'Carlos Henrique', 'Patrícia Lima', 'José Roberto', 'Ana Paula', 'Ricardo Souza', 'Fernanda Alves', 'Marcos Vinícius'];
+  const cs = nomes.map((m, i) => ({ id: 'C' + String(i + 1).padStart(2, '0'), motorista: m, cidade: cidades[i][0], cidadeNome: cidades[i][1], chave: 'demo' + i + 'abcdefgh', ativo: i !== 6 }));
+  const st = {};
+  cs.forEach((c, i) => { if (i === 6) return; st[c.id] = { visto: Date.now() - (i === 4 ? 4 * 86400000 : rnd() * 5 * 3600000), bateria: Math.round(40 + rnd() * 60), carregando: rnd() > .4, pacote: i === 2 ? '2026-11-10.1' : pacote.versao }; });
+  if (!mes) return { carros: cs, status: st };
+  const [ano, m] = mes.split('-').map(Number), dias = new Date(ano, m, 0).getDate();
+  const ids = Object.keys(pacote.midias), lotes = [], scans = [];
+  cs.forEach((c, i) => {
+    if (i === 6) return;
+    const ritmo = [1, .9, .6, 1.1, .3, .8, 0, .95][i];
+    for (let d = 1; d <= Math.min(dias, 18); d++) {
+      if (rnd() > .85) continue;
+      const dia = `${mes}-${String(d).padStart(2, '0')}`, horas = {};
+      const ini = i % 3 === 0 ? 16 : 7, fim = ini + Math.round(6 + 4 * ritmo);
+      for (let h = ini; h < Math.min(fim, 24); h++) {
+        const t = Math.round(3000 + rnd() * 600 * ritmo), v = [Math.round(20 * rnd()), Math.round(30 * rnd()), Math.round(160 * ritmo), Math.round(100 * ritmo), 5], e = {};
+        for (const id of ids) if (rnd() < .9) e[id] = [Math.round(5 + rnd() * 2), 80];
+        horas[h] = { t, v, e };
+        if (rnd() < .25 * ritmo) scans.push({ anuncio: ['tech', 'gio', 'vender', 'catalogo'][Math.floor(rnd() * 4)], carro: c.id, dia, mes, hora: h, h: 'p' + Math.floor(rnd() * 1e9), em: Date.parse(dia) + h * 3600000 });
+      }
+      const dono = {}, qr = {};
+      for (const [id, md] of Object.entries(pacote.midias)) { if (md.dono) dono[id] = md.dono; if (md.qr) qr[id] = [...new Set(md.qr.map(q => q.anuncio))]; }
+      lotes.push({ carro: c.id, cidade: c.cidade, dia, mes, horas, dono, qr });
+    }
+  });
+  return { carros: cs, status: st, mes: { lotes, scans } };
+}
+</script>
+</body>
+</html>
