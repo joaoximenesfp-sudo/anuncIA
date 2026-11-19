@@ -35,6 +35,9 @@
   // ── PAREAMENTO: o painel gera .../tela/#parear=C07.chave.cidade ──
   // Dentro do app Android "Tela do carro" existe window.TelaAndroid (trava de verdade)
   const nativo = typeof window.TelaAndroid !== 'undefined';
+  // Desde 30/09/2026 o Android no Brasil só instala app de desenvolvedor verificado no Google.
+  // Enquanto o app não for verificado, o Chrome não oferece "Baixar o app" (só confundiria).
+  const OFERECER_APP = false;
   const appEstado = () => { try { return JSON.parse(window.TelaAndroid.estado()); } catch (e) { return {}; } };
   const par = N.lerPareamento(location.hash) || N.lerPareamento(location.search);
   if (par) {
@@ -352,8 +355,8 @@
       ? `Carro ${estado.carro.carro}${cidade() ? ' · ' + cidade() : ''}`
       : 'Este tablet ainda não está ligado a um carro (abra o link do painel).';
     $('passo-app').hidden = !pedidoAtalho || modoApp();
-    // no Chrome do Android: o app é que trava de verdade
-    $('passo-baixar').hidden = nativo || !/Android/i.test(navigator.userAgent);
+    // no Chrome do Android: o app é que trava de verdade (fica escondido até o app ser verificado no Google)
+    $('passo-baixar').hidden = !OFERECER_APP || nativo || !/Android/i.test(navigator.userAgent);
     $('bt-abrir-app').href = linkApp();
     // dentro do app: a lista muda para o que o app precisa
     document.querySelector('#config ol:not(#passos-nativo)').hidden = nativo;
