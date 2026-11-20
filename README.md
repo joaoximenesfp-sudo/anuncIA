@@ -6,7 +6,9 @@ Site gerador de anúncios com IA
 No topo do **Gerar anúncio**, o cartão **Anúncios do catálogo** mostra cada notebook
 anunciado com preço já com o **post** (1080×1080) e o **story** (1080×1920) desenhados,
 das fotos e da descrição do cadastro, no tema da data: dá para baixar, publicar um
-(post + story) ou **Publicar as novas** de uma vez. Para mudar foto, texto ou promoção
+(post + story) ou **Publicar as novas** de uma vez. O post sai em **carrossel**: a arte
+primeiro e, depois, as fotos da máquina (até 9), cada uma inteira num quadro quadrado
+com o nome e o preço (o Instagram corta o carrossel no formato da 1ª imagem). Para mudar foto, texto ou promoção
 de uma máquina, o ✏️ (ou o 📸 da lista) abre o editor de baixo, que também publica
 post, carrossel em 2 partes ou story.
 Usa a API oficial da Meta (`api/insta.js`). A legenda só leva o que é público (nome,

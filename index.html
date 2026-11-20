@@ -2901,7 +2901,8 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
               <div id="instaPub" style="display:none">
                 <div class="fc"><span class="fla">Publicar como</span>
                   <select class="inp" id="instaTipo" onchange="instaTrocouTipo()">
-                    <option value="feed">📷 Post — a arte quadrada</option>
+                    <option value="fotos">🖼️ Post + fotos da máquina (carrossel)</option>
+                    <option value="feed">📷 Post — só a arte</option>
                     <option value="carrossel">🗂️ Carrossel — a arte em 2 partes</option>
                     <option value="story">📱 Story — a arte em pé</option>
                   </select>
@@ -12094,14 +12095,17 @@ window.instaPublicar=async()=>{
     alert(anModo()==='uma'?'Essa máquina só tem uma foto no sistema. O carrossel precisa de pelo menos duas.':'Escolha pelo menos duas máquinas para o carrossel.'); return;
   }
   const f=document.getElementById('anFmt'); if(f) f.value = tipo==='story'?'story':'feed';
-  if(!confirm(`Publicar ${tipo==='story'?'o story':tipo==='carrossel'?'o carrossel':'o post'} agora no Instagram${instaCfg&&instaCfg.usuario?' @'+instaCfg.usuario:''}?`)) return;
+  if(!confirm(`Publicar ${tipo==='story'?'o story':tipo==='carrossel'?'o carrossel':tipo==='fotos'?'o post com as fotos da máquina':'o post'} agora no Instagram${instaCfg&&instaCfg.usuario?' @'+instaCfg.usuario:''}?`)) return;
   if(bt){ bt.disabled=true; bt.textContent='Publicando...'; }
   try{
     const meio=Math.ceil(cels.length/2);
     const partes=tipo==='carrossel'?[cels.slice(0,meio),cels.slice(meio)]:[null];
     const telas=partes.map(parte=>{ anExportando=true; anDesenhar(parte); return instaCopiaCanvas(); });
     anExportando=false; anDesenhar();
-    const r=await instaEnviar(tipo,telas,legenda,t=>{ if(st) st.textContent=t; });
+    // post + fotos: a arte primeiro e, depois, as fotos do cadastro (sem foto, sai só a arte)
+    if(tipo==='fotos') telas.push(...anSlidesFotos(anEscolhidas,9));
+    const envio=tipo==='fotos'?(telas.length>1?'carrossel':'feed'):tipo;
+    const r=await instaEnviar(envio,telas,legenda,t=>{ if(st) st.textContent=t; });
     if(st) st.innerHTML='✅ Publicado'+(r.usuario?' em @'+esc(r.usuario):'')+(r.link?` · <a href="${encodeURI(r.link)}" target="_blank" rel="noopener">ver no Instagram</a>`:'');
     for(const p of anEscolhidas) await instaMarcar(p,tipo,r.link);
     anCatMontar();
@@ -12126,7 +12130,7 @@ window.instaMaquina=async id=>{
   await anAlternar(id);
   const f=document.getElementById('anFmt'), tp=document.getElementById('instaTipo');
   if(f&&f.value==='capa') f.value='feed';
-  if(tp) tp.value=(f&&f.value==='story')?'story':'feed';
+  if(tp) tp.value=(f&&f.value==='story')?'story':'fotos';
   instaSincronizarLegenda(true); anDesenhar();
   const box=document.getElementById('instaBox'); if(box) box.scrollIntoView({behavior:'smooth',block:'center'});
 };
@@ -12252,12 +12256,48 @@ window.anCatBaixar=async(id,f)=>{
     document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },1500);
   },'image/png');
 };
+// Uma foto do cadastro num quadro 1080×1080: o Instagram corta todo o carrossel no
+// formato da 1ª imagem (a arte, quadrada), então a foto vai INTEIRA, sobre ela mesma
+// desfocada, com o nome e o preço no rodapé.
+function anSlideFoto(img,p){
+  const L=1080, c=document.createElement('canvas'); c.width=L; c.height=L;
+  const ctx=c.getContext('2d'), rod=78;
+  ctx.fillStyle='#0b1220'; ctx.fillRect(0,0,L,L);
+  const cobre=Math.max(L/img.width,L/img.height);
+  try{ ctx.filter='blur(26px)'; }catch(e){}
+  ctx.drawImage(img,(L-img.width*cobre)/2,(L-img.height*cobre)/2,img.width*cobre,img.height*cobre);
+  try{ ctx.filter='none'; }catch(e){}
+  ctx.fillStyle='rgba(8,12,22,.55)'; ctx.fillRect(0,0,L,L);
+  const m=36, cabe=Math.min((L-2*m)/img.width,(L-rod-2*m)/img.height);
+  const w=img.width*cabe, h=img.height*cabe;
+  ctx.drawImage(img,(L-w)/2,(L-rod-h)/2,w,h);
+  ctx.fillStyle='rgba(0,0,0,.6)'; ctx.fillRect(0,L-rod,L,rod);
+  ctx.textBaseline='middle';
+  const preco=fmt(anPreco(p).por);
+  ctx.textAlign='right'; ctx.fillStyle='#1cf08f'; ctx.font='800 32px system-ui,sans-serif';
+  ctx.fillText(preco,L-32,L-rod/2);
+  const espaco=L-64-ctx.measureText(preco).width-28;
+  ctx.textAlign='left'; ctx.fillStyle='#fff'; ctx.font='600 27px system-ui,sans-serif';
+  let nome=`#${p.num||'?'} · ${String(p.nome||'Notebook').trim()}`;
+  while(nome.length>8&&ctx.measureText(nome).width>espaco) nome=nome.slice(0,-2);
+  if(nome!==`#${p.num||'?'} · ${String(p.nome||'Notebook').trim()}`) nome=nome.trim()+'…';
+  ctx.fillText(nome,32,L-rod/2);
+  return c;
+}
+// As fotos das máquinas, prontas pro carrossel: todas da máquina (até o limite) ou,
+// com várias máquinas, a primeira de cada.
+function anSlidesFotos(maqs,max){
+  const imgs=maqs.length===1?anFotosDe(maqs[0].id).map(img=>[img,maqs[0]]):maqs.map(p=>[anFotosDe(p.id)[0],p]).filter(x=>x[0]);
+  return imgs.slice(0,max).map(([img,p])=>anSlideFoto(img,p));
+}
 // Post e story de uma máquina. Se o story falhar, o post já foi: avisa e segue.
 async function anCatPublicarMaquina(p,aviso){
   await anCarregarFoto(p.id);
   const [post,story]=anArtesDe(p,['feed','story']);
   if(!post||!story) throw new Error('Não consegui desenhar a arte.');
-  const r=await instaEnviar('feed',[post],instaLegendaDe(p),aviso);
+  // o post: a arte e, atrás dela, as fotos da máquina (carrossel); sem foto, só a arte
+  const telas=[post,...anSlidesFotos([p],9)];
+  const r=await instaEnviar(telas.length>1?'carrossel':'feed',telas,instaLegendaDe(p),aviso);
   await instaMarcar(p,'feed',r.link);
   let erroStory='';
   try{ await instaEnviar('story',[story],'',aviso); await instaMarcar(p,'story'); }catch(e){ erroStory=e.message; }
@@ -12272,7 +12312,7 @@ window.anCatPublicar=async id=>{
   }
   const pub=anCatPublicada(p);
   if(!confirm(pub?`${p.nome} já foi publicado em ${new Date(pub).toLocaleDateString('pt-BR')}. Publicar o post e o story de novo?`
-                 :`Publicar o post e o story de ${p.nome} no Instagram agora?`)) return;
+                 :`Publicar no Instagram agora o post (a arte${anFotosDe(p.id).length?' + '+Math.min(9,anFotosDe(p.id).length)+' foto'+(Math.min(9,anFotosDe(p.id).length)!==1?'s':''):''}) e o story de ${p.nome}?`)) return;
   const st=document.querySelector(`.ancat-it[data-id="${id}"] .ancat-st`);
   document.querySelectorAll(`.ancat-it[data-id="${id}"] button`).forEach(b=>b.disabled=true);
   try{
