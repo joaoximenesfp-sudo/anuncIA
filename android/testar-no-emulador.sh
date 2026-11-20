@@ -6,6 +6,8 @@ APK="$1"; SAIDA="${2:-telas}"; mkdir -p "$SAIDA"
 PKG=br.com.anuncia.tela
 falhas=0
 ok() { if eval "$1"; then echo "  ok  $2"; else echo "  FALHOU  $2"; falhas=$((falhas+1)); fi; }
+# confere sem contar como falha (comportamento novo, ainda sendo medido no emulador)
+info() { if eval "$1"; then echo "  info ok  $2"; else echo "  info NÃO  $2"; fi; }
 topo() { adb shell dumpsys activity activities | grep -m1 -E 'topResumedActivity|mResumedActivity'; }
 trava() { adb shell dumpsys activity | grep -m1 -o 'mLockTaskModeState=[A-Z]*' | cut -d= -f2 | tr -d '\r'; }
 na_frente() { topo | grep -q "$PKG/"; }
@@ -103,6 +105,30 @@ adb shell input keyevent 3; sleep 8
 ok na_frente "tirou o app da frente e ele voltou sozinho"
 foto 4-voltou-sozinho
 tocar "$NAO_FIXAR" || true
+
+echo "== soltaram a fixação num tablet com PIN: sem o PIN o app volta; com o PIN respeita"
+adb shell locksettings set-pin 1234 >/dev/null 2>&1
+adb shell settings put secure lock_to_app_exit_locked 1
+adb shell am start -n $PKG/.MainActivity --ez travar true >/dev/null; sleep 4
+tocar "$OK_FIXAR" || { adb shell am task lock "$(tarefa)" >/dev/null; adb shell input keyevent 4; }
+esperar_trava PINNED 8 && echo "    fixado" || echo "    não fixou"
+sleep 4 # a ronda do app marca que estava fixado
+adb logcat -c
+adb shell am task lock stop; sleep 6
+info "adb logcat -d -s Tela:V | grep -q 'pediu o PIN'" "soltou: o tablet pediu o PIN e o app percebeu"
+adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard >/dev/null 2>&1; sleep 3
+foto 5a-tela-do-pin
+sleep 22
+info na_frente "ninguém digitou o PIN: o app voltou por cima da tela de bloqueio"
+info "adb logcat -d -s Tela:V | grep -q 'ninguém digitou o PIN'" "e registrou no log"
+foto 5b-voltou-sem-pin
+adb shell wm dismiss-keyguard >/dev/null 2>&1; sleep 2
+adb shell input text 1234; adb shell input keyevent 66; sleep 9
+info "adb logcat -d -s Tela:V | grep -q 'soltaram com o PIN'" "digitou o PIN: o app respeitou e soltou"
+logs 8
+adb shell locksettings clear --old 1234 >/dev/null 2>&1
+adb shell settings put secure lock_to_app_exit_locked 0
+adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard >/dev/null 2>&1; sleep 2
 
 echo "== modo frota (app dono do tablet, sem perguntar nada)"
 adb shell dpm set-device-owner $PKG/.Admin

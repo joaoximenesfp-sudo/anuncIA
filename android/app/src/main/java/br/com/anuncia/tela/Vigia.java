@@ -1,6 +1,7 @@
 package br.com.anuncia.tela;
 
 import android.app.ActivityManager;
+import android.app.KeyguardManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -21,11 +22,15 @@ import android.util.Log;
  * Fica de olho enquanto o modo carro está ligado:
  *  - apertaram o Liga/Desliga com o carregador ligado: acende a tela de novo, com o app por cima;
  *  - alguém tirou o app da frente (sem o PIN): traz de volta em até 3 segundos;
- *  - o app deixou de estar fixado sem ser pelo próprio app: foi o PIN do tablet, então respeita.
+ *  - soltaram a fixação (Voltar + Recentes): o tablet bloqueia e pede o PIN. Se ninguém digitar
+ *    o PIN, o app volta por cima da tela de bloqueio (quem está na tela do PIN tem 20 s para
+ *    digitar). Se desbloquearem com o PIN, foi o dono: respeita e solta o modo carro.
  */
 public class Vigia extends Service {
     private static final String CANAL = "tela";
     private final Handler h = new Handler(Looper.getMainLooper());
+    private static final long PRAZO_PIN = 20000;
+    private long naTelaDoPin = 0, soltoSemBloqueio = 0;
 
     private final BroadcastReceiver apagou = new BroadcastReceiver() {
         @Override
@@ -108,22 +113,45 @@ public class Vigia extends Service {
 
     private void verificar() {
         ActivityManager am = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        KeyguardManager km = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
+        PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+        long agora = System.currentTimeMillis();
         boolean fixado = am.getLockTaskModeState() != ActivityManager.LOCK_TASK_MODE_NONE;
+        // tablet com PIN e bloqueado: ninguém digitou o PIN ainda
+        boolean bloqueado = km.isDeviceSecure() && km.isKeyguardLocked();
         if (fixado) {
             if (!Estado.estavaFixado(this)) Estado.estavaFixado(this, true);
+            soltoSemBloqueio = 0;
         } else if (Estado.estavaFixado(this) && Estado.modoCarro(this) && !MainActivity.saindo) {
-            // estava fixado e não está mais, sem ter sido o app: soltaram com o PIN do tablet
-            Log.i(MainActivity.TAG, "soltaram com o PIN: modo carro desligado");
-            Estado.modoCarro(this, false);
-            Estado.estavaFixado(this, false);
+            if (bloqueado) {
+                if (soltoSemBloqueio == 0 && naTelaDoPin == 0) Log.i(MainActivity.TAG, "soltaram a fixação: o tablet pediu o PIN");
+                soltoSemBloqueio = 0;
+            } else if (soltoSemBloqueio == 0) {
+                soltoSemBloqueio = agora; // confere de novo na próxima ronda (o bloqueio pode demorar um instante)
+            } else {
+                // solto e desbloqueado: digitaram o PIN do tablet (ou o tablet não tem PIN). Respeita.
+                Log.i(MainActivity.TAG, "soltaram com o PIN: modo carro desligado");
+                Estado.modoCarro(this, false);
+                Estado.estavaFixado(this, false);
+                soltoSemBloqueio = 0;
+            }
         }
-        PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-        if (!Estado.modoCarro(this)) return;
+        if (!Estado.modoCarro(this)) { naTelaDoPin = 0; return; }
         // o aviso de "tela apagou" pode demorar: a ronda também confere
         if (!pm.isInteractive()) {
+            naTelaDoPin = 0;
             if (carregando()) acender();
         } else if (!MainActivity.visivel) {
+            if (bloqueado) {
+                // alguém está na tela do PIN: dá um tempo para quem sabe digitar; depois o app volta
+                if (naTelaDoPin == 0) naTelaDoPin = agora;
+                if (agora - naTelaDoPin < PRAZO_PIN) return;
+                Log.i(MainActivity.TAG, "ninguém digitou o PIN: app de volta");
+            }
+            naTelaDoPin = 0;
             trazer();
+        } else {
+            naTelaDoPin = 0;
         }
     }
 
