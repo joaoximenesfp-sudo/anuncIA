@@ -7,7 +7,7 @@
 (function () {
   'use strict';
   const N = window.TelaNucleo;
-  const APP = '2026-11-20.5';
+  const APP = '2026-11-20.6';
   const CACHE_MIDIA = 'tela-midia';
   const FADE = 250;
   const MIN = 60000;
@@ -96,6 +96,16 @@
 
   let saidaPermitida = false; // recarregar para atualizar não pergunta "Sair do site?"
 
+  // ── ANÚNCIO POR REGIÃO ──
+  // Pelo GPS (funciona sem internet): dentro de uma região do pacote (ponto + raio), os espaços
+  // regionais passam só os anunciantes dela, revezando. Sem GPS ou fora delas, o anúncio geral.
+  const giros = {};
+  const giro = cota => { const n = giros[cota] || 0; giros[cota] = n + 1; return n; };
+  function regioesAgora() {
+    const f = typeof loc !== 'undefined' ? loc.fix : null;
+    return f && Date.now() - f.t < 5 * MIN ? N.regioesEm(estado.pacote, f) : [];
+  }
+
   // ── ATUALIZAÇÃO SOZINHA ──
   // O pacote.json diz a versão do player ("app"). Se for mais nova que esta, recarrega entre um
   // anúncio e outro: no app (ou no atalho) na hora; no Chrome, quando o carro desliga, porque
@@ -114,7 +124,7 @@
     ultimoAvanco = Date.now();
     clearTimeout(estado.timer); vid.onended = null;
     if (!estado.pacote) { estado.tocando = null; mostrarEspera(); return; }
-    const prox = N.proximo(estado.pacote, estado.pos, new Date(), cidade());
+    const prox = N.proximo(estado.pacote, estado.pos, new Date(), cidade(), { regioes: regioesAgora() }, giro);
     if (!prox) { // nada programado agora: tenta de novo daqui a um minuto
       estado.tocando = null; quadro.classList.remove('aceso'); estado.timer = setTimeout(tocarProximo, MIN); return;
     }
@@ -448,6 +458,7 @@
       ['Internet', navigator.onLine ? 'conectado' : 'sem conexão'],
       ['Na tomada', (c => c == null ? 'o tablet não informa' : c ? 'sim (carro ligado)' : 'não')(carregando())],
       ['Localização', textoLocal()],
+      ['Região agora', (r => r.length ? r.map(id => (estado.pacote.regioes[id] || {}).nome || id).join(', ') : (loc.fix ? 'fora das regiões de anúncio' : 'sem GPS: passa o anúncio geral'))(estado.pacote ? regioesAgora() : [])],
       ['Tela sempre acesa', nativo ? 'sim (o app segura)' : travaTela ? 'sim' : `não: ${erroTela || 'tentando…'} · ligue "Permanecer ativo" nas opções do desenvolvedor`],
       ['Trava', nativo ? (a => (a.fixado ? 'fixado' : 'solto') + (a.frota ? ' · modo frota' : '') + (a.modoCarro ? ' · modo carro ligado' : ''))(appEstado()) : 'no Chrome, sem o app'],
       ['Versão do app', APP + (nativo ? ' · Android ' + (appEstado().app || '') : '') + (novaVersao ? ` · nova ${novaVersao} (atualiza ${modoApp() ? 'já' : 'quando o carro desligar'})` : '')],

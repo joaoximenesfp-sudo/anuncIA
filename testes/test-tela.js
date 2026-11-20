@@ -49,6 +49,22 @@ const hambPico = grade[1].anuncios.find(a => a.dono === 'hamb');
 ok(hambPico && Math.round(hambPico.vezesHora) === 60 && !grade[0].anuncios.some(a => a.dono === 'hamb'), 'hamburgueria só no pico, 60 vezes por hora (loop de 1 min)');
 ok(N.programacao(pac2, em('2026-11-20T12:00:00'), 'sumare').length === 1, 'em outra cidade a cota não entra: o dia todo igual');
 
+console.log('\nanúncio por região');
+const pacR = { regioes: { centro: { nome: 'Centro de Campinas', lat: -22.9056, lon: -47.0608, km: 1.5 }, barao: { nome: 'Barão Geraldo', lat: -22.8236, lon: -47.0786, km: 2.5 } },
+  midias: { d: { tipo: 'imagem' }, c1: { tipo: 'imagem', dono: 'lojac1' }, c2: { tipo: 'imagem', dono: 'lojac2' }, b1: { tipo: 'imagem', dono: 'pizzab' }, e: { tipo: 'imagem', dono: 'eletr' }, g: { tipo: 'imagem', dono: 'tech' } },
+  loop: [{ midia: 'd', segundos: 10 }, { cota: 'reg', rodizio: true, opcoes: [{ midia: 'c1', segundos: 10, regioes: ['centro'] }, { midia: 'c2', segundos: 10, regioes: ['centro'] },
+    { midia: 'b1', segundos: 10, regioes: ['barao'] }, { midia: 'e', segundos: 10, regioes: ['barao', 'centro'] }, { midia: 'g', segundos: 10 }] }] };
+ok(JSON.stringify(N.regioesEm(pacR, { lat: -22.9050, lon: -47.0600 })) === '["centro"]' && JSON.stringify(N.regioesEm(pacR, { lat: -22.8240, lon: -47.0790 })) === '["barao"]', 'acha a região pelo GPS');
+ok(N.regioesEm(pacR, { lat: -22.95, lon: -47.10 }).length === 0 && N.regioesEm(pacR, null).length === 0, 'fora das regiões, ou sem GPS: nenhuma');
+const giroT = (() => { const n = {}; return c => { const k = n[c] || 0; n[c] = k + 1; return k; }; })();
+const seqR = l => Array.from({ length: 6 }, () => N.escolher(pacR.loop[1], em('2026-11-20T12:00:00'), 'campinas', l, giroT).midia).join(',');
+ok(seqR({ regioes: ['centro'] }) === 'c1,c2,e,c1,c2,e', 'no Centro: só os anunciantes do Centro (e quem atende as duas), revezando');
+ok(seqR({ regioes: ['barao'] }) === 'b1,e,b1,e,b1,e', 'em Barão Geraldo: só os de Barão');
+ok(seqR({ regioes: [] }) === 'g,g,g,g,g,g' && N.escolher(pacR.loop[1], em('2026-11-20T12:00:00'), 'campinas', undefined) .midia === 'g', 'fora das regiões ou sem GPS: o anúncio geral');
+const gC = N.programacao(pacR, em('2026-11-20T12:00:00'), 'campinas', { regioes: ['centro'] })[0].anuncios;
+ok(['lojac1', 'lojac2', 'eletr'].every(d => gC.some(a => a.dono === d)) && !gC.some(a => a.dono === 'pizzab' || a.dono === 'tech'), 'programação no Centro mostra só os do Centro');
+const regioesUsadas = pac => (pac.loop || []).flatMap(e => e.cota ? e.opcoes : [e]).flatMap(o => o.regioes || []);
+
 console.log('\ncontagem do que passou');
 const ag = {};
 const t = em('2026-11-20T19:10:00');
@@ -165,6 +181,8 @@ ok(usadas.every(id => pacote.midias[id]), 'o loop só usa mídia que existe');
 const qrs = Object.values(pacote.midias).flatMap(m => m.qr || []);
 ok(qrs.every(q => pacote.anuncios[q.anuncio]), 'todo QR aponta para um anúncio com destino');
 ok(Object.values(pacote.anuncios).every(a => /^https:\/\//.test(a.destino)), 'destinos em https');
+ok(regioesUsadas(pacote).every(r => pacote.regioes && pacote.regioes[r]), 'toda região usada no loop existe no pacote');
+ok(Object.values(pacote.regioes || {}).every(z => Math.abs(z.lat) <= 90 && Math.abs(z.lon) <= 180 && z.km > 0 && z.nome), 'regiões com ponto, raio e nome');
 const APP = (/const APP = '([^']+)'/.exec(fs.readFileSync(path.join(RAIZ, 'tela/tela.js'), 'utf8')) || [])[1];
 ok(pacote.app === APP, `"app" do pacote (${pacote.app}) = versão do player (${APP}): é o que faz os tablets se atualizarem sozinhos`);
 const dur = N.duracaoLoop(pacote, em('2026-11-20T12:00:00'), 'campinas');

@@ -99,7 +99,23 @@ ter um quadrado branco onde o QR vai.
 ] }
 ```
 
-Toca a primeira opção que bater com horário, dia (`dias`: 0 = domingo) e cidade. A aba
+Toca a primeira opção que bater com horário, dia (`dias`: 0 = domingo), cidade e região.
+
+**Anúncio por região** (pelo GPS do tablet, funciona sem internet): as regiões ficam em
+`regioes` no pacote, como ponto + raio (`{ "centro": { "nome": "Centro de Campinas", "lat": …,
+"lon": …, "km": 1.5 } }`). Uma opção com `"regioes": ["centro"]` só vale com o carro dentro do
+raio. Cota com `"rodizio": true` reveza entre as opções que valem; se o carro estiver numa
+região, reveza só entre as dela (empresa que atende várias regiões lista todas), e fora delas
+(ou sem GPS) passa o anúncio geral:
+
+```json
+{ "cota": "regional-1", "rodizio": true, "opcoes": [
+  { "midia": "loja-centro", "segundos": 15, "regioes": ["centro"] },
+  { "midia": "pizzaria-barao", "segundos": 15, "regioes": ["barao"] },
+  { "midia": "eletricista", "segundos": 15, "regioes": ["centro", "barao"] },
+  { "midia": "t05", "segundos": 14 }
+] }
+``` A aba
 **Programação** do painel mostra a grade do dia (o que passa em cada horário, quantas vezes por
 hora e quanto da tela) e a página do motorista mostra "Na sua tela hoje". Não existe vídeo de
 24 horas: cada tablet monta a grade pelo próprio relógio, então quem liga às 19h já pega a das 19h.

@@ -53,9 +53,14 @@
   //   cidades: ["campinas"]        dias: [0..6] (0 = domingo)
   //   das/ate: "18:00"/"23:00"     (pode virar a noite: "21:00"/"02:00")
   //   periodo: {inicio:"2026-12-01", fim:"2026-12-31"}  (contrato do anunciante)
-  function vale(op, data, cidade) {
+  //   regioes: ["centro"]          (só com o carro dentro da região: ponto + raio, em pacote.regioes)
+  function vale(op, data, cidade, local) {
     if (!op) return false;
     if (op.cidades && op.cidades.length && !op.cidades.includes(cidade)) return false;
+    if (op.regioes && op.regioes.length) {
+      const onde = (local && local.regioes) || [];
+      if (!op.regioes.some(r => onde.includes(r))) return false;
+    }
     const { dia } = partesData(data);
     if (op.periodo) {
       if (op.periodo.inicio && dia < op.periodo.inicio) return false;
@@ -78,10 +83,25 @@
   }
 
   // Entrada do loop: mídia fixa {midia, segundos} ou cota {cota, opcoes:[...]},
-  // em que vale a primeira opção que bater com horário, dia e cidade.
-  function escolher(entrada, data, cidade) {
-    if (entrada.cota) return (entrada.opcoes || []).find(op => vale(op, data, cidade)) || null;
-    return vale(entrada, data, cidade) ? entrada : null;
+  // em que vale a primeira opção que bater com horário, dia, cidade e região.
+  // Cota com "rodizio": true reveza entre as opções que valem agora, e se alguma for da região
+  // em que o carro está, reveza só entre as da região (o anúncio geral fica para fora delas).
+  function opcoesDaVez(entrada, data, cidade, local) {
+    const validas = (entrada.opcoes || []).filter(op => vale(op, data, cidade, local));
+    if (!validas.length || !entrada.rodizio) return validas.slice(0, 1);
+    const regionais = validas.filter(op => op.regioes && op.regioes.length);
+    return regionais.length ? regionais : validas;
+  }
+  function escolher(entrada, data, cidade, local, giro) {
+    if (!entrada.cota) return vale(entrada, data, cidade, local) ? entrada : null;
+    const lista = opcoesDaVez(entrada, data, cidade, local);
+    if (!lista.length) return null;
+    return lista.length === 1 ? lista[0] : lista[(giro ? giro(entrada.cota) : 0) % lista.length];
+  }
+  // Regiões em que o ponto está (pacote.regioes: { id: { nome, lat, lon, km } })
+  function regioesEm(pacote, ponto) {
+    if (!ponto || !pacote || !pacote.regioes) return [];
+    return Object.entries(pacote.regioes).filter(([, z]) => distanciaM(ponto, z) <= (z.km || 1) * 1000).map(([id]) => id);
   }
 
   function segundosDe(item, pacote) {
@@ -91,19 +111,19 @@
   }
 
   // Próxima entrada depois da posição pos (pula cota vazia e mídia que não existe)
-  function proximo(pacote, pos, data, cidade) {
+  function proximo(pacote, pos, data, cidade, local, giro) {
     const n = pacote.loop.length;
     for (let k = 1; k <= n; k++) {
       const p = (((pos + k) % n) + n) % n;
-      const it = escolher(pacote.loop[p], data, cidade);
+      const it = escolher(pacote.loop[p], data, cidade, local, giro);
       if (it && pacote.midias[it.midia]) return { pos: p, item: it };
     }
     return null;
   }
 
-  function duracaoLoop(pacote, data, cidade) {
+  function duracaoLoop(pacote, data, cidade, local) {
     return pacote.loop.reduce((s, e) => {
-      const it = escolher(e, data, cidade);
+      const it = escolher(e, data, cidade, local);
       return s + (it && pacote.midias[it.midia] ? segundosDe(it, pacote) : 0);
     }, 0);
   }
@@ -112,7 +132,7 @@
   // num dia (as cotas mudam com horário, dia da semana, cidade e contrato). É o mesmo cálculo que
   // o tablet faz pelo relógio dele: quem liga às 19h já pega a programação das 19h.
   const hhmm = m => `${dois(Math.floor(m / 60))}:${dois(m % 60)}`;
-  function programacao(pacote, data, cidade) {
+  function programacao(pacote, data, cidade, local) {
     const d0 = new Date(data);
     const cortes = new Set([0]);
     const marca = op => { for (const k of ['das', 'ate']) { const m = minutos(op && op[k]); if (m != null && m < 1440) cortes.add(m); } };
@@ -120,13 +140,17 @@
     const lista = [...cortes].sort((a, b) => a - b), faixas = [];
     lista.forEach((das, i) => {
       const t = new Date(d0.getFullYear(), d0.getMonth(), d0.getDate(), 0, das);
-      const dur = duracaoLoop(pacote, t, cidade), fator = dur > 0 ? 3600 / dur : 0, por = {};
+      const por = {};
+      let dur = 0;
       for (const e of pacote.loop || []) {
-        const it = escolher(e, t, cidade), m = it && pacote.midias[it.midia];
-        if (!m) continue;
-        const x = por[m.dono || ''] || (por[m.dono || ''] = { vezes: 0, segundos: 0 });
-        x.vezes += 1; x.segundos += segundosDe(it, pacote);
+        const itens = (e.cota ? opcoesDaVez(e, t, cidade, local) : (vale(e, t, cidade, local) ? [e] : [])).filter(it => pacote.midias[it.midia]);
+        for (const it of itens) {
+          const m = pacote.midias[it.midia], peso = 1 / itens.length, seg = segundosDe(it, pacote);
+          const x = por[m.dono || ''] || (por[m.dono || ''] = { vezes: 0, segundos: 0 });
+          x.vezes += peso; x.segundos += seg * peso; dur += seg * peso;
+        }
       }
+      const fator = dur > 0 ? 3600 / dur : 0;
       const anuncios = Object.entries(por).map(([dono, x]) => ({ dono, vezesHora: x.vezes * fator, segundosHora: x.segundos * fator }))
         .sort((a, b) => b.segundosHora - a.segundosHora);
       const ate = i + 1 < lista.length ? lista[i + 1] : 1440;
@@ -485,7 +509,7 @@
 
   const API = {
     PROJETO, CHAVE_API, SITE, JANELA_VIBRACAO, FAIXAS_VIBRACAO, FAIXA_MOVIMENTO, FAIXAS_HORARIO, LIMITE_SCANS_HORA,
-    partesData, faixaDaHora, slug, vale, escolher, segundosDe, proximo, duracaoLoop, programacao,
+    partesData, faixaDaHora, slug, vale, escolher, opcoesDaVez, regioesEm, segundosDe, proximo, duracaoLoop, programacao,
     anotarExibicao, anotarTela, anotarVibracao, anotarCarregando, anotarBateria, anotarToque, anotarKm, anotarRegiao, desvio, lotes, novoId, novaChave,
     PRECISAO_REGIAO, VELOCIDADE_ANDANDO, geohash, caixaGeohash, centroGeohash, distanciaM,
     valor, campos, lerValor, lerCampos, urlCriar, urlDoc, linkQR, linkPareamento, lerPareamento, pinMenu,

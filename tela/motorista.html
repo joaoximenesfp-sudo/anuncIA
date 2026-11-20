@@ -161,11 +161,17 @@
       const pac = await (await fetch('pacote.json', { cache: 'no-store' })).json();
       const faixas = N.programacao(pac, new Date(), N.slug(dados.cidade || ''));
       const nome = d => (pac.anuncios[d] || {}).nome || d;
-      $('prog').innerHTML = faixas.map(f => {
+      // anunciantes que só aparecem quando o carro passa por uma região
+      const base = new Set(faixas.flatMap(f => f.anuncios.map(a => a.dono)));
+      const extras = Object.entries(pac.regioes || {}).map(([id, z]) => {
+        const so = new Set(N.programacao(pac, new Date(), N.slug(dados.cidade || ''), { regioes: [id] }).flatMap(f => f.anuncios.map(a => a.dono)).filter(d => d && !base.has(d)));
+        return so.size ? `<div class="faixa"><b>Passando por ${esc(z.nome || id)}</b><ul>` + [...so].map(d => `<li>${esc(nome(d))}</li>`).join('') + '</ul></div>' : '';
+      }).join('');
+      $('prog').innerHTML = extras + faixas.map(f => {
         const ads = f.anuncios.filter(a => a.dono);
         const proprio = f.anuncios.some(a => !a.dono);
         const titulo = f.das === '00:00' && f.ate === '24:00' ? 'O dia todo' : `${f.das} às ${f.ate}`;
-        return `<div class="faixa"><b>${titulo}</b><ul>` + ads.map(a => `<li>${esc(nome(a.dono))} <span>· a cada ${fmt(60 / a.vezesHora)} min</span></li>`).join('') +
+        return `<div class="faixa"><b>${titulo}</b><ul>` + ads.map(a => `<li>${esc(nome(a.dono))} <span>· a cada ${a.vezesHora <= 60 ? fmt(60 / a.vezesHora) + ' min' : fmt(3600 / a.vezesHora) + ' s'}</span></li>`).join('') +
           (proprio ? '<li><span>e dicas de tecnologia entre os anúncios</span></li>' : '') + '</ul></div>';
       }).join('');
       $('programa').hidden = !faixas.length;
