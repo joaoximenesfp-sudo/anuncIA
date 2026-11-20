@@ -24,11 +24,11 @@
 
   // Faixas de horário do relatório do anunciante
   const FAIXAS_HORARIO = [
-    { id: 'manha', nome: 'Manhã (6h–11h)', das: 6, ate: 11 },
-    { id: 'almoco', nome: 'Almoço (11h–14h)', das: 11, ate: 14 },
-    { id: 'tarde', nome: 'Tarde (14h–18h)', das: 14, ate: 18 },
-    { id: 'pico', nome: 'Noite / pico (18h–23h)', das: 18, ate: 23 },
-    { id: 'madrugada', nome: 'Madrugada (23h–6h)', das: 23, ate: 6 },
+    { id: 'manha', nome: 'Manhã (6h–11h)', curto: 'Manhã', das: 6, ate: 11 },
+    { id: 'almoco', nome: 'Almoço (11h–14h)', curto: 'Almoço', das: 11, ate: 14 },
+    { id: 'tarde', nome: 'Tarde (14h–18h)', curto: 'Tarde', das: 14, ate: 18 },
+    { id: 'pico', nome: 'Noite / pico (18h–23h)', curto: 'Noite', das: 18, ate: 23 },
+    { id: 'madrugada', nome: 'Madrugada (23h–6h)', curto: 'Madrugada', das: 23, ate: 6 },
   ];
 
   const dois = n => String(n).padStart(2, '0');
@@ -109,7 +109,11 @@
   }
 
   // ── O QUE PASSOU NA TELA ──
-  // ag = { "2026-11-18": { "14": { t: s de tela, v: [janelas por faixa de vibração], e: { midia: [n, s] } } } }
+  // ag = { "2026-11-18": { "14": { t: s de tela, v: [janelas por faixa de vibração], e: { midia: [n, s] },
+  //        c: s na tomada (carro ligado), b: s de tela rodando na bateria (cabo solto?),
+  //        k: toques, d: metros rodados com a tela ligada,
+  //        g: { bairro (geohash): [s andando ali, exibições ali] } } } }
+  // c, k, d e g só aparecem quando têm algo (tablet antigo não manda e o painel lê igual).
   function hora(ag, data) {
     const { dia, hora: h } = partesData(data);
     const d = ag[dia] || (ag[dia] = {});
@@ -130,6 +134,74 @@
     while (f < FAIXAS_VIBRACAO.length && desvioPadrao >= FAIXAS_VIBRACAO[f]) f++;
     h.v[f] += 1;
   }
+  // Carregando = tablet na tomada do carro, ou seja, carro ligado (o cabo fica no carro).
+  function anotarCarregando(ag, data, segundos) {
+    const h = hora(ag, data); h.c = um((h.c || 0) + segundos);
+  }
+  // Tela rodando fora da tomada: no carro isso é cabo solto ou carregador fraco
+  function anotarBateria(ag, data, segundos) {
+    const h = hora(ag, data); h.b = um((h.b || 0) + segundos);
+  }
+  // Passageiro tocou na tela (fora do canto escondido): mede interesse
+  function anotarToque(ag, data) {
+    const h = hora(ag, data); h.k = (h.k || 0) + 1;
+  }
+  function anotarKm(ag, data, metros) {
+    const h = hora(ag, data); h.d = Math.round((h.d || 0) + metros);
+  }
+  // Região aproximada (geohash de 6 letras, uns 1,1 × 0,6 km): segundos rodando ali e exibições
+  function anotarRegiao(ag, data, regiao, segundos, exibicoes) {
+    const h = hora(ag, data);
+    const g = h.g || (h.g = {});
+    const r = g[regiao] || (g[regiao] = [0, 0]);
+    r[0] = um(r[0] + (segundos || 0)); r[1] += exibicoes || 0;
+  }
+
+  // ── REGIÃO APROXIMADA ──
+  // Só o bairro, nunca a rua: 6 letras de geohash (uma caixa de uns 1,1 × 0,6 km aqui na
+  // região). E só com o carro andando (o player cuida disso), para não marcar onde o
+  // motorista mora ou estaciona.
+  const PRECISAO_REGIAO = 6;
+  const VELOCIDADE_ANDANDO = 2.5; // m/s, uns 9 km/h
+  const B32 = '0123456789bcdefghjkmnpqrstuvwxyz';
+  function geohash(lat, lon, prec) {
+    prec = prec || PRECISAO_REGIAO;
+    const la = [-90, 90], lo = [-180, 180];
+    let out = '', bit = 0, ch = 0, par = true;
+    while (out.length < prec) {
+      const r = par ? lo : la, v = par ? lon : lat, meio = (r[0] + r[1]) / 2;
+      if (v >= meio) { ch = ch * 2 + 1; r[0] = meio; } else { ch = ch * 2; r[1] = meio; }
+      par = !par;
+      if (++bit === 5) { out += B32[ch]; bit = 0; ch = 0; }
+    }
+    return out;
+  }
+  // A caixa do bairro no mapa: sul, oeste, norte, leste
+  function caixaGeohash(gh) {
+    const la = [-90, 90], lo = [-180, 180];
+    let par = true;
+    for (const c of String(gh || '')) {
+      const n = B32.indexOf(c);
+      if (n < 0) break;
+      for (let b = 4; b >= 0; b--) {
+        const r = par ? lo : la, meio = (r[0] + r[1]) / 2;
+        if ((n >> b) & 1) r[0] = meio; else r[1] = meio;
+        par = !par;
+      }
+    }
+    return { s: la[0], o: lo[0], n: la[1], l: lo[1] };
+  }
+  function centroGeohash(gh) {
+    const c = caixaGeohash(gh);
+    return { lat: (c.s + c.n) / 2, lon: (c.o + c.l) / 2 };
+  }
+  function distanciaM(a, b) {
+    const R = 6371000, rad = Math.PI / 180;
+    const dla = (b.lat - a.lat) * rad, dlo = (b.lon - a.lon) * rad;
+    const x = Math.sin(dla / 2) ** 2 + Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * Math.sin(dlo / 2) ** 2;
+    return 2 * R * Math.asin(Math.sqrt(x));
+  }
+
   function desvio(xs) {
     if (!xs.length) return 0;
     const m = xs.reduce((a, b) => a + b, 0) / xs.length;
@@ -205,37 +277,65 @@
 
   // Junta o mês. Pontos do motorista = pesoHora × horas com o carro andando e a
   // tela ligada + pesoScan × scans. O bônus do mês é dividido pelos pontos.
-  // Tablet sem sensor de movimento conta as horas de tela (e fica marcado).
+  // Andando, hora a hora: o que der mais entre o GPS e o sensor de vibração.
+  // Tablet sem sensor nenhum conta as horas de tela (e fica marcado).
   // cadastrados: códigos dos carros do painel. Scan de carro fora do cadastro
   // (tablet não pareado = X, ou código inventado no link) não entra em nada.
   function resumoMes({ lotes = [], scans = [], pesoHora = 1, pesoScan = 2, valorBonus = 0, faixaMovimento = FAIXA_MOVIMENTO, cadastrados = null }) {
     const dentro = id => !cadastrados || cadastrados.includes(id);
     const carros = {}, anuncios = {};
-    const C = id => carros[id] || (carros[id] = { carro: id, cidade: '', dias: new Set(), tela: 0, mov: 0, janelas: 0, exib: 0, scans: 0 });
-    const A = id => anuncios[id] || (anuncios[id] = { anuncio: id, exib: 0, segundos: 0, exibQR: 0, scans: 0,
-      faixas: Object.fromEntries(FAIXAS_HORARIO.map(f => [f.id, 0])), cidades: {}, carros: new Set() });
+    const zeroFaixas = () => Object.fromEntries(FAIXAS_HORARIO.map(f => [f.id, 0]));
+    const C = id => carros[id] || (carros[id] = { carro: id, cidade: '', dias: new Set(), tela: 0, mov: 0, janelas: 0, exib: 0, scans: 0,
+      ligado: 0, bateria: 0, toques: 0, metros: 0, gps: 0, regioes: new Set(), faixas: zeroFaixas() });
+    const regioes = {};
+    const R = id => regioes[id] || (regioes[id] = { regiao: id, segundos: 0, exib: 0, carros: new Set() });
+    const A = id => anuncios[id] || (anuncios[id] = { anuncio: id, exib: 0, segundos: 0, exibQR: 0, scans: 0, metros: 0,
+      faixas: zeroFaixas(), cidades: {}, carros: new Set(), regioes: {} });
     for (const l of lotes) {
       if (!dentro(l.carro)) continue;
       const c = C(l.carro);
       if (l.cidade) c.cidade = l.cidade;
       for (const [h, v] of Object.entries(l.horas || {})) {
-        const tela = v.t || 0, vib = v.v || [];
+        const tela = v.t || 0, vib = v.v || [], faixa = faixaDaHora(+h);
         c.tela += tela;
+        c.faixas[faixa] += tela;
         if (tela > 0) c.dias.add(l.dia);
         c.janelas += vib.reduce((a, b) => a + b, 0);
-        c.mov += Math.min(tela, vib.slice(faixaMovimento).reduce((a, b) => a + b, 0) * JANELA_VIBRACAO);
+        const g = Object.entries(v.g || {});
+        const gps = Math.min(tela, g.reduce((a, [, sn]) => a + (sn[0] || 0), 0));
+        c.mov += Math.max(gps, Math.min(tela, vib.slice(faixaMovimento).reduce((a, b) => a + b, 0) * JANELA_VIBRACAO));
+        c.gps += gps;
+        c.ligado += v.c || 0;
+        c.bateria += Math.min(tela, v.b || 0);
+        c.toques += v.k || 0;
+        c.metros += v.d || 0;
+        // exibições da hora que caíram em algum bairro (as outras foram com o carro parado)
+        const exibHora = Object.values(v.e || {}).reduce((a, ns) => a + (ns[0] || 0), 0);
+        const exibBairros = g.reduce((a, [, sn]) => a + (sn[1] || 0), 0);
+        for (const [reg, sn] of g) {
+          const r = R(reg); r.segundos += sn[0] || 0; r.exib += sn[1] || 0; r.carros.add(l.carro);
+          c.regioes.add(reg);
+        }
+        const donosDaHora = new Set();
         for (const [midia, ns] of Object.entries(v.e || {})) {
           const n = ns[0] || 0, s = ns[1] || 0;
           c.exib += n;
           const dono = l.dono && l.dono[midia];
           if (dono) {
             const a = A(dono);
-            a.exib += n; a.segundos += s; a.faixas[faixaDaHora(+h)] += n;
+            a.exib += n; a.segundos += s; a.faixas[faixa] += n;
             a.cidades[l.cidade || '?'] = (a.cidades[l.cidade || '?'] || 0) + n;
             a.carros.add(l.carro);
+            if (n > 0) donosDaHora.add(dono);
+            // bairros do anunciante: a parte dele das exibições da hora, espalhada como elas se espalharam
+            if (n > 0 && exibHora > 0 && exibBairros > 0) {
+              for (const [reg, sn] of g) a.regioes[reg] = (a.regioes[reg] || 0) + n * (sn[1] || 0) / exibHora;
+            }
           }
           for (const q of (l.qr && l.qr[midia]) || []) A(q).exibQR += n;
         }
+        // km que os carros rodaram nas horas em que o anúncio estava passando
+        for (const d of donosDaHora) A(d).metros += v.d || 0;
       }
     }
     // Para o anunciante conta todo scan único (é gente de verdade apontando a câmera, inclusive em
@@ -250,12 +350,19 @@
     const lista = Object.values(carros);
     let total = 0;
     for (const c of lista) {
-      c.semSensor = c.tela > 0 && c.janelas === 0;
+      c.semSensor = c.tela > 0 && c.janelas === 0 && c.gps === 0;
       c.horasTela = c.tela / 3600;
       c.horasMov = (c.semSensor ? c.tela : c.mov) / 3600;
       c.taxaScans = c.horasTela > 0 ? c.scans / c.horasTela * 10 : 0; // scans a cada 10 h de tela
       c.pontos = pesoHora * c.horasMov + pesoScan * c.scans;
       c.diasAtivos = c.dias.size;
+      c.horasLigado = c.ligado / 3600;
+      c.horasGPS = c.gps / 3600;
+      c.naBateria = c.tela > 0 ? c.bateria / c.tela : 0; // parte da tela que rodou fora da tomada
+      c.km = c.metros / 1000;
+      c.bairros = c.regioes.size;
+      // faixas com pelo menos um quarto das horas de tela: é quando o motorista mais roda
+      c.turno = c.tela > 0 ? FAIXAS_HORARIO.filter(f => c.faixas[f.id] >= c.tela * 0.25).map(f => f.id) : [];
       total += c.pontos;
     }
     // divide em centavos e joga o arredondamento no maior, para fechar o valor exato
@@ -265,8 +372,12 @@
     const maior = lista.slice().sort((a, b) => b.pontos - a.pontos)[0];
     if (maior && total > 0) maior.bonus = Math.round((maior.bonus * 100) + (cent - soma)) / 100;
     lista.sort((a, b) => b.pontos - a.pontos);
+    for (const a of Object.values(anuncios)) {
+      a.km = a.metros / 1000;
+      a.bairros = Object.entries(a.regioes).map(([regiao, exib]) => ({ regiao, exib })).sort((x, y) => y.exib - x.exib);
+    }
     return { carros: lista, anuncios: Object.values(anuncios).sort((a, b) => b.exib - a.exib), totalPontos: total, scansValidos: validos, scansTodos: todos.length, scansBrutos: scans.length,
-      foraDoCadastro: fora };
+      foraDoCadastro: fora, regioes: Object.values(regioes).sort((a, b) => b.segundos - a.segundos) };
   }
 
   function diasSemSinal(visto, agora) {
@@ -277,7 +388,8 @@
   const API = {
     PROJETO, CHAVE_API, SITE, JANELA_VIBRACAO, FAIXAS_VIBRACAO, FAIXA_MOVIMENTO, FAIXAS_HORARIO, LIMITE_SCANS_HORA,
     partesData, faixaDaHora, slug, vale, escolher, segundosDe, proximo, duracaoLoop,
-    anotarExibicao, anotarTela, anotarVibracao, desvio, lotes, novoId, novaChave,
+    anotarExibicao, anotarTela, anotarVibracao, anotarCarregando, anotarBateria, anotarToque, anotarKm, anotarRegiao, desvio, lotes, novoId, novaChave,
+    PRECISAO_REGIAO, VELOCIDADE_ANDANDO, geohash, caixaGeohash, centroGeohash, distanciaM,
     valor, campos, urlCriar, urlDoc, linkQR, linkPareamento, lerPareamento,
     scansValidos, resumoMes, diasSemSinal,
   };

@@ -1,12 +1,13 @@
 // Player da rede de telas nos carros.
 // Baixa o pacote quando tem internet (de preferência no Wi-Fi de casa), toca em
 // loop sem internet, põe o QR do carro por cima do QR da arte e anota o que
-// passou na tela: exibições, horas de tela e vibração (carro andando). O painel
-// (painel.html) junta isso por carro e por anunciante.
+// passou na tela: exibições, horas de tela, vibração (carro andando), tempo na
+// tomada (carro ligado), toques na tela e, se o motorista deixar, o bairro
+// aproximado e os km rodados. O painel (painel.html) junta isso por carro e por anunciante.
 (function () {
   'use strict';
   const N = window.TelaNucleo;
-  const APP = '2026-11-18';
+  const APP = '2026-11-20';
   const CACHE_MIDIA = 'tela-midia';
   const FADE = 250;
   const MIN = 60000;
@@ -144,7 +145,11 @@
     if (g !== geracao) return;
     const t = estado.tocando;
     // só conta exibição que passou quase inteira
-    if (t && t.id === id && segundos >= t.seg * 0.8) N.anotarExibicao(estado.ag, new Date(), id, t.seg);
+    if (t && t.id === id && segundos >= t.seg * 0.8) {
+      const agora = new Date(), r = regiaoAgora();
+      N.anotarExibicao(estado.ag, agora, id, t.seg);
+      if (r) N.anotarRegiao(estado.ag, agora, r, 0, 1);
+    }
     tocarProximo();
   }
 
@@ -201,14 +206,112 @@
     amostras.push(Math.hypot(a.x, a.y, a.z));
     if (amostras.length > 3000) amostras.splice(0, 1000);
   });
+  let ultimoTique = Date.now();
   setInterval(() => {
     const agora = new Date();
+    // na tomada = carro ligado. Conta o tempo de verdade entre um tique e outro (com a tela
+    // apagada o Android segura o relógio), mas nunca mais que um minuto e pouco de uma vez
+    const passou = Math.min(70, Math.max(0, (agora - ultimoTique) / 1000));
+    ultimoTique = +agora;
+    const tomada = carregando();
+    if (tomada) N.anotarCarregando(estado.ag, agora, passou);
     if (document.visibilityState === 'visible' && estado.tocando) {
       N.anotarTela(estado.ag, agora, N.JANELA_VIBRACAO);
+      if (tomada === false) N.anotarBateria(estado.ag, agora, N.JANELA_VIBRACAO);
       if (amostras.length >= 5) N.anotarVibracao(estado.ag, agora, N.desvio(amostras));
+      const r = regiaoAgora();
+      if (r) N.anotarRegiao(estado.ag, agora, r, N.JANELA_VIBRACAO, 0);
     }
     amostras.length = 0;
   }, N.JANELA_VIBRACAO * 1000);
+
+  // ── CARRO LIGADO: tablet na tomada (o cabo fica no carro) ──
+  let bat = null;
+  try {
+    if (navigator.getBattery) navigator.getBattery().then(b => { bat = b; b.addEventListener('chargingchange', ajustarLocal); ajustarLocal(); }).catch(() => {});
+  } catch (e) { /* sem a API: segue sem */ }
+  function carregando() { // true / false, ou null se o tablet não conta
+    if (nativo) { const a = appEstado(); if (typeof a.carregando === 'boolean') return a.carregando; }
+    return bat ? !!bat.charging : null;
+  }
+
+  // ── TOQUES NA TELA: passageiro mexendo (o canto do menu e as telas de ajuste não contam) ──
+  let ultimoToque = 0;
+  document.addEventListener('pointerdown', e => {
+    if (!estado.tocando || (e.target.closest && e.target.closest('#canto, #menu, #config'))) return;
+    const t = Date.now();
+    if (t - ultimoToque < 1500) return; // dedo que fica batendo conta uma vez
+    ultimoToque = t;
+    N.anotarToque(estado.ag, new Date(t));
+  }, true);
+
+  // ── BAIRRO E KM RODADOS (só se o motorista deixar, no "Configurar a tela") ──
+  // Guarda só o bairro aproximado (geohash de 6 letras, uns 1,1 × 0,6 km), nunca a rua, e
+  // só com o carro andando: parado mais de 3 min (em casa, no estacionamento) não marca nada.
+  const loc = { watch: null, fix: null, ancora: null, andou: 0, precisao: 0, negada: false, erro: '' };
+  const PRECISAO_BAIRRO = 300, PRECISAO_KM = 50; // metros: sinal pior que isso não vale
+  function ligarLocal() {
+    if (loc.watch != null || !navigator.geolocation) return;
+    loc.negada = false; loc.erro = '';
+    try {
+      loc.watch = navigator.geolocation.watchPosition(novaPosicao, erroLocal, { enableHighAccuracy: true, maximumAge: 10000 });
+    } catch (e) { loc.erro = 'sem GPS'; loc.watch = null; }
+  }
+  function desligarLocal() {
+    if (loc.watch != null) { try { navigator.geolocation.clearWatch(loc.watch); } catch (e) { /* já parou */ } }
+    loc.watch = null; loc.ancora = null;
+  }
+  function erroLocal(e) {
+    if (e && e.code === 1) { loc.negada = true; desligarLocal(); } // o tablet (ou o Chrome) negou
+    else loc.erro = 'sem sinal de GPS';
+  }
+  function novaPosicao(p) {
+    const c = p.coords, t = Date.now();
+    loc.precisao = Math.round(c.accuracy || 0); loc.erro = '';
+    if (!(c.accuracy <= PRECISAO_BAIRRO)) { loc.erro = 'sinal fraco'; return; }
+    const ponto = { lat: c.latitude, lon: c.longitude, t };
+    loc.fix = ponto;
+    if (typeof c.speed === 'number' && c.speed >= N.VELOCIDADE_ANDANDO) loc.andou = t;
+    if (c.accuracy > PRECISAO_KM) return;
+    // km: soma só quando sai de perto do último ponto (o GPS "treme" uns metros parado)
+    const a = loc.ancora;
+    if (!a || t - a.t > 2 * MIN) { loc.ancora = ponto; return; } // começou agora ou ficou sem sinal
+    const d = N.distanciaM(a, ponto);
+    if (d < Math.max(30, 2 * c.accuracy)) return;
+    if (d / ((t - a.t) / 1000) >= N.VELOCIDADE_ANDANDO) loc.andou = t;
+    if (document.visibilityState === 'visible' && estado.tocando) N.anotarKm(estado.ag, new Date(t), d);
+    loc.ancora = ponto;
+  }
+  function regiaoAgora() {
+    const t = Date.now();
+    if (!loc.fix || t - loc.fix.t > 2 * MIN || t - loc.andou > 3 * MIN) return null;
+    return N.geohash(loc.fix.lat, loc.fix.lon);
+  }
+  // fora da tomada o GPS desliga (economiza bateria); volta quando o carro liga
+  function ajustarLocal() {
+    const a = nativo ? appEstado() : null;
+    const ligar = ler('tela.local', false) && carregando() !== false && !(a && a.local === false);
+    if (!ligar) { desligarLocal(); return; }
+    if (loc.negada && !(a && a.local === true)) return; // negou: só tenta de novo se pedirem
+    ligarLocal();
+  }
+  function pedirLocal() {
+    gravar('tela.local', true);
+    loc.negada = false; desligarLocal();
+    if (nativo && appEstado().local === false) window.TelaAndroid.abrir('local'); // o Android pergunta
+    ajustarLocal(); atualizarConfig();
+  }
+  setInterval(ajustarLocal, 30000);
+  function textoLocal() {
+    const a = nativo ? appEstado() : null;
+    if (a && a.local === undefined) return 'precisa da versão nova do app';
+    if (!ler('tela.local', false)) return 'desligada (não autorizada)';
+    if (loc.negada || (a && a.local === false)) return 'negada no tablet';
+    if (carregando() === false) return 'pausada (fora da tomada)';
+    if (!loc.fix) return loc.erro || 'procurando o GPS…';
+    const parado = Date.now() - loc.andou > 3 * MIN;
+    return `ligada · ±${loc.precisao} m · ${parado ? 'parado (não marca)' : 'andando'}${loc.erro ? ' · ' + loc.erro : ''}`;
+  }
   const guardar = () => gravar('tela.ag', estado.ag);
   setInterval(guardar, MIN);
   addEventListener('pagehide', guardar);
@@ -295,6 +398,8 @@
       ['Esperando envio', `${estado.fila.length} lote(s)` + (estado.erroEnvio ? ` · ${estado.erroEnvio}` : '')],
       ['Último envio', hora(estado.ultimoEnvio)],
       ['Internet', navigator.onLine ? 'conectado' : 'sem conexão'],
+      ['Na tomada', (c => c == null ? 'o tablet não informa' : c ? 'sim (carro ligado)' : 'não')(carregando())],
+      ['Localização', textoLocal()],
       ['Trava', nativo ? (a => (a.fixado ? 'fixado' : 'solto') + (a.frota ? ' · modo frota' : '') + (a.modoCarro ? ' · modo carro ligado' : ''))(appEstado()) : 'no Chrome, sem o app'],
       ['Versão do app', APP + (nativo ? ' · Android ' + (appEstado().app || '') : '')],
     ];
@@ -369,12 +474,22 @@
       $('n-bateria').classList.toggle('feito', !!a.bateria);
       $('n-pin').classList.toggle('feito', !!a.fixado);
       $('n-pin-aviso').hidden = a.pin !== false;
+      $('n-local').hidden = a.local === undefined; // app antigo não tem GPS
     }
+    ajustarLocal(); // na volta do aviso do Android, já liga o GPS
+    const ligada = ler('tela.local', false) && !!loc.fix && !loc.negada;
+    document.querySelectorAll('.passo-local').forEach(li => li.classList.toggle('feito', ligada));
+    document.querySelectorAll('.bt-local').forEach(b => {
+      b.textContent = ligada ? 'Localização ligada ✓' : loc.negada ? 'Tentar de novo' : ler('tela.local', false) ? 'Procurando o GPS…' : 'Permitir localização';
+      b.classList.toggle('feito', ligada);
+    });
+    document.querySelectorAll('.local-negada').forEach(x => { x.hidden = !loc.negada; });
     const cheia = modoApp() || !!document.fullscreenElement;
     $('bt-cfg-cheia').classList.toggle('feito', cheia);
     $('bt-cfg-cheia').textContent = cheia ? 'Tela cheia ligada ✓' : 'Expandir tela';
   }
   $('bt-cfg-cheia').onclick = telaCheia;
+  document.querySelectorAll('.bt-local').forEach(b => { b.onclick = pedirLocal; });
   $('bt-cfg-app').onclick = async () => {
     if (!pedidoAtalho) return;
     pedidoAtalho.prompt();
@@ -410,13 +525,14 @@
   }
 
   // ── PARTIDA ──
-  window.TelaAcoes = { sincronizar, enviar, avisar, tocarProximo }; // console / testes
+  window.TelaAcoes = { sincronizar, enviar, avisar, tocarProximo, pedirLocal, regiaoAgora, local: loc }; // console / testes
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
   try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) { /* segue */ }
   manterAcesa();
   mostrarEspera();
   if (estado.pacote) tocarProximo();
   sincronizar();
+  ajustarLocal();
   setTimeout(() => { enviar(); avisar(); }, 5000);
   setInterval(sincronizar, 15 * MIN);
   setInterval(enviar, 60 * MIN); // de hora em hora: menos lotes, painel lê menos

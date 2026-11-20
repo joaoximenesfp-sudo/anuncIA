@@ -7,7 +7,7 @@ anúncios e conteúdo. São três peças:
 |---|---|---|
 | Player | `/tela/` | Baixa `pacote.json` e `midia/` quando tem internet, roda sem internet, troca o QR da arte pelo QR do carro e anota o que passou |
 | Contador de QR | `/q/<anuncio>/<carro>` → `api/q.js` | Registra o scan (sem IP) e manda a pessoa para o destino do anúncio |
-| Painel | `/tela/painel.html` | Carros, pareamento, sumidos, eficiência, bônus do mês e relatório por anunciante. `?demo` mostra com números inventados |
+| Painel | `/tela/painel.html` | Carros, pareamento, sumidos, eficiência, bônus do mês, jornada, mapa de bairros e relatório por anunciante. `?demo` mostra com números inventados |
 
 O tablet não faz login. Ele grava no Firestore pela API REST, levando a chave do
 carro; o `firestore.rules` só aceita se a chave bater com `tela_carros/<carro>` e
@@ -17,7 +17,8 @@ o carro estiver ativo. Só os sócios leem.
 1. Painel → **Novo carro** → mande o link para o motorista (botão do WhatsApp).
 2. No tablet, abra o link no Chrome, no Wi-Fi. Abre a tela **Configurar a tela do carro**:
    atalho na tela inicial (opcional, só tira a barra do Chrome), travar com o PIN do
-   tablet (Fixação de aplicativos) e os botões da lateral (Controle de interação).
+   tablet (Fixação de aplicativos), os botões da lateral (Controle de interação) e, se o
+   motorista quiser, **Permitir localização** (bairros e km; veja abaixo).
    **Expandir tela** liga a tela cheia; **Pronto, começar** fecha e começa o loop.
 3. O pacote baixa sozinho (barra verde) e depois roda sem internet.
 4. Menu escondido do tablet: 5 toques rápidos no canto de cima, à esquerda. Dali dá
@@ -82,12 +83,36 @@ começou. Se nenhuma opção bater, a cota é pulada.
 
 ## O que o painel mede
 - **Horas de tela**: player tocando com a tela visível.
-- **Horas rodando**: tela ligada com o carro em movimento, pela vibração do
-  tablet (janelas de 10 s). As faixas ficam guardadas, então o limiar pode ser
-  recalibrado depois da primeira semana sem mexer nos tablets.
+- **Horas rodando**: tela ligada com o carro em movimento, hora a hora o que der mais
+  entre o GPS (se o motorista permitiu) e a vibração do tablet (janelas de 10 s). As
+  faixas de vibração ficam guardadas, então o limiar pode ser recalibrado depois sem
+  mexer nos tablets.
 - **Scans**: uma pessoa por anúncio, carro e dia; no máximo 6 por carro por hora.
 - **Bônus**: pontos = horas rodando × peso + scans × peso; o valor do mês é
   dividido pelos pontos.
+- **Jornada** (aba Eficiência): turno (faixa de horário em que o carro mais roda),
+  horas **na tomada** (tablet carregando = carro ligado), **tela na bateria** (acima de
+  15% fica amarelo: cabo solto ou carregador fraco), horas andando pelo GPS, km,
+  bairros e **toques** na tela (o canto do menu não conta; dedo batendo seguido conta 1).
+- **Bairros** (aba própria): mapa com áreas de ~1,1 × 0,6 km (geohash de 6 letras) e
+  a lista dos bairros com mais tela. Escolhendo um anunciante, mostra a estimativa das
+  exibições dele por bairro (a parte dele de cada hora, espalhada pelos bairros daquela
+  hora). O nome do bairro vem do OpenStreetMap (1 pedido por segundo, só o meio da
+  área) e fica guardado no navegador.
+- **Relatório do anunciante**: também leva os km que os carros rodaram nas horas em
+  que o anúncio passava e os bairros onde mais passou.
+
+## Localização (bairros e km)
+Só liga quando o motorista toca em **Permitir localização** no Configurar a tela
+(e no app, também no aviso do Android). Combine isso com ele no contrato (LGPD):
+o que se guarda é o bairro aproximado e os km, para o relatório do anunciante.
+- O tablet nunca manda coordenada: só a área de 1 km (geohash de 6 letras) e os
+  metros rodados, somados por hora.
+- Só marca com o carro andando (GPS acima de ~9 km/h nos últimos 3 min): parado em
+  casa ou no estacionamento não aparece.
+- Fora da tomada o GPS desliga, para não gastar a bateria.
+- Tablet sem GPS (só Wi-Fi) fica sem bairros e km; o resto continua igual.
+- App Android: precisa da versão 1.1 (a 1.0 não tem GPS e esconde o passo).
 
 ## Limites
 Plano grátis do Firestore: 20 mil gravações e 50 mil leituras por dia. Com envio

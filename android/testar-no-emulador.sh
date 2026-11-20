@@ -47,6 +47,11 @@ adb shell dumpsys battery set ac 1
 adb shell input keyevent KEYCODE_WAKEUP
 adb shell wm dismiss-keyguard
 
+echo "== localização (só pedida quando o motorista toca em Permitir localização)"
+ok '! adb shell dumpsys package $PKG | grep -q "ACCESS_FINE_LOCATION: granted=true"' "instalado, o app ainda não tem a localização"
+adb shell pm grant $PKG android.permission.ACCESS_FINE_LOCATION
+ok 'adb shell dumpsys package $PKG | grep -q "ACCESS_FINE_LOCATION: granted=true"' "o app declara a localização e o Android libera"
+
 echo "== abrir"
 adb shell am start -W -n $PKG/.MainActivity >/dev/null
 sleep 15

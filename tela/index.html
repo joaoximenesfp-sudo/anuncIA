@@ -92,6 +92,10 @@
       <li id="passo-botoes"><b class="t">Botões da lateral</b>
         <span>Uma vez só: Configurações → Acessibilidade → Interação e destreza → <b>Controle de interação</b>. Ligue o atalho e a opção de desligar as teclas Liga/Desliga e Volume.</span>
         <span>Depois de tocar em <b>Pronto</b>, com o vídeo rodando, segure <b>Volume +</b> e <b>Liga/Desliga</b> juntos por 2 segundos. Para sair, o mesmo.</span></li>
+      <li id="passo-local" class="passo-local"><b class="t">Bairros por onde o carro passa (opcional)</b>
+        <span>O anunciante quer saber em que bairros o anúncio rodou e quantos km. A tela guarda só o bairro aproximado (uma área de 1 km), só com o carro andando, e nunca a rua nem o endereço.</span>
+        <span class="aviso local-negada" hidden>A localização foi negada. No Chrome: ⋮ → Configurações → Configurações do site → Local → libere anunc-ia.vercel.app. Depois toque em Tentar de novo.</span>
+        <button type="button" class="sec bt-local">Permitir localização</button></li>
     </ol>
     <ol id="passos-nativo" hidden>
       <li id="n-pin"><b class="t">Fixação de aplicativos com PIN</b>
@@ -104,6 +108,10 @@
       <li id="n-bateria"><b class="t">Não deixar o Android fechar o app</b>
         <span>Libere a Tela do carro da economia de bateria.</span>
         <button type="button" class="sec" data-ajuste="bateria">Permitir</button></li>
+      <li id="n-local" class="passo-local"><b class="t">Bairros por onde o carro passa (opcional)</b>
+        <span>O anunciante quer saber em que bairros o anúncio rodou e quantos km. A tela guarda só o bairro aproximado (uma área de 1 km), só com o carro andando, e nunca a rua nem o endereço.</span>
+        <span class="aviso local-negada" hidden>A localização foi negada. Libere em Configurações → Apps → Tela do carro → Permissões → Localização, e toque em Tentar de novo.</span>
+        <button type="button" class="sec bt-local">Permitir localização</button></li>
       <li id="n-liga"><b class="t">Botão Liga/Desliga</b>
         <span>Com o carregador ligado, se alguém apertar, a tela acende de novo sozinha.</span></li>
     </ol>

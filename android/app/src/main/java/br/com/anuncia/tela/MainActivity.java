@@ -1,5 +1,6 @@
 package br.com.anuncia.tela;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.ActivityManager;
@@ -7,8 +8,11 @@ import android.app.KeyguardManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.BatteryManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -20,6 +24,7 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.webkit.GeolocationPermissions;
 import android.webkit.JavascriptInterface;
 import android.webkit.RenderProcessGoneDetail;
 import android.webkit.WebChromeClient;
@@ -41,6 +46,8 @@ public class MainActivity extends Activity {
     static final String HOST = "anunc-ia.vercel.app";
     static final String TAG = "Tela";
     private static final int PEDIR_PIN = 7;
+    private static final int PEDIR_LOCAL = 8;
+    private static final String[] LOCAL = {Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION};
 
     /** Lido pelo Vigia: modo carro ligado e app fora da frente = trazer de volta. */
     static volatile boolean visivel = false;
@@ -78,7 +85,17 @@ public class MainActivity extends Activity {
         s.setMediaPlaybackRequiresUserGesture(false);
         s.setAllowFileAccess(false);
         s.setAllowContentAccess(false);
-        web.setWebChromeClient(new WebChromeClient());
+        s.setGeolocationEnabled(true);
+        web.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public void onGeolocationPermissionsShowPrompt(String origem, GeolocationPermissions.Callback cb) {
+                // só o nosso site, e só depois que o motorista deixou o app usar a localização
+                // (quem pergunta é o botão "Permitir localização" da página, nunca sozinho)
+                boolean pode = HOST.equals(Uri.parse(origem).getHost()) && temLocal();
+                Log.i(TAG, "localização para a página: " + (pode ? "liberada" : "sem permissão"));
+                cb.invoke(origem, pode, false);
+            }
+        });
         web.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView v, WebResourceRequest r) {
@@ -151,6 +168,30 @@ public class MainActivity extends Activity {
         } catch (Exception e) {
             // fixação de aplicativos desligada nas configurações: o Vigia ainda traz o app de volta
             Log.w(TAG, "travar: o Android recusou", e);
+        }
+    }
+
+    boolean temLocal() {
+        for (String p : LOCAL) if (checkSelfPermission(p) == PackageManager.PERMISSION_GRANTED) return true;
+        return false;
+    }
+
+    /** Na tomada = carro ligado (o cabo fica no carro). */
+    private Intent bateria() {
+        return registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int pedido, String[] permissoes, int[] resultados) {
+        super.onRequestPermissionsResult(pedido, permissoes, resultados);
+        if (pedido != PEDIR_LOCAL || temLocal()) return;
+        // negou de vez (o Android não pergunta mais): abre a página do app para liberar à mão
+        if (!shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)) {
+            try {
+                startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + getPackageName())));
+            } catch (Exception e) {
+                // sem a página de ajustes: segue sem localização
+            }
         }
     }
 
@@ -265,6 +306,9 @@ public class MainActivity extends Activity {
             case "wifi":
                 i = new Intent(Settings.ACTION_WIFI_SETTINGS);
                 break;
+            case "local":
+                if (!temLocal()) requestPermissions(LOCAL, PEDIR_LOCAL);
+                return;
             default:
                 return;
         }
@@ -291,6 +335,13 @@ public class MainActivity extends Activity {
                 j.put("sobreposicao", Settings.canDrawOverlays(MainActivity.this));
                 j.put("bateria", pm.isIgnoringBatteryOptimizations(getPackageName()));
                 j.put("pin", km.isDeviceSecure());
+                j.put("local", temLocal());
+                Intent b = bateria();
+                if (b != null) {
+                    j.put("carregando", b.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) != 0);
+                    int nivel = b.getIntExtra(BatteryManager.EXTRA_LEVEL, -1), escala = b.getIntExtra(BatteryManager.EXTRA_SCALE, 100);
+                    j.put("nivel", nivel >= 0 && escala > 0 ? Math.round(100f * nivel / escala) : -1);
+                }
                 return j.toString();
             } catch (Exception e) {
                 return "{}";

@@ -91,6 +91,40 @@ ok(!r2.carros.some(c => c.carro === 'X' || c.carro === 'ZZZ') && r2.foraDoCadast
 ok(r2.carros.find(c => c.carro === 'C01').bonus === C('C01').bonus, 'e não muda o bônus de quem é do cadastro');
 ok(r2.scansTodos === 6 && r2.scansValidos === 3 && r2.anuncios.find(a => a.anuncio === 'tech').scans === 5, 'para o anunciante conta todo scan único, inclusive de tablet sem carro');
 
+console.log('\ncarro ligado, toques, km e bairros');
+ok(N.geohash(57.64911, 10.40744, 11) === 'u4pruydqqvj', 'geohash bate com o exemplo de referência');
+const centro = N.geohash(-22.9056, -47.0608);
+ok(centro.length === N.PRECISAO_REGIAO && centro === '6gyt9n', 'Centro de Campinas vira a área ' + centro);
+const cx = N.caixaGeohash(centro), cc = N.centroGeohash(centro);
+const altKm = (cx.n - cx.s) * 111.32, largKm = (cx.l - cx.o) * 111.32 * Math.cos(cx.s * Math.PI / 180);
+ok(altKm > 0.5 && altKm < 0.7 && largKm > 1 && largKm < 1.2, `a área tem uns ${largKm.toFixed(2)} × ${altKm.toFixed(2)} km (nunca a rua)`);
+ok(cc.lat > cx.s && cc.lat < cx.n && cc.lon > cx.o && cc.lon < cx.l && N.geohash(cc.lat, cc.lon) === centro, 'o meio da área volta para a mesma área');
+ok(Math.abs(N.distanciaM({ lat: -22.9056, lon: -47.0608 }, { lat: -22.8946, lon: -47.0517 }) - 1534) < 30, 'distância Centro → Cambuí (~1,5 km)');
+const ag2 = {}, t2 = em('2026-11-20T19:10:00');
+N.anotarTela(ag2, t2, 600); N.anotarCarregando(ag2, t2, 500); N.anotarBateria(ag2, t2, 100); N.anotarToque(ag2, t2); N.anotarToque(ag2, t2);
+N.anotarKm(ag2, t2, 4200.4); N.anotarExibicao(ag2, t2, 'hamb', 15); N.anotarExibicao(ag2, t2, 'hamb', 15); N.anotarExibicao(ag2, t2, 't01', 14); N.anotarExibicao(ag2, t2, 't01', 14);
+N.anotarRegiao(ag2, t2, centro, 300, 2); N.anotarRegiao(ag2, t2, '6gyt9p', 100, 1); N.anotarRegiao(ag2, t2, centro, 10, 0);
+const h2 = ag2['2026-11-20'][19];
+ok(h2.c === 500 && h2.b === 100 && h2.k === 2 && h2.d === 4200, 'na tomada, na bateria, toques e metros na hora certa');
+ok(JSON.stringify(h2.g) === JSON.stringify({ [centro]: [310, 2], '6gyt9p': [100, 1] }), 'segundos andando e exibições por área: ' + JSON.stringify(h2.g));
+const velho = { t: 3600, v: [0, 0, 0, 0, 0], e: { hamb: [10, 150] } }; // tablet com a versão antiga: sem c, k, d, g
+const r3 = N.resumoMes({ lotes: [
+  { carro: 'C01', cidade: 'campinas', dia: '2026-11-20', mes: '2026-11', horas: ag2['2026-11-20'], dono: { hamb: 'hamb' }, qr: { t01: ['tech'] } },
+  { carro: 'C02', cidade: 'campinas', dia: '2026-11-20', mes: '2026-11', horas: { 8: velho }, dono: { hamb: 'hamb' }, qr: {} },
+] });
+const D = id => r3.carros.find(c => c.carro === id);
+ok(Math.abs(D('C01').km - 4.2) < 1e-9 && D('C01').bairros === 2 && D('C01').toques === 2, 'por carro: km, bairros e toques');
+ok(Math.abs(D('C01').naBateria - 100 / 600) < 1e-9 && Math.abs(D('C01').horasLigado - 500 / 3600) < 1e-9, 'por carro: parte da tela na bateria e horas na tomada');
+ok(Math.abs(D('C01').horasMov - 410 / 3600) < 1e-9, 'sem vibração, o GPS dá as horas rodando (410 s andando)');
+ok(!D('C01').semSensor && D('C02').semSensor, 'com GPS não é "sem sensor"; tablet antigo sem nada continua marcado');
+ok(D('C02').km === 0 && D('C02').bairros === 0 && D('C02').ligado === 0 && D('C02').naBateria === 0, 'versão antiga do tablet: os dados novos ficam zerados, sem quebrar');
+ok(JSON.stringify(D('C01').turno) === '["pico"]' && JSON.stringify(D('C02').turno) === '["manha"]', 'turno = faixa em que o carro mais roda');
+ok(r3.regioes.length === 2 && r3.regioes[0].regiao === centro && r3.regioes[0].segundos === 310 && r3.regioes[0].carros.size === 1, 'bairros do mês, do mais rodado para o menos');
+const hb = r3.anuncios.find(a => a.anuncio === 'hamb');
+// hora com 4 exibições, 3 delas com o carro andando (2 no Centro, 1 na outra área); a hamburgueria teve 2
+ok(Math.abs(hb.bairros[0].exib - 1) < 1e-9 && hb.bairros[0].regiao === centro && Math.abs(hb.bairros[1].exib - 0.5) < 1e-9, 'bairros do anunciante: a parte dele, espalhada como as exibições');
+ok(Math.abs(hb.km - 4.2) < 1e-9, 'km dos carros nas horas em que o anúncio passou (a hora sem GPS não soma)');
+
 console.log('\npacote publicado (tela/pacote.json)');
 const pacote = JSON.parse(fs.readFileSync(path.join(RAIZ, 'tela/pacote.json'), 'utf8'));
 const crypto = require('crypto');

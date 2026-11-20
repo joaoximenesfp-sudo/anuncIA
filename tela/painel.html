@@ -48,6 +48,12 @@
   #entrar form{display:flex;flex-direction:column;gap:10px}
   .erro{color:var(--vermelho)}
   .demo{background:var(--amarelo-claro);color:var(--amarelo);padding:8px 12px;border-radius:10px;font-weight:600;margin-bottom:12px}
+  #mapa{height:440px;border-radius:12px;border:1px solid var(--linha);overflow:hidden;background:var(--fundo);margin-top:12px;z-index:0}
+  @media (max-width:640px){#mapa{height:320px}}
+  /* mapa escuro no tema escuro (os mapas do OpenStreetMap são claros) */
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.9) contrast(.9)}}
+  :root[data-theme="dark"] .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.9) contrast(.9)}
+  .leaflet-container{font:inherit}
   [hidden]{display:none!important}
 </style>
 </head>
@@ -74,6 +80,7 @@
     <nav>
       <button data-aba="carros" class="on">Carros</button>
       <button data-aba="mes">Eficiência e bônus</button>
+      <button data-aba="bairros">Bairros</button>
       <button data-aba="anuncios">Anunciantes</button>
     </nav>
 
@@ -115,15 +122,34 @@
       </div>
       <div class="cartao">
         <h2>Eficiência por carro</h2>
-        <p class="leg">Horas rodando = tela ligada com o carro em movimento (sensor do tablet). Scans contam uma pessoa por dia, até 6 por hora em cada carro. Pontos = horas rodando × peso + scans × peso; o bônus é dividido pelos pontos. * tablet sem sensor: conta as horas de tela.</p>
+        <p class="leg">Horas rodando = tela ligada com o carro em movimento: pelo GPS do tablet (quando o motorista permitiu a localização) ou pelo sensor de vibração, o que mostrar mais. Scans contam uma pessoa por dia, até 6 por hora em cada carro. Pontos = horas rodando × peso + scans × peso; o bônus é dividido pelos pontos. * tablet sem sensor: conta as horas de tela.</p>
         <div class="rolar"><table id="tab-mes"></table></div>
+      </div>
+      <div class="cartao">
+        <h2>Jornada e movimento</h2>
+        <p class="leg">Turno = horário em que o carro mais roda (bom para vender o horário de pico). Na tomada = tablet carregando, ou seja, carro ligado. Tela na bateria alta = cabo solto ou carregador fraco: o tablet vai apagar. Andando, km e bairros só aparecem nos tablets em que o motorista permitiu a localização. Toques = vezes que alguém mexeu na tela.</p>
+        <div class="rolar"><table id="tab-jornada"></table></div>
+      </div>
+    </section>
+
+    <section data-painel="bairros" hidden>
+      <div class="cartao">
+        <h2>Por onde as telas rodaram</h2>
+        <p class="leg">Do mês escolhido na aba Eficiência e bônus. Cada quadrado é uma área de mais ou menos 1 km (nunca a rua nem o endereço), e só conta com o carro andando. Mais forte = mais tela ali. Só aparecem os tablets em que o motorista permitiu a localização.</p>
+        <div class="linha"><label>Mostrar<select id="bairros-de"><option value="">Todas as telas (tempo andando)</option></select></label></div>
+        <div id="mapa"></div>
+      </div>
+      <div class="cartao">
+        <h2>Bairros com mais tela</h2>
+        <p class="leg">Nome do bairro pelo OpenStreetMap (fica guardado neste navegador). Num anunciante, as exibições por bairro são uma estimativa: a parte dele das exibições de cada hora, espalhada pelos bairros daquela hora.</p>
+        <div class="rolar"><table id="tab-bairros"></table></div>
       </div>
     </section>
 
     <section data-painel="anuncios" hidden>
       <div class="cartao">
         <h2>Relatório por anunciante</h2>
-        <p class="leg">Do mês escolhido na aba anterior. Exibições = vezes que o anúncio passou inteiro numa tela. Com QR = vezes que o QR dele apareceu (inclusive nas dicas). Scans = pessoas que apontaram a câmera.</p>
+        <p class="leg">Do mês escolhido na aba Eficiência e bônus. Exibições = vezes que o anúncio passou inteiro numa tela. Com QR = vezes que o QR dele apareceu (inclusive nas dicas). Scans = pessoas que apontaram a câmera. Km = o que os carros rodaram nas horas em que o anúncio estava passando. Bairros = onde ele mais passou (veja o mapa na aba Bairros).</p>
         <div class="rolar"><table id="tab-anuncios"></table></div>
       </div>
     </section>
@@ -270,6 +296,9 @@ function calcular() {
     [fmt(soma('horasTela'), 0), 'horas de tela'],
     [fmt(soma('exib')), 'exibições'],
     [fmt(resumo.scansTodos), `pessoas escanearam o QR${resumo.foraDoCadastro ? ` (${fmt(resumo.foraDoCadastro)} em tablet sem carro cadastrado, fora do bônus)` : ''}`],
+    [fmt(soma('km')), 'km rodados com a tela ligada'],
+    [fmt(resumo.regioes.length), 'bairros com tela (áreas de 1 km)'],
+    [fmt(soma('toques')), 'toques na tela'],
   ].map(([v, t]) => `<div class="kpi"><b>${v}</b><span>${t}</span></div>`).join('');
   $('tab-mes').innerHTML = `<thead><tr><th>Carro</th><th>Motorista</th><th>Cidade</th><th class="n">Dias</th><th class="n">Horas de tela</th><th class="n">Horas rodando</th>
     <th class="n">Exibições</th><th class="n">Scans</th><th class="n">Scans a cada 10 h</th><th class="n">Pontos</th><th class="n">Bônus</th></tr></thead><tbody>` +
@@ -280,7 +309,154 @@ function calcular() {
       <td class="n">${fmt(soma('scans'))}</td><td></td><td class="n">${fmt(resumo.totalPontos, 1)}</td><td class="n">${reais(soma('bonus'))}</td></tr></tfoot>`;
   if (!r.length) $('tab-mes').innerHTML = '<tbody><tr><td>Nenhum tablet mandou dados neste mês ainda.</td></tr></tbody>';
   desenharScans();
+  desenharJornada();
   desenharAnuncios();
+  desenharBairros();
+}
+
+// ── JORNADA E MOVIMENTO ──
+function desenharJornada() {
+  const r = resumo.carros;
+  const nome = id => (carros.find(c => c.id === id) || {}).motorista || '—';
+  const curto = id => (N.FAIXAS_HORARIO.find(f => f.id === id) || {}).curto || id;
+  const bateria = c => {
+    if (!c.ligado && !c.bateria) return '—'; // tablet com a versão antiga: não mede
+    const pct = fmt(c.naBateria * 100) + '%';
+    return c.naBateria >= 0.15 ? `<span class="selo aviso" title="Confira o cabo e o carregador do carro">${pct}</span>` : pct;
+  };
+  $('tab-jornada').innerHTML = !r.length ? '<tbody><tr><td>Nenhum tablet mandou dados neste mês ainda.</td></tr></tbody>'
+    : `<thead><tr><th>Carro</th><th>Motorista</th><th>Turno</th><th class="n">Na tomada</th><th class="n">Horas de tela</th><th class="n">Tela na bateria</th>
+      <th class="n">Andando (GPS)</th><th class="n">Km</th><th class="n">Bairros</th><th class="n">Toques</th></tr></thead><tbody>` +
+    r.map(c => `<tr><td><b>${esc(c.carro)}</b></td><td>${esc(nome(c.carro))}</td><td>${esc(c.turno.map(curto).join(' + ') || '—')}</td>
+      <td class="n">${c.ligado ? fmt(c.horasLigado, 1) + ' h' : '—'}</td><td class="n">${fmt(c.horasTela, 1)} h</td><td class="n">${bateria(c)}</td>
+      <td class="n">${c.gps ? fmt(c.horasGPS, 1) + ' h' : '—'}</td><td class="n">${c.metros ? fmt(c.km) : '—'}</td><td class="n">${c.bairros || '—'}</td>
+      <td class="n">${fmt(c.toques)}</td></tr>`).join('') + '</tbody>';
+}
+
+// ── BAIRROS: nome pelo OpenStreetMap, guardado neste navegador ──
+const nomesBairros = DEMO ? {} : lerLocal('tela.bairros', {});
+let filaNomes = [], buscandoNomes = false, redesenho = 0, pausaNomes = 0;
+const nomeBairro = gh => nomesBairros[gh] || '';
+function pedirNomes(ghs) {
+  if (DEMO || Date.now() < pausaNomes) return;
+  for (const gh of ghs) if (!nomesBairros[gh] && !filaNomes.includes(gh)) filaNomes.push(gh);
+  if (!buscandoNomes && filaNomes.length) buscarNomes();
+}
+async function buscarNomes() {
+  buscandoNomes = true;
+  try {
+    while (filaNomes.length) {
+      const gh = filaNomes.shift();
+      if (nomesBairros[gh]) continue;
+      const c = N.centroGeohash(gh); // só o meio da área de 1 km vai para o OpenStreetMap
+      const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=14&accept-language=pt-BR&lat=${c.lat.toFixed(5)}&lon=${c.lon.toFixed(5)}`);
+      if (!r.ok) throw new Error('nominatim ' + r.status);
+      const ad = (await r.json()).address || {};
+      const bairro = ad.suburb || ad.neighbourhood || ad.quarter || ad.city_district || ad.village || ad.hamlet || '';
+      const cidade = ad.city || ad.town || ad.municipality || '';
+      nomesBairros[gh] = bairro && cidade && bairro !== cidade ? `${bairro} · ${cidade}` : (bairro || cidade || 'sem nome');
+      gravarLocal('tela.bairros', nomesBairros);
+      clearTimeout(redesenho);
+      redesenho = setTimeout(() => { desenharTabelaBairros(); desenharAnuncios(); }, 300);
+      await new Promise(ok => setTimeout(ok, 1100)); // regra do OpenStreetMap: no máximo 1 pedido por segundo
+    }
+  } catch (e) { filaNomes = []; pausaNomes = Date.now() + 60000; /* sem internet ou limite do OpenStreetMap: tenta de novo em 1 min */ }
+  buscandoNomes = false;
+}
+// Um bairro grande ocupa várias áreas de 1 km: junta pelo nome (as que ainda não têm nome ficam separadas)
+function juntarPorNome(lista) {
+  const grupos = new Map();
+  for (const x of lista) {
+    const nome = nomeBairro(x.regiao), k = nome || '#' + x.regiao;
+    const g = grupos.get(k) || { nome, regioes: [], valor: 0, exib: 0, horas: 0, carros: new Set() };
+    g.regioes.push(x.regiao); g.valor += x.valor; g.exib += x.exib || 0; g.horas += x.horas || 0;
+    for (const c of x.carrosDe || []) g.carros.add(c);
+    grupos.set(k, g);
+  }
+  return [...grupos.values()].sort((a, b) => b.valor - a.valor);
+}
+// "Campinas: Centro, Cambuí · Sumaré: Centro" (para o relatório do anunciante)
+function bairrosPorCidade(bairros, porCidade = 4) {
+  const cidades = new Map(), soCidade = new Set(carros.map(c => c.cidadeNome || nomeCidade(c.cidade)));
+  for (const g of juntarPorNome(bairros.map(b => ({ regiao: b.regiao, valor: b.exib, exib: b.exib })))) {
+    if (!g.nome || g.nome === 'sem nome' || soCidade.has(g.nome)) continue; // área sem bairro no mapa: a cidade já está no relatório
+    const [bairro, cidade = ''] = g.nome.split(' · ');
+    if (!cidades.has(cidade)) cidades.set(cidade, []);
+    if (cidades.get(cidade).length < porCidade) cidades.get(cidade).push(bairro);
+  }
+  return [...cidades].slice(0, 3).map(([cid, bs]) => (cid ? cid + ': ' : '') + bs.join(', ')).join(' · ');
+}
+function dadosBairros() {
+  const de = $('bairros-de').value;
+  if (!resumo) return { de, lista: [] };
+  if (!de) return { de, lista: resumo.regioes.map(r => ({ regiao: r.regiao, valor: r.segundos, horas: r.segundos / 3600, exib: r.exib, carros: r.carros.size, carrosDe: r.carros })) };
+  const a = resumo.anuncios.find(x => x.anuncio === de);
+  return { de, lista: a ? a.bairros.map(b => ({ regiao: b.regiao, valor: b.exib, exib: b.exib })) : [] };
+}
+function desenharBairros() {
+  const sel = $('bairros-de'), antes = sel.value;
+  const com = resumo ? resumo.anuncios.filter(a => a.bairros.length) : [];
+  sel.innerHTML = '<option value="">Todas as telas (tempo andando)</option>' +
+    com.map(a => `<option value="${esc(a.anuncio)}">${esc((pacote.anuncios[a.anuncio] || {}).nome || a.anuncio)} (exibições)</option>`).join('');
+  sel.value = com.some(a => a.anuncio === antes) ? antes : '';
+  desenharTabelaBairros();
+  desenharMapa();
+}
+function desenharTabelaBairros() {
+  const { de, lista } = dadosBairros();
+  const maiores = lista.slice(0, 60); // as 60 áreas com mais tela; o resto aparece só no mapa
+  pedirNomes(maiores.map(x => x.regiao));
+  const top = juntarPorNome(maiores).slice(0, 25);
+  const nome = g => esc(g.nome || 'buscando o nome…') + (g.regioes.length > 1 ? ` <span class="leg">(${g.regioes.length} áreas)</span>` : '');
+  $('tab-bairros').innerHTML = !top.length
+    ? `<tbody><tr><td>${de ? 'Sem bairros deste anunciante no mês.' : 'Nenhum tablet mandou bairros neste mês. A localização liga quando o motorista toca em Permitir localização no Configurar a tela (5 toques no canto de cima à esquerda do tablet).'}</td></tr></tbody>`
+    : de
+      ? `<thead><tr><th>#</th><th>Bairro</th><th class="n">Exibições (estimativa)</th></tr></thead><tbody>` +
+        top.map((g, i) => `<tr><td>${i + 1}</td><td>${nome(g)}</td><td class="n">${fmt(g.exib)}</td></tr>`).join('') + '</tbody>'
+      : `<thead><tr><th>#</th><th>Bairro</th><th class="n">Horas andando</th><th class="n">Exibições</th><th class="n">Carros</th></tr></thead><tbody>` +
+        top.map((g, i) => `<tr><td>${i + 1}</td><td>${nome(g)}</td><td class="n">${fmt(g.horas, 1)} h</td><td class="n">${fmt(g.exib)}</td><td class="n">${g.carros.size}</td></tr>`).join('') + '</tbody>';
+}
+$('bairros-de').onchange = () => { desenharTabelaBairros(); desenharMapa(); };
+
+// mapa (Leaflet, guardado em tela/mapa/, só carrega quando abre a aba)
+let mapa = null, camadaMapa = null, chaveMapa = '';
+function carregarLeaflet() {
+  if (window.L) return Promise.resolve(window.L);
+  return carregarLeaflet.p || (carregarLeaflet.p = new Promise((ok, erro) => {
+    const css = document.createElement('link'); css.rel = 'stylesheet'; css.href = 'mapa/leaflet.css'; document.head.appendChild(css);
+    const js = document.createElement('script'); js.src = 'mapa/leaflet.js';
+    js.onload = () => ok(window.L);
+    js.onerror = () => { carregarLeaflet.p = null; erro(new Error('não carregou o mapa')); };
+    document.head.appendChild(js);
+  }));
+}
+async function desenharMapa() {
+  if (document.querySelector('[data-painel="bairros"]').hidden) return;
+  let L;
+  try { L = await carregarLeaflet(); }
+  catch (e) { $('mapa').innerHTML = '<p class="leg" style="padding:12px">Não consegui carregar o mapa agora. A lista abaixo continua valendo.</p>'; return; }
+  if (!mapa) {
+    $('mapa').textContent = '';
+    mapa = L.map('mapa', { scrollWheelZoom: false }).setView([-22.9056, -47.0608], 12); // Campinas
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18,
+      attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>' }).addTo(mapa);
+  } else mapa.invalidateSize();
+  const { de, lista } = dadosBairros();
+  const chave = $('mes').value + '|' + de + '|' + lista.map(x => x.regiao + ':' + Math.round(x.valor)).join(',');
+  if (chave === chaveMapa) return; // mesmos dados: não mexe no zoom de quem está olhando
+  chaveMapa = chave;
+  if (camadaMapa) camadaMapa.remove();
+  camadaMapa = L.featureGroup().addTo(mapa);
+  const max = Math.max(1, ...lista.map(x => x.valor));
+  const cor = getComputedStyle(document.documentElement).getPropertyValue('--verde').trim() || '#14945a';
+  for (const x of lista) {
+    const b = N.caixaGeohash(x.regiao), forca = Math.sqrt(x.valor / max);
+    L.rectangle([[b.s, b.o], [b.n, b.l]], { color: cor, weight: 1, opacity: 0.4 + 0.5 * forca, fillColor: cor, fillOpacity: 0.12 + 0.6 * forca })
+      .bindTooltip(() => `<b>${esc(nomeBairro(x.regiao) || 'Área de 1 km')}</b><br>` +
+        (de ? `${fmt(x.exib)} exibições (estimativa)` : `${fmt(x.horas, 1)} h andando · ${fmt(x.exib)} exibições · ${x.carros} carro(s)`), { sticky: true })
+      .addTo(camadaMapa);
+  }
+  if (lista.length) mapa.fitBounds(camadaMapa.getBounds(), { padding: [24, 24], maxZoom: 14 });
 }
 $('bt-copiar-bonus').onclick = () => {
   if (!resumo) return;
@@ -311,12 +487,20 @@ function desenharScans() {
 function desenharAnuncios() {
   const lista = resumo ? resumo.anuncios : [];
   const faixas = N.FAIXAS_HORARIO;
+  pedirNomes([...new Set(lista.flatMap(a => a.bairros.slice(0, 8).map(b => b.regiao)))]);
+  const bairros = a => {
+    if (!a.bairros.length) return '—';
+    const nomes = juntarPorNome(a.bairros.slice(0, 8).map(b => ({ regiao: b.regiao, valor: b.exib })))
+      .filter(g => g.nome && g.nome !== 'sem nome').map(g => g.nome.split(' · ')[0]);
+    return [...new Set(nomes)].slice(0, 3).join(', ') || 'buscando…';
+  };
   $('tab-anuncios').innerHTML = `<thead><tr><th>Anunciante</th><th class="n">Exibições</th><th class="n">Tempo no ar</th><th class="n">Com QR</th><th class="n">Scans</th>` +
-    faixas.map(f => `<th class="n">${esc(f.nome)}</th>`).join('') + `<th class="n">Carros</th><th>Cidades</th><th></th></tr></thead><tbody>` +
+    faixas.map(f => `<th class="n">${esc(f.nome)}</th>`).join('') + `<th class="n">Carros</th><th class="n">Km</th><th>Cidades</th><th>Bairros</th><th></th></tr></thead><tbody>` +
     lista.map(a => `<tr><td><b>${esc((pacote.anuncios[a.anuncio] || {}).nome || a.anuncio)}</b></td><td class="n">${fmt(a.exib)}</td>
       <td class="n">${fmt(a.segundos / 3600, 1)} h</td><td class="n">${fmt(a.exibQR)}</td><td class="n">${fmt(a.scans)}</td>` +
       faixas.map(f => `<td class="n">${fmt(a.faixas[f.id])}</td>`).join('') +
-      `<td class="n">${a.carros.size}</td><td>${esc(Object.keys(a.cidades).map(nomeCidade).join(', '))}</td><td><button class="sec" data-rel="${esc(a.anuncio)}">Copiar relatório</button></td></tr>`).join('') + '</tbody>';
+      `<td class="n">${a.carros.size}</td><td class="n">${a.metros ? fmt(a.km) : '—'}</td><td>${esc(Object.keys(a.cidades).map(nomeCidade).join(', '))}</td>
+      <td>${esc(bairros(a))}</td><td><button class="sec" data-rel="${esc(a.anuncio)}">Copiar relatório</button></td></tr>`).join('') + '</tbody>';
   if (!lista.length) $('tab-anuncios').innerHTML = '<tbody><tr><td>Sem exibições neste mês.</td></tr></tbody>';
 }
 $('tab-anuncios').onclick = e => {
@@ -327,7 +511,9 @@ $('tab-anuncios').onclick = e => {
   const txt = `Relatório da tela nos carros · ${$('mes').value}\n${nome}\n` +
     `• ${fmt(a.exib)} exibições em ${a.carros.size} carro(s) (${fmt(a.segundos / 3600, 1)} h no ar)\n` +
     `• ${fmt(a.scans)} pessoas apontaram a câmera para o QR\n` +
-    `• Horário com mais exibições: ${melhor.nome}\n• Cidades: ${Object.keys(a.cidades).map(nomeCidade).join(', ')}`;
+    `• Horário com mais exibições: ${melhor.nome}\n• Cidades: ${Object.keys(a.cidades).map(nomeCidade).join(', ')}` +
+    (a.metros ? `\n• Os carros rodaram ${fmt(a.km)} km nas horas em que o anúncio estava passando` : '') +
+    ((txt => txt ? `\n• Bairros onde mais passou: ${txt}` : '')(bairrosPorCidade(a.bairros)));
   navigator.clipboard.writeText(txt).then(() => b.textContent = 'Copiado');
 };
 
@@ -336,6 +522,7 @@ document.querySelector('nav').onclick = e => {
   const b = e.target.closest('button[data-aba]'); if (!b) return;
   document.querySelectorAll('nav button').forEach(x => x.classList.toggle('on', x === b));
   document.querySelectorAll('[data-painel]').forEach(p => p.hidden = p.dataset.painel !== b.dataset.aba);
+  if (b.dataset.aba === 'bairros') desenharMapa();
 };
 async function trocarMes() {
   const mes = $('mes').value;
@@ -381,6 +568,15 @@ async function iniciarFirebase() {
 }
 
 // ── DEMONSTRAÇÃO: 8 carros inventados, para ver o painel sem dados reais ──
+const PONTOS_DEMO = {
+  campinas: [['Centro', -22.9056, -47.0608], ['Cambuí', -22.8946, -47.0517], ['Taquaral', -22.8722, -47.0567], ['Guanabara', -22.8925, -47.0718],
+    ['Nova Campinas', -22.8985, -47.0427], ['Bosque', -22.9033, -47.0500], ['Castelo', -22.8815, -47.0786], ['Barão Geraldo', -22.8236, -47.0786],
+    ['Ponte Preta', -22.9190, -47.0560], ['Chapadão', -22.8880, -47.0870], ['Vila Brandina', -22.8930, -47.0270], ['Sousas', -22.8810, -46.9650],
+    ['Ouro Verde', -22.9600, -47.1300], ['Viracopos', -23.0067, -47.1345]],
+  sumare: [['Centro', -22.8219, -47.2669], ['Nova Veneza', -22.8380, -47.2240], ['Matão', -22.8400, -47.2900]],
+  hortolandia: [['Centro', -22.8585, -47.2199], ['Jardim Amanda', -22.8900, -47.2300], ['Rosolém', -22.8650, -47.2000]],
+  valinhos: [['Centro', -22.9707, -46.9958], ['Vila Santana', -22.9600, -47.0050]],
+};
 function demo(mes) {
   let semente = 7; const rnd = () => (semente = (semente * 16807) % 2147483647) / 2147483647;
   const cidades = [['campinas', 'Campinas'], ['campinas', 'Campinas'], ['campinas', 'Campinas'], ['sumare', 'Sumaré'], ['hortolandia', 'Hortolândia'],
@@ -402,7 +598,22 @@ function demo(mes) {
       for (let h = ini; h < Math.min(fim, 24); h++) {
         const t = Math.round(3000 + rnd() * 600 * ritmo), v = [Math.round(20 * rnd()), Math.round(30 * rnd()), Math.round(160 * ritmo), Math.round(100 * ritmo), 5], e = {};
         for (const id of ids) if (rnd() < .9) e[id] = [Math.round(5 + rnd() * 2), 80];
-        horas[h] = { t, v, e };
+        // C05 com o cabo solto (metade na bateria); C06 sem a localização permitida
+        const mov = Math.round(t * (.5 + .35 * rnd()));
+        const extra = { c: i === 4 ? Math.round(t * .45) : t + Math.round(rnd() * 240), b: i === 4 ? Math.round(t * .55) : 0, k: Math.round(rnd() * 5 * ritmo) };
+        if (i !== 5) {
+          const zona = PONTOS_DEMO[c.cidade] || PONTOS_DEMO.campinas, nCel = 2 + Math.floor(rnd() * 2), g = {};
+          const exibAndando = Object.values(e).reduce((a, x) => a + x[0], 0) * mov / t;
+          for (let q = 0; q < nCel; q++) {
+            const [bairro, la, lo] = zona[Math.floor(rnd() ** 1.6 * zona.length)];
+            const gh = N.geohash(la + (rnd() - .5) * .012, lo + (rnd() - .5) * .012);
+            nomesBairros[gh] = nomesBairros[gh] || `${bairro} · ${c.cidadeNome}`;
+            const sx = Math.round(mov / nCel), nx = Math.round(exibAndando / nCel);
+            g[gh] = g[gh] ? [g[gh][0] + sx, g[gh][1] + nx] : [sx, nx];
+          }
+          Object.assign(extra, { g, d: Math.round(mov * (6 + 4 * rnd())) });
+        }
+        horas[h] = { t, v, e, ...extra };
         if (rnd() < .25 * ritmo) scans.push({ anuncio: ['tech', 'gio', 'vender', 'catalogo'][Math.floor(rnd() * 4)], carro: c.id, dia, mes, hora: h, h: 'p' + Math.floor(rnd() * 1e9), em: Date.parse(dia) + h * 3600000 });
       }
       const dono = {}, qr = {};

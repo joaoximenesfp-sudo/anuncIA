@@ -1,6 +1,6 @@
 // Service worker do player: guarda a "casca" do app para ele abrir sem internet.
 // Pacote e vídeos não passam por aqui — o tela.js guarda eles no Cache Storage.
-const CASCA = 'tela-casca-2026-11-18';
+const CASCA = 'tela-casca-2026-11-20';
 const ARQUIVOS = ['./', 'index.html', 'tela.js', 'nucleo.js', 'qrcode.js', 'app.webmanifest', 'icone-192.png', 'icone-512.png'];
 
 self.addEventListener('install', e => {

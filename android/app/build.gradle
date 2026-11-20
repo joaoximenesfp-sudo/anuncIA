@@ -8,8 +8,8 @@ android {
         minSdk 24
         // 33 de propósito: no Android 14, app que mira 34 perde o "acender a tela" (ACQUIRE_CAUSES_WAKEUP)
         targetSdk 33
-        versionCode 1
-        versionName '1.0'
+        versionCode 2
+        versionName '1.1'
     }
     // Chave fixa: o tablet só aceita atualização assinada pela mesma chave.
     // Fica no repositório porque o app é instalado à mão, só nos tablets da rede.
