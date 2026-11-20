@@ -14,6 +14,8 @@ tarefa() { adb shell dumpsys activity activities | grep -m1 "A=[0-9]*:$PKG" | gr
 pergunta() { adb shell dumpsys window windows | grep -q 'ScreenPinning'; }
 logs() { echo "    --- log do app ---"; adb logcat -d -s Tela:V | tail -n "${1:-15}" | sed 's/^/    /'; }
 acordado() { adb shell dumpsys power | grep -q 'mWakefulness=Awake'; }
+# espera a trava chegar num estado (o emulador do Actions às vezes demora uns segundos)
+esperar_trava() { local alvo="$1" n="${2:-10}" i; for i in $(seq "$n"); do [ "$(trava)" = "$alvo" ] && return 0; sleep 1; done; return 1; }
 # toca no botão de um diálogo do Android cujo texto ou id bate com o padrão
 tocar() {
   adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1
@@ -67,8 +69,7 @@ logs 5
 # o motorista toca em OK; aqui, com vídeo rodando, o leitor de tela do teste não acha o botão:
 # fixa pelo sistema, como o OK faria
 tocar "$OK_FIXAR" || { adb shell am task lock "$(tarefa)" >/dev/null; adb shell input keyevent 4; }
-sleep 3
-ok '[ "$(trava)" = PINNED ]' "fixou o app"
+ok 'esperar_trava PINNED 8' "fixou o app"
 for k in 4:Voltar 3:Home 187:Recentes; do
   adb shell input keyevent "${k%%:*}"; sleep 2
   ok na_frente "${k#*:} não tira o app da frente"
@@ -105,8 +106,11 @@ tocar "$NAO_FIXAR" || true
 
 echo "== modo frota (app dono do tablet, sem perguntar nada)"
 adb shell dpm set-device-owner $PKG/.Admin
-adb shell am start -n $PKG/.MainActivity --ez travar true >/dev/null; sleep 5
-ok '[ "$(trava)" = LOCKED ]' "travou sem perguntar"
+t0=$(date +%s)
+adb shell am start -n $PKG/.MainActivity --ez travar true >/dev/null
+esperar_trava LOCKED 15; r=$?
+ok '[ "$r" = 0 ]' "travou sem perguntar ($(( $(date +%s) - t0 )) s)"
+logs 8
 adb shell input keyevent 3; sleep 2
 ok na_frente "Home não sai"
 adb shell input keyevent 187; sleep 2
