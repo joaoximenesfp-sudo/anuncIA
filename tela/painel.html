@@ -35,6 +35,11 @@
   .ok{background:var(--verde-claro);color:var(--verde)}.aviso{background:var(--amarelo-claro);color:var(--amarelo)}.ruim{background:var(--vermelho-claro);color:var(--vermelho)}
   .linha{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
   label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--fraco);font-weight:600}
+  label.marcar{flex-direction:row;align-items:center;gap:6px;padding:8px 0;cursor:pointer}
+  label.marcar input{width:18px;height:18px;margin:0;accent-color:var(--azul)}
+  .amostra{display:inline-block;width:11px;height:11px;border-radius:3px;margin:0 4px 0 10px;vertical-align:-1px}
+  .amostra:first-child{margin-left:0}
+  .tracejado{display:inline-block;width:18px;border-top:2px dashed var(--azul);margin:0 4px 0 10px;vertical-align:3px}
   input,select{font:inherit;color:var(--texto);background:var(--fundo);border:1px solid var(--linha);border-radius:10px;padding:8px 10px;min-width:0}
   button.acao{font:inherit;font-weight:700;border:0;border-radius:10px;padding:9px 14px;background:var(--verde);color:#fff;cursor:pointer}
   button.sec{font:inherit;font-weight:600;border:1px solid var(--linha);border-radius:10px;padding:6px 10px;background:var(--cartao);color:var(--texto);cursor:pointer}
@@ -138,8 +143,10 @@
       <div class="cartao">
         <h2>Por onde as telas rodaram</h2>
         <p class="leg">Do mês escolhido na aba Eficiência e bônus. Cada quadrado é uma área de mais ou menos 1 km (nunca a rua nem o endereço), e só conta com o carro andando. Mais forte = mais tela ali. Só aparecem os tablets em que o motorista permitiu a localização.</p>
-        <div class="linha"><label>Mostrar<select id="bairros-de"><option value="">Todas as telas (tempo andando)</option></select></label></div>
+        <div class="linha"><label>Mostrar<select id="bairros-de"><option value="">Todas as telas (tempo andando)</option></select></label>
+          <label class="marcar"><input type="checkbox" id="ver-regioes" checked> Regiões de anúncio</label></div>
         <div id="mapa"></div>
+        <p class="leg" id="leg-regioes" style="margin:8px 0 0"></p>
       </div>
       <div class="cartao">
         <h2>Bairros com mais tela</h2>
@@ -490,7 +497,69 @@ function desenharTabelaBairros() {
 $('bairros-de').onchange = () => { desenharTabelaBairros(); desenharMapa(); };
 
 // mapa (Leaflet, guardado em tela/mapa/, só carrega quando abre a aba)
-let mapa = null, camadaMapa = null, chaveMapa = '';
+let mapa = null, camadaMapa = null, chaveMapa = '', camadaRegioes = null;
+// as cores das regiões que repartem a cidade (Norte, Sul...), na ordem do pacote
+const CORES_REGIAO = ['#d9480f', '#7c3aed', '#ca8a04', '#0891b2', '#db2777', '#4f46e5', '#65a30d', '#0f766e']; // nada de verde: o verde é das telas
+function coresDosSetores() {
+  const cor = {}; let i = 0;
+  for (const [id, z] of Object.entries(pacote.regioes || {})) if (z.setor) cor[id] = CORES_REGIAO[i++ % CORES_REGIAO.length];
+  return cor;
+}
+// regiões de anúncio do pacote no mapa, para conferir as divisas:
+//   as que repartem a cidade (setor) pintadas de leve, cada uma de uma cor, com o mesmo cálculo do tablet;
+//   as áreas menores (círculo ou faixa) com contorno tracejado
+function desenharRegioes(L) {
+  const regs = pacote.regioes || {}, camada = L.featureGroup();
+  const azul = getComputedStyle(document.documentElement).getPropertyValue('--azul').trim() || '#24508f';
+  // nome no mapa: centrado no ponto, ou logo acima dele (áreas menores: em cima do círculo)
+  const etiqueta = (lat, lon, nome, cor, acima) => L.marker([lat, lon], { interactive: false, keyboard: false, icon: L.divIcon({ className: '', iconSize: null,
+    html: `<span style="position:absolute;transform:translate(-50%,${acima ? 'calc(-100% - 2px)' : '-50%'});font:600 12px system-ui;color:${cor};background:var(--cartao);padding:2px 6px;border-radius:6px;white-space:nowrap;box-shadow:0 0 0 1px ${cor}40">${esc(nome)}</span>` }) }).addTo(camada);
+  // onde vai o nome de cada área menor: em cima do círculo (na faixa, em cima do meio dela)
+  const menores = Object.entries(regs).filter(([, z]) => !z.setor).map(([id, z]) => {
+    const areas = z.areas || [z];
+    return { id, z, lat: Math.max(...areas.map(a => a.lat + (a.km || z.km || 1) / 111.2)), lon: areas.reduce((t, a) => t + a.lon, 0) / areas.length };
+  });
+  const cor = coresDosSetores(), setores = Object.fromEntries(Object.entries(regs).filter(([, z]) => z.setor));
+  const pontos = Object.values(setores).flatMap(z => z.pontos || []);
+  if (pontos.length) {
+    // grade de uns 550 m: cada quadradinho fica com a cor da região em que o centro dele cai
+    const passo = 0.005, folga = 0.045, tinta = L.canvas({ padding: 0.3 });
+    const la0 = Math.min(...pontos.map(p => p[0])) - folga, lo0 = Math.min(...pontos.map(p => p[1])) - folga;
+    const ni = Math.ceil((Math.max(...pontos.map(p => p[0])) + folga - la0) / passo), nj = Math.ceil((Math.max(...pontos.map(p => p[1])) + folga - lo0) / passo);
+    const grade = new Array(ni * nj).fill(null);
+    for (let i = 0; i < ni; i++) for (let j = 0; j < nj; j++) {
+      const la = la0 + i * passo, lo = lo0 + j * passo, id = N.regioesEm({ regioes: setores }, { lat: la + passo / 2, lon: lo + passo / 2 })[0];
+      if (!id) continue;
+      grade[i * nj + j] = id;
+      L.rectangle([[la, lo], [la + passo, lo + passo]], { renderer: tinta, stroke: false, fillColor: cor[id], fillOpacity: 0.16, interactive: false }).addTo(camada);
+    }
+    // o nome de cada região vai no quadradinho dela mais longe da divisa e dos nomes das áreas menores
+    const viz = [[1, 0], [-1, 0], [0, 1], [0, -1]], dist = new Array(ni * nj).fill(Infinity), fila = [];
+    const outro = (i, j, id) => i < 0 || j < 0 || i >= ni || j >= nj || grade[i * nj + j] !== id;
+    grade.forEach((id, k) => { if (id && viz.some(([a, b]) => outro((k / nj | 0) + a, k % nj + b, id))) { dist[k] = 0; fila.push(k); } });
+    for (let q = 0; q < fila.length; q++) {
+      const k = fila[q], i = k / nj | 0, j = k % nj;
+      for (const [a, b] of viz) if (!outro(i + a, j + b, grade[k]) && dist[(i + a) * nj + j + b] === Infinity) { dist[(i + a) * nj + j + b] = dist[k] + 1; fila.push((i + a) * nj + j + b); }
+    }
+    const melhor = {};
+    grade.forEach((id, k) => {
+      if (!id) return;
+      const ponto = { lat: la0 + ((k / nj | 0) + 0.5) * passo, lon: lo0 + (k % nj + 0.5) * passo };
+      const nota = Math.min(dist[k] * passo * 111, ...menores.map(m => N.distanciaM(ponto, m) / 1000 - 2.5)); // longe dos nomes das áreas menores
+      if (!melhor[id] || nota > melhor[id].nota) melhor[id] = { nota, ponto };
+    });
+    for (const [id, m] of Object.entries(melhor)) etiqueta(m.ponto.lat, m.ponto.lon, setores[id].nome || id, cor[id]);
+  }
+  for (const { id, z, lat, lon } of menores) {
+    for (const a of z.areas || [z]) L.circle([a.lat, a.lon], { radius: (a.km || z.km || 1) * 1000, color: azul, weight: 2, dashArray: '6 6', fill: false, interactive: false }).addTo(camada);
+    etiqueta(lat, lon, z.nome || id, azul, true);
+  }
+  return camada;
+}
+$('ver-regioes').onchange = () => {
+  if (!mapa || !camadaRegioes) return;
+  if ($('ver-regioes').checked) camadaRegioes.addTo(mapa); else camadaRegioes.remove();
+};
 function carregarLeaflet() {
   if (window.L) return Promise.resolve(window.L);
   return carregarLeaflet.p || (carregarLeaflet.p = new Promise((ok, erro) => {
@@ -501,8 +570,17 @@ function carregarLeaflet() {
     document.head.appendChild(js);
   }));
 }
+function legendaRegioes() {
+  const regs = pacote.regioes || {}, cor = coresDosSetores();
+  const menores = Object.values(regs).filter(z => !z.setor).map(z => z.nome);
+  $('leg-regioes').innerHTML = !Object.keys(regs).length ? '' :
+    Object.entries(regs).filter(([, z]) => z.setor).map(([id, z]) => `<span class="amostra" style="background:${cor[id]}"></span>${esc(z.nome)}`).join('') +
+    (menores.length ? `<span class="tracejado"></span>${esc(menores.join(', '))}` : '') +
+    '<br>Regiões de anúncio, calculadas igual ao tablet. Os limites são aproximados: se algum bairro caiu na região errada, avise para ajustar.';
+}
 async function desenharMapa() {
   if (document.querySelector('[data-painel="bairros"]').hidden) return;
+  legendaRegioes();
   let L;
   try { L = await carregarLeaflet(); }
   catch (e) { $('mapa').innerHTML = '<p class="leg" style="padding:12px">Não consegui carregar o mapa agora. A lista abaixo continua valendo.</p>'; return; }
@@ -511,12 +589,8 @@ async function desenharMapa() {
     mapa = L.map('mapa', { scrollWheelZoom: false }).setView([-22.9056, -47.0608], 12); // Campinas
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18,
       attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>' }).addTo(mapa);
-    // regiões de anúncio do pacote (contorno tracejado)
-    const azul = getComputedStyle(document.documentElement).getPropertyValue('--azul').trim() || '#24508f';
-    for (const z of Object.values(pacote.regioes || {})) {
-      L.circle([z.lat, z.lon], { radius: (z.km || 1) * 1000, color: azul, weight: 2, dashArray: '6 6', fill: false, interactive: false }).addTo(mapa);
-      L.marker([z.lat, z.lon], { icon: L.divIcon({ className: '', html: `<span style="font:600 12px system-ui;color:${azul};background:var(--cartao);padding:2px 6px;border-radius:6px;white-space:nowrap">${esc(z.nome)}</span>`, iconSize: null }), interactive: false }).addTo(mapa);
-    }
+    camadaRegioes = desenharRegioes(L);
+    if ($('ver-regioes').checked) camadaRegioes.addTo(mapa);
   } else mapa.invalidateSize();
   const { de, lista } = dadosBairros();
   const chave = $('mes').value + '|' + de + '|' + lista.map(x => x.regiao + ':' + Math.round(x.valor)).join(',');
@@ -561,6 +635,23 @@ function desenharScans() {
 }
 
 // ── PROGRAMAÇÃO DO DIA ──
+// em que regiões fica um carro que está nesta região (no meio dela): no Ouro Verde, também na Região Sudoeste
+function regioesDoLugar(id) {
+  const z = (pacote.regioes || {})[id];
+  if (!z) return [];
+  if (z.setor) return [id];
+  const areas = z.areas || [z], meio = areas[Math.floor(areas.length / 2)];
+  const aqui = N.regioesEm(pacote, meio);
+  return [id, ...aqui.filter(r => r !== id)];
+}
+function textoRegioes() {
+  const regs = Object.values(pacote.regioes || {});
+  const setores = regs.filter(z => z.setor), menores = regs.filter(z => !z.setor);
+  const km = z => z.areas ? `faixa de ${z.areas.length} trechos` : `raio de ${fmt(z.km || 1, 1)} km`;
+  return 'Regiões de anúncio (pelo GPS do tablet). ' +
+    (setores.length ? `A cidade dividida em ${setores.length}: ${setores.map(z => z.nome).join(', ')} (todo ponto da cidade cai em uma delas). ` : '') +
+    (menores.length ? `${setores.length ? 'Por cima, áreas' : 'Áreas'} menores: ${menores.map(z => `${z.nome} (${km(z)})`).join(', ')}.` : '');
+}
 function desenharProgramacao() {
   if (!$('prog-dia').value) $('prog-dia').value = N.partesData(new Date()).dia;
   const sel = $('prog-cidade'), antes = sel.value;
@@ -570,12 +661,15 @@ function desenharProgramacao() {
   sel.value = cidades.some(([s]) => s === antes) ? antes : cidades[0][0];
   const regs = pacote.regioes || {}, selR = $('prog-regiao'), antesR = selR.value;
   selR.innerHTML = '<option value="">Fora das regiões (qualquer lugar)</option>' +
-    Object.entries(regs).map(([id, z]) => `<option value="${esc(id)}">${esc(z.nome || id)}</option>`).join('');
+    Object.entries(regs).map(([id, z]) => {
+      const junto = regioesDoLugar(id).filter(r => r !== id).map(r => (regs[r] || {}).nome || r);
+      return `<option value="${esc(id)}">${esc(z.nome || id)}${junto.length ? ' (+ ' + esc(junto.join(', ')) + ')' : ''}</option>`;
+    }).join('');
   selR.value = regs[antesR] ? antesR : '';
   $('prog-regioes').textContent = Object.keys(regs).length
-    ? 'Regiões de anúncio (pelo GPS do tablet): ' + Object.values(regs).map(z => `${z.nome} (raio de ${fmt(z.km, 1)} km)`).join(' · ') + '. Dentro de uma região, os espaços regionais passam só os anunciantes dela, revezando.'
+    ? textoRegioes() + ' Dentro de uma região, os espaços regionais passam só os anunciantes dela (e os das outras regiões em que o carro está), revezando.'
     : 'Ainda não há regiões de anúncio no pacote.';
-  const faixas = (pacote.loop || []).length ? N.programacao(pacote, new Date($('prog-dia').value + 'T12:00:00'), sel.value, { regioes: selR.value ? [selR.value] : [] }) : [];
+  const faixas = (pacote.loop || []).length ? N.programacao(pacote, new Date($('prog-dia').value + 'T12:00:00'), sel.value, { regioes: regioesDoLugar(selR.value) }) : [];
   const nome = d => d ? ((pacote.anuncios[d] || {}).nome || d) : 'Conteúdo próprio (dicas, catálogo)';
   $('tab-prog').innerHTML = !faixas.length ? '<tbody><tr><td>Pacote não carregado.</td></tr></tbody>'
     : '<thead><tr><th>Horário</th><th>O que passa</th><th class="n">Vezes por hora</th><th class="n">A cada</th><th class="n">% da tela</th></tr></thead><tbody>' +

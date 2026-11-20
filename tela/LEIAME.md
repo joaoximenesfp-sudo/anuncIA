@@ -102,21 +102,38 @@ ter um quadrado branco onde o QR vai.
 Toca a primeira opção que bater com horário, dia (`dias`: 0 = domingo), cidade e região.
 
 **Anúncio por região** (pelo GPS do tablet, funciona sem internet): as regiões ficam em
-`regioes` no pacote, como ponto + raio (`{ "centro": { "nome": "Centro de Campinas", "lat": …,
-"lon": …, "km": 1.5 } }`). Uma opção com `"regioes": ["centro"]` só vale com o carro dentro do
-raio. Cota com `"rodizio": true` reveza entre as opções que valem; se o carro estiver numa
-região, reveza só entre as dela (empresa que atende várias regiões lista todas), e fora delas
-(ou sem GPS) passa o anúncio geral:
+`regioes` no pacote, de três jeitos:
+
+- **círculo**: `"centro": { "nome": "Centro de Campinas", "lat": …, "lon": …, "km": 1.5 }`;
+- **faixa** (vários círculos, para uma avenida): `"johnboyd": { "nome": "John Boyd Dunlop",
+  "areas": [{ "lat": …, "lon": …, "km": 1.2 }, …] }`;
+- **setor** (regiões que repartem a cidade sem buraco): `"leste": { "nome": "Região Leste",
+  "setor": "campinas", "km": 4, "pontos": [[lat, lon], …] }`. O carro fica na região do
+  ponto de referência mais perto, desde que a menos de `km` dele (assim a cidade vizinha
+  fica de fora). Para mexer numa divisa, acrescente ou mova pontos.
+
+Campinas está dividida nas 5 regiões da prefeitura (Norte, Sul, Leste, Sudoeste e
+Noroeste) e, por cima, nas áreas menores Centro, Barão Geraldo, Ouro Verde e John Boyd
+Dunlop. Um carro pode estar em duas ao mesmo tempo (no Ouro Verde também está na
+Sudoeste). As divisas são aproximadas: a aba **Bairros** do painel pinta as regiões com
+o mesmo cálculo do tablet, para conferir.
+
+Uma opção com `"regioes": ["centro"]` só vale com o carro dentro da região. Cota com
+`"rodizio": true` reveza entre as opções que valem; se o carro estiver em alguma região,
+reveza só entre as dela (empresa que atende várias regiões lista todas; no Ouro Verde
+revezam as do Ouro Verde e as da Sudoeste), e fora delas (ou sem GPS) passa o anúncio
+geral:
 
 ```json
 { "cota": "regional-1", "rodizio": true, "opcoes": [
   { "midia": "loja-centro", "segundos": 15, "regioes": ["centro"] },
   { "midia": "pizzaria-barao", "segundos": 15, "regioes": ["barao"] },
-  { "midia": "eletricista", "segundos": 15, "regioes": ["centro", "barao"] },
+  { "midia": "encanador", "segundos": 15, "regioes": ["sudoeste", "noroeste"] },
   { "midia": "t05", "segundos": 14 }
 ] }
-``` A aba
-**Programação** do painel mostra a grade do dia (o que passa em cada horário, quantas vezes por
+```
+
+A aba **Programação** do painel mostra a grade do dia (o que passa em cada horário, quantas vezes por
 hora e quanto da tela) e a página do motorista mostra "Na sua tela hoje". Não existe vídeo de
 24 horas: cada tablet monta a grade pelo próprio relógio, então quem liga às 19h já pega a das 19h.
 Faixa que vira a noite (`"21:00"` a `"02:00"`) conta como a noite do dia em que

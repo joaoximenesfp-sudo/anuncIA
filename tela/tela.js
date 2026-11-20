@@ -7,7 +7,7 @@
 (function () {
   'use strict';
   const N = window.TelaNucleo;
-  const APP = '2026-11-20.6';
+  const APP = '2026-11-20.7';
   const CACHE_MIDIA = 'tela-midia';
   const FADE = 250;
   const MIN = 60000;
@@ -97,8 +97,9 @@
   let saidaPermitida = false; // recarregar para atualizar não pergunta "Sair do site?"
 
   // ── ANÚNCIO POR REGIÃO ──
-  // Pelo GPS (funciona sem internet): dentro de uma região do pacote (ponto + raio), os espaços
-  // regionais passam só os anunciantes dela, revezando. Sem GPS ou fora delas, o anúncio geral.
+  // Pelo GPS (funciona sem internet): dentro de uma região do pacote (círculo, faixa ou uma das
+  // regiões que repartem a cidade), os espaços regionais passam só os anunciantes dela (e das outras
+  // regiões em que o carro está), revezando. Sem GPS ou fora delas, o anúncio geral.
   const giros = {};
   const giro = cota => { const n = giros[cota] || 0; giros[cota] = n + 1; return n; };
   function regioesAgora() {

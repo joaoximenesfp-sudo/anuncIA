@@ -98,10 +98,28 @@
     if (!lista.length) return null;
     return lista.length === 1 ? lista[0] : lista[(giro ? giro(entrada.cota) : 0) % lista.length];
   }
-  // Regiões em que o ponto está (pacote.regioes: { id: { nome, lat, lon, km } })
+  // Regiões em que o ponto está. Três jeitos de desenhar uma região em pacote.regioes:
+  //   círculo: { nome, lat, lon, km }
+  //   faixa:   { nome, areas: [{ lat, lon, km }, ...] }            (vários círculos, ex.: uma avenida)
+  //   setor:   { nome, setor: "campinas", km, pontos: [[lat, lon], ...] }
+  // As regiões de um mesmo setor repartem a cidade sem buraco: o carro fica na região do ponto
+  // de referência mais perto (desde que a menos de km dele, para não pegar a cidade vizinha).
   function regioesEm(pacote, ponto) {
     if (!ponto || !pacote || !pacote.regioes) return [];
-    return Object.entries(pacote.regioes).filter(([, z]) => distanciaM(ponto, z) <= (z.km || 1) * 1000).map(([id]) => id);
+    const dentro = [], setores = {};
+    for (const [id, z] of Object.entries(pacote.regioes)) {
+      if (z.setor) {
+        const g = setores[z.setor] || (setores[z.setor] = { d: Infinity, id: null, km: 0 });
+        for (const [la, lo] of z.pontos || []) {
+          const d = distanciaM(ponto, { lat: la, lon: lo });
+          if (d < g.d) { g.d = d; g.id = id; g.km = z.km || 4; }
+        }
+        continue;
+      }
+      if ((z.areas || [z]).some(a => distanciaM(ponto, a) <= (a.km || z.km || 1) * 1000)) dentro.push(id);
+    }
+    for (const g of Object.values(setores)) if (g.id && g.d <= g.km * 1000) dentro.push(g.id);
+    return dentro;
   }
 
   function segundosDe(item, pacote) {

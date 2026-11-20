@@ -1,9 +1,16 @@
 {
  "versao": "2026-11-18.1",
- "app": "2026-11-20.6",
+ "app": "2026-11-20.7",
  "regioes": {
-  "centro": { "nome": "Centro de Campinas", "lat": -22.9056, "lon": -47.0608, "km": 1.5 },
-  "barao": { "nome": "Barão Geraldo", "lat": -22.8236, "lon": -47.0786, "km": 2.5 }
+  "centro": {"nome": "Centro de Campinas", "lat": -22.9056, "lon": -47.0608, "km": 1.5},
+  "barao": {"nome": "Barão Geraldo", "lat": -22.8236, "lon": -47.0786, "km": 2.5},
+  "ouroverde": {"nome": "Ouro Verde", "lat": -22.963, "lon": -47.13, "km": 2},
+  "johnboyd": {"nome": "John Boyd Dunlop", "areas": [{"lat": -22.902, "lon": -47.101, "km": 1.2}, {"lat": -22.899, "lon": -47.123, "km": 1.2}, {"lat": -22.896, "lon": -47.145, "km": 1.2}, {"lat": -22.891, "lon": -47.165, "km": 1.2}]},
+  "leste": {"nome": "Região Leste", "setor": "campinas", "km": 4, "pontos": [[-22.9056, -47.0608], [-22.8946, -47.0517], [-22.9033, -47.05], [-22.8985, -47.0427], [-22.8722, -47.0567], [-22.869, -47.032], [-22.881, -46.965], [-22.888, -46.93], [-22.895, -47.008]]},
+  "norte": {"nome": "Região Norte", "setor": "campinas", "km": 4, "pontos": [[-22.8236, -47.0786], [-22.8184, -47.0647], [-22.865, -47.085], [-22.853, -47.076], [-22.861, -47.064], [-22.888, -47.087]]},
+  "noroeste": {"nome": "Região Noroeste", "setor": "campinas", "km": 4, "pontos": [[-22.903, -47.1], [-22.893, -47.108], [-22.899, -47.139], [-22.915, -47.156], [-22.888, -47.165], [-22.873, -47.147]]},
+  "sudoeste": {"nome": "Região Sudoeste", "setor": "campinas", "km": 4, "pontos": [[-22.933, -47.105], [-22.925, -47.09], [-22.963, -47.13], [-22.975, -47.115], [-22.99, -47.14], [-23.0067, -47.1345]]},
+  "sul": {"nome": "Região Sul", "setor": "campinas", "km": 4, "pontos": [[-22.919, -47.056], [-22.918, -47.043], [-22.933, -47.07], [-22.933, -47.058], [-22.945, -47.073], [-22.966, -47.089]]}
  },
  "sobre": "Pacote do tablet nos carros. O player baixa tudo, roda sem internet e manda as exibições. Cotas por horário/cidade entram no loop como {\"cota\": nome, \"opcoes\": [...]} — veja tela/LEIAME.md.",
  "anuncios": {

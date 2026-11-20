@@ -65,6 +65,27 @@ const gC = N.programacao(pacR, em('2026-11-20T12:00:00'), 'campinas', { regioes:
 ok(['lojac1', 'lojac2', 'eletr'].every(d => gC.some(a => a.dono === d)) && !gC.some(a => a.dono === 'pizzab' || a.dono === 'tech'), 'programação no Centro mostra só os do Centro');
 const regioesUsadas = pac => (pac.loop || []).flatMap(e => e.cota ? e.opcoes : [e]).flatMap(o => o.regioes || []);
 
+console.log('\nregiões em faixa e regiões que repartem a cidade');
+const pacS = { regioes: {
+  centro: { nome: 'Centro', lat: -22.9056, lon: -47.0608, km: 1.5 },
+  avenida: { nome: 'Avenida', km: 1, areas: [{ lat: -22.902, lon: -47.101, km: 1.2 }, { lat: -22.896, lon: -47.145 }] },
+  leste: { nome: 'Leste', setor: 'cidade', km: 4, pontos: [[-22.9056, -47.0608], [-22.881, -46.965]] },
+  oeste: { nome: 'Oeste', setor: 'cidade', km: 4, pontos: [[-22.90, -47.12], [-22.888, -47.165]] } } };
+const emS = (la, lo) => N.regioesEm(pacS, { lat: la, lon: lo }).sort().join(',');
+ok(emS(-22.9056, -47.0608) === 'centro,leste', 'no Centro: a área menor e a região grande ao mesmo tempo');
+ok(emS(-22.90, -47.105) === 'avenida,oeste' && emS(-22.896, -47.152) === 'avenida,oeste', 'faixa: vale qualquer trecho dela');
+ok(emS(-22.896, -47.157) === 'oeste', 'trecho sem raio usa o raio da região (1 km)');
+ok(emS(-22.90, -47.085) === 'leste' && emS(-22.90, -47.03) === 'leste', 'entre as regiões grandes: fica na do ponto de referência mais perto');
+ok(emS(-22.8219, -47.2669) === '', 'longe de todo ponto de referência (outra cidade): fora');
+let duasS = 0;
+for (let la = -22.95; la <= -22.85; la += 0.005) for (let lo = -47.2; lo <= -46.95; lo += 0.005) if (N.regioesEm(pacS, { lat: la, lon: lo }).filter(id => pacS.regioes[id].setor).length > 1) duasS++;
+ok(duasS === 0, 'nunca cai em duas regiões grandes do mesmo jeito de repartir');
+const pacSL = Object.assign({}, pacS, { midias: { o1: { tipo: 'imagem', dono: 'merc' }, w1: { tipo: 'imagem', dono: 'encan' }, g: { tipo: 'imagem', dono: 'tech' } },
+  loop: [{ cota: 'reg', rodizio: true, opcoes: [{ midia: 'o1', segundos: 10, regioes: ['avenida'] }, { midia: 'w1', segundos: 10, regioes: ['oeste'] }, { midia: 'g', segundos: 10 }] }] });
+const seqS = (la, lo) => Array.from({ length: 4 }, () => N.escolher(pacSL.loop[0], em('2026-11-20T12:00:00'), 'campinas', { regioes: N.regioesEm(pacSL, { lat: la, lon: lo }) }, giroT).midia).sort().join(',');
+ok(seqS(-22.90, -47.105) === 'o1,o1,w1,w1', 'na avenida (que fica na Oeste): reveza o da avenida e o que atende a Oeste toda');
+ok(seqS(-22.888, -47.18) === 'w1,w1,w1,w1', 'na Oeste, longe da avenida: só o da região');
+
 console.log('\ncontagem do que passou');
 const ag = {};
 const t = em('2026-11-20T19:10:00');
@@ -182,7 +203,23 @@ const qrs = Object.values(pacote.midias).flatMap(m => m.qr || []);
 ok(qrs.every(q => pacote.anuncios[q.anuncio]), 'todo QR aponta para um anúncio com destino');
 ok(Object.values(pacote.anuncios).every(a => /^https:\/\//.test(a.destino)), 'destinos em https');
 ok(regioesUsadas(pacote).every(r => pacote.regioes && pacote.regioes[r]), 'toda região usada no loop existe no pacote');
-ok(Object.values(pacote.regioes || {}).every(z => Math.abs(z.lat) <= 90 && Math.abs(z.lon) <= 180 && z.km > 0 && z.nome), 'regiões com ponto, raio e nome');
+const pontoOk = (la, lo) => Math.abs(la) <= 90 && Math.abs(lo) <= 180 && !(la === 0 && lo === 0);
+const regiaoOk = z => !!z.nome && (z.setor ? (z.pontos || []).length > 0 && z.pontos.every(q => pontoOk(q[0], q[1])) && (z.km || 4) > 0
+  : z.areas ? z.areas.length > 0 && z.areas.every(a => pontoOk(a.lat, a.lon) && (a.km || z.km || 1) > 0)
+  : pontoOk(z.lat, z.lon) && (z.km || 1) > 0);
+ok(Object.values(pacote.regioes || {}).every(regiaoOk), 'regiões com nome e desenho válido (círculo, faixa ou setor)');
+if (pacote.regioes && pacote.regioes.sudoeste) {
+  const emC = (la, lo) => N.regioesEm(pacote, { lat: la, lon: lo }).sort().join(',');
+  ok(emC(-22.9056, -47.0608) === 'centro,leste' && emC(-22.8236, -47.0786) === 'barao,norte' && emC(-22.963, -47.13) === 'ouroverde,sudoeste' &&
+    emC(-22.888, -47.165) === 'johnboyd,noroeste' && emC(-22.919, -47.056) === 'sul', 'Campinas: Centro na Leste, Barão na Norte, Ouro Verde na Sudoeste, John Boyd na Noroeste, Ponte Preta na Sul');
+  ok([[-22.8219, -47.2669], [-22.9707, -46.9958], [-22.8585, -47.2199]].every(([la, lo]) => !emC(la, lo)), 'Sumaré, Valinhos e Hortolândia ficam fora');
+  let semR = 0, duasR = 0; // miolo da cidade, de 500 em 500 m
+  for (let la = -22.94; la <= -22.86; la += 0.005) for (let lo = -47.15; lo <= -47.01; lo += 0.005) {
+    const n = N.regioesEm(pacote, { lat: la, lon: lo }).filter(id => pacote.regioes[id].setor).length;
+    if (!n) semR++; if (n > 1) duasR++;
+  }
+  ok(!semR && !duasR, `no miolo de Campinas todo ponto cai em uma só das 5 regiões (${semR} sem região, ${duasR} em duas)`);
+}
 const APP = (/const APP = '([^']+)'/.exec(fs.readFileSync(path.join(RAIZ, 'tela/tela.js'), 'utf8')) || [])[1];
 ok(pacote.app === APP, `"app" do pacote (${pacote.app}) = versão do player (${APP}): é o que faz os tablets se atualizarem sozinhos`);
 const dur = N.duracaoLoop(pacote, em('2026-11-20T12:00:00'), 'campinas');
