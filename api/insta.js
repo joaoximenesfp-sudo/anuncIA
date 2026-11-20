@@ -17,11 +17,22 @@
 // chave tirada do IG_APP_SECRET, que só existe na Vercel). Na Vercel: IG_APP_ID e
 // IG_APP_SECRET (do produto Instagram no Meta for Developers) e, se um dia precisar,
 // IG_VERSAO (versão da API, padrão abaixo).
+//
+// MODO TOKEN (o que vale para apps novos da Meta, com o "login unificado"): um token de
+// usuário do sistema, gerado nas Configurações do portfólio empresarial, na variável
+// IG_TOKEN da Vercel. Não vence, não precisa de login nem de cifra: com ele, o GET diz
+// se o token funciona e de qual conta é, e o publicar usa graph.facebook.com na conta
+// IG_USER_ID (padrão: a @tech.campinas, no portfólio da Tech Campinas).
 const crypto = require('crypto');
 const N = require('../tela/nucleo.js');
 
 const VERSAO = () => process.env.IG_VERSAO || 'v23.0';
 const GRAPH = 'https://graph.instagram.com';
+const GRAPH_FB = 'https://graph.facebook.com';
+const IG_ID_PADRAO = '17841430007598170'; // @tech.campinas (Configurações da Tech Campinas → Contas do Instagram)
+const tokenFixo = () => String(process.env.IG_TOKEN || '').trim();
+// token do login do Instagram começa com IG; o de usuário do sistema (Facebook), com EAA
+const hostDe = t => /^IG/.test(t) ? GRAPH : GRAPH_FB;
 const VOLTA = `${N.SITE}/api/insta`; // igual ao "OAuth redirect URI" cadastrado no app da Meta
 const ESCOPOS = 'instagram_business_basic,instagram_business_content_publish';
 const DIA = 86400000;
@@ -92,17 +103,17 @@ async function gravarConfig(idToken, dados) {
 function traduzir(e) {
   const cod = Number(e.code), msg = String(e.error_user_msg || e.message || e.error_message || '');
   if (cod === 190 || /access token|session has expired|validating access token/i.test(msg))
-    return 'A conexão com o Instagram venceu ou foi desfeita. Toque em Conectar Instagram de novo.';
+    return 'A conexão com o Instagram venceu ou foi desfeita. Toque em Conectar Instagram de novo (ou gere um token novo, se usa o IG_TOKEN).';
   if ([4, 9, 17, 32, 613].includes(cod) || /request limit|rate limit|too many|publishing limit/i.test(msg))
     return 'O Instagram limitou as publicações por agora (são no máximo 100 por dia pela API). Tente mais tarde.';
   if (cod === 10 || cod === 200 || /permission/i.test(msg))
-    return 'Falta permissão para publicar. Conecte de novo e deixe marcada a opção de publicar conteúdo.';
+    return 'Falta permissão para publicar. Confira as permissões do Instagram no token (ou conecte de novo deixando marcada a opção de publicar).';
   if (/aspect ratio/i.test(msg)) return 'O Instagram não aceitou o formato da imagem.';
   if (/fetch|download|retriev/i.test(msg)) return 'O Instagram não conseguiu baixar a imagem. Tente de novo.';
   return 'Instagram: ' + (msg || 'erro sem mensagem');
 }
-async function graph(metodo, caminho, params, token) {
-  const url = new URL(/^https:/.test(caminho) ? caminho : `${GRAPH}/${VERSAO()}${caminho}`);
+async function graph(metodo, caminho, params, token, host = GRAPH) {
+  const url = new URL(/^https:/.test(caminho) ? caminho : `${host}/${VERSAO()}${caminho}`);
   const dados = new URLSearchParams(Object.assign({}, params, token ? { access_token: token } : {}));
   let r;
   if (metodo === 'GET') {
@@ -128,9 +139,9 @@ async function trocarCodigo(code) {
   if (!r.ok || !d.access_token) throw erro(502, traduzir(j.error || j));
   return d;
 }
-async function esperarPronto(id, token) {
+async function esperarPronto(id, token, host) {
   for (let i = 0; i < 12; i++) {
-    const s = (await graph('GET', `/${id}`, { fields: 'status_code' }, token)).status_code;
+    const s = (await graph('GET', `/${id}`, { fields: 'status_code' }, token, host)).status_code;
     if (!s || s === 'FINISHED' || s === 'PUBLISHED') return;
     if (s === 'ERROR' || s === 'EXPIRED') throw erro(502, `O Instagram não conseguiu preparar a imagem (${s}). Tente de novo.`);
     await espera(Math.min(1000 * (i + 1), 3000));
@@ -153,8 +164,26 @@ async function renovarSePreciso(idToken, seg, sempre) {
   }
 }
 
+// ── MODO TOKEN ──
+let cacheToken = null; // { em, chave, ok, id, usuario, erro }
+async function estadoToken() {
+  const t = tokenFixo();
+  if (!t) return null;
+  const chaveCache = t.slice(-12) + '|' + (process.env.IG_USER_ID || '');
+  if (cacheToken && cacheToken.chave === chaveCache && Date.now() - cacheToken.em < 60000) return cacheToken;
+  const id = String(process.env.IG_USER_ID || IG_ID_PADRAO).trim();
+  try {
+    const eu = await graph('GET', `/${id}`, { fields: 'id,username' }, t, hostDe(t));
+    cacheToken = { em: Date.now(), chave: chaveCache, ok: true, id: String(eu.id || id), usuario: eu.username || '' };
+  } catch (e) {
+    cacheToken = { em: Date.now(), chave: chaveCache, ok: false, id, usuario: '', erro: e.message };
+  }
+  return cacheToken;
+}
+
 // ── AÇÕES ──
 async function conectar(corpo) {
+  if (tokenFixo()) throw erro(409, 'O Instagram já está ligado pelo token da Vercel (IG_TOKEN): não precisa conectar.');
   if (!configurado()) throw erro(503, 'Falta configurar o app da Meta na Vercel (IG_APP_ID e IG_APP_SECRET).');
   await lerConfig(corpo.idToken); // só sócio
   const u = new URL('https://www.instagram.com/oauth/authorize');
@@ -182,35 +211,44 @@ async function voltaDoLogin(q, res) {
   }
 }
 async function publicar(corpo) {
-  const cfg = await lerConfig(corpo.idToken);
-  if (!cfg || !cfg.cifra) throw erro(409, 'Conecte o Instagram da loja primeiro (botão Conectar Instagram).');
+  const cfg = await lerConfig(corpo.idToken); // só sócio, nos dois modos
+  const est = await estadoToken();
+  if (est && !est.ok) throw erro(409, 'O token do Instagram na Vercel (IG_TOKEN) não funcionou: ' + est.erro);
+  if (!est && (!cfg || !cfg.cifra)) throw erro(409, 'Conecte o Instagram da loja primeiro (botão Conectar Instagram).');
   const tipo = ['feed', 'carrossel', 'story'].includes(corpo.tipo) ? corpo.tipo : 'feed';
   const imagens = (Array.isArray(corpo.imagens) ? corpo.imagens : []).map(String);
   const qtdOk = tipo === 'carrossel' ? imagens.length >= 2 && imagens.length <= 10 : imagens.length === 1;
   if (!qtdOk || !imagens.every(id => ID_IMG.test(id))) throw erro(400, 'Imagens inválidas para publicar.');
   const legenda = String(corpo.legenda || '').slice(0, 2200);
-  const { seg } = await renovarSePreciso(corpo.idToken, decifrar(cfg.cifra), false);
-  const ig = seg.u || 'me', url = id => `${N.SITE}/insta/img/${id}.jpg`;
+  let t, ig, host, usuario;
+  if (est) { t = tokenFixo(); ig = est.id; host = hostDe(t); usuario = est.usuario; }
+  else {
+    const { seg } = await renovarSePreciso(corpo.idToken, decifrar(cfg.cifra), false);
+    t = seg.t; ig = seg.u || 'me'; host = GRAPH; usuario = cfg.usuario || '';
+  }
+  const g = (metodo, caminho, params) => graph(metodo, caminho, params, t, host);
+  const url = id => `${N.SITE}/insta/img/${id}.jpg`;
   let criacao;
   if (tipo === 'story') {
-    criacao = (await graph('POST', `/${ig}/media`, { media_type: 'STORIES', image_url: url(imagens[0]) }, seg.t)).id;
+    criacao = (await g('POST', `/${ig}/media`, { media_type: 'STORIES', image_url: url(imagens[0]) })).id;
   } else if (tipo === 'feed') {
-    criacao = (await graph('POST', `/${ig}/media`, { image_url: url(imagens[0]), caption: legenda }, seg.t)).id;
+    criacao = (await g('POST', `/${ig}/media`, { image_url: url(imagens[0]), caption: legenda })).id;
   } else {
     const filhos = [];
-    for (const id of imagens) filhos.push((await graph('POST', `/${ig}/media`, { image_url: url(id), is_carousel_item: 'true' }, seg.t)).id);
-    for (const f of filhos) await esperarPronto(f, seg.t);
-    criacao = (await graph('POST', `/${ig}/media`, { media_type: 'CAROUSEL', children: filhos.join(','), caption: legenda }, seg.t)).id;
+    for (const id of imagens) filhos.push((await g('POST', `/${ig}/media`, { image_url: url(id), is_carousel_item: 'true' })).id);
+    for (const f of filhos) await esperarPronto(f, t, host);
+    criacao = (await g('POST', `/${ig}/media`, { media_type: 'CAROUSEL', children: filhos.join(','), caption: legenda })).id;
   }
-  await esperarPronto(criacao, seg.t);
-  const pub = await graph('POST', `/${ig}/media_publish`, { creation_id: criacao }, seg.t);
+  await esperarPronto(criacao, t, host);
+  const pub = await g('POST', `/${ig}/media_publish`, { creation_id: criacao });
   let link = '';
-  try { link = (await graph('GET', `/${pub.id}`, { fields: 'permalink' }, seg.t)).permalink || ''; } catch (e) { /* publicou mesmo assim */ }
-  console.log(`insta publicou ${tipo} ${pub.id}`);
-  return { ok: true, id: pub.id, link, usuario: cfg.usuario || '' };
+  try { link = (await g('GET', `/${pub.id}`, { fields: 'permalink' })).permalink || ''; } catch (e) { /* publicou mesmo assim */ }
+  console.log(`insta publicou ${tipo} ${pub.id}${est ? ' (token)' : ''}`);
+  return { ok: true, id: pub.id, link, usuario };
 }
 async function renovar(corpo) {
   const cfg = await lerConfig(corpo.idToken);
+  if (tokenFixo()) return { ok: true, renovou: false, expira: null }; // o token de usuário do sistema não vence
   if (!cfg || !cfg.cifra) throw erro(409, 'O Instagram da loja não está conectado.');
   const r = await renovarSePreciso(corpo.idToken, decifrar(cfg.cifra), true);
   return { ok: true, renovou: r.renovou, expira: r.expira ? r.expira.getTime() : null };
@@ -254,7 +292,10 @@ module.exports = async (req, res) => {
     if (req.method === 'GET') {
       if (q.img) return await servirImagem(String(q.img).replace(/\.jpg$/i, ''), res);
       if (q.code || q.error || q.state) return await voltaDoLogin(q, res);
-      return json(res, 200, { ok: true, configurado: configurado() });
+      // estado para o sistema: no modo token, se ele funciona e de qual conta é (nunca o token)
+      const est = await estadoToken();
+      return json(res, 200, { ok: true, configurado: configurado(), token: !!est, conectado: !!(est && est.ok),
+        usuario: (est && est.usuario) || '', erro: (est && !est.ok && est.erro) || '' });
     }
     if (req.method !== 'POST') return json(res, 405, { erro: 'Use GET ou POST.' });
     const corpo = await lerCorpo(req);
@@ -267,4 +308,4 @@ module.exports = async (req, res) => {
     return json(res, e.status || 500, { erro: e.message || 'Erro inesperado.' });
   }
 };
-module.exports._teste = { cifrar, decifrar, novoEstado, estadoValido, VOLTA, ESCOPOS };
+module.exports._teste = { cifrar, decifrar, novoEstado, estadoValido, VOLTA, ESCOPOS, limparCache: () => { cacheToken = null; } };

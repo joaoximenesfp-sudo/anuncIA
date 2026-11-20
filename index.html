@@ -11927,15 +11927,21 @@ async function instaCarregar(){
   // WhatsApp, cidade e @ da loja: sem eles a legenda (e o rodapé da arte) sai sem contato.
   // Antes só carregavam ao abrir a tabela de vendedores.
   if(!catCfg.whatsapp){ try{ await catCarregarCfg(); anDesenhar(); anCatMontar(); }catch(e){} }
-  try{ const s=await getDoc(doc(db,'config','instagram')); instaCfg=s.exists()?s.data():null; }catch(e){ instaCfg=null; }
-  if(instaConfigurado===null){
-    try{ instaConfigurado=!!(await (await fetch('/api/insta')).json()).configurado; }catch(e){ instaConfigurado=false; }
+  // O servidor diz como o Instagram está ligado. Token de usuário do sistema na Vercel
+  // (IG_TOKEN, o jeito dos apps novos da Meta): não precisa de login nem vence.
+  let est=null;
+  try{ est=await (await fetch('/api/insta')).json(); }catch(e){}
+  instaConfigurado=!!(est&&est.configurado);
+  if(est&&est.token){
+    instaCfg={modo:'token',usuario:est.usuario||'',ok:!!est.conectado,erro:est.erro||''};
+  }else{
+    try{ const s=await getDoc(doc(db,'config','instagram')); instaCfg=s.exists()?s.data():null; }catch(e){ instaCfg=null; }
   }
   instaMostrar();
-  // Renova sozinho: o token vale 60 dias e a Meta deixa renovar depois de 24 h.
-  // Usando o sistema pelo menos a cada 50 dias, a conexão nunca vence.
+  // Login do Instagram (apps antigos): o token vale 60 dias e a Meta deixa renovar
+  // depois de 24 h. Usando o sistema pelo menos a cada 50 dias, a conexão nunca vence.
   const ren=instaData(instaCfg&&instaCfg.renovadoEm);
-  if(instaCfg&&instaCfg.cifra&&instaConfigurado&&Date.now()-ren>7*864e5&&!instaRenovando){
+  if(instaCfg&&instaCfg.modo!=='token'&&instaCfg.cifra&&instaConfigurado&&Date.now()-ren>7*864e5&&!instaRenovando){
     instaRenovando=true;
     instaApi({acao:'renovar'}).then(async r=>{
       if(r&&r.renovou){ const s=await getDoc(doc(db,'config','instagram')); if(s.exists()) instaCfg=s.data(); instaMostrar(); }
@@ -11943,23 +11949,26 @@ async function instaCarregar(){
   }
 }
 function instaConectado(){
+  if(instaCfg&&instaCfg.modo==='token') return !!instaCfg.ok;
   const exp=instaData(instaCfg&&instaCfg.expira);
   return !!(instaCfg&&instaCfg.cifra&&!(exp&&exp<Date.now()));
 }
 function instaMsg(t,html){ const m=document.getElementById('instaMsg'); if(m){ if(html) m.innerHTML=t; else m.textContent=t; } }
 const INSTA_VOLTA='https://anunc-ia.vercel.app/api/insta';
 const INSTA_VERCEL='https://vercel.com/joaoximenesfp-sudos-projects/anunc-ia/settings/environment-variables';
-// O passo a passo, enquanto a Vercel ainda não tem o app da Meta.
-function instaGuia(){
-  return `<details class="insta-guia" open><summary>Como conectar o Instagram (uma vez só, uns 15 minutos)</summary><ol>
-    <li>No app do Instagram: <b>Configurações → Tipo de conta e ferramentas</b> → deixe a conta da loja como <b>profissional</b> (Comercial ou Criador de conteúdo).</li>
-    <li>Abra o <a href="https://developers.facebook.com/apps/" target="_blank" rel="noopener">Meta for Developers</a> (entra com o seu Facebook) → <b>Criar app</b> → caso de uso <b>Gerenciar mensagens e conteúdo no Instagram</b>.</li>
-    <li>No app: <b>Instagram → Configuração da API com login do Instagram</b>. Em <b>Gerar tokens de acesso</b>, toque em <b>Adicionar conta</b> e entre com a conta da loja.</li>
-    <li>Na mesma página, em <b>Configurar o login comercial do Instagram</b>, no campo <b>URI de redirecionamento do OAuth</b>, cole <code>${INSTA_VOLTA}</code> (<a href="#" onclick="instaCopiarVolta();return false">copiar</a>) e salve.</li>
-    <li>Ainda ali, copie o <b>ID do app do Instagram</b> e a <b>chave secreta do app do Instagram</b>.</li>
-    <li>Nas <a href="${INSTA_VERCEL}" target="_blank" rel="noopener">variáveis da Vercel</a>, crie <code>IG_APP_ID</code> (o ID) e <code>IG_APP_SECRET</code> (a chave secreta) e faça o <b>Redeploy</b> (Deployments → ⋯ → Redeploy). A chave secreta vai só lá: nunca em mensagem nem em print.</li>
-    <li>Volte aqui: no lugar deste texto aparece o botão <b>Conectar Instagram</b>.</li>
-  </ol><div class="tipo-auto">Se o Instagram disser que a conta não tem permissão: no app da Meta, <b>Funções do app → Funções → Testadores do Instagram</b>, adicione a conta e aceite o convite no Instagram (Configurações → Apps e sites → Convites de testador).</div></details>`;
+const INSTA_NEGOCIOS='https://business.facebook.com/settings';
+// O passo a passo, enquanto a Vercel não tem o token. Apps novos da Meta só têm o "login
+// unificado", que usa token de usuário do sistema: gerado nas Configurações da empresa.
+function instaGuia(aberto){
+  return `<details class="insta-guia"${aberto===false?'':' open'}><summary>Como ligar o Instagram (uma vez só)</summary><ol>
+    <li>A conta da loja precisa ser <b>profissional</b> e estar no portfólio da empresa: <a href="${INSTA_NEGOCIOS}" target="_blank" rel="noopener">Configurações da empresa</a> → <b>Contas do Instagram</b>.</li>
+    <li>No app do <a href="https://developers.facebook.com/apps/" target="_blank" rel="noopener">Meta for Developers</a>: <b>Casos de uso → Personalizar (API do Instagram) → Permissões e recursos</b> → adicione <code>instagram_basic</code> e <code>instagram_content_publish</code>.</li>
+    <li>Nas <a href="${INSTA_NEGOCIOS}" target="_blank" rel="noopener">Configurações da empresa</a> → <b>Usuários do sistema</b> → <b>Adicionar</b> (nome "Publicador", função Administrador).</li>
+    <li>Com ele selecionado: <b>Atribuir ativos</b> → o app e a conta do Instagram, com controle total.</li>
+    <li><b>Gerar token</b>: escolha o app, validade <b>Nunca</b>, e marque <code>instagram_basic</code> e <code>instagram_content_publish</code> (e as de <code>pages_</code> e a <code>business_management</code>, se aparecerem). Copie o token: ele aparece uma vez só.</li>
+    <li>Nas <a href="${INSTA_VERCEL}" target="_blank" rel="noopener">variáveis da Vercel</a>, crie <code>IG_TOKEN</code> com o token e faça o <b>Redeploy</b> (Deployments → ⋯ → Redeploy). O token vai só lá: nunca em mensagem nem em print.</li>
+    <li>Volte aqui: aparece "Conectado" com a conta da loja.</li>
+  </ol></details>`;
 }
 window.instaCopiarVolta=()=>{ try{ navigator.clipboard.writeText(INSTA_VOLTA).then(()=>instaMsg('Endereço copiado: é só colar no campo da Meta.')); }catch(e){} };
 function instaMostrar(){
@@ -11969,14 +11978,20 @@ function instaMostrar(){
   if(aviso) aviso.style.display=ligado?'none':'';
   if(ligado) instaSincronizarLegenda();
   if(lig&&conta){
-    if(ligado){
+    if(ligado&&instaCfg.modo==='token'){
+      conta.textContent='@'+(instaCfg.usuario||'conta da loja');
+      lig.innerHTML='<div class="tipo-auto">Conectado pelo token do usuário do sistema (não vence). Para trocar de conta, troque o IG_TOKEN na Vercel.</div>';
+    }else if(instaCfg&&instaCfg.modo==='token'){
+      conta.textContent='token com problema';
+      lig.innerHTML=`<div class="tipo-auto">⚠️ O token da Vercel (IG_TOKEN) não funcionou: ${esc(instaCfg.erro||'erro sem mensagem')}</div>`+instaGuia(false);
+    }else if(ligado){
       const dias=exp?Math.max(0,Math.round((exp-Date.now())/864e5)):null;
       conta.textContent='@'+(instaCfg.usuario||'conta da loja');
       lig.innerHTML=`<div class="tipo-auto">Conectado${dias!=null?` · vale mais ${dias} dias e renova sozinho quando você usa o sistema`:''}.
         <a href="#" onclick="instaConectar();return false">Reconectar</a> · <a href="#" onclick="instaDesconectar();return false">Desconectar</a></div>`;
     }else{
       conta.textContent=vencido?'conexão vencida':'não conectado';
-      lig.innerHTML = instaConfigurado===false ? instaGuia()
+      lig.innerHTML = !instaConfigurado ? instaGuia()
         : `<button class="bok" onclick="instaConectar()">🔗 ${vencido?'Conectar de novo':'Conectar Instagram'}</button>
            <div class="tipo-auto">Abre o login do próprio Instagram: entre com a conta da loja e permita publicar.</div>`;
     }

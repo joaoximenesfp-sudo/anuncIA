@@ -13,7 +13,7 @@ const N = require(path.join(__dirname, '..', 'tela', 'nucleo.js'));
 const { cifrar, decifrar, estadoValido, novoEstado } = insta._teste;
 
 // ── fetch simulado ──
-let pedidos = [], cfgDoc = null, imagens = {}, contador = 0, statusSeq = [], erroMeta = null, trocaPlana = false;
+let pedidos = [], cfgDoc = null, imagens = {}, contador = 0, statusSeq = [], erroMeta = null, trocaPlana = false, tokenRuim = false;
 const resposta = (status, json) => ({ ok: status >= 200 && status < 300, status, json: async () => json });
 const param = (p, k) => p.metodo === 'GET' ? new URL(p.url).searchParams.get(k) : new URLSearchParams(p.corpo).get(k);
 global.fetch = async (url, op = {}) => {
@@ -33,6 +33,14 @@ global.fetch = async (url, op = {}) => {
     if (erroMeta) return resposta(400, { error_type: 'OAuthException', code: 400, error_message: erroMeta });
     const d = { access_token: 'curto', user_id: '111', permissions: 'instagram_business_basic,instagram_business_content_publish' };
     return resposta(200, trocaPlana ? d : { data: [d] });
+  }
+  if (u.host === 'graph.facebook.com') { // modo token (usuário do sistema)
+    if (tokenRuim) return resposta(400, { error: { message: 'Invalid OAuth access token - Cannot parse access token', code: 190, type: 'OAuthException' } });
+    if (/^\/v23\.0\/\d+$/.test(u.pathname) && u.searchParams.get('fields') === 'id,username') return resposta(200, { id: u.pathname.split('/').pop(), username: 'tech.campinas' });
+    if (/\/v23\.0\/\d+\/media$/.test(u.pathname)) return resposta(200, { id: 'c' + (++contador) });
+    if (/\/v23\.0\/\d+\/media_publish$/.test(u.pathname)) return resposta(200, { id: 'm' + contador });
+    if (/\/v23\.0\/c\d+$/.test(u.pathname)) return resposta(200, { status_code: 'FINISHED' });
+    if (/\/v23\.0\/m\d+$/.test(u.pathname)) return resposta(200, { permalink: 'https://www.instagram.com/p/FB123/' });
   }
   if (u.host === 'graph.instagram.com') {
     if (erroMeta && u.pathname !== '/access_token') return resposta(400, { error: { message: erroMeta.msg, code: erroMeta.code, type: 'OAuthException' } });
@@ -171,6 +179,38 @@ const ID1 = 'a'.repeat(32), ID2 = 'b'.repeat(32);
   cfgDoc = { cifra: cifrar({ t: 'longo', u: '1', r: 0 }).slice(0, -4) + 'AAAA' };
   r = await chamar({ method: 'POST', body: { acao: 'publicar', idToken: 'socio', tipo: 'feed', imagens: [ID1], legenda: 'x' } });
   ok(r.status === 409 && /Conecte de novo/.test(r.json().erro), 'cifra mexida (ou segredo trocado): pede para conectar de novo');
+
+  console.log('\nmodo token (usuário do sistema, o dos apps novos da Meta)');
+  process.env.IG_TOKEN = 'EAAtokenDeTesteDoSistema'; insta._teste.limparCache(); cfgDoc = null; pedidos = [];
+  r = await chamar();
+  let est = r.json();
+  ok(est.token && est.conectado && est.usuario === 'tech.campinas' && !r.body.includes('EAAtoken'), 'GET: token funcionando, de qual conta é (e nunca o token)');
+  const lk = pedidos.find(p => p.url.startsWith('https://graph.facebook.com/'));
+  ok(lk && new URL(lk.url).pathname === '/v23.0/17841430007598170', 'confere na conta da loja (@tech.campinas), pela API do Facebook');
+  pedidos = []; contador = 0;
+  r = await chamar({ method: 'POST', body: { acao: 'publicar', idToken: 'socio', tipo: 'feed', imagens: [ID1], legenda: 'pelo token' } });
+  const mt = pedidos.filter(p => p.url.startsWith('https://graph.facebook.com/'));
+  const cont = mt.find(p => p.metodo === 'POST' && p.url.endsWith('/media'));
+  ok(r.status === 200 && r.json().link === 'https://www.instagram.com/p/FB123/' && r.json().usuario === 'tech.campinas', 'publica pelo token, sem config/instagram no banco');
+  ok(cont && cont.url === 'https://graph.facebook.com/v23.0/17841430007598170/media' && param(cont, 'access_token') === 'EAAtokenDeTesteDoSistema' &&
+    param(cont, 'caption') === 'pelo token' && !pedidos.some(p => p.url.includes('graph.instagram.com')), 'container e publicação em graph.facebook.com, na conta da loja');
+  r = await chamar({ method: 'POST', body: { acao: 'publicar', idToken: 'intruso', tipo: 'feed', imagens: [ID1], legenda: 'x' } });
+  ok(r.status === 403, 'com token também: quem não é sócio não publica');
+  r = await chamar({ method: 'POST', body: { acao: 'conectar', idToken: 'socio' } });
+  const rn = await chamar({ method: 'POST', body: { acao: 'renovar', idToken: 'socio' } });
+  ok(r.status === 409 && /já está ligado/.test(r.json().erro) && rn.json().renovou === false, 'com token, não tem login nem renovação (não vence)');
+  process.env.IG_USER_ID = '17841499999999999'; pedidos = [];
+  await chamar();
+  ok(pedidos.some(p => p.url.includes('/v23.0/17841499999999999?')), 'IG_USER_ID na Vercel troca a conta');
+  delete process.env.IG_USER_ID;
+  tokenRuim = true; insta._teste.limparCache();
+  r = await chamar(); est = r.json();
+  ok(est.token && !est.conectado && /venceu ou foi desfeita/.test(est.erro), 'token errado: o GET diz que não funcionou, e por quê');
+  r = await chamar({ method: 'POST', body: { acao: 'publicar', idToken: 'socio', tipo: 'feed', imagens: [ID1], legenda: 'x' } });
+  ok(r.status === 409 && /IG_TOKEN/.test(r.json().erro), 'e não tenta publicar');
+  tokenRuim = false; delete process.env.IG_TOKEN; insta._teste.limparCache();
+  r = await chamar();
+  ok(r.json().token === false, 'sem IG_TOKEN: volta ao login do Instagram');
 
   console.log('\na arte temporária, para a Meta baixar');
   const jpg = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3, 0xff, 0xd9]);
