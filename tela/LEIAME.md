@@ -99,7 +99,10 @@ ter um quadrado branco onde o QR vai.
 ] }
 ```
 
-Toca a primeira opção que bater com horário, dia (`dias`: 0 = domingo) e cidade.
+Toca a primeira opção que bater com horário, dia (`dias`: 0 = domingo) e cidade. A aba
+**Programação** do painel mostra a grade do dia (o que passa em cada horário, quantas vezes por
+hora e quanto da tela) e a página do motorista mostra "Na sua tela hoje". Não existe vídeo de
+24 horas: cada tablet monta a grade pelo próprio relógio, então quem liga às 19h já pega a das 19h.
 Faixa que vira a noite (`"21:00"` a `"02:00"`) conta como a noite do dia em que
 começou. Se nenhuma opção bater, a cota é pulada.
 

@@ -81,6 +81,7 @@
       <button data-aba="carros" class="on">Carros</button>
       <button data-aba="mes">Eficiência e bônus</button>
       <button data-aba="bairros">Bairros</button>
+      <button data-aba="programa">Programação</button>
       <button data-aba="anuncios">Anunciantes</button>
     </nav>
 
@@ -144,6 +145,15 @@
         <h2>Bairros com mais tela</h2>
         <p class="leg">Nome do bairro pelo OpenStreetMap (fica guardado neste navegador). Num anunciante, as exibições por bairro são uma estimativa: a parte dele das exibições de cada hora, espalhada pelos bairros daquela hora.</p>
         <div class="rolar"><table id="tab-bairros"></table></div>
+      </div>
+    </section>
+
+    <section data-painel="programa" hidden>
+      <div class="cartao">
+        <h2>Programação do dia</h2>
+        <p class="leg">O que os tablets passam em cada horário. Cada tablet monta a programação pelo próprio relógio: quem liga às 19h já pega a das 19h, e nada precisa ser baixado à mão. Os anúncios com horário (ex.: hamburgueria das 18h às 23h, só em Campinas, só no fim de semana) entram como cota no pacote, e os tablets pegam sozinhos na próxima vez que tiverem internet.</p>
+        <div class="linha"><label>Dia<input id="prog-dia" type="date"></label><label>Cidade<select id="prog-cidade"></select></label></div>
+        <div class="rolar" style="margin-top:12px"><table id="tab-prog"></table></div>
       </div>
     </section>
 
@@ -542,6 +552,25 @@ function desenharScans() {
     : '<tbody><tr><td>Ninguém escaneou ainda neste mês. Quando alguém apontar a câmera para um QR da tela, aparece aqui.</td></tr></tbody>';
 }
 
+// ── PROGRAMAÇÃO DO DIA ──
+function desenharProgramacao() {
+  if (!$('prog-dia').value) $('prog-dia').value = N.partesData(new Date()).dia;
+  const sel = $('prog-cidade'), antes = sel.value;
+  const cidades = [...new Map(carros.map(c => [c.cidade, c.cidadeNome || c.cidade])).entries()].filter(([s]) => s);
+  if (!cidades.length) cidades.push(['campinas', 'Campinas']);
+  sel.innerHTML = cidades.map(([s, n]) => `<option value="${esc(s)}">${esc(n)}</option>`).join('');
+  sel.value = cidades.some(([s]) => s === antes) ? antes : cidades[0][0];
+  const faixas = (pacote.loop || []).length ? N.programacao(pacote, new Date($('prog-dia').value + 'T12:00:00'), sel.value) : [];
+  const nome = d => d ? ((pacote.anuncios[d] || {}).nome || d) : 'Conteúdo próprio (dicas, catálogo)';
+  $('tab-prog').innerHTML = !faixas.length ? '<tbody><tr><td>Pacote não carregado.</td></tr></tbody>'
+    : '<thead><tr><th>Horário</th><th>O que passa</th><th class="n">Vezes por hora</th><th class="n">A cada</th><th class="n">% da tela</th></tr></thead><tbody>' +
+      faixas.map(f => f.anuncios.map((a, i) => `<tr>${i ? '' : `<td rowspan="${f.anuncios.length}" style="vertical-align:top"><b>${f.das === '00:00' && f.ate === '24:00' ? 'O dia todo' : `${f.das}–${f.ate}`}</b><br><span class="leg">loop de ${fmt(f.duracaoLoop / 60, 1)} min</span></td>`}
+        <td>${esc(nome(a.dono))}</td><td class="n">${fmt(a.vezesHora, 1)}</td><td class="n">${a.dono && a.vezesHora > 0 ? fmt(60 / a.vezesHora) + ' min' : '—'}</td>
+        <td class="n">${fmt(100 * a.segundosHora / 3600)}%</td></tr>`).join('')).join('') + '</tbody>';
+}
+$('prog-dia').onchange = desenharProgramacao;
+$('prog-cidade').onchange = desenharProgramacao;
+
 // ── ANUNCIANTES ──
 function desenharAnuncios() {
   const lista = resumo ? resumo.anuncios : [];
@@ -582,6 +611,7 @@ document.querySelector('nav').onclick = e => {
   document.querySelectorAll('nav button').forEach(x => x.classList.toggle('on', x === b));
   document.querySelectorAll('[data-painel]').forEach(p => p.hidden = p.dataset.painel !== b.dataset.aba);
   if (b.dataset.aba === 'bairros') desenharMapa();
+  if (b.dataset.aba === 'programa') desenharProgramacao();
 };
 async function trocarMes() {
   const mes = $('mes').value;

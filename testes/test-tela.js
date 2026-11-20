@@ -41,6 +41,13 @@ ok(p.pos === 1 && p.item.midia === 'casa', 'próximo depois da posição 0 é a 
 p = N.proximo(pac, 1, em('2026-11-20T12:00:00'), 'campinas');
 ok(p.pos === 0, 'cota vazia é pulada e o loop volta ao começo');
 ok(N.duracaoLoop(pac, em('2026-11-20T19:00:00'), 'campinas') === 29, 'loop no pico dura 14 + 15 s');
+const pac2 = { midias: { a: { tipo: 'imagem', dono: 'tech' }, h: { tipo: 'video', duracao: 15, dono: 'hamb' }, c: { tipo: 'imagem' } },
+  loop: [{ midia: 'a', segundos: 15 }, { cota: 'c1', opcoes: [{ midia: 'h', das: '18:00', ate: '23:00', cidades: ['campinas'] }, { midia: 'c', segundos: 15 }] }, { midia: 'c', segundos: 30 }] };
+const grade = N.programacao(pac2, em('2026-11-20T12:00:00'), 'campinas');
+ok(grade.map(f => f.das + '-' + f.ate).join() === '00:00-18:00,18:00-23:00,23:00-24:00', 'programação do dia em faixas: ' + grade.map(f => f.das + '-' + f.ate).join(' '));
+const hambPico = grade[1].anuncios.find(a => a.dono === 'hamb');
+ok(hambPico && Math.round(hambPico.vezesHora) === 60 && !grade[0].anuncios.some(a => a.dono === 'hamb'), 'hamburgueria só no pico, 60 vezes por hora (loop de 1 min)');
+ok(N.programacao(pac2, em('2026-11-20T12:00:00'), 'sumare').length === 1, 'em outra cidade a cota não entra: o dia todo igual');
 
 console.log('\ncontagem do que passou');
 const ag = {};

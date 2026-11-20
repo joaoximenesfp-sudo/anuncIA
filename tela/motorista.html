@@ -37,6 +37,8 @@
   th,td{padding:8px 6px;border-bottom:1px solid var(--linha);text-align:left}
   th{color:var(--fraco);font-weight:600;font-size:13px}
   td.n,th.n{text-align:right}
+  .faixa{margin:0 0 10px}.faixa b{display:block;font-size:15px;margin-bottom:2px}
+  .faixa ul{margin:0;padding-left:18px;color:var(--texto);font-size:15px}.faixa li span{color:var(--fraco)}
   .demo{background:var(--amarelo-claro);color:var(--amarelo);padding:8px 12px;border-radius:10px;font-weight:600;margin-bottom:12px}
   [hidden]{display:none!important}
 </style>
@@ -55,6 +57,11 @@
     <div id="avisos"></div>
     <div class="cartao" id="bonus"></div>
     <div class="kpis" id="kpis"></div>
+    <div class="cartao" id="programa" hidden>
+      <h2>Na sua tela hoje</h2>
+      <div id="prog"></div>
+      <p class="leg">O tablet troca sozinho pelo relógio: se você ligar às 19h, já passa a programação das 19h. Não precisa baixar nada.</p>
+    </div>
     <div class="cartao">
       <h2>Dia a dia</h2>
       <table id="dias"></table>
@@ -148,6 +155,23 @@
         turno: ['tarde', 'pico'], pontos: h + 2 * sc, posicao: 3, total: 12, bonus: 142.35, pesoHora: 1, pesoScan: 2, porDia } } };
   }
 
+  // o que passa na tela hoje, pela programação do pacote (mesmo cálculo do tablet)
+  async function desenharProgramacao() {
+    try {
+      const pac = await (await fetch('pacote.json', { cache: 'no-store' })).json();
+      const faixas = N.programacao(pac, new Date(), N.slug(dados.cidade || ''));
+      const nome = d => (pac.anuncios[d] || {}).nome || d;
+      $('prog').innerHTML = faixas.map(f => {
+        const ads = f.anuncios.filter(a => a.dono);
+        const proprio = f.anuncios.some(a => !a.dono);
+        const titulo = f.das === '00:00' && f.ate === '24:00' ? 'O dia todo' : `${f.das} às ${f.ate}`;
+        return `<div class="faixa"><b>${titulo}</b><ul>` + ads.map(a => `<li>${esc(nome(a.dono))} <span>· a cada ${fmt(60 / a.vezesHora)} min</span></li>`).join('') +
+          (proprio ? '<li><span>e dicas de tecnologia entre os anúncios</span></li>' : '') + '</ul></div>';
+      }).join('');
+      $('programa').hidden = !faixas.length;
+    } catch (e) { /* sem o pacote agora: o resto da página continua */ }
+  }
+
   carregar().then(d => {
     if (!d) return;
     dados = d;
@@ -157,6 +181,7 @@
     $('mes').onchange = desenhar;
     $('carregando').hidden = true; $('app').hidden = false;
     desenhar();
+    desenharProgramacao();
   }).catch(() => erro('Não consegui ler seus números agora. Tente de novo daqui a pouco.'));
 })();
 </script>

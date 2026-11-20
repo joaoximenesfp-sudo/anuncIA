@@ -108,6 +108,36 @@
     }, 0);
   }
 
+  // Grade do dia: em que horários cada anunciante passa e quantas vezes por hora, numa cidade e
+  // num dia (as cotas mudam com horário, dia da semana, cidade e contrato). É o mesmo cálculo que
+  // o tablet faz pelo relógio dele: quem liga às 19h já pega a programação das 19h.
+  const hhmm = m => `${dois(Math.floor(m / 60))}:${dois(m % 60)}`;
+  function programacao(pacote, data, cidade) {
+    const d0 = new Date(data);
+    const cortes = new Set([0]);
+    const marca = op => { for (const k of ['das', 'ate']) { const m = minutos(op && op[k]); if (m != null && m < 1440) cortes.add(m); } };
+    for (const e of pacote.loop || []) e.cota ? (e.opcoes || []).forEach(marca) : marca(e);
+    const lista = [...cortes].sort((a, b) => a - b), faixas = [];
+    lista.forEach((das, i) => {
+      const t = new Date(d0.getFullYear(), d0.getMonth(), d0.getDate(), 0, das);
+      const dur = duracaoLoop(pacote, t, cidade), fator = dur > 0 ? 3600 / dur : 0, por = {};
+      for (const e of pacote.loop || []) {
+        const it = escolher(e, t, cidade), m = it && pacote.midias[it.midia];
+        if (!m) continue;
+        const x = por[m.dono || ''] || (por[m.dono || ''] = { vezes: 0, segundos: 0 });
+        x.vezes += 1; x.segundos += segundosDe(it, pacote);
+      }
+      const anuncios = Object.entries(por).map(([dono, x]) => ({ dono, vezesHora: x.vezes * fator, segundosHora: x.segundos * fator }))
+        .sort((a, b) => b.segundosHora - a.segundosHora);
+      const ate = i + 1 < lista.length ? lista[i + 1] : 1440;
+      const assinatura = JSON.stringify(anuncios.map(a => [a.dono, Math.round(a.vezesHora * 10)]));
+      const ant = faixas[faixas.length - 1];
+      if (ant && ant.assinatura === assinatura) ant.ate = ate;
+      else faixas.push({ das, ate, duracaoLoop: dur, anuncios, assinatura });
+    });
+    return faixas.map(f => ({ das: hhmm(f.das), ate: hhmm(f.ate), duracaoLoop: f.duracaoLoop, anuncios: f.anuncios }));
+  }
+
   // ── O QUE PASSOU NA TELA ──
   // ag = { "2026-11-18": { "14": { t: s de tela, v: [janelas por faixa de vibração], e: { midia: [n, s] },
   //        c: s na tomada (carro ligado), b: s de tela rodando na bateria (cabo solto?),
@@ -455,7 +485,7 @@
 
   const API = {
     PROJETO, CHAVE_API, SITE, JANELA_VIBRACAO, FAIXAS_VIBRACAO, FAIXA_MOVIMENTO, FAIXAS_HORARIO, LIMITE_SCANS_HORA,
-    partesData, faixaDaHora, slug, vale, escolher, segundosDe, proximo, duracaoLoop,
+    partesData, faixaDaHora, slug, vale, escolher, segundosDe, proximo, duracaoLoop, programacao,
     anotarExibicao, anotarTela, anotarVibracao, anotarCarregando, anotarBateria, anotarToque, anotarKm, anotarRegiao, desvio, lotes, novoId, novaChave,
     PRECISAO_REGIAO, VELOCIDADE_ANDANDO, geohash, caixaGeohash, centroGeohash, distanciaM,
     valor, campos, lerValor, lerCampos, urlCriar, urlDoc, linkQR, linkPareamento, lerPareamento, pinMenu,
