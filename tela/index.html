@@ -42,6 +42,19 @@
   #menu button.sec{background:#26344d;color:#fff}
   #menu details{margin-top:18px;color:#b9c3d6}
   #menu input{font:inherit;font-size:16px;width:100%;margin:6px 0 10px;padding:10px 12px;border-radius:10px;border:1px solid #34445f;background:#0a111d;color:#fff}
+  /* PIN do menu */
+  #pin{position:fixed;inset:0;z-index:11;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.85)}
+  #pin.on{display:flex}
+  #pin .caixa{background:#101826;border:1px solid #26344d;border-radius:20px;padding:22px 26px;width:min(380px,92vw);text-align:center}
+  #pin h2{margin:0 0 6px;font-size:22px}
+  #pin-msg{margin:0 0 14px;color:#b9c3d6;font-size:15px;min-height:2.6em}
+  #pin-pontos{display:flex;gap:14px;justify-content:center;margin-bottom:16px}
+  #pin-pontos i{width:16px;height:16px;border-radius:50%;border:2px solid #8fa0bd}
+  #pin-pontos i.on{background:#fff;border-color:#fff}
+  #pin-teclas{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  #pin-teclas button{font:inherit;font-size:24px;font-weight:700;border:0;border-radius:14px;padding:14px 0;background:#26344d;color:#fff}
+  #pin-teclas button:active{background:#34507a}
+  #pin-teclas button[data-k="x"]{font-size:16px}
   .erro{color:#ff8a8a}
   [hidden]{display:none!important}
   /* configurar a tela: aparece ao abrir pelo link do painel */
@@ -95,6 +108,7 @@
       <li id="passo-local" class="passo-local"><b class="t">Bairros por onde o carro passa (opcional)</b>
         <span>O anunciante quer saber em que bairros o anúncio rodou e quantos km. A tela guarda só o bairro aproximado (uma área de 1 km), só com o carro andando, e nunca a rua nem o endereço.</span>
         <span class="aviso local-negada" hidden>A localização foi negada. No Chrome: ⋮ → Configurações → Configurações do site → Local → libere anunc-ia.vercel.app. Depois toque em Tentar de novo.</span>
+        <span class="aviso local-dica" hidden></span>
         <button type="button" class="sec bt-local">Permitir localização</button></li>
     </ol>
     <ol id="passos-nativo" hidden>
@@ -111,6 +125,7 @@
       <li id="n-local" class="passo-local"><b class="t">Bairros por onde o carro passa (opcional)</b>
         <span>O anunciante quer saber em que bairros o anúncio rodou e quantos km. A tela guarda só o bairro aproximado (uma área de 1 km), só com o carro andando, e nunca a rua nem o endereço.</span>
         <span class="aviso local-negada" hidden>A localização foi negada. Libere em Configurações → Apps → Tela do carro → Permissões → Localização, e toque em Tentar de novo.</span>
+        <span class="aviso local-dica" hidden></span>
         <button type="button" class="sec bt-local">Permitir localização</button></li>
       <li id="n-liga"><b class="t">Botão Liga/Desliga</b>
         <span>Com o carregador ligado, se alguém apertar, a tela acende de novo sozinha.</span></li>
@@ -120,6 +135,19 @@
 </div>
 
 <div id="canto"></div>
+<div id="pin" role="dialog" aria-label="PIN do menu">
+  <div class="caixa">
+    <h2>PIN do menu</h2>
+    <p id="pin-msg"></p>
+    <div id="pin-pontos"><i></i><i></i><i></i><i></i></div>
+    <div id="pin-teclas">
+      <button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button>
+      <button data-k="4">4</button><button data-k="5">5</button><button data-k="6">6</button>
+      <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
+      <button data-k="x">Fechar</button><button data-k="0">0</button><button data-k="&lt;">⌫</button>
+    </div>
+  </div>
+</div>
 <div id="menu" role="dialog" aria-label="Menu da tela">
   <div class="caixa">
     <h2>Tela do carro</h2>

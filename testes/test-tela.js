@@ -65,6 +65,9 @@ ok(N.linkPareamento('C07', 'abcdef123456', 'sumare') === 'https://anunc-ia.verce
 ok(N.linkQR('tech', 'C07') === 'https://anunc-ia.vercel.app/q/tech/C07', 'link do QR leva anúncio e carro');
 ok(N.slug('Hortolândia ') === 'hortolandia' && N.slug('Santa Bárbara d\'Oeste') === 'santa-barbara-d-oeste', 'cidade vira código sem acento');
 ok(N.novaChave().length === 32, 'chave do carro com 32 caracteres');
+ok(/^\d{4}$/.test(N.pinMenu('abcdef123456')) && N.pinMenu('abcdef123456') === N.pinMenu('abcdef123456'), 'PIN do menu: 4 números, sempre o mesmo para a mesma chave');
+const pins = new Set(Array.from({ length: 200 }, () => N.pinMenu(N.novaChave())));
+ok(pins.size > 180, `PIN muda com a chave (${pins.size} PINs diferentes em 200 chaves)`);
 
 console.log('\nscans e bônus');
 const s = (carro, h, hora = 19, anuncio = 'tech') => ({ carro, h, hora, anuncio, dia: '2026-11-20', em: Date.parse('2026-11-20T19:00:00Z') });

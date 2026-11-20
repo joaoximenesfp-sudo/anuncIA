@@ -208,6 +208,14 @@
     return Math.sqrt(xs.reduce((a, b) => a + (b - m) * (b - m), 0) / xs.length);
   }
 
+  // PIN do menu escondido do tablet: 4 números que saem da chave do carro (o painel mostra).
+  // Quem não tem a chave não descobre o PIN, e ele muda junto quando o painel troca a chave.
+  function pinMenu(chave) {
+    let h = 0x811c9dc5;
+    for (const ch of 'menu:' + String(chave || '')) { h ^= ch.charCodeAt(0); h = Math.imul(h, 0x01000193) >>> 0; }
+    return String(h % 10000).padStart(4, '0');
+  }
+
   function novoId() {
     const b = new Uint8Array(12);
     (raiz.crypto || require('crypto').webcrypto).getRandomValues(b);
@@ -390,7 +398,7 @@
     partesData, faixaDaHora, slug, vale, escolher, segundosDe, proximo, duracaoLoop,
     anotarExibicao, anotarTela, anotarVibracao, anotarCarregando, anotarBateria, anotarToque, anotarKm, anotarRegiao, desvio, lotes, novoId, novaChave,
     PRECISAO_REGIAO, VELOCIDADE_ANDANDO, geohash, caixaGeohash, centroGeohash, distanciaM,
-    valor, campos, urlCriar, urlDoc, linkQR, linkPareamento, lerPareamento,
+    valor, campos, urlCriar, urlDoc, linkQR, linkPareamento, lerPareamento, pinMenu,
     scansValidos, resumoMes, diasSemSinal,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = API;

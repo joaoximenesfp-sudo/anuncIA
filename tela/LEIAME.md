@@ -21,8 +21,11 @@ o carro estiver ativo. Só os sócios leem.
    motorista quiser, **Permitir localização** (bairros e km; veja abaixo).
    **Expandir tela** liga a tela cheia; **Pronto, começar** fecha e começa o loop.
 3. O pacote baixa sozinho (barra verde) e depois roda sem internet.
-4. Menu escondido do tablet: 5 toques rápidos no canto de cima, à esquerda. Dali dá
-   para reabrir a configuração.
+4. Menu escondido do tablet: 5 toques rápidos no canto de cima, à esquerda, e o **PIN do
+   menu** (4 números; o painel mostra em "Link do tablet" e ele muda quando troca a chave).
+   5 PINs errados bloqueiam por 5 min, depois 10, 20… até 1 h; o menu fecha sozinho depois de
+   2 min parado. Tablet ainda sem carro abre sem PIN (para dar para parear). Dali dá para
+   reabrir a configuração.
 
 Página da web não consegue fixar o app nem desligar o botão Liga/Desliga sozinha:
 isso é do Android (Fixação de aplicativos e Controle de interação, da Samsung). O
@@ -116,7 +119,8 @@ o que se guarda é o bairro aproximado e os km, para o relatório do anunciante.
   metros rodados, somados por hora.
 - Só marca com o carro andando (GPS acima de ~9 km/h nos últimos 3 min): parado em
   casa ou no estacionamento não aparece.
-- Fora da tomada o GPS desliga, para não gastar a bateria.
+- Fora da tomada o GPS só fica ligado com mais de 50% de bateria; abaixo disso desliga
+  para não descarregar o tablet, e volta quando carrega.
 - Tablet sem GPS (só Wi-Fi) fica sem bairros e km; o resto continua igual.
 - App Android: precisa da versão 1.1 (a 1.0 não tem GPS e esconde o passo).
 

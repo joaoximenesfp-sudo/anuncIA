@@ -1,6 +1,6 @@
 {
  "versao": "2026-11-18.1",
- "app": "2026-11-20",
+ "app": "2026-11-20.2",
  "sobre": "Pacote do tablet nos carros. O player baixa tudo, roda sem internet e manda as exibições. Cotas por horário/cidade entram no loop como {\"cota\": nome, \"opcoes\": [...]} — veja tela/LEIAME.md.",
  "anuncios": {
   "tech": {

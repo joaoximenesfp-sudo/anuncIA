@@ -7,7 +7,7 @@
 (function () {
   'use strict';
   const N = window.TelaNucleo;
-  const APP = '2026-11-20';
+  const APP = '2026-11-20.2';
   const CACHE_MIDIA = 'tela-midia';
   const FADE = 250;
   const MIN = 60000;
@@ -240,17 +240,30 @@
   // ── CARRO LIGADO: tablet na tomada (o cabo fica no carro) ──
   let bat = null;
   try {
-    if (navigator.getBattery) navigator.getBattery().then(b => { bat = b; b.addEventListener('chargingchange', ajustarLocal); ajustarLocal(); }).catch(() => {});
+    if (navigator.getBattery) navigator.getBattery().then(b => {
+      bat = b; b.addEventListener('chargingchange', ajustarLocal); b.addEventListener('levelchange', ajustarLocal); ajustarLocal();
+    }).catch(() => {});
   } catch (e) { /* sem a API: segue sem */ }
   function carregando() { // true / false, ou null se o tablet não conta
     if (nativo) { const a = appEstado(); if (typeof a.carregando === 'boolean') return a.carregando; }
     return bat ? !!bat.charging : null;
   }
+  function nivelBateria() { // 0–100, ou null se o tablet não conta
+    if (nativo) { const a = appEstado(); if (typeof a.nivel === 'number' && a.nivel >= 0) return a.nivel; }
+    return bat && typeof bat.level === 'number' ? Math.round(bat.level * 100) : null;
+  }
+  // GPS: na tomada, ou fora dela com mais de 50% de bateria (abaixo disso desliga para poupar)
+  const BATERIA_GPS = 50;
+  function gpsPode() {
+    if (carregando() !== false) return true;
+    const n = nivelBateria();
+    return n == null || n > BATERIA_GPS;
+  }
 
   // ── TOQUES NA TELA: passageiro mexendo (o canto do menu e as telas de ajuste não contam) ──
   let ultimoToque = 0;
   document.addEventListener('pointerdown', e => {
-    if (!estado.tocando || (e.target.closest && e.target.closest('#canto, #menu, #config'))) return;
+    if (!estado.tocando || (e.target.closest && e.target.closest('#canto, #menu, #config, #pin'))) return;
     const t = Date.now();
     if (t - ultimoToque < 1500) return; // dedo que fica batendo conta uma vez
     ultimoToque = t;
@@ -260,18 +273,20 @@
   // ── BAIRRO E KM RODADOS (só se o motorista deixar, no "Configurar a tela") ──
   // Guarda só o bairro aproximado (geohash de 6 letras, uns 1,1 × 0,6 km), nunca a rua, e
   // só com o carro andando: parado mais de 3 min (em casa, no estacionamento) não marca nada.
-  const loc = { watch: null, fix: null, ancora: null, andou: 0, precisao: 0, negada: false, erro: '' };
+  const loc = { watch: null, fix: null, ancora: null, andou: 0, precisao: 0, negada: false, erro: '', desde: 0 };
+  const DICA_GPS = 'Dentro de casa o GPS demora. Leve o tablet para perto de uma janela por 1 a 2 minutos. Confira também em ' +
+    'Configurações → Localização se ela está ligada, com "Precisão do local do Google" ligada (acha a posição pelo Wi-Fi, bem mais rápido).';
   const PRECISAO_BAIRRO = 300, PRECISAO_KM = 50; // metros: sinal pior que isso não vale
   function ligarLocal() {
     if (loc.watch != null || !navigator.geolocation) return;
-    loc.negada = false; loc.erro = '';
+    loc.negada = false; loc.erro = ''; loc.desde = Date.now();
     try {
       loc.watch = navigator.geolocation.watchPosition(novaPosicao, erroLocal, { enableHighAccuracy: true, maximumAge: 10000 });
     } catch (e) { loc.erro = 'sem GPS'; loc.watch = null; }
   }
   function desligarLocal() {
     if (loc.watch != null) { try { navigator.geolocation.clearWatch(loc.watch); } catch (e) { /* já parou */ } }
-    loc.watch = null; loc.ancora = null;
+    loc.watch = null; loc.ancora = null; loc.desde = 0;
   }
   function erroLocal(e) {
     if (e && e.code === 1) { loc.negada = true; desligarLocal(); } // o tablet (ou o Chrome) negou
@@ -299,10 +314,10 @@
     if (!loc.fix || t - loc.fix.t > 2 * MIN || t - loc.andou > 3 * MIN) return null;
     return N.geohash(loc.fix.lat, loc.fix.lon);
   }
-  // fora da tomada o GPS desliga (economiza bateria); volta quando o carro liga
+  // fora da tomada e com a bateria abaixo de 50% o GPS desliga; volta quando carrega
   function ajustarLocal() {
     const a = nativo ? appEstado() : null;
-    const ligar = ler('tela.local', false) && carregando() !== false && !(a && a.local === false);
+    const ligar = ler('tela.local', false) && gpsPode() && !(a && a.local === false);
     if (!ligar) { desligarLocal(); return; }
     if (loc.negada && !(a && a.local === true)) return; // negou: só tenta de novo se pedirem
     ligarLocal();
@@ -319,8 +334,8 @@
     if (a && a.local === undefined) return 'precisa da versão nova do app';
     if (!ler('tela.local', false)) return 'desligada (não autorizada)';
     if (loc.negada || (a && a.local === false)) return 'negada no tablet';
-    if (carregando() === false) return 'pausada (fora da tomada)';
-    if (!loc.fix) return loc.erro || 'procurando o GPS…';
+    if (!gpsPode()) return `pausada (bateria abaixo de ${BATERIA_GPS}% fora da tomada)`;
+    if (!loc.fix) return (loc.erro || 'procurando o GPS…') + (loc.desde && Date.now() - loc.desde > 20000 ? ' · perto da janela acha mais rápido' : '');
     const parado = Date.now() - loc.andou > 3 * MIN;
     return `ligada · ±${loc.precisao} m · ${parado ? 'parado (não marca)' : 'andando'}${loc.erro ? ' · ' + loc.erro : ''}`;
   }
@@ -423,12 +438,55 @@
     }
   }
 
-  // 5 toques no canto de cima à esquerda abrem o menu
+  // 5 toques no canto de cima à esquerda pedem o PIN do menu (4 números que o painel mostra em
+  // cada carro). Tablet sem carro abre direto, para dar para parear. 5 erros: bloqueia 5 min,
+  // depois 10, 20… até 1 h. O menu fecha sozinho depois de 2 min parado.
   let toques = [];
   $('canto').addEventListener('pointerdown', () => {
     const t = Date.now();
     toques = toques.filter(x => t - x < 3000); toques.push(t);
-    if (toques.length >= 5) { toques = []; $('menu').classList.add('on'); atualizarMenu(); }
+    if (toques.length >= 5) { toques = []; pedirPin(); }
+  });
+  const PIN_ERROS = 5;
+  const hhmm = t => new Date(t).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  const bloqueio = () => ler('tela.pinBloqueio', { ate: 0, vezes: 0, erros: 0 });
+  let pinDigitado = '', fecharPinT = 0, fecharMenuT = 0;
+  function abrirMenu() { $('menu').classList.add('on'); atualizarMenu(); fecharMenuDepois(); }
+  function fecharMenuDepois() { clearTimeout(fecharMenuT); fecharMenuT = setTimeout(() => $('menu').classList.remove('on'), 2 * MIN); }
+  $('menu').addEventListener('pointerdown', fecharMenuDepois);
+  function pedirPin() {
+    if (!estado.carro) { abrirMenu(); return; }
+    const b = bloqueio();
+    pinDigitado = ''; desenharPin();
+    $('pin-msg').textContent = b.ate > Date.now() ? `Bloqueado por PIN errado. Tente às ${hhmm(b.ate)}.` : 'Digite o PIN do menu. Ele está no painel, no carro.';
+    $('pin').classList.add('on');
+    clearTimeout(fecharPinT); fecharPinT = setTimeout(fecharPin, 30000);
+  }
+  function fecharPin() { clearTimeout(fecharPinT); pinDigitado = ''; $('pin').classList.remove('on'); }
+  function desenharPin() { $('pin-pontos').querySelectorAll('i').forEach((el, i) => el.classList.toggle('on', i < pinDigitado.length)); }
+  $('pin-teclas').addEventListener('click', e => {
+    const bt = e.target.closest('button[data-k]');
+    if (!bt) return;
+    const k = bt.dataset.k;
+    clearTimeout(fecharPinT); fecharPinT = setTimeout(fecharPin, 30000);
+    if (k === 'x') return fecharPin();
+    const b = bloqueio();
+    if (b.ate > Date.now()) return;
+    if (k === '<') { pinDigitado = pinDigitado.slice(0, -1); return desenharPin(); }
+    if (pinDigitado.length >= 4) return;
+    pinDigitado += k; desenharPin();
+    if (pinDigitado.length < 4) return;
+    if (estado.carro && pinDigitado === N.pinMenu(estado.carro.chave)) {
+      gravar('tela.pinBloqueio', { ate: 0, vezes: 0, erros: 0 });
+      fecharPin(); abrirMenu();
+      return;
+    }
+    b.erros += 1;
+    if (b.erros >= PIN_ERROS) { b.vezes += 1; b.erros = 0; b.ate = Date.now() + Math.min(60, 5 * 2 ** (b.vezes - 1)) * MIN; }
+    gravar('tela.pinBloqueio', b);
+    pinDigitado = '';
+    setTimeout(desenharPin, 250);
+    $('pin-msg').textContent = b.ate > Date.now() ? `PIN errado. Bloqueado até ${hhmm(b.ate)}.` : `PIN errado. Restam ${PIN_ERROS - b.erros} tentativa(s).`;
   });
   $('bt-fechar').onclick = () => $('menu').classList.remove('on');
   $('bt-sinc').onclick = () => { sincronizar(); enviar(); avisar(); atualizarMenu(); };
@@ -454,7 +512,7 @@
   }
   // No Chrome (sem atalho), se a tela cheia cair, o próximo toque volta com ela
   document.addEventListener('pointerdown', () => {
-    if (!modoApp() && !$('config').classList.contains('on') && !$('menu').classList.contains('on')) telaCheia();
+    if (!modoApp() && !$('config').classList.contains('on') && !$('menu').classList.contains('on') && !$('pin').classList.contains('on')) telaCheia();
   });
   // Voltar não sai da tela. Com o app fixado, só Voltar + Recentes com o PIN solta.
   try { history.pushState({ tela: 1 }, ''); } catch (e) { /* segue */ }
@@ -489,13 +547,23 @@
       $('n-local').hidden = a.local === undefined; // app antigo não tem GPS
     }
     ajustarLocal(); // na volta do aviso do Android, já liga o GPS
-    const ligada = ler('tela.local', false) && !!loc.fix && !loc.negada;
+    // o botão diz o que está acontecendo (e o que fazer), não só "procurando"
+    const pediu = ler('tela.local', false), app = nativo ? appEstado() : {};
+    const negada = loc.negada || (pediu && app.local === false);
+    const ligada = pediu && !!loc.fix && !negada;
+    const semTomada = pediu && !ligada && !negada && !gpsPode();
+    const demorando = pediu && !ligada && !negada && !semTomada && (!!loc.erro || (loc.desde && Date.now() - loc.desde > 20000));
     document.querySelectorAll('.passo-local').forEach(li => li.classList.toggle('feito', ligada));
     document.querySelectorAll('.bt-local').forEach(b => {
-      b.textContent = ligada ? 'Localização ligada ✓' : loc.negada ? 'Tentar de novo' : ler('tela.local', false) ? 'Procurando o GPS…' : 'Permitir localização';
+      b.textContent = ligada ? 'Localização ligada ✓' : negada ? 'Tentar de novo' : semTomada ? 'Ligue o carregador'
+        : loc.erro ? 'Sem sinal de GPS' : pediu ? 'Procurando o GPS…' : 'Permitir localização';
       b.classList.toggle('feito', ligada);
     });
-    document.querySelectorAll('.local-negada').forEach(x => { x.hidden = !loc.negada; });
+    document.querySelectorAll('.local-negada').forEach(x => { x.hidden = !negada; });
+    document.querySelectorAll('.local-dica').forEach(x => {
+      x.textContent = semTomada ? `Fora da tomada, o GPS só liga com mais de ${BATERIA_GPS}% de bateria (para não descarregar o tablet).` : demorando ? DICA_GPS : '';
+      x.hidden = !x.textContent;
+    });
     const cheia = modoApp() || !!document.fullscreenElement;
     $('bt-cfg-cheia').classList.toggle('feito', cheia);
     $('bt-cfg-cheia').textContent = cheia ? 'Tela cheia ligada ✓' : 'Expandir tela';

@@ -243,7 +243,8 @@ function mostrarPareamento(c) {
     <p class="linha"><button class="sec" id="bt-copiar-link">Copiar link</button>
     <a class="sec" style="text-decoration:none;padding:6px 10px;border:1px solid var(--linha);border-radius:10px;color:inherit" target="_blank" rel="noopener"
        href="https://wa.me/${tel ? '55' + tel.replace(/^55/, '') : ''}?text=${encodeURIComponent(msg)}">Mandar no WhatsApp</a></p>
-    <p class="leg">O link leva a chave do carro: mande só para o motorista.</p></div></div>`;
+    <p>PIN do menu do tablet: <b id="pin-menu">${N.pinMenu(c.chave)}</b> <span class="leg">(5 toques no canto de cima à esquerda; muda quando troca a chave)</span></p>
+    <p class="leg">O link leva a chave do carro: mande só para o motorista. O PIN fica com você.</p></div></div>`;
   const qr = qrcode(0, 'M'); qr.addData(link); qr.make();
   const cv = $('qr-par'), ctx = cv.getContext('2d'), n = qr.getModuleCount(), m = Math.floor(cv.width / (n + 4)), off = Math.floor((cv.width - m * n) / 2);
   ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cv.width, cv.height); ctx.fillStyle = '#000';
