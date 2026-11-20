@@ -70,6 +70,7 @@
       }
       const mudou = JSON.stringify(estado.pacote) !== JSON.stringify(novo);
       estado.pacote = novo; gravar('tela.pacote', novo);
+      if (novo.app && novo.app > APP) novaVersao = novo.app; // player novo no site: recarrega na hora certa
       // tira do aparelho o que saiu do pacote
       const usadas = new Set(lista.map(([, m]) => new URL(urlMidia(m), location.href).href));
       for (const req of await cache.keys()) if (!usadas.has(req.url)) await cache.delete(req);
@@ -93,9 +94,20 @@
     return u;
   }
 
+  // ── ATUALIZAÇÃO SOZINHA ──
+  // O pacote.json diz a versão do player ("app"). Se for mais nova que esta, recarrega entre um
+  // anúncio e outro: no app (ou no atalho) na hora; no Chrome, quando o carro desliga, porque
+  // recarregar sai da tela cheia (o próximo toque volta com ela). Uma vez por versão, no máximo.
+  let novaVersao = '';
+  function podeRecarregar() {
+    if (!novaVersao || ler('tela.recarregou', '') === novaVersao) return false;
+    return modoApp() || carregando() !== true;
+  }
+
   // ── TOCAR ──
   let geracao = 0;
   async function tocarProximo() {
+    if (podeRecarregar()) { gravar('tela.recarregou', novaVersao); guardar(); location.reload(); return; }
     const g = ++geracao;
     clearTimeout(estado.timer); vid.onended = null;
     if (!estado.pacote) { estado.tocando = null; mostrarEspera(); return; }
@@ -401,7 +413,7 @@
       ['Na tomada', (c => c == null ? 'o tablet não informa' : c ? 'sim (carro ligado)' : 'não')(carregando())],
       ['Localização', textoLocal()],
       ['Trava', nativo ? (a => (a.fixado ? 'fixado' : 'solto') + (a.frota ? ' · modo frota' : '') + (a.modoCarro ? ' · modo carro ligado' : ''))(appEstado()) : 'no Chrome, sem o app'],
-      ['Versão do app', APP + (nativo ? ' · Android ' + (appEstado().app || '') : '')],
+      ['Versão do app', APP + (nativo ? ' · Android ' + (appEstado().app || '') : '') + (novaVersao ? ` · nova ${novaVersao} (atualiza ${modoApp() ? 'já' : 'quando o carro desligar'})` : '')],
     ];
     const dl = $('menu-info');
     dl.textContent = '';

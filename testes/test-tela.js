@@ -141,6 +141,8 @@ ok(usadas.every(id => pacote.midias[id]), 'o loop só usa mídia que existe');
 const qrs = Object.values(pacote.midias).flatMap(m => m.qr || []);
 ok(qrs.every(q => pacote.anuncios[q.anuncio]), 'todo QR aponta para um anúncio com destino');
 ok(Object.values(pacote.anuncios).every(a => /^https:\/\//.test(a.destino)), 'destinos em https');
+const APP = (/const APP = '([^']+)'/.exec(fs.readFileSync(path.join(RAIZ, 'tela/tela.js'), 'utf8')) || [])[1];
+ok(pacote.app === APP, `"app" do pacote (${pacote.app}) = versão do player (${APP}): é o que faz os tablets se atualizarem sozinhos`);
 const dur = N.duracaoLoop(pacote, em('2026-11-20T12:00:00'), 'campinas');
 ok(Math.abs(dur - 600) < 2, `loop de 10 min (${dur.toFixed(1)} s)`);
 

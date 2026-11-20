@@ -59,6 +59,12 @@ pegam sozinhos na próxima vez que tiverem internet (conferem a cada 15 min) e s
 baixam o que mudou. Depois rode `node testes/test-tela.js`: ele confere arquivos,
 hashes, QRs e a duração do loop.
 
+**Player novo** (mudou `tela.js`, `nucleo.js` ou `index.html`): troque o `APP` do `tela.js` e o
+`app` do `pacote.json` para a mesma data. Os tablets veem a versão nova no próximo download e
+recarregam sozinhos entre um anúncio e outro: no app (ou no atalho) na hora; no Chrome, quando o
+carro desliga (recarregar sai da tela cheia; o próximo toque volta com ela). Uma vez por versão.
+O `node testes/test-tela.js` confere que os dois batem.
+
 **Mídia**: `arquivo`, `tipo` (`imagem` ou `video`), `duracao` (vídeo), `bytes`,
 `hash` (12 primeiros caracteres do sha256 do arquivo), `dono` (anunciante que
 paga a exibição) e `qr`: lista de `{anuncio, x, y, lado}` em pixels da arte
