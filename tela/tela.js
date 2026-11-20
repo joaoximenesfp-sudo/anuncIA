@@ -7,7 +7,7 @@
 (function () {
   'use strict';
   const N = window.TelaNucleo;
-  const APP = '2026-11-20.4';
+  const APP = '2026-11-20.5';
   const CACHE_MIDIA = 'tela-midia';
   const FADE = 250;
   const MIN = 60000;
@@ -94,6 +94,8 @@
     return u;
   }
 
+  let saidaPermitida = false; // recarregar para atualizar não pergunta "Sair do site?"
+
   // ── ATUALIZAÇÃO SOZINHA ──
   // O pacote.json diz a versão do player ("app"). Se for mais nova que esta, recarrega entre um
   // anúncio e outro: no app (ou no atalho) na hora; no Chrome, quando o carro desliga, porque
@@ -107,7 +109,7 @@
   // ── TOCAR ──
   let geracao = 0;
   async function tocarProximo() {
-    if (podeRecarregar()) { gravar('tela.recarregou', novaVersao); guardar(); location.reload(); return; }
+    if (podeRecarregar()) { gravar('tela.recarregou', novaVersao); guardar(); saidaPermitida = true; location.reload(); return; }
     const g = ++geracao;
     ultimoAvanco = Date.now();
     clearTimeout(estado.timer); vid.onended = null;
@@ -282,7 +284,7 @@
   // ── TOQUES NA TELA: passageiro mexendo (o canto do menu e as telas de ajuste não contam) ──
   let ultimoToque = 0;
   document.addEventListener('pointerdown', e => {
-    if (!estado.tocando || (e.target.closest && e.target.closest('#canto, #menu, #config, #pin'))) return;
+    if (!estado.tocando || (e.target.closest && e.target.closest('#canto, #menu, #config, #pin, #trava'))) return;
     const t = Date.now();
     if (t - ultimoToque < 1500) return; // dedo que fica batendo conta uma vez
     ultimoToque = t;
@@ -465,7 +467,7 @@
   $('canto').addEventListener('pointerdown', () => {
     const t = Date.now();
     toques = toques.filter(x => t - x < 3000); toques.push(t);
-    if (toques.length >= 5) { toques = []; pedirPin(); }
+    if (toques.length >= 5) { toques = []; mostrarTrava(); }
   });
   const PIN_ERROS = 5;
   const hhmm = t => new Date(t).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
@@ -474,6 +476,40 @@
   function abrirMenu() { $('menu').classList.add('on'); atualizarMenu(); fecharMenuDepois(); }
   function fecharMenuDepois() { clearTimeout(fecharMenuT); fecharMenuT = setTimeout(() => $('menu').classList.remove('on'), 2 * MIN); }
   $('menu').addEventListener('pointerdown', fecharMenuDepois);
+  // Cadeado como nos apps de filme: antes do PIN, é preciso deslizar até o fim. Toque à toa (ou
+  // criança batendo na tela) não passa daqui. Some sozinho em 8 s.
+  let travaT = 0, arrasto = null;
+  function mostrarTrava() {
+    if (!estado.carro) { abrirMenu(); return; } // tablet sem carro: menu direto, para parear
+    const b = $('botao-trava'); b.classList.remove('volta'); b.style.transform = '';
+    $('trava').classList.add('on');
+    clearTimeout(travaT); travaT = setTimeout(esconderTrava, 8000);
+  }
+  function esconderTrava() { clearTimeout(travaT); arrasto = null; $('trava').classList.remove('on'); }
+  const fimTrilho = () => $('trilho').clientWidth - $('botao-trava').offsetWidth - 8;
+  $('botao-trava').addEventListener('pointerdown', e => {
+    e.preventDefault();
+    arrasto = { x0: e.clientX, id: e.pointerId, dx: 0 };
+    try { $('botao-trava').setPointerCapture(e.pointerId); } catch (err) { /* segue */ }
+    $('botao-trava').classList.remove('volta');
+    clearTimeout(travaT); travaT = setTimeout(esconderTrava, 8000);
+  });
+  $('botao-trava').addEventListener('pointermove', e => {
+    if (!arrasto || e.pointerId !== arrasto.id) return;
+    arrasto.dx = Math.max(0, Math.min(fimTrilho(), e.clientX - arrasto.x0));
+    $('botao-trava').style.transform = `translateX(${arrasto.dx}px)`;
+  });
+  function soltarTrava(e) {
+    if (!arrasto || (e && e.pointerId !== arrasto.id)) return;
+    const chegou = arrasto.dx >= fimTrilho() * 0.92;
+    arrasto = null;
+    if (chegou) { esconderTrava(); pedirPin(); return; }
+    const b = $('botao-trava'); b.classList.add('volta'); b.style.transform = '';
+  }
+  $('botao-trava').addEventListener('pointerup', soltarTrava);
+  $('botao-trava').addEventListener('pointercancel', soltarTrava);
+  $('trava').addEventListener('pointerdown', e => { if (e.target === $('trava')) esconderTrava(); }); // tocou fora: fecha
+
   function pedirPin() {
     if (!estado.carro) { abrirMenu(); return; }
     const b = bloqueio();
@@ -532,11 +568,23 @@
   }
   // No Chrome (sem atalho), se a tela cheia cair, o próximo toque volta com ela
   document.addEventListener('pointerdown', () => {
-    if (!modoApp() && !$('config').classList.contains('on') && !$('menu').classList.contains('on') && !$('pin').classList.contains('on')) telaCheia();
+    if (!modoApp() && !$('config').classList.contains('on') && !$('menu').classList.contains('on') && !$('pin').classList.contains('on') && !$('trava').classList.contains('on')) telaCheia();
   });
-  // Voltar não sai da tela. Com o app fixado, só Voltar + Recentes com o PIN solta.
-  try { history.pushState({ tela: 1 }, ''); } catch (e) { /* segue */ }
-  addEventListener('popstate', () => { try { history.pushState({ tela: 1 }, ''); } catch (e) { /* segue */ } });
+  // Voltar não sai da tela. No app, Voltar não faz nada. No Chrome, a regra dele ignora "voltas"
+  // que o site cria sem toque de gente (é contra site que prende o usuário), então cada toque na
+  // tela guarda uma volta (até 3): os primeiros Voltar só gastam essas voltas. Acabaram, o
+  // Chrome pergunta "Sair do site?" antes de sair.
+  let voltasGuardadas = 0;
+  function guardarVolta() {
+    if (nativo || voltasGuardadas >= 3) return;
+    try { history.pushState({ tela: Date.now() }, ''); voltasGuardadas++; } catch (e) { /* segue */ }
+  }
+  addEventListener('click', guardarVolta, true);
+  addEventListener('popstate', () => { voltasGuardadas = Math.max(0, voltasGuardadas - 1); });
+  addEventListener('beforeunload', e => {
+    if (nativo || saidaPermitida || !ler('tela.configurada', false)) return;
+    e.preventDefault(); e.returnValue = '';
+  });
 
   // ── CONFIGURAR A TELA: tela cheia e trava com o PIN do próprio tablet ──
   // (página da web não consegue fixar o app sozinha: o passo a passo fica na tela)

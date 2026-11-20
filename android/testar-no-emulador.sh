@@ -40,6 +40,13 @@ sys.exit(1)
 PY
 }
 OK_FIXAR='screen_pinning_ok|^(got it|ok|entendi|iniciar)$'
+# o motorista toca em OK no "Fixar app?"; aqui, com vídeo rodando, o leitor de tela do teste nem sempre
+# acha o botão: fixa pelo sistema, como o OK faria (e tenta de novo se o emulador demorar)
+fixar() {
+  tocar "$OK_FIXAR" || { adb shell am task lock "$(tarefa)" >/dev/null 2>&1; adb shell input keyevent 4; }
+  esperar_trava PINNED 8 && return 0
+  adb shell am task lock "$(tarefa)" >/dev/null 2>&1; esperar_trava PINNED 8
+}
 NAO_FIXAR='screen_pinning_cancel|^(no thanks|não, obrigado|cancelar)$'
 
 echo "== preparar"
@@ -68,10 +75,8 @@ sleep 4
 foto 2-pergunta-fixar
 ok pergunta "o Android pergunta se pode fixar"
 logs 5
-# o motorista toca em OK; aqui, com vídeo rodando, o leitor de tela do teste não acha o botão:
-# fixa pelo sistema, como o OK faria
-tocar "$OK_FIXAR" || { adb shell am task lock "$(tarefa)" >/dev/null; adb shell input keyevent 4; }
-ok 'esperar_trava PINNED 8' "fixou o app"
+fixar; r=$?
+ok '[ "$r" = 0 ]' "fixou o app"
 for k in 4:Voltar 3:Home 187:Recentes; do
   adb shell input keyevent "${k%%:*}"; sleep 2
   ok na_frente "${k#*:} não tira o app da frente"
@@ -110,8 +115,7 @@ echo "== soltaram a fixação num tablet com PIN: sem o PIN o app volta; com o P
 adb shell locksettings set-pin 1234 >/dev/null 2>&1
 adb shell settings put secure lock_to_app_exit_locked 1
 adb shell am start -n $PKG/.MainActivity --ez travar true >/dev/null; sleep 4
-tocar "$OK_FIXAR" || { adb shell am task lock "$(tarefa)" >/dev/null; adb shell input keyevent 4; }
-esperar_trava PINNED 8 && echo "    fixado" || echo "    não fixou"
+fixar && echo "    fixado" || echo "    não fixou"
 sleep 4 # a ronda do app marca que estava fixado
 adb logcat -c
 adb shell am task lock stop; sleep 6
@@ -130,6 +134,8 @@ logs 8
 adb shell locksettings clear --old 1234 >/dev/null 2>&1
 adb shell settings put secure lock_to_app_exit_locked 0
 adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard >/dev/null 2>&1; sleep 2
+# começa o modo frota do zero: nada fixado, nada pedindo para fixar
+adb shell am task lock stop >/dev/null 2>&1; esperar_trava NONE 6; tocar "$NAO_FIXAR" >/dev/null 2>&1 || true
 
 echo "== modo frota (app dono do tablet, sem perguntar nada)"
 adb shell dpm set-device-owner $PKG/.Admin
