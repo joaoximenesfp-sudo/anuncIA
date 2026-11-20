@@ -115,10 +115,11 @@ esperar_trava PINNED 8 && echo "    fixado" || echo "    não fixou"
 sleep 4 # a ronda do app marca que estava fixado
 adb logcat -c
 adb shell am task lock stop; sleep 6
-info "adb logcat -d -s Tela:V | grep -q 'pediu o PIN'" "soltou: o tablet pediu o PIN e o app percebeu"
 adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard >/dev/null 2>&1; sleep 3
 foto 5a-tela-do-pin
 sleep 22
+info "adb logcat -d -s Tela:V | grep -q 'pediu o PIN'" "soltou: o tablet pediu o PIN e o app percebeu"
+info '[ "$(adb logcat -d -s Tela:V | grep -c "pediu o PIN")" = 1 ]' "e avisou uma vez só no log"
 info na_frente "ninguém digitou o PIN: o app voltou por cima da tela de bloqueio"
 info "adb logcat -d -s Tela:V | grep -q 'ninguém digitou o PIN'" "e registrou no log"
 foto 5b-voltou-sem-pin

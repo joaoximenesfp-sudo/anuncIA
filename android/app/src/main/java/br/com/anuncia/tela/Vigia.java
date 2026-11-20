@@ -31,6 +31,7 @@ public class Vigia extends Service {
     private final Handler h = new Handler(Looper.getMainLooper());
     private static final long PRAZO_PIN = 20000;
     private long naTelaDoPin = 0, soltoSemBloqueio = 0;
+    private boolean avisouSolto = false;
 
     private final BroadcastReceiver apagou = new BroadcastReceiver() {
         @Override
@@ -122,9 +123,11 @@ public class Vigia extends Service {
         if (fixado) {
             if (!Estado.estavaFixado(this)) Estado.estavaFixado(this, true);
             soltoSemBloqueio = 0;
+            avisouSolto = false;
         } else if (Estado.estavaFixado(this) && Estado.modoCarro(this) && !MainActivity.saindo) {
             if (bloqueado) {
-                if (soltoSemBloqueio == 0 && naTelaDoPin == 0) Log.i(MainActivity.TAG, "soltaram a fixação: o tablet pediu o PIN");
+                if (!avisouSolto) Log.i(MainActivity.TAG, "soltaram a fixação: o tablet pediu o PIN");
+                avisouSolto = true;
                 soltoSemBloqueio = 0;
             } else if (soltoSemBloqueio == 0) {
                 soltoSemBloqueio = agora; // confere de novo na próxima ronda (o bloqueio pode demorar um instante)
@@ -134,6 +137,7 @@ public class Vigia extends Service {
                 Estado.modoCarro(this, false);
                 Estado.estavaFixado(this, false);
                 soltoSemBloqueio = 0;
+                avisouSolto = false;
             }
         }
         if (!Estado.modoCarro(this)) { naTelaDoPin = 0; return; }
