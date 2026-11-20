@@ -609,6 +609,28 @@ input[type=number].inp{padding-left:32px}
 .insta-tit{font-weight:800}
 .insta-conta{font-size:.72rem;color:#a21caf;font-weight:700}
 .insta-box a{color:#a21caf;font-weight:700}
+.insta-guia summary{cursor:pointer;font-weight:700;font-size:.78rem}
+.insta-guia ol{margin:6px 0 4px 18px;padding:0;font-size:.74rem;line-height:1.55}
+.insta-guia li{margin-bottom:3px}
+.insta-guia code{background:#fff;border:1px solid var(--b);border-radius:4px;padding:0 4px;font-size:.7rem;word-break:break-all}
+.ancat-topo{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin:12px 0 4px}
+.ancat-grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+.ancat-it{border:1px solid var(--b);border-radius:10px;padding:8px;display:flex;flex-direction:column;gap:5px;background:var(--w)}
+.ancat-imgs{display:flex;gap:6px;align-items:flex-start}
+.ancat-imgs img{border-radius:6px;background:var(--bg);border:1px solid var(--b);object-fit:cover}
+.ancat-imgs img:not([src]){visibility:visible}
+.ancat-post{width:150px;height:150px}
+.ancat-story{width:84px;height:150px}
+.ancat-nome{font-size:.76rem;font-weight:700;line-height:1.3}
+.ancat-nome .nb{color:var(--li);font-weight:600}
+.ancat-preco{font-size:.8rem;font-weight:800}
+.ancat-st{font-size:.68rem;color:var(--li);min-height:14px}
+.ancat-st.ok{color:#a21caf}
+.ancat-st a{color:#a21caf;font-weight:700}
+.ancat-bts{display:flex;gap:4px;flex-wrap:wrap}
+.ancat-bts button{font-size:.72rem;padding:4px 7px;border-radius:7px;border:1px solid var(--b);background:var(--bg);color:var(--tx);cursor:pointer}
+.ancat-bts button.pub{background:#fdf4ff;border-color:#f5d0fe;color:#a21caf;font-weight:700}
+.ancat-bts button:disabled{opacity:.5;cursor:wait}
 .binsta{background:#fdf4ff;color:#a21caf;border:1px solid #f5d0fe;border-radius:7px;padding:3px 7px;font-size:.8rem;cursor:pointer;margin-left:4px;line-height:1}
 .an-chip{display:inline-flex;align-items:center;gap:6px;font-size:.71rem;font-weight:600;
   background:var(--bbg);color:var(--bl);border:1px solid var(--bbd);border-radius:20px;
@@ -2814,6 +2836,20 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
        Tudo desenhado no proprio navegador: sem servico de fora, sem conta
        nova, sem mensalidade. -->
   <div class="pg" id="pg-anuncio">
+    <div class="cd" id="anCatCard">
+      <div class="cdh"><span class="cdht">⚡ Anúncios do catálogo</span>
+        <span style="font-size:.74rem;color:var(--li)">post e story de cada notebook anunciado, prontos — saem das fotos e da descrição do cadastro</span></div>
+      <div class="cdb">
+        <div class="insta-box">
+          <div class="insta-top"><span class="insta-tit">📸 Instagram da loja</span><span class="insta-conta" id="instaConta">…</span></div>
+          <div id="instaLigar"></div>
+          <div class="tipo-auto" id="instaMsg"></div>
+        </div>
+        <div class="ancat-topo"><span class="tipo-auto" id="anCatResumo"></span>
+          <button class="bok" id="anCatNovasBt" style="display:none" onclick="anCatPublicarNovas()">📤 Publicar as novas</button></div>
+        <div class="ancat-grade" id="anCatGrade"></div>
+      </div>
+    </div>
     <div class="cd">
       <div class="cdh"><span class="cdht">🎨 Gerar anúncio</span>
         <span style="font-size:.74rem;color:var(--li)">imagem pronta pro Instagram, story ou capa do WhatsApp</span></div>
@@ -2860,8 +2896,8 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
             <button class="bcan" style="width:100%" onclick="anBaixarPar()" id="anBaixarParBt">🗂️ Baixar em 2 partes (carrossel)</button>
             <div class="tipo-auto" id="anStatus"></div>
             <div class="insta-box" id="instaBox">
-              <div class="insta-top"><span class="insta-tit">📸 Instagram da loja</span><span class="insta-conta" id="instaConta">…</span></div>
-              <div id="instaLigar"></div>
+              <div class="insta-top"><span class="insta-tit">📸 Publicar esta arte no Instagram</span></div>
+              <div class="tipo-auto" id="instaPubAviso">Para publicar daqui, conecte o Instagram no quadro do topo desta página.</div>
               <div id="instaPub" style="display:none">
                 <div class="fc"><span class="fla">Publicar como</span>
                   <select class="inp" id="instaTipo" onchange="instaTrocouTipo()">
@@ -8296,7 +8332,7 @@ window.sp2=p=>{
   if(p==='painel'){ try{ buildPainel(); }catch(e){ console.error('buildPainel:',e); } buildPainelCharts(); }
   if(p==='financas'){renderFinLabel();checkNotificacoes();}
   if(p==='admin'){carregarAvisos();}
-  if(p==='anuncio'){ try{ anMontarSelect(); anTrocouModo(); anGradeFotos(); anLigarEditor(); }catch(e){ console.error('anuncio:',e); } try{ instaCarregar(); }catch(e){} }
+  if(p==='anuncio'){ try{ anMontarSelect(); anTrocouModo(); anGradeFotos(); anLigarEditor(); }catch(e){ console.error('anuncio:',e); } try{ instaCarregar(); }catch(e){} try{ anCatMontar(); }catch(e){} }
   if(p==='clientes'){ if(cliAba==='fornecedores')renderFornecedores(); else renderClientes(); }
   else{const bar=document.getElementById('notifBar');if(bar){bar.innerHTML='';bar.classList.remove('on');adjustPageTop();}}
 };
@@ -11732,7 +11768,7 @@ window.anDesenhar=(recorte)=>{
   const zap=(catCfg&&catCfg.whatsapp)?String(catCfg.whatsapp).replace(/\D/g,''):'';
   const linha2=(catCfg&&catCfg.instagram?'@'+catCfg.instagram:'@tech.campinas')+(zap?'  ·  '+zap:'');
   ctx.fillText(linha2, m, F.h-Math.round(F.h*(capa?0.045:0.032)));
-  try{ instaSincronizarLegenda(); }catch(e){}
+  try{ if(!anLote) instaSincronizarLegenda(); }catch(e){}
 };
 
 function anNomeArquivo(sufixo){
@@ -11853,15 +11889,15 @@ function instaLegenda(maqs,o){
   L.push('',[...new Set(tags.filter(Boolean))].map(t=>'#'+t).join(' '));
   return L.join('\n').replace(/\n{3,}/g,'\n\n').trim();
 }
-function instaLegendaDaTela(){
-  return instaLegenda(anEscolhidas,{
-    selo:document.getElementById('anSelo')?.value||'',
-    frase:document.getElementById('anFrase')?.value||'',
-    desc:anEscolhidas.length===1?anDesc():'',
+function instaOpcoes(desc,tema){
+  tema=tema||{selo:document.getElementById('anSelo')?.value||'', frase:document.getElementById('anFrase')?.value||''};
+  return { selo:tema.selo, frase:tema.frase, desc,
     preco:anPreco, specs:p=>{ try{ return hwResumo(p,true); }catch(e){ return []; } }, marca:p=>brand(p.nome),
-    cidade:(catCfg&&catCfg.cidade)||'Campinas', zap:instaZap(catCfg&&catCfg.whatsapp), loja:(catCfg&&catCfg.nome)||'Tech Campinas',
-  });
+    cidade:(catCfg&&catCfg.cidade)||'Campinas', zap:instaZap(catCfg&&catCfg.whatsapp), loja:(catCfg&&catCfg.nome)||'Tech Campinas' };
 }
+function instaLegendaDaTela(){ return instaLegenda(anEscolhidas,instaOpcoes(anEscolhidas.length===1?anDesc():'')); }
+// A do catálogo segue o tema da data (chamada e selo dela), não o que ele digitou no editor.
+function instaLegendaDe(p){ return instaLegenda([p],instaOpcoes(String(p.descricao||'').slice(0,240),anTemaPadrao())); }
 function instaContar(){
   const t=document.getElementById('instaLegenda'), c=document.getElementById('instaConta2'); if(!t||!c) return;
   const tags=(t.value.match(/#[\p{L}\p{N}_]+/gu)||[]).length;
@@ -11890,7 +11926,7 @@ async function instaApi(dados){
 async function instaCarregar(){
   // WhatsApp, cidade e @ da loja: sem eles a legenda (e o rodapé da arte) sai sem contato.
   // Antes só carregavam ao abrir a tabela de vendedores.
-  if(!catCfg.whatsapp){ try{ await catCarregarCfg(); anDesenhar(); }catch(e){} }
+  if(!catCfg.whatsapp){ try{ await catCarregarCfg(); anDesenhar(); anCatMontar(); }catch(e){} }
   try{ const s=await getDoc(doc(db,'config','instagram')); instaCfg=s.exists()?s.data():null; }catch(e){ instaCfg=null; }
   if(instaConfigurado===null){
     try{ instaConfigurado=!!(await (await fetch('/api/insta')).json()).configurado; }catch(e){ instaConfigurado=false; }
@@ -11906,37 +11942,57 @@ async function instaCarregar(){
     }).catch(()=>{}).finally(()=>{ instaRenovando=false; });
   }
 }
+function instaConectado(){
+  const exp=instaData(instaCfg&&instaCfg.expira);
+  return !!(instaCfg&&instaCfg.cifra&&!(exp&&exp<Date.now()));
+}
+function instaMsg(t,html){ const m=document.getElementById('instaMsg'); if(m){ if(html) m.innerHTML=t; else m.textContent=t; } }
+const INSTA_VOLTA='https://anunc-ia.vercel.app/api/insta';
+const INSTA_VERCEL='https://vercel.com/joaoximenesfp-sudos-projects/anunc-ia/settings/environment-variables';
+// O passo a passo, enquanto a Vercel ainda não tem o app da Meta.
+function instaGuia(){
+  return `<details class="insta-guia" open><summary>Como conectar o Instagram (uma vez só, uns 15 minutos)</summary><ol>
+    <li>No app do Instagram: <b>Configurações → Tipo de conta e ferramentas</b> → deixe a conta da loja como <b>profissional</b> (Comercial ou Criador de conteúdo).</li>
+    <li>Abra o <a href="https://developers.facebook.com/apps/" target="_blank" rel="noopener">Meta for Developers</a> (entra com o seu Facebook) → <b>Criar app</b> → caso de uso <b>Gerenciar mensagens e conteúdo no Instagram</b>.</li>
+    <li>No app: <b>Instagram → Configuração da API com login do Instagram</b>. Em <b>Gerar tokens de acesso</b>, toque em <b>Adicionar conta</b> e entre com a conta da loja.</li>
+    <li>Na mesma página, em <b>Configurar o login comercial do Instagram</b>, no campo <b>URI de redirecionamento do OAuth</b>, cole <code>${INSTA_VOLTA}</code> (<a href="#" onclick="instaCopiarVolta();return false">copiar</a>) e salve.</li>
+    <li>Ainda ali, copie o <b>ID do app do Instagram</b> e a <b>chave secreta do app do Instagram</b>.</li>
+    <li>Nas <a href="${INSTA_VERCEL}" target="_blank" rel="noopener">variáveis da Vercel</a>, crie <code>IG_APP_ID</code> (o ID) e <code>IG_APP_SECRET</code> (a chave secreta) e faça o <b>Redeploy</b> (Deployments → ⋯ → Redeploy). A chave secreta vai só lá: nunca em mensagem nem em print.</li>
+    <li>Volte aqui: no lugar deste texto aparece o botão <b>Conectar Instagram</b>.</li>
+  </ol><div class="tipo-auto">Se o Instagram disser que a conta não tem permissão: no app da Meta, <b>Funções do app → Funções → Testadores do Instagram</b>, adicione a conta e aceite o convite no Instagram (Configurações → Apps e sites → Convites de testador).</div></details>`;
+}
+window.instaCopiarVolta=()=>{ try{ navigator.clipboard.writeText(INSTA_VOLTA).then(()=>instaMsg('Endereço copiado: é só colar no campo da Meta.')); }catch(e){} };
 function instaMostrar(){
-  const lig=document.getElementById('instaLigar'), pub=document.getElementById('instaPub'), conta=document.getElementById('instaConta');
-  if(!lig||!pub||!conta) return;
-  const exp=instaData(instaCfg&&instaCfg.expira), vencido=!!exp&&exp<Date.now();
-  if(instaCfg&&instaCfg.cifra&&!vencido){
-    const dias=exp?Math.max(0,Math.round((exp-Date.now())/864e5)):null;
-    conta.textContent='@'+(instaCfg.usuario||'conta da loja');
-    lig.innerHTML=`<div class="tipo-auto">Conectado${dias!=null?` · vale mais ${dias} dias e renova sozinho quando você usa o sistema`:''}.
-      <a href="#" onclick="instaConectar();return false">Reconectar</a> · <a href="#" onclick="instaDesconectar();return false">Desconectar</a></div>`;
-    pub.style.display='';
-    instaSincronizarLegenda();
-  }else{
-    conta.textContent=vencido?'conexão vencida':'não conectado';
-    lig.innerHTML = instaConfigurado===false
-      ? '<div class="tipo-auto">⚙️ Falta configurar o app da Meta na Vercel (IG_APP_ID e IG_APP_SECRET). Feito isso, o botão de conectar aparece aqui.</div>'
-      : `<button class="bok" style="width:100%" onclick="instaConectar()">🔗 ${vencido?'Conectar de novo':'Conectar Instagram'}</button>
-         <div class="tipo-auto">Abre o login do próprio Instagram: entre com a conta da loja e permita publicar.</div>`;
-    pub.style.display='none';
+  const lig=document.getElementById('instaLigar'), pub=document.getElementById('instaPub'), conta=document.getElementById('instaConta'), aviso=document.getElementById('instaPubAviso');
+  const exp=instaData(instaCfg&&instaCfg.expira), vencido=!!exp&&exp<Date.now(), ligado=instaConectado();
+  if(pub) pub.style.display=ligado?'':'none';
+  if(aviso) aviso.style.display=ligado?'none':'';
+  if(ligado) instaSincronizarLegenda();
+  if(lig&&conta){
+    if(ligado){
+      const dias=exp?Math.max(0,Math.round((exp-Date.now())/864e5)):null;
+      conta.textContent='@'+(instaCfg.usuario||'conta da loja');
+      lig.innerHTML=`<div class="tipo-auto">Conectado${dias!=null?` · vale mais ${dias} dias e renova sozinho quando você usa o sistema`:''}.
+        <a href="#" onclick="instaConectar();return false">Reconectar</a> · <a href="#" onclick="instaDesconectar();return false">Desconectar</a></div>`;
+    }else{
+      conta.textContent=vencido?'conexão vencida':'não conectado';
+      lig.innerHTML = instaConfigurado===false ? instaGuia()
+        : `<button class="bok" onclick="instaConectar()">🔗 ${vencido?'Conectar de novo':'Conectar Instagram'}</button>
+           <div class="tipo-auto">Abre o login do próprio Instagram: entre com a conta da loja e permita publicar.</div>`;
+    }
   }
+  anCatBotaoNovas();
 }
 window.instaConectar=async()=>{
-  const st=document.getElementById('instaStatus');
   try{
-    if(st) st.textContent='Abrindo o login do Instagram...';
+    instaMsg('Abrindo o login do Instagram...');
     const r=await instaApi({acao:'conectar'});
     location.href=r.url;
-  }catch(e){ if(st) st.textContent='⚠️ '+e.message; }
+  }catch(e){ instaMsg('⚠️ '+e.message); }
 };
 window.instaDesconectar=async()=>{
   if(!confirm('Desconectar o Instagram da loja? Para publicar de novo vai ser preciso conectar outra vez.')) return;
-  try{ await deleteDoc(doc(db,'config','instagram')); instaCfg=null; instaMostrar(); }
+  try{ await deleteDoc(doc(db,'config','instagram')); instaCfg=null; instaMostrar(); instaMsg('Instagram desconectado.'); }
   catch(e){ alert('Não consegui desconectar: '+e.message); }
 };
 // Volta do login do Instagram: o servidor manda a conexão cifrada no endereço
@@ -11946,15 +12002,14 @@ async function instaVoltaDoLogin(){
   if(!h.has('insta')&&!h.has('insta_erro')) return;
   history.replaceState(null,'',location.pathname+location.search);
   sp2('anuncio');
-  const st=document.getElementById('instaStatus');
-  if(h.has('insta_erro')){ if(st) st.textContent='⚠️ Instagram: '+h.get('insta_erro'); return; }
+  if(h.has('insta_erro')){ instaMsg('⚠️ Instagram: '+h.get('insta_erro')); return; }
   const usuario=(h.get('insta_user')||'').replace(/[^\w.]/g,''), exp=+h.get('insta_exp')||(Date.now()+60*864e5);
   try{
     await setDoc(doc(db,'config','instagram'),{cifra:h.get('insta'),usuario,expira:new Date(exp),renovadoEm:new Date(),
       conectadoEm:new Date(),conectadoPor:(auth.currentUser&&auth.currentUser.email)||''});
     await instaCarregar();
-    if(st) st.textContent='✅ Instagram conectado'+(usuario?': @'+usuario:'')+'. Escolha a máquina e publique.';
-  }catch(e){ if(st) st.textContent='⚠️ Não consegui guardar a conexão: '+e.message; }
+    instaMsg('✅ Instagram conectado'+(usuario?': @'+usuario:'')+'. Os anúncios do catálogo já podem ser publicados.');
+  }catch(e){ instaMsg('⚠️ Não consegui guardar a conexão: '+e.message); }
 }
 window.instaTrocouTipo=()=>{
   const t=document.getElementById('instaTipo').value, f=document.getElementById('anFmt');
@@ -11965,18 +12020,50 @@ function instaNovoId(){
   const b=new Uint8Array(16); crypto.getRandomValues(b);
   return Array.from(b,x=>x.toString(16).padStart(2,'0')).join('');
 }
-// A arte em JPEG (o único formato que o Instagram aceita), pequena o bastante
-// pra caber num documento do banco (1 MB).
-function instaJpeg(recorte){
+// Cópia do que está desenhado agora no canvas do editor (síncrona).
+function instaCopiaCanvas(){
+  const cv=document.getElementById('anCanvas'), c=document.createElement('canvas');
+  c.width=cv.width; c.height=cv.height; c.getContext('2d').drawImage(cv,0,0);
+  return c;
+}
+// JPEG (o único formato que o Instagram aceita), pequeno o bastante pra caber
+// num documento do banco (1 MB).
+function instaJpegDe(cv){
   return new Promise((ok,falha)=>{
-    const cv=document.getElementById('anCanvas'); if(!cv) return falha(new Error('A arte não está na tela.'));
-    anExportando=true; anDesenhar(recorte);
     const tentar=q=>cv.toBlob(async b=>{
       if(!b) return falha(new Error('Não consegui gerar a imagem.'));
       if(b.size>950000&&q>0.55) return tentar(Math.round((q-0.1)*100)/100);
       ok(new Uint8Array(await b.arrayBuffer()));
     },'image/jpeg',q);
     tentar(0.92);
+  });
+}
+// Manda as artes e a legenda. A arte fica em catalogo_fotos (leitura pública)
+// só até a Meta baixar: sem produto_id, o catálogo nem vê; e é apagada no fim.
+async function instaEnviar(tipo,telas,legenda,aviso){
+  const ids=[];
+  try{
+    for(const [i,c] of telas.entries()){
+      if(aviso) aviso(`Preparando a imagem ${i+1} de ${telas.length}...`);
+      const jpg=await instaJpegDe(c), id=instaNovoId();
+      await setDoc(doc(db,'catalogo_fotos','insta_'+id),{insta:true,jpg:Bytes.fromUint8Array(jpg),em:Date.now()});
+      ids.push(id);
+    }
+    if(aviso) aviso('Enviando para o Instagram... (leva alguns segundos)');
+    const r=await instaApi({acao:'publicar',tipo,imagens:ids,legenda});
+    r.link=/^https:\/\/(www\.)?instagram\.com\//.test(r.link||'')?r.link:'';
+    return r;
+  }finally{
+    for(const id of ids){ try{ await deleteDoc(doc(db,'catalogo_fotos','insta_'+id)); }catch(e){} }
+  }
+}
+// Marca na máquina o que foi publicado (e o 📸 da lista mostra na hora).
+async function instaMarcar(p,tipo,link){
+  const em=new Date().toISOString();
+  const campos=tipo==='story'?{insta_story_em:em}:{insta_em:em,insta_link:link||'',insta_feed_em:em};
+  try{ await updateDoc(doc(db,'products',p.id),campos); Object.assign(p,campos); }catch(e){}
+  document.querySelectorAll('button.binsta').forEach(b=>{
+    if(b.getAttribute('onclick')===`instaMaquina('${p.id}')`) b.title='Publicar no Instagram (publicada em '+new Date(em).toLocaleDateString('pt-BR')+')';
   });
 }
 window.instaPublicar=async()=>{
@@ -11994,32 +12081,18 @@ window.instaPublicar=async()=>{
   const f=document.getElementById('anFmt'); if(f) f.value = tipo==='story'?'story':'feed';
   if(!confirm(`Publicar ${tipo==='story'?'o story':tipo==='carrossel'?'o carrossel':'o post'} agora no Instagram${instaCfg&&instaCfg.usuario?' @'+instaCfg.usuario:''}?`)) return;
   if(bt){ bt.disabled=true; bt.textContent='Publicando...'; }
-  const ids=[];
   try{
     const meio=Math.ceil(cels.length/2);
     const partes=tipo==='carrossel'?[cels.slice(0,meio),cels.slice(meio)]:[null];
-    for(const [i,parte] of partes.entries()){
-      if(st) st.textContent=`Preparando a imagem ${i+1} de ${partes.length}...`;
-      const jpg=await instaJpeg(parte), id=instaNovoId();
-      // fica em catalogo_fotos (leitura pública) só até a Meta baixar: sem produto_id, o catálogo nem vê
-      await setDoc(doc(db,'catalogo_fotos','insta_'+id),{insta:true,jpg:Bytes.fromUint8Array(jpg),em:Date.now()});
-      ids.push(id);
-    }
-    if(st) st.textContent='Enviando para o Instagram... (leva alguns segundos)';
-    const r=await instaApi({acao:'publicar',tipo,imagens:ids,legenda});
-    const link=/^https:\/\/(www\.)?instagram\.com\//.test(r.link||'')?r.link:'';
-    if(st) st.innerHTML='✅ Publicado'+(r.usuario?' em @'+esc(r.usuario):'')+(link?` · <a href="${encodeURI(link)}" target="_blank" rel="noopener">ver no Instagram</a>`:'');
-    const em=new Date().toISOString();
-    for(const p of anEscolhidas){
-      try{ await updateDoc(doc(db,'products',p.id),{insta_em:em,insta_link:link}); p.insta_em=em; p.insta_link=link; }catch(e){}
-      document.querySelectorAll('button.binsta').forEach(b=>{
-        if(b.getAttribute('onclick')===`instaMaquina('${p.id}')`) b.title='Publicar no Instagram (publicada em '+new Date(em).toLocaleDateString('pt-BR')+')';
-      });
-    }
+    const telas=partes.map(parte=>{ anExportando=true; anDesenhar(parte); return instaCopiaCanvas(); });
+    anExportando=false; anDesenhar();
+    const r=await instaEnviar(tipo,telas,legenda,t=>{ if(st) st.textContent=t; });
+    if(st) st.innerHTML='✅ Publicado'+(r.usuario?' em @'+esc(r.usuario):'')+(r.link?` · <a href="${encodeURI(r.link)}" target="_blank" rel="noopener">ver no Instagram</a>`:'');
+    for(const p of anEscolhidas) await instaMarcar(p,tipo,r.link);
+    anCatMontar();
   }catch(e){
     if(st) st.textContent='⚠️ '+e.message;
   }finally{
-    for(const id of ids){ try{ await deleteDoc(doc(db,'catalogo_fotos','insta_'+id)); }catch(e){} }
     anExportando=false; anDesenhar();
     if(bt){ bt.disabled=false; bt.textContent='📤 Publicar no Instagram'; }
   }
@@ -12041,6 +12114,174 @@ window.instaMaquina=async id=>{
   if(tp) tp.value=(f&&f.value==='story')?'story':'feed';
   instaSincronizarLegenda(true); anDesenhar();
   const box=document.getElementById('instaBox'); if(box) box.scrollIntoView({behavior:'smooth',block:'center'});
+};
+
+// ── ANÚNCIOS DO CATÁLOGO ───────────────────────────────────────────────
+// Cada notebook do catálogo (anunciado, com preço) ganha um post e um story
+// prontos, desenhados pelo mesmo editor daqui de baixo, com as fotos e a
+// descrição do cadastro e o tema da data. Entrou no catálogo, aparece aqui —
+// sem escolher foto nem escrever nada. O editor fica pra quando ele quiser
+// mudar foto, texto ou promoção de uma máquina.
+let anLote=false;               // desenhando a arte de uma máquina do lote
+const anCatMini={};             // id -> { ass, post, story }: miniaturas já desenhadas
+const anCatFilaIds=[]; let anCatRodando=false, anCatObs=null;
+function anCatMaquinas(){
+  return prods.filter(p=>p.status==='Anunciado'&&!aguardandoP(p)&&!reservadoP(p)&&(parseFloat(p.venda)||0)>0)
+              .sort((a,b)=>(parseFloat(b.num)||0)-(parseFloat(a.num)||0));
+}
+const anCatPublicada=p=>p.insta_feed_em||p.insta_em||'';
+// Chamada e selo do tema da data escolhida (não o que ele digitou no editor).
+function anTemaPadrao(){
+  const sel=document.getElementById('anData'), d=sel?anDatas().find(x=>x.id===sel.value):null;
+  return { frase:d?d.frase:'Notebooks revisados, com 90 dias de garantia.', selo:d?d.nome.toUpperCase():'' };
+}
+// Desenha as artes de UMA máquina no canvas do editor, copia cada uma e devolve
+// o editor exatamente como estava. Tudo síncrono: nada que ele digite cai no meio.
+function anArtesDe(p,formatos){
+  const el=id=>document.getElementById(id);
+  const cv=el('anCanvas'), mo=el('anModo'), fm=el('anFmt'), de=el('anDesc'), fr=el('anFrase'), se=el('anSelo');
+  if(!cv||!mo||!fm||!de||!fr||!se) return [];
+  const salvo={esc:anEscolhidas,modo:mo.value,fmt:fm.value,desc:de.value,frase:fr.value,selo:se.value,descAuto:anDescAuto,sel:anSel,exp:anExportando};
+  const tema=anTemaPadrao();
+  anLote=true;
+  try{
+    anEscolhidas=[p]; mo.value='uma'; de.value=String(p.descricao||'').slice(0,240);
+    fr.value=tema.frase; se.value=tema.selo; anSel=''; anExportando=true;
+    return formatos.map(f=>{ fm.value=f; anDesenhar(); return instaCopiaCanvas(); });
+  }finally{
+    anEscolhidas=salvo.esc; mo.value=salvo.modo; fm.value=salvo.fmt; de.value=salvo.desc; fr.value=salvo.frase; se.value=salvo.selo;
+    anDescAuto=salvo.descAuto; anSel=salvo.sel; anExportando=salvo.exp; anLote=false;
+    anDesenhar();
+  }
+}
+function anMini(c,larg){
+  const m=document.createElement('canvas'); m.width=larg; m.height=Math.round(c.height*larg/c.width);
+  m.getContext('2d').drawImage(c,0,0,m.width,m.height);
+  return m.toDataURL('image/jpeg',0.82);
+}
+// O que muda a arte: se nada disso mudou, a miniatura de antes vale.
+function anCatAssinatura(p){
+  const v=id=>(document.getElementById(id)||{}).value||'';
+  return [p.nome,p.venda,p.descricao,p.num,anPromo[p.id]||'',(anFotoSel[p.id]||[]).join(','),anFotosDe(p.id).length,
+          v('anData'),catCfg.whatsapp||'',catCfg.instagram||''].join('|');
+}
+function anCatCartao(p){
+  const pub=anCatPublicada(p), link=/^https:\/\/(www\.)?instagram\.com\//.test(p.insta_link||'')?p.insta_link:'';
+  return `<div class="ancat-it" data-id="${p.id}">
+    <div class="ancat-imgs"><img class="ancat-post" alt="post"><img class="ancat-story" alt="story"></div>
+    <div class="ancat-nome"><span class="nb">#${esc(String(p.num||'?'))}</span> ${esc(p.nome||'sem nome')}</div>
+    <div class="ancat-preco">${fmt(anPreco(p).por)}</div>
+    <div class="ancat-st${pub?' ok':''}">${pub?'📸 publicado em '+new Date(pub).toLocaleDateString('pt-BR')+(link?` · <a href="${encodeURI(link)}" target="_blank" rel="noopener">ver</a>`:''):'ainda não foi pro Instagram'}</div>
+    <div class="ancat-bts">
+      <button onclick="anCatBaixar('${p.id}','feed')">⬇️ Post</button>
+      <button onclick="anCatBaixar('${p.id}','story')">⬇️ Story</button>
+      <button class="pub" onclick="anCatPublicar('${p.id}')">📤 Publicar</button>
+      <button onclick="instaMaquina('${p.id}')" title="Abrir no editor para mudar fotos, texto ou promoção">✏️ Editar</button>
+    </div></div>`;
+}
+function anCatMontar(){
+  const grade=document.getElementById('anCatGrade'), res=document.getElementById('anCatResumo'); if(!grade) return;
+  const lista=anCatMaquinas(), novas=lista.filter(p=>!anCatPublicada(p)).length;
+  if(res) res.textContent=lista.length?`${lista.length} notebook${lista.length!==1?'s':''} no catálogo · ${novas} ainda não ${novas===1?'foi':'foram'} pro Instagram`:'';
+  grade.innerHTML=lista.length?lista.map(anCatCartao).join('')
+    :'<div class="tipo-auto">Nenhum notebook anunciado com preço ainda. Quando um entrar no catálogo, o post e o story dele aparecem aqui.</div>';
+  // as artes são desenhadas conforme os cartões aparecem na tela (as fotos são pesadas)
+  if(anCatObs) anCatObs.disconnect();
+  anCatObs='IntersectionObserver' in window?new IntersectionObserver(es=>es.forEach(e=>{
+    if(e.isIntersecting){ anCatObs.unobserve(e.target); anCatFila(e.target.dataset.id); }
+  }),{rootMargin:'400px'}):null;
+  grade.querySelectorAll('.ancat-it').forEach(c=>{
+    anCatPintar(c.dataset.id);
+    if(anCatObs) anCatObs.observe(c); else anCatFila(c.dataset.id);
+  });
+  anCatBotaoNovas();
+}
+window.anCatMontar=anCatMontar; // console / testes
+function anCatFila(id){ if(!anCatFilaIds.includes(id)) anCatFilaIds.push(id); if(!anCatRodando) anCatProcessar(); }
+async function anCatProcessar(){
+  anCatRodando=true;
+  try{
+    while(anCatFilaIds.length){
+      const id=anCatFilaIds.shift(), p=prods.find(x=>x.id===id); if(!p) continue;
+      try{
+        await anCarregarFoto(id);
+        const ass=anCatAssinatura(p);
+        if(!anCatMini[id]||anCatMini[id].ass!==ass){
+          const [post,story]=anArtesDe(p,['feed','story']);
+          if(post&&story) anCatMini[id]={ass,post:anMini(post,300),story:anMini(story,170)};
+        }
+        anCatPintar(id);
+      }catch(e){ console.error('anúncio do catálogo:',e); }
+      await new Promise(r=>setTimeout(r,0)); // respira entre uma máquina e outra
+    }
+  }finally{ anCatRodando=false; }
+}
+function anCatPintar(id){
+  const m=anCatMini[id], c=document.querySelector(`.ancat-it[data-id="${id}"]`); if(!m||!c) return;
+  c.querySelector('.ancat-post').src=m.post; c.querySelector('.ancat-story').src=m.story; c.classList.add('pronto');
+}
+function anCatBotaoNovas(){
+  const bt=document.getElementById('anCatNovasBt'); if(!bt) return;
+  const n=anCatMaquinas().filter(p=>!anCatPublicada(p)).length;
+  bt.style.display=instaConectado()&&n?'':'none';
+  bt.textContent=`📤 Publicar as novas (${Math.min(n,20)})`;
+}
+window.anCatBaixar=async(id,f)=>{
+  const p=prods.find(x=>x.id===id); if(!p) return;
+  await anCarregarFoto(id);
+  const [c]=anArtesDe(p,[f]); if(!c) return;
+  c.toBlob(b=>{
+    if(!b) return;
+    const a=document.createElement('a'); a.href=URL.createObjectURL(b);
+    a.download=`anuncio-${p.num||id}-${f==='story'?'story':'post'}-${new Date().toISOString().slice(0,10)}.png`;
+    document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },1500);
+  },'image/png');
+};
+// Post e story de uma máquina. Se o story falhar, o post já foi: avisa e segue.
+async function anCatPublicarMaquina(p,aviso){
+  await anCarregarFoto(p.id);
+  const [post,story]=anArtesDe(p,['feed','story']);
+  if(!post||!story) throw new Error('Não consegui desenhar a arte.');
+  const r=await instaEnviar('feed',[post],instaLegendaDe(p),aviso);
+  await instaMarcar(p,'feed',r.link);
+  let erroStory='';
+  try{ await instaEnviar('story',[story],'',aviso); await instaMarcar(p,'story'); }catch(e){ erroStory=e.message; }
+  return { link:r.link, usuario:r.usuario, erroStory };
+}
+window.anCatPublicar=async id=>{
+  const p=prods.find(x=>x.id===id); if(!p) return;
+  if(!instaConectado()){
+    instaMsg('Para publicar, conecte o Instagram aqui em cima. Enquanto isso, dá pra baixar o post e o story e postar pelo celular.');
+    const card=document.getElementById('anCatCard'); if(card) card.scrollIntoView({behavior:'smooth',block:'start'});
+    return;
+  }
+  const pub=anCatPublicada(p);
+  if(!confirm(pub?`${p.nome} já foi publicado em ${new Date(pub).toLocaleDateString('pt-BR')}. Publicar o post e o story de novo?`
+                 :`Publicar o post e o story de ${p.nome} no Instagram agora?`)) return;
+  const st=document.querySelector(`.ancat-it[data-id="${id}"] .ancat-st`);
+  document.querySelectorAll(`.ancat-it[data-id="${id}"] button`).forEach(b=>b.disabled=true);
+  try{
+    const r=await anCatPublicarMaquina(p,t=>{ if(st) st.textContent=t; });
+    instaMsg('✅ '+esc(p.nome||'Notebook')+' publicado'+(r.usuario?' em @'+esc(r.usuario):'')
+      +(r.link?` · <a href="${encodeURI(r.link)}" target="_blank" rel="noopener">ver no Instagram</a>`:'')
+      +(r.erroStory?` · ⚠️ o story não foi: ${esc(r.erroStory)}`:''),true);
+  }catch(e){ instaMsg('⚠️ '+e.message); }
+  finally{ anCatMontar(); }
+};
+window.anCatPublicarNovas=async()=>{
+  const novas=anCatMaquinas().filter(p=>!anCatPublicada(p)).slice(0,20); // a Meta deixa 100 por dia
+  if(!novas.length||!instaConectado()) return;
+  if(!confirm(`Publicar ${novas.length} notebook${novas.length!==1?'s':''} no Instagram, um post e um story de cada?`)) return;
+  const bt=document.getElementById('anCatNovasBt'); if(bt) bt.disabled=true;
+  let feitas=0; const falhas=[];
+  try{
+    for(const [i,p] of novas.entries()){
+      instaMsg(`Publicando ${i+1} de ${novas.length}: ${p.nome||'notebook'}...`);
+      try{ const r=await anCatPublicarMaquina(p); feitas++; if(r.erroStory) falhas.push((p.nome||p.id)+' (o story)'); }
+      catch(e){ falhas.push((p.nome||p.id)+': '+e.message); if(/Conectar Instagram de novo|limitou|Só os sócios|Conecte/.test(e.message)) break; }
+    }
+    instaMsg((feitas?`✅ ${feitas} publicado${feitas!==1?'s':''} no Instagram.`:'')+(falhas.length?` ⚠️ Não foram: ${falhas.join(' · ')}`:''));
+  }finally{ if(bt) bt.disabled=false; anCatMontar(); }
 };
 
 // ── Camada de animação ─────────────────────────────────────────────────

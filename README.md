@@ -3,8 +3,12 @@ Site gerador de anúncios com IA
 
 ## Instagram da loja (publicar direto do sistema)
 
-No **Gerar anúncio** (ou no botão 📸 da máquina, na lista), a arte e a legenda saem
-do sistema e um clique publica na conta da loja: post, carrossel em 2 partes ou story.
+No topo do **Gerar anúncio**, o cartão **Anúncios do catálogo** mostra cada notebook
+anunciado com preço já com o **post** (1080×1080) e o **story** (1080×1920) desenhados,
+das fotos e da descrição do cadastro, no tema da data: dá para baixar, publicar um
+(post + story) ou **Publicar as novas** de uma vez. Para mudar foto, texto ou promoção
+de uma máquina, o ✏️ (ou o 📸 da lista) abre o editor de baixo, que também publica
+post, carrossel em 2 partes ou story.
 Usa a API oficial da Meta (`api/insta.js`). A legenda só leva o que é público (nome,
 ficha, descrição, preço, WhatsApp da loja): custo, lucro e fornecedor nunca entram.
 
