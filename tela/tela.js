@@ -7,7 +7,7 @@
 (function () {
   'use strict';
   const N = window.TelaNucleo;
-  const APP = '2026-11-20.3';
+  const APP = '2026-11-20.4';
   const CACHE_MIDIA = 'tela-midia';
   const FADE = 250;
   const MIN = 60000;
@@ -109,6 +109,7 @@
   async function tocarProximo() {
     if (podeRecarregar()) { gravar('tela.recarregou', novaVersao); guardar(); location.reload(); return; }
     const g = ++geracao;
+    ultimoAvanco = Date.now();
     clearTimeout(estado.timer); vid.onended = null;
     if (!estado.pacote) { estado.tocando = null; mostrarEspera(); return; }
     const prox = N.proximo(estado.pacote, estado.pos, new Date(), cidade());
@@ -133,6 +134,7 @@
     if (m.tipo === 'video') {
       img.style.display = 'none';
       vid.style.display = 'block';
+      vid.onerror = () => terminar(g, id, 0); // vídeo com defeito: pula na hora
       vid.src = url;
       try { await vid.play(); }
       catch (e) { estado.timer = setTimeout(() => terminar(g, id, 0), 1000); return; }
@@ -152,6 +154,23 @@
       estado.timer = setTimeout(() => terminar(g, id, seg), Math.max(1000, seg * 1000 - FADE));
     }
   }
+
+  // ── VIGIA DO LOOP: a tela nunca fica parada ──
+  // O loop já recomeça sozinho, sem fim. Isto cobre o que pode travar no meio do caminho: o
+  // Android pausa o vídeo quando a tela apaga, o decodificador engasga, um item passa do tempo.
+  let ultimoAvanco = Date.now();
+  function vigiarLoop() {
+    if (document.visibilityState !== 'visible' || !estado.pacote) return;
+    const t = estado.tocando, agora = Date.now();
+    if (t) {
+      const m = estado.pacote.midias[t.id] || {};
+      const passou = (agora - t.inicio) / 1000;
+      if (passou > t.seg + 15) { tocarProximo(); return; } // passou muito do tempo: segue
+      if (m.tipo === 'video' && vid.paused && !vid.ended && passou > 1) vid.play().catch(() => {}); // pausado à toa: continua
+    } else if (agora - ultimoAvanco > 2 * MIN) tocarProximo(); // parado sem nada tocando: recomeça
+  }
+  setInterval(vigiarLoop, 5000);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') setTimeout(vigiarLoop, 500); });
 
   function terminar(g, id, segundos) {
     if (g !== geracao) return;
