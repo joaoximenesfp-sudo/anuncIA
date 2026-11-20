@@ -86,7 +86,7 @@ const ID1 = 'a'.repeat(32), ID2 = 'b'.repeat(32);
     login.searchParams.get('response_type') === 'code', 'com o id do app e a volta para o sistema');
   ok(login.searchParams.get('scope') === 'instagram_business_basic,instagram_business_content_publish', 'pede só ler a conta e publicar');
   ok(estadoValido(login.searchParams.get('state'), Date.now()), 'com um "state" assinado');
-  ok(!estadoValido(login.searchParams.get('state'), Date.now() + 16 * 60000) && !estadoValido(novoEstado(Date.now()).replace(/.$/, 'x'), Date.now()) &&
+  ok(!estadoValido(login.searchParams.get('state'), Date.now() + 16 * 60000) && !estadoValido((st => st.slice(0, -1) + (st.slice(-1) === 'x' ? 'y' : 'x'))(novoEstado(Date.now())), Date.now()) &&
     !estadoValido('lixo', Date.now()), '"state" vencido (15 min), mexido ou inventado não vale');
 
   console.log('\nvolta do login');

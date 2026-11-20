@@ -12,6 +12,7 @@ node testes/test-link-catalogo.js  # link do catálogo sai sempre pelo endereço
 node testes/test-gasto-rapido.js   # "45 gasolina" vira valor, nome, categoria e parcelas
 node testes/test-tela.js           # tela nos carros: horário/cidade, contagem, bônus, pacote e o /q dos QRs
 node testes/test-insta.js          # Instagram da loja: login da Meta, token cifrado, post/carrossel/story e a legenda
+node testes/test-tema.js           # datas comemorativas: o dia certo, a próxima vez de cada uma e o menu do Gerar anúncio
 ```
 
 Rode o `checar.js` sempre antes de subir. Tag desbalanceada ou chave de CSS

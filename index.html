@@ -10986,21 +10986,29 @@ function anTemPromo(){ return anEscolhidas.some(p=>anPreco(p).de>0); }
 // As datas do ano vêm do tema.js, o mesmo arquivo que pinta o catálogo. Uma
 // lista só: se um dia entrar data nova, ela aparece nos dois lugares.
 function anDatas(){
-  const hoje=new Date(), ano=hoje.getFullYear();
+  const hoje=new Date();
   const lista=(window.Tema&&Tema.DATAS)?Tema.DATAS:[];
   return lista.map(t=>{
-    const [ini,fim]=t.janela(ano);
-    return {id:t.id, nome:t.nome, emoji:t.emoji, frase:t.frase,
-            cor1:t.cor1, cor2:t.cor2, ini, fim};
+    // a vez que vale: a que está acontecendo ou, se já passou este ano, a próxima
+    const pr=Tema.proxima?Tema.proxima(t,hoje):null;
+    const [ini,fim]=pr?[pr.ini,pr.fim]:t.janela(hoje.getFullYear());
+    return {id:t.id, nome:t.nome, emoji:t.emoji, frase:pr?pr.frase:t.frase,
+            cor1:t.cor1, cor2:t.cor2, ini, fim, dia:pr&&pr.dia, periodo:pr&&pr.periodo};
   }).sort((a,b)=>a.ini-b.ini);
+}
+// "25 de dez.", "6 a 9 de fev." ou "5 de jan. a 28 de fev." — com o ano quando não é este.
+function anRotuloData(d){
+  const f=x=>x.toLocaleDateString('pt-BR',{day:'numeric',month:'short'});
+  const [a,b]=d.dia?[d.dia,d.dia]:(d.periodo||[d.ini,d.fim]);
+  const txt=a.getTime()===b.getTime()?f(a):(a.getMonth()===b.getMonth()?`${a.getDate()} a ${f(b)}`:`${f(a)} a ${f(b)}`);
+  return txt+(b.getFullYear()!==new Date().getFullYear()?' de '+b.getFullYear():'');
 }
 function anMontarSelect(){
   const sel=document.getElementById('anData'); if(!sel) return;
   const atual=(window.Tema&&Tema.temaDe())||null;
   const opts=['<option value="">— sem data, promoção comum —</option>'];
   anDatas().forEach(d=>{
-    const q=d.ini.toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
-    opts.push(`<option value="${d.id}">${d.emoji} ${esc(d.nome)} · ${q}</option>`);
+    opts.push(`<option value="${d.id}">${d.emoji} ${esc(d.nome)} · ${anRotuloData(d)}</option>`);
   });
   sel.innerHTML=opts.join('');
   // Abre já na data que está valendo hoje — é a que ele quer 90% das vezes.
