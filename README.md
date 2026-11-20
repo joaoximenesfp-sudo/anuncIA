@@ -8,7 +8,15 @@ anunciado com preço já com o **post** (1080×1080) e o **story** (1080×1920) 
 das fotos e da descrição do cadastro, no tema da data: dá para baixar, publicar um
 (post + story) ou **Publicar as novas** de uma vez. O post sai em **carrossel**: a arte
 primeiro e, depois, as fotos da máquina (até 9), cada uma inteira num quadro quadrado
-com o nome e o preço (o Instagram corta o carrossel no formato da 1ª imagem). Para mudar foto, texto ou promoção
+com o nome e o preço (o Instagram corta o carrossel no formato da 1ª imagem).
+
+O cartão separa **Para publicar** (só o que nunca foi; é o que o "Publicar as novas"
+manda), **Já publicados** (não entram de novo) e **Vendidos que ainda estão no
+Instagram** (com o link do post para arquivar e um "✓ Já tirei"). Em cada máquina, a
+**análise de preço**: dias no estoque desde a entrada e, quando ela está parada além do
+normal, acima do que as parecidas venderam no último ano ou é a mais antiga entre iguais
+em estoque, uma sugestão de preço (nunca abaixo do custo + 10%) com o motivo e a margem
+que sobra. "Usar no anúncio" põe o "de/por" na arte; o preço do cadastro não muda. Para mudar foto, texto ou promoção
 de uma máquina, o ✏️ (ou o 📸 da lista) abre o editor de baixo, que também publica
 post, carrossel em 2 partes ou story.
 Usa a API oficial da Meta (`api/insta.js`). A legenda só leva o que é público (nome,

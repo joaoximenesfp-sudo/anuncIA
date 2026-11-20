@@ -631,6 +631,23 @@ input[type=number].inp{padding-left:32px}
 .ancat-bts button{font-size:.72rem;padding:4px 7px;border-radius:7px;border:1px solid var(--b);background:var(--bg);color:var(--tx);cursor:pointer}
 .ancat-bts button.pub{background:#fdf4ff;border-color:#f5d0fe;color:#a21caf;font-weight:700}
 .ancat-bts button:disabled{opacity:.5;cursor:wait}
+.ancat-sec{margin-top:8px}
+.ancat-sec-tit{font-size:.8rem;font-weight:800;margin:10px 0 6px;color:var(--tx)}
+details.ancat-sec>summary{cursor:pointer}
+.ancat-preco s{color:var(--li);font-weight:600;font-size:.72rem}
+.ancat-idade{font-size:.68rem;font-weight:700;color:var(--gr)}
+.ancat-idade.medio{color:#b45309}
+.ancat-idade.lento{color:#dc2626}
+.ancat-sug{font-size:.68rem;line-height:1.35;background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:5px 7px;display:flex;flex-direction:column;gap:3px}
+.ancat-sug b{color:#92400e;font-size:.72rem}
+.ancat-sug span{color:var(--mu)}
+.ancat-sug button{align-self:flex-start;font-size:.68rem;padding:3px 7px;border-radius:6px;border:1px solid #fcd34d;background:#fff;color:#92400e;font-weight:700;cursor:pointer}
+.ancat-sug.neutro{background:var(--bg);border-color:var(--b);color:var(--mu)}
+.ancat-ok{font-size:.66rem;color:var(--mu);line-height:1.35}
+.ancat-vend{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:.74rem;padding:7px 0;border-bottom:1px solid var(--b)}
+.ancat-vend a{color:#a21caf;font-weight:700}
+.ancat-vend button{font-size:.7rem;padding:3px 8px;border-radius:6px;border:1px solid var(--b);background:var(--bg);color:var(--tx);cursor:pointer}
+.binsta.feito{background:#f0fdf4;color:var(--gr);border-color:var(--gbd)}
 .binsta{background:#fdf4ff;color:#a21caf;border:1px solid #f5d0fe;border-radius:7px;padding:3px 7px;font-size:.8rem;cursor:pointer;margin-left:4px;line-height:1}
 .an-chip{display:inline-flex;align-items:center;gap:6px;font-size:.71rem;font-weight:600;
   background:var(--bbg);color:var(--bl);border:1px solid var(--bbd);border-radius:20px;
@@ -12128,8 +12145,8 @@ window.instaPublicar=async()=>{
 // preço, sem reserva) — o mesmo filtro do Gerar anúncio.
 function instaBtn(p){
   if(!(p&&p.status==='Anunciado'&&!aguardandoP(p)&&!reservadoP(p)&&(parseFloat(p.venda)||0)>0)) return '';
-  const quando=p.insta_em?' (publicada em '+new Date(p.insta_em).toLocaleDateString('pt-BR')+')':'';
-  return `<button class="binsta" onclick="instaMaquina('${p.id}')" title="Publicar no Instagram${quando}">📸</button>`;
+  const pub=p.insta_feed_em||p.insta_em, quando=pub?' (publicada em '+new Date(pub).toLocaleDateString('pt-BR')+')':'';
+  return `<button class="binsta${pub?' feito':''}" onclick="instaMaquina('${p.id}')" title="${pub?'Já está no Instagram':'Publicar no Instagram'}${quando}">${pub?'📸✓':'📸'}</button>`;
 }
 window.instaMaquina=async id=>{
   sp2('anuncio');
@@ -12150,6 +12167,7 @@ window.instaMaquina=async id=>{
 // sem escolher foto nem escrever nada. O editor fica pra quando ele quiser
 // mudar foto, texto ou promoção de uma máquina.
 let anLote=false;               // desenhando a arte de uma máquina do lote
+let anCatFeitasAberto=false;    // a lista "Já publicados" aberta ou fechada
 const anCatMini={};             // id -> { ass, post, story }: miniaturas já desenhadas
 const anCatFilaIds=[]; let anCatRodando=false, anCatObs=null;
 function anCatMaquinas(){
@@ -12192,12 +12210,14 @@ function anCatAssinatura(p){
   return [p.nome,p.venda,p.descricao,p.num,anPromo[p.id]||'',(anFotoSel[p.id]||[]).join(','),anFotosDe(p.id).length,
           v('anData'),catCfg.whatsapp||'',catCfg.instagram||''].join('|');
 }
-function anCatCartao(p){
+function anCatCartao(p,a){
   const pub=anCatPublicada(p), link=/^https:\/\/(www\.)?instagram\.com\//.test(p.insta_link||'')?p.insta_link:'';
+  const pr=anPreco(p);
   return `<div class="ancat-it" data-id="${p.id}">
     <div class="ancat-imgs"><img class="ancat-post" alt="post"><img class="ancat-story" alt="story"></div>
     <div class="ancat-nome"><span class="nb">#${esc(String(p.num||'?'))}</span> ${esc(p.nome||'sem nome')}</div>
-    <div class="ancat-preco">${fmt(anPreco(p).por)}</div>
+    <div class="ancat-preco">${pr.de?`<s>${fmt(pr.de)}</s> `:''}${fmt(pr.por)}</div>
+    ${a?anCatAnaliseHTML(p,a):''}
     <div class="ancat-st${pub?' ok':''}">${pub?'📸 publicado em '+new Date(pub).toLocaleDateString('pt-BR')+(link?` · <a href="${encodeURI(link)}" target="_blank" rel="noopener">ver</a>`:''):'ainda não foi pro Instagram'}</div>
     <div class="ancat-bts">
       <button onclick="anCatBaixar('${p.id}','feed')">⬇️ Post</button>
@@ -12208,10 +12228,24 @@ function anCatCartao(p){
 }
 function anCatMontar(){
   const grade=document.getElementById('anCatGrade'), res=document.getElementById('anCatResumo'); if(!grade) return;
-  const lista=anCatMaquinas(), novas=lista.filter(p=>!anCatPublicada(p)).length;
-  if(res) res.textContent=lista.length?`${lista.length} notebook${lista.length!==1?'s':''} no catálogo · ${novas} ainda não ${novas===1?'foi':'foram'} pro Instagram`:'';
-  grade.innerHTML=lista.length?lista.map(anCatCartao).join('')
-    :'<div class="tipo-auto">Nenhum notebook anunciado com preço ainda. Quando um entrar no catálogo, o post e o story dele aparecem aqui.</div>';
+  const lista=anCatMaquinas();
+  const novas=lista.filter(p=>!anCatPublicada(p)), feitas=lista.filter(p=>anCatPublicada(p));
+  // vendidas depois de publicadas: o post continua no Instagram até alguém tirar
+  const vendidas=prods.filter(p=>p.status==='Vendido'&&anCatPublicada(p)&&!p.insta_removido_em)
+                      .sort((x,y)=>String(y.data_venda||'').localeCompare(String(x.data_venda||'')));
+  const op={ficha:anFichaRapida,giro:diasGiro}, an=new Map(lista.map(p=>[p.id,anAnalisePreco(p,prods,op)]));
+  const comSug=lista.filter(p=>an.get(p.id).sugerido).length;
+  if(res) res.textContent=lista.length?`${lista.length} no catálogo · ${novas.length} para publicar · ${feitas.length} já publicado${feitas.length!==1?'s':''}`
+    +(comSug?` · 💡 ${comSug} com sugestão de desconto`:''):'';
+  const cart=l=>`<div class="ancat-grade">${l.map(p=>anCatCartao(p,an.get(p.id))).join('')}</div>`;
+  grade.innerHTML=!lista.length&&!vendidas.length
+    ?'<div class="tipo-auto">Nenhum notebook anunciado com preço ainda. Quando um entrar no catálogo, o post e o story dele aparecem aqui.</div>'
+    :`<div class="ancat-sec"><div class="ancat-sec-tit">📤 Para publicar (${novas.length})</div>`
+      +(novas.length?cart(novas):'<div class="tipo-auto">Tudo o que está no catálogo já foi pro Instagram.</div>')+'</div>'
+      +(feitas.length?`<details class="ancat-sec" id="anCatFeitas"${anCatFeitasAberto?' open':''}><summary class="ancat-sec-tit">✅ Já publicados (${feitas.length}) — não entram de novo no "Publicar as novas"</summary>${cart(feitas)}</details>`:'')
+      +(vendidas.length?`<details class="ancat-sec" id="anCatVendidas" open><summary class="ancat-sec-tit">🏷️ Vendidos que ainda estão no Instagram (${vendidas.length})</summary>
+          <div class="tipo-auto">Arquive ou apague o post no app do Instagram, pra ninguém chamar por uma máquina que já foi.</div>${vendidas.map(anCatVendidaHTML).join('')}</details>`:'');
+  const fe=document.getElementById('anCatFeitas'); if(fe) fe.addEventListener('toggle',()=>{ anCatFeitasAberto=fe.open; });
   // as artes são desenhadas conforme os cartões aparecem na tela (as fotos são pesadas)
   if(anCatObs) anCatObs.disconnect();
   anCatObs='IntersectionObserver' in window?new IntersectionObserver(es=>es.forEach(e=>{
@@ -12224,6 +12258,107 @@ function anCatMontar(){
   anCatBotaoNovas();
 }
 window.anCatMontar=anCatMontar; // console / testes
+// ── ANÁLISE DE PREÇO E TEMPO DE ESTOQUE ─────────────────────────────────
+// Para cada máquina do catálogo: há quantos dias entrou, por quanto e em quanto
+// tempo as parecidas venderam no último ano, e quantas parecidas ainda estão
+// em estoque. Sugere um preço quando ela está parada além do normal, acima do
+// que as parecidas venderam, ou é a mais antiga entre iguais — sem passar do
+// custo + 10%. Parecida = mesmo modelo (marca, modelo, processador e geração);
+// sem 2 vendas do modelo, mesma classe (processador, geração e RAM).
+function anDiasDesde(data,hoje){
+  const s=String(data||'').trim(); if(!s) return null;
+  const d=Date.parse((s.length>7?s.slice(0,10):s+'-15')+'T12:00:00'); if(isNaN(d)) return null;
+  const h=Date.parse(hoje.toISOString().slice(0,10)+'T12:00:00');
+  return Math.max(0,Math.round((h-d)/864e5));
+}
+function anMediana(v){
+  const s=v.filter(x=>x!=null&&!isNaN(x)).sort((a,b)=>a-b); if(!s.length) return null;
+  const m=s.length>>1; return s.length%2?s[m]:(s[m-1]+s[m])/2;
+}
+function anAnalisePreco(p,todos,o){
+  o=o||{};
+  const hoje=o.hoje||new Date(), ficha=o.ficha||(()=>({})), giro=o.giro||(()=>null);
+  const f=ficha(p)||{}, preco=parseFloat(p.venda)||0, custo=parseFloat(p.custo)||0;
+  const dias=anDiasDesde(p.data_compra||p.data_compra_mes,hoje);
+  const kMod=x=>{ const g=ficha(x)||{}; return g.marca&&g.modelo?[g.marca,g.modelo,g.cpu,g.ger].join('|').toLowerCase():''; };
+  const kCla=x=>{ const g=ficha(x)||{}; return g.cpu&&g.ger?[g.cpu,g.ger,g.ram].join('|').toLowerCase():''; };
+  const mod=kMod(p), cla=kCla(p);
+  const vendidas=todos.filter(x=>x!==p&&x.status==='Vendido'&&(parseFloat(x.venda)||0)>0&&(anDiasDesde(x.data_venda,hoje)??999)<=365);
+  const estoque=todos.filter(x=>x!==p&&x.id!==p.id&&x.status!=='Vendido');
+  const vMod=mod?vendidas.filter(x=>kMod(x)===mod):[], vCla=cla?vendidas.filter(x=>kCla(x)===cla):[];
+  const base=vMod.length>=2?{l:vMod,tipo:'modelo',nome:[f.marca,f.modelo,f.cpu,f.ger].filter(Boolean).join(' ')}
+            :vCla.length>=2?{l:vCla,tipo:'classe',nome:[f.cpu,f.ger,f.ram].filter(Boolean).join(' ')}:null;
+  const ref=base?{n:base.l.length,tipo:base.tipo,nome:base.nome,preco:anMediana(base.l.map(x=>parseFloat(x.venda)||0)),
+                  dias:anMediana(base.l.map(x=>{ const g=giro(x); return g?g.dias:null; }))}:null;
+  const eMod=mod?estoque.filter(x=>kMod(x)===mod):[];
+  const irmas=eMod.length?eMod:(cla?estoque.filter(x=>kCla(x)===cla):[]);
+  const motivos=[]; let alvo=preco;
+  const normal=ref&&ref.dias!=null?Math.max(15,ref.dias):30;
+  if(dias!=null&&dias>Math.max(30,normal*1.5)){
+    motivos.push(`parada há ${dias} dias`+(ref&&ref.dias!=null?` (as parecidas vendem em ~${Math.round(ref.dias)})`:''));
+    alvo=Math.min(alvo,preco*(dias>90?0.9:dias>60?0.94:0.97));
+  }
+  if(ref&&ref.preco&&preco>ref.preco*1.07){
+    motivos.push(`${fmt(preco-ref.preco)} acima do que as parecidas venderam`);
+    alvo=Math.min(alvo,ref.preco);
+  }
+  if(irmas.length&&dias!=null&&dias>=21&&irmas.every(x=>(anDiasDesde(x.data_compra||x.data_compra_mes,hoje)??0)<dias)){
+    motivos.push(`${irmas.length+1} parecidas em estoque e esta é a mais antiga`);
+    alvo=Math.min(alvo,preco*0.97);
+  }
+  const r={dias,ref,irmas:irmas.length,motivos,preco};
+  if(!motivos.length||!preco) return r;
+  const piso=custo>0?Math.ceil(custo*1.1/10)*10:0;
+  let sug=Math.floor(alvo/50)*50;
+  if(sug<piso){ sug=Math.ceil(piso/50)*50; r.noPiso=true; }
+  if(sug>=preco){ r.semEspaco=true; return r; }
+  r.sugerido=sug; r.pct=Math.round((1-sug/preco)*100);
+  if(custo>0) r.margem=Math.round((sug-custo)/sug*100);
+  return r;
+}
+// A ficha lida do nome é cara pra repetir em centenas de máquinas: guarda por nome.
+const anFichas=new Map();
+function anFichaRapida(p){
+  const k=(p&&p.id||'')+'|'+(p&&p.nome||'')+'|'+JSON.stringify((p&&p.ficha)||'');
+  if(!anFichas.has(k)) anFichas.set(k,fichaDe(p));
+  return anFichas.get(k);
+}
+function anCatAnaliseHTML(p,a){
+  const cls=a.dias==null?'':a.dias<=30?'ok':a.dias<=60?'medio':'lento';
+  let h=a.dias!=null?`<div class="ancat-idade ${cls}">📅 ${a.dias} dia${a.dias!==1?'s':''} no estoque</div>`:'';
+  const ref=a.ref?`${a.ref.n} parecida${a.ref.n!==1?'s':''} (${esc(a.ref.nome)}) vendida${a.ref.n!==1?'s':''} no último ano por ~${fmt(a.ref.preco)}`
+                  +(a.ref.dias!=null?`, em ~${Math.round(a.ref.dias)} dias`:''):'';
+  if(a.sugerido){
+    h+=`<div class="ancat-sug"><b>💡 Sugestão: ${fmt(a.sugerido)} (−${a.pct}%)</b>`
+      +`<span>${a.motivos.map(esc).join(' · ')}${ref?'. '+ref:''}${a.noPiso?'. No limite do custo + 10%':''}${a.margem!=null?` · margem fica em ${a.margem}%`:''}</span>`
+      +(anPromo[p.id]===a.sugerido?'<span>✓ em uso no anúncio</span>':`<button onclick="anCatUsarSugestao('${p.id}',${a.sugerido})">Usar no anúncio (de/por)</button>`)+'</div>';
+  }else if(a.semEspaco){
+    h+=`<div class="ancat-sug neutro">⏳ ${a.motivos.map(esc).join(' · ')} — mas o preço já está perto do custo: sem espaço pra desconto</div>`;
+  }else if(ref){
+    h+=`<div class="ancat-ok">👍 Preço ok · ${ref}</div>`;
+  }
+  return h;
+}
+window.anCatUsarSugestao=(id,valor)=>{
+  const p=prods.find(x=>x.id===id); if(!p) return;
+  anPromo[id]=valor; // o anúncio sai "de/por"; o preço do cadastro não muda
+  if(anEscolhidas.some(x=>x.id===id)){ anChips(); anDesenhar(); }
+  anCatMontar();
+  instaMsg(`💡 ${p.nome}: o anúncio sai "de ${fmt(parseFloat(p.venda)||0)} por ${fmt(valor)}". O preço do cadastro continua o mesmo; se a venda fechar mais barato, é só mudar na venda.`);
+};
+function anCatVendidaHTML(p){
+  const link=/^https:\/\/(www\.)?instagram\.com\//.test(p.insta_link||'')?p.insta_link:'';
+  const dv=String(p.data_venda||'').slice(0,10), quando=dv?new Date(dv+'T12:00:00').toLocaleDateString('pt-BR'):'';
+  return `<div class="ancat-vend"><span><b>#${esc(String(p.num||'?'))}</b> ${esc(p.nome||'sem nome')}${quando?' · vendido em '+quando:''}</span>`
+    +(link?`<a href="${encodeURI(link)}" target="_blank" rel="noopener">ver o post</a>`:'')
+    +`<button onclick="anCatTirei('${p.id}')">✓ Já tirei do Instagram</button></div>`;
+}
+window.anCatTirei=async id=>{
+  const p=prods.find(x=>x.id===id); if(!p) return;
+  const em=new Date().toISOString();
+  try{ await updateDoc(doc(db,'products',id),{insta_removido_em:em}); p.insta_removido_em=em; anCatMontar(); }
+  catch(e){ instaMsg('⚠️ Não consegui marcar: '+e.message); }
+};
 function anCatFila(id){ if(!anCatFilaIds.includes(id)) anCatFilaIds.push(id); if(!anCatRodando) anCatProcessar(); }
 async function anCatProcessar(){
   anCatRodando=true;
