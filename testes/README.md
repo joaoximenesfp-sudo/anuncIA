@@ -11,6 +11,7 @@ node testes/test-ficha.js      # leitura da ficha técnica a partir do nome
 node testes/test-link-catalogo.js  # link do catálogo sai sempre pelo endereço público
 node testes/test-gasto-rapido.js   # "45 gasolina" vira valor, nome, categoria e parcelas
 node testes/test-tela.js           # tela nos carros: horário/cidade, contagem, bônus, pacote e o /q dos QRs
+node testes/test-insta.js          # Instagram da loja: login da Meta, token cifrado, post/carrossel/story e a legenda
 ```
 
 Rode o `checar.js` sempre antes de subir. Tag desbalanceada ou chave de CSS

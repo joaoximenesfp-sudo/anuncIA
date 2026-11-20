@@ -1,5 +1,9 @@
 {
   "rewrites": [
-    { "source": "/q/:anuncio/:carro", "destination": "/api/q?anuncio=:anuncio&carro=:carro" }
-  ]
+    { "source": "/q/:anuncio/:carro", "destination": "/api/q?anuncio=:anuncio&carro=:carro" },
+    { "source": "/insta/img/:arq", "destination": "/api/insta?img=:arq" }
+  ],
+  "functions": {
+    "api/insta.js": { "maxDuration": 60 }
+  }
 }
