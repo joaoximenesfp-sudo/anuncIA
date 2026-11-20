@@ -16,7 +16,12 @@ Instagram** (com o link do post para arquivar e um "✓ Já tirei"). Em cada má
 **análise de preço**: dias no estoque desde a entrada e, quando ela está parada além do
 normal, acima do que as parecidas venderam no último ano ou é a mais antiga entre iguais
 em estoque, uma sugestão de preço (nunca abaixo do custo + 10%) com o motivo e a margem
-que sobra. "Usar no anúncio" põe o "de/por" na arte; o preço do cadastro não muda. Para mudar foto, texto ou promoção
+que sobra. "Usar no anúncio" põe o "de/por" na arte; o preço do cadastro não muda.
+A **barra de procura** (gruda embaixo do menu ao rolar) filtra as três listas pelo
+número, nome, ficha ou descrição: todas as palavras, em qualquer ordem, sem acento;
+`#12` acha só a máquina 12. Abre o "Já publicados" quando acha algo lá e avisa quando
+a máquina procurada existe mas está fora do catálogo (em estoque, reservada, chegando
+ou sem preço). O "Buscar no que está anunciado" do editor segue a mesma regra. Para mudar foto, texto ou promoção
 de uma máquina, o ✏️ (ou o 📸 da lista) abre o editor de baixo, que também publica
 post, carrossel em 2 partes ou story.
 Usa a API oficial da Meta (`api/insta.js`). A legenda só leva o que é público (nome,

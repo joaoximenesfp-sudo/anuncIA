@@ -47,6 +47,7 @@ nav{position:sticky;top:0;z-index:50;background:rgba(249,248,246,.93);backdrop-f
 .nl{display:flex;align-items:baseline;gap:9px;flex-shrink:0}
 .nln{font-family:'Instrument Serif',serif;font-size:1.25rem;color:var(--tx);letter-spacing:-.01em}
 .nlb{font-size:.65rem;font-weight:600;color:var(--mu);letter-spacing:.12em;text-transform:uppercase;border:1px solid var(--b2);padding:2px 7px;border-radius:20px}
+@media(max-width:420px){ .nlb{display:none} }
 .nts{display:flex;gap:2px;flex-wrap:wrap}
 /* A aba de acao nao e mais uma secao: e um botao de fazer alguma coisa.
    Cor propria pra nao se perder no meio das outras cinco. */
@@ -595,9 +596,12 @@ input[type=number].inp{padding-left:32px}
 .copia-it .cn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .copia-it .cv{color:var(--li);font-size:.72rem;white-space:nowrap}
 .copia-vazio{padding:9px 10px;font-size:.72rem;color:var(--li)}
-.an-grade{display:grid;grid-template-columns:1fr;gap:18px}
-@media(min-width:900px){ .an-grade{grid-template-columns:340px 1fr;align-items:start} }
-.an-lado{display:flex;flex-direction:column;gap:12px}
+/* minmax(0,…): sem isso a coluna cresce até caber a opção mais comprida dos
+   menus e a página passa da largura do celular */
+.an-grade{display:grid;grid-template-columns:minmax(0,1fr);gap:18px}
+@media(min-width:900px){ .an-grade{grid-template-columns:340px minmax(0,1fr);align-items:start} }
+.an-lado{display:flex;flex-direction:column;gap:12px;min-width:0}
+.an-lado select.inp{min-width:0;text-overflow:ellipsis}
 .an-prev{display:flex;flex-direction:column;gap:8px;align-items:center;
   background:var(--bg);border:1px solid var(--b);border-radius:var(--rad);padding:16px}
 /* A previa e a mesma imagem, so encolhida pela tela. O que baixa e o tamanho
@@ -632,6 +636,19 @@ input[type=number].inp{padding-left:32px}
 .ancat-bts button.pub{background:#fdf4ff;border-color:#f5d0fe;color:#a21caf;font-weight:700}
 .ancat-bts button:disabled{opacity:.5;cursor:wait}
 .ancat-lista{display:block}
+/* A busca gruda embaixo do menu: com a lista comprida, dá pra procurar de
+   qualquer ponto sem subir a página. */
+#anCatCard{overflow:visible}
+.ancat-busca{position:sticky;top:56px;z-index:20;display:flex;align-items:center;gap:6px;margin:6px -6px 2px;padding:6px;background:var(--w);border-radius:10px}
+.ancat-busca.colada{box-shadow:0 6px 12px -8px rgba(0,0,0,.25)}
+.ancat-busca .inp{flex:1;min-width:0;padding-left:34px;margin:0}
+.ancat-busca-ic{position:absolute;left:16px;font-size:.85rem;opacity:.6;pointer-events:none}
+.ancat-busca-x{border:1px solid var(--b);background:var(--bg);color:var(--mu);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:.8rem;flex-shrink:0}
+.ancat-busca-res{min-height:0}
+.ancat-busca-res:empty{display:none}
+.ancat-busca-res .fora{margin-top:4px;line-height:1.5}
+.ancat-busca-res .fora button{font-size:.68rem;padding:1px 7px;border-radius:6px;border:1px solid var(--b);background:var(--bg);color:var(--tx);cursor:pointer;margin-left:4px}
+#anCatGrade [hidden]{display:none!important}
 .ancat-sec{margin-top:8px;display:block;width:100%}
 .ancat-sec-tit{font-size:.8rem;font-weight:800;margin:10px 0 6px;color:var(--tx)}
 details.ancat-sec>summary{cursor:pointer}
@@ -664,7 +681,8 @@ details.ancat-sec>summary{cursor:pointer}
    de tabela fica visivel ao lado do campo: e o "de" que vai sair riscado na
    arte, entao ele ve os dois numeros antes de gerar. */
 .an-item{display:flex;align-items:center;gap:6px;font-size:.72rem;font-weight:600;
-  background:var(--bbg);border:1px solid var(--b);border-radius:8px;padding:5px 7px;margin-top:5px}
+  background:var(--bbg);border:1px solid var(--b);border-radius:8px;padding:5px 7px;margin-top:5px;
+  max-width:100%;min-width:0;box-sizing:border-box}
 .an-item .nb{font-weight:800;color:var(--mu);flex:none}
 .an-item .cn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .an-item .de{flex:none;color:var(--li);text-decoration:line-through;font-size:.68rem}
@@ -1512,6 +1530,9 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
   .fr{grid-template-columns:1fr 1fr}
   .fr .fc:first-child{grid-column:1/-1}
   .nts{display:none}
+  /* o menu cabe no celular: o "Sair" não fica pra fora da tela */
+  .ni{padding:0 12px;gap:8px}
+  .nr{gap:6px}
   .sr{grid-template-columns:1fr 1fr}
   .cg{grid-template-columns:1fr}
   .mcb{grid-template-columns:1fr}
@@ -2311,7 +2332,6 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
       </div>
     </div>
   </div>
-</div>
 
   <!-- PAINEL COMPLETO -->
   <div class="pg" id="pg-painel">
@@ -2869,6 +2889,14 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
         </div>
         <div class="ancat-topo"><span class="tipo-auto" id="anCatResumo"></span>
           <button class="bok" id="anCatNovasBt" style="display:none" onclick="anCatPublicarNovas()">📤 Publicar as novas</button></div>
+        <div class="ancat-busca" id="anCatBuscaBox">
+          <span class="ancat-busca-ic" aria-hidden="true">🔍</span>
+          <input class="inp" type="text" id="anCatBusca" inputmode="search" enterkeyhint="search" autocomplete="off" spellcheck="false"
+                 aria-label="Procurar no catálogo" placeholder="Procurar no catálogo — nome, #número, processador, memória…"
+                 oninput="anCatFiltrar(true)" onkeydown="anCatBuscaTecla(event)">
+          <button type="button" class="ancat-busca-x" id="anCatBuscaX" title="Limpar a busca" aria-label="Limpar a busca" onclick="anCatLimparBusca()" hidden>✕</button>
+        </div>
+        <div class="tipo-auto ancat-busca-res" id="anCatBuscaRes"></div>
         <div class="ancat-lista" id="anCatGrade"></div>
       </div>
     </div>
@@ -3064,6 +3092,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
       </div><!-- /fornView -->
     </div>
   </div>
+</div><!-- /APP: todas as páginas ficam aqui dentro, senão o menu do topo não acompanha a rolagem -->
 
   <!-- MODAL EDITAR PEÇA -->
   <!-- TABELA PRA MANDAR AOS VENDEDORES -->
@@ -11059,8 +11088,10 @@ window.anBuscar=()=>{
   // oferta, e máquina em estoque não anunciada não deveria ir pro Instagram.
   const base=prods.filter(p=>p.status==='Anunciado' && !aguardandoP(p) && !reservadoP(p)
                              && (parseFloat(p.venda)||0)>0);
+  // mesma regra da busca do catálogo: as palavras em qualquer ordem, "#12" pelo número
+  const termos=anBuscaTermos(inp.value);
   const achados=(t.length<2 ? base.slice(0,8)
-                            : base.filter(p=>cliNorm(p.nome).includes(t)).slice(0,8));
+                            : base.filter(p=>anBuscaCasa(p,termos)).slice(0,8));
   if(!achados.length){
     box.innerHTML='<div class="copia-vazio">Nenhuma anunciada com preço bate com isso.</div>';
     box.style.display='block'; return;
@@ -12245,17 +12276,20 @@ function anCatMontar(){
   const cart=l=>`<div class="ancat-grade">${l.map(p=>anCatCartao(p,an.get(p.id))).join('')}</div>`;
   grade.innerHTML=!lista.length&&!vendidas.length
     ?'<div class="tipo-auto">Nenhum notebook anunciado com preço ainda. Quando um entrar no catálogo, o post e o story dele aparecem aqui.</div>'
-    :`<div class="ancat-sec"><div class="ancat-sec-tit">📤 Para publicar (${novas.length})</div>`
+    :`<div class="ancat-sec" id="anCatNovas"><div class="ancat-sec-tit">📤 Para publicar (<span class="ancat-n">${novas.length}</span>)</div>`
       +(novas.length?cart(novas):'<div class="tipo-auto">Tudo o que está no catálogo já foi pro Instagram.</div>')+'</div>'
-      +(feitas.length?`<details class="ancat-sec" id="anCatFeitas"${anCatFeitasAberto?' open':''}><summary class="ancat-sec-tit">✅ Já publicados (${feitas.length}) — não entram de novo no "Publicar as novas"</summary>${cart(feitas)}</details>`:'')
-      +(vendidas.length?`<details class="ancat-sec" id="anCatVendidas" open><summary class="ancat-sec-tit">🏷️ Vendidos que ainda estão no Instagram (${vendidas.length})</summary>
+      +(feitas.length?`<details class="ancat-sec" id="anCatFeitas"${anCatFeitasAberto?' open':''}><summary class="ancat-sec-tit">✅ Já publicados (<span class="ancat-n">${feitas.length}</span>) — não entram de novo no "Publicar as novas"</summary>${cart(feitas)}</details>`:'')
+      +(vendidas.length?`<details class="ancat-sec" id="anCatVendidas" open><summary class="ancat-sec-tit">🏷️ Vendidos que ainda estão no Instagram (<span class="ancat-n">${vendidas.length}</span>)</summary>
           <div class="tipo-auto">Arquive ou apague o post no app do Instagram, pra ninguém chamar por uma máquina que já foi.</div>${vendidas.map(anCatVendidaHTML).join('')}</details>`:'');
-  const fe=document.getElementById('anCatFeitas'); if(fe) fe.addEventListener('toggle',()=>{ anCatFeitasAberto=fe.open; });
+  // aberto/fechado que ele escolheu; o que a busca abre sozinha não conta
+  const fe=document.getElementById('anCatFeitas'); if(fe) fe.addEventListener('toggle',()=>{ if(!('antes' in fe.dataset)) anCatFeitasAberto=fe.open; });
   // as artes são desenhadas conforme os cartões aparecem na tela (as fotos são pesadas)
   if(anCatObs) anCatObs.disconnect();
   anCatObs='IntersectionObserver' in window?new IntersectionObserver(es=>es.forEach(e=>{
     if(e.isIntersecting){ anCatObs.unobserve(e.target); anCatFila(e.target.dataset.id); }
   }),{rootMargin:'400px'}):null;
+  // a busca vale também depois de remontar (chegou máquina nova, publicou uma...)
+  anCatFiltrar();
   grade.querySelectorAll('.ancat-it').forEach(c=>{
     anCatPintar(c.dataset.id);
     if(anCatObs) anCatObs.observe(c); else anCatFila(c.dataset.id);
@@ -12263,6 +12297,97 @@ function anCatMontar(){
   anCatBotaoNovas();
 }
 window.anCatMontar=anCatMontar; // console / testes
+// ── BUSCA DO CATÁLOGO ──────────────────────────────────────────────────
+// Cada palavra digitada precisa aparecer, em qualquer ordem, no número, no
+// nome, na ficha ou na descrição — sem acento e sem diferença de maiúscula.
+// "#12" acha só a máquina 12; "12" acha também "12ª geração" e a #120.
+// A mesma regra serve ao "Buscar no que está anunciado" do editor.
+const anBuscaCache=new Map();
+function anBuscaAlvo(p){
+  const k=[p.id,p.num,p.nome,p.descricao,JSON.stringify(p.ficha||'')].join('|');
+  let a=anBuscaCache.get(k);
+  if(a===undefined){
+    a=cliNorm(['#'+(p.num??''),p.nome,Object.values(anFichaRapida(p)||{}).join(' '),p.descricao].join(' '));
+    if(anBuscaCache.size>3000) anBuscaCache.clear();
+    anBuscaCache.set(k,a);
+  }
+  return a;
+}
+function anBuscaTermos(q){ return cliNorm(q).split(' ').filter(Boolean); }
+function anBuscaCasa(p,termos){
+  if(!p) return false;
+  if(!termos.length) return true;
+  const a=anBuscaAlvo(p);
+  return termos.every(t=>t[0]==='#'&&t.length>1?String(p.num??'')===t.slice(1):a.includes(t));
+}
+// Por que uma máquina que existe não está no catálogo.
+function anForaPorque(p){
+  if(aguardandoP(p)) return 'ainda chegando';
+  if(reservadoP(p)) return 'reservada';
+  if(p.status!=='Anunciado') return 'em estoque, não está anunciada';
+  return 'sem preço de venda';
+}
+window.anCatFiltrar=digitando=>{
+  const inp=document.getElementById('anCatBusca'), grade=document.getElementById('anCatGrade'), res=document.getElementById('anCatBuscaRes');
+  if(!inp||!grade) return;
+  const q=inp.value.trim(), termos=anBuscaTermos(q), busca=termos.length>0;
+  const x=document.getElementById('anCatBuscaX'); if(x) x.hidden=!inp.value;
+  const porId=new Map(prods.map(p=>[p.id,p]));
+  let achou=0;
+  grade.querySelectorAll('.ancat-sec').forEach(sec=>{
+    const its=[...sec.querySelectorAll('.ancat-it,.ancat-vend')];
+    let n=0;
+    for(const el of its){ const ok=!busca||anBuscaCasa(porId.get(el.dataset.id),termos); el.hidden=!ok; if(ok) n++; }
+    achou+=n;
+    const c=sec.querySelector('.ancat-n'); if(c) c.textContent=busca?`${n} de ${its.length}`:String(its.length);
+    sec.hidden=busca&&!n;
+    // a busca abre a lista fechada onde achou algo e, ao limpar, devolve como estava
+    if(sec.tagName==='DETAILS'){
+      if(busca){
+        if(!('antes' in sec.dataset)) sec.dataset.antes=sec.open?'1':'';
+        if(sec.open!==(n>0)) sec.open=n>0;
+      }else if('antes' in sec.dataset){
+        sec.open=sec.dataset.antes==='1'; delete sec.dataset.antes;
+      }
+    }
+  });
+  if(res){
+    if(!busca) res.innerHTML='';
+    else{
+      // o que bate com a busca mas não está no catálogo: diz por quê, pra ele não achar que sumiu
+      const vistos=new Set([...grade.querySelectorAll('.ancat-it,.ancat-vend')].map(e=>e.dataset.id));
+      const fora=prods.filter(p=>p.status!=='Vendido'&&!vistos.has(p.id)&&anBuscaCasa(p,termos));
+      res.innerHTML=(achou?`${achou} encontrada${achou>1?'s':''} para “${esc(q)}”`:`Nada no catálogo para “${esc(q)}”.`)
+        +(fora.length?'<div class="fora">Fora do catálogo: '+fora.slice(0,5).map(p=>`<b>#${esc(String(p.num||'?'))}</b> ${esc(p.nome||'sem nome')} — ${anForaPorque(p)}`
+            +`<button onclick="openEdit('${p.id}')" title="Abrir o cadastro">✎</button>`).join(' · ')+(fora.length>5?` · e mais ${fora.length-5}`:'')+'</div>':'');
+    }
+  }
+  // digitando com a página rolada lá embaixo: a lista encolhe e sumiria da tela
+  if(digitando){
+    const box=document.getElementById('anCatBuscaBox'), topo=56+(box?box.offsetHeight:0)+4;
+    const r=(res&&res.innerHTML?res:grade).getBoundingClientRect();
+    if(r.top<topo) window.scrollTo({top:Math.max(0,window.scrollY+r.top-topo)});
+  }
+};
+window.anCatBuscaTecla=e=>{
+  if(e.key==='Escape'){ anCatLimparBusca(); e.preventDefault(); }
+  else if(e.key==='Enter'){ e.preventDefault(); e.target.blur(); } // no celular, fecha o teclado e mostra o resultado
+};
+window.anCatLimparBusca=()=>{
+  const inp=document.getElementById('anCatBusca'); if(!inp) return;
+  inp.value=''; anCatFiltrar(); inp.focus();
+};
+// a sombra só quando a busca está grudada no menu
+(()=>{
+  let pend=false;
+  window.addEventListener('scroll',()=>{
+    if(pend) return; pend=true;
+    requestAnimationFrame(()=>{ pend=false;
+      const b=document.getElementById('anCatBuscaBox'); if(!b||!b.offsetParent) return;
+      b.classList.toggle('colada',b.getBoundingClientRect().top<=57&&window.scrollY>0);
+    });
+  },{passive:true});
+})();
 // ── ANÁLISE DE PREÇO E TEMPO DE ESTOQUE ─────────────────────────────────
 // Para cada máquina do catálogo: há quantos dias entrou, por quanto e em quanto
 // tempo as parecidas venderam no último ano, e quantas parecidas ainda estão
@@ -12354,7 +12479,7 @@ window.anCatUsarSugestao=(id,valor)=>{
 function anCatVendidaHTML(p){
   const link=/^https:\/\/(www\.)?instagram\.com\//.test(p.insta_link||'')?p.insta_link:'';
   const dv=String(p.data_venda||'').slice(0,10), quando=dv?new Date(dv+'T12:00:00').toLocaleDateString('pt-BR'):'';
-  return `<div class="ancat-vend"><span><b>#${esc(String(p.num||'?'))}</b> ${esc(p.nome||'sem nome')}${quando?' · vendido em '+quando:''}</span>`
+  return `<div class="ancat-vend" data-id="${p.id}"><span><b>#${esc(String(p.num||'?'))}</b> ${esc(p.nome||'sem nome')}${quando?' · vendido em '+quando:''}</span>`
     +(link?`<a href="${encodeURI(link)}" target="_blank" rel="noopener">ver o post</a>`:'')
     +`<button onclick="anCatTirei('${p.id}')">✓ Já tirei do Instagram</button></div>`;
 }
