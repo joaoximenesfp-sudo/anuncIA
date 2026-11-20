@@ -631,7 +631,8 @@ input[type=number].inp{padding-left:32px}
 .ancat-bts button{font-size:.72rem;padding:4px 7px;border-radius:7px;border:1px solid var(--b);background:var(--bg);color:var(--tx);cursor:pointer}
 .ancat-bts button.pub{background:#fdf4ff;border-color:#f5d0fe;color:#a21caf;font-weight:700}
 .ancat-bts button:disabled{opacity:.5;cursor:wait}
-.ancat-sec{margin-top:8px}
+.ancat-lista{display:block}
+.ancat-sec{margin-top:8px;display:block;width:100%}
 .ancat-sec-tit{font-size:.8rem;font-weight:800;margin:10px 0 6px;color:var(--tx)}
 details.ancat-sec>summary{cursor:pointer}
 .ancat-preco s{color:var(--li);font-weight:600;font-size:.72rem}
@@ -641,7 +642,11 @@ details.ancat-sec>summary{cursor:pointer}
 .ancat-sug{font-size:.68rem;line-height:1.35;background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:5px 7px;display:flex;flex-direction:column;gap:3px}
 .ancat-sug b{color:#92400e;font-size:.72rem}
 .ancat-sug span{color:var(--mu)}
-.ancat-sug button{align-self:flex-start;font-size:.68rem;padding:3px 7px;border-radius:6px;border:1px solid #fcd34d;background:#fff;color:#92400e;font-weight:700;cursor:pointer}
+.ancat-sug button{font-size:.66rem;padding:2px 7px;border-radius:6px;border:1px solid #fcd34d;background:#fff;color:#92400e;font-weight:700;cursor:pointer;white-space:nowrap}
+.ancat-sug-l{display:flex;justify-content:space-between;align-items:center;gap:6px}
+.ancat-sug .em-uso{color:#15803d;font-weight:700;white-space:nowrap}
+.ancat-sug details summary{cursor:pointer;color:#92400e;font-size:.64rem}
+.ancat-sug details span{display:block;margin-top:2px}
 .ancat-sug.neutro{background:var(--bg);border-color:var(--b);color:var(--mu)}
 .ancat-ok{font-size:.66rem;color:var(--mu);line-height:1.35}
 .ancat-vend{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:.74rem;padding:7px 0;border-bottom:1px solid var(--b)}
@@ -2864,7 +2869,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
         </div>
         <div class="ancat-topo"><span class="tipo-auto" id="anCatResumo"></span>
           <button class="bok" id="anCatNovasBt" style="display:none" onclick="anCatPublicarNovas()">📤 Publicar as novas</button></div>
-        <div class="ancat-grade" id="anCatGrade"></div>
+        <div class="ancat-lista" id="anCatGrade"></div>
       </div>
     </div>
     <div class="cd">
@@ -12329,9 +12334,9 @@ function anCatAnaliseHTML(p,a){
   const ref=a.ref?`${a.ref.n} parecida${a.ref.n!==1?'s':''} (${esc(a.ref.nome)}) vendida${a.ref.n!==1?'s':''} no último ano por ~${fmt(a.ref.preco)}`
                   +(a.ref.dias!=null?`, em ~${Math.round(a.ref.dias)} dias`:''):'';
   if(a.sugerido){
-    h+=`<div class="ancat-sug"><b>💡 Sugestão: ${fmt(a.sugerido)} (−${a.pct}%)</b>`
-      +`<span>${a.motivos.map(esc).join(' · ')}${ref?'. '+ref:''}${a.noPiso?'. No limite do custo + 10%':''}${a.margem!=null?` · margem fica em ${a.margem}%`:''}</span>`
-      +(anPromo[p.id]===a.sugerido?'<span>✓ em uso no anúncio</span>':`<button onclick="anCatUsarSugestao('${p.id}',${a.sugerido})">Usar no anúncio (de/por)</button>`)+'</div>';
+    h+=`<div class="ancat-sug"><div class="ancat-sug-l"><b>💡 ${fmt(a.sugerido)} (−${a.pct}%)</b>`
+      +(anPromo[p.id]===a.sugerido?'<span class="em-uso">✓ no anúncio</span>':`<button onclick="anCatUsarSugestao('${p.id}',${a.sugerido})">Usar no anúncio</button>`)+'</div>'
+      +`<details><summary>por quê?</summary><span>${a.motivos.map(esc).join(' · ')}${ref?'. '+ref:''}${a.noPiso?'. No limite do custo + 10%':''}${a.margem!=null?` · margem fica em ${a.margem}%`:''}</span></details></div>`;
   }else if(a.semEspaco){
     h+=`<div class="ancat-sug neutro">⏳ ${a.motivos.map(esc).join(' · ')} — mas o preço já está perto do custo: sem espaço pra desconto</div>`;
   }else if(ref){
