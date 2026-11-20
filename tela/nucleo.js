@@ -395,7 +395,7 @@
     const C = id => carros[id] || (carros[id] = { carro: id, cidade: '', dias: new Set(), tela: 0, mov: 0, janelas: 0, exib: 0, scans: 0,
       ligado: 0, bateria: 0, toques: 0, metros: 0, gps: 0, regioes: new Set(), faixas: zeroFaixas() });
     const regioes = {};
-    const R = id => regioes[id] || (regioes[id] = { regiao: id, segundos: 0, exib: 0, carros: new Set() });
+    const R = id => regioes[id] || (regioes[id] = { regiao: id, segundos: 0, exib: 0, carros: new Set(), porCarro: {} });
     const A = id => anuncios[id] || (anuncios[id] = { anuncio: id, exib: 0, segundos: 0, exibQR: 0, scans: 0, metros: 0,
       faixas: zeroFaixas(), cidades: {}, carros: new Set(), regioes: {} });
     for (const l of lotes) {
@@ -421,6 +421,7 @@
         const exibBairros = g.reduce((a, [, sn]) => a + (sn[1] || 0), 0);
         for (const [reg, sn] of g) {
           const r = R(reg); r.segundos += sn[0] || 0; r.exib += sn[1] || 0; r.carros.add(l.carro);
+          r.porCarro[l.carro] = (r.porCarro[l.carro] || 0) + (sn[0] || 0);
           c.regioes.add(reg);
         }
         const donosDaHora = new Set();
@@ -487,6 +488,37 @@
       foraDoCadastro: fora, regioes: Object.values(regioes).sort((a, b) => b.segundos - a.segundos) };
   }
 
+  // Onde os carros rodam, por região de anúncio: cada área de ~1 km do mês (resumo.regioes) entra
+  // na(s) região(ões) do meio dela. Serve para ver, antes de vender um espaço regional, se tem
+  // carro rodando lá e se a região depende de um motorista só. Todas as regiões do pacote
+  // aparecem, mesmo as que ninguém passou. fora = tempo andando fora de todas elas.
+  function horasPorRegiao(resumo, pacote) {
+    const regs = (pacote && pacote.regioes) || {};
+    const por = {}, porCarro = {};
+    for (const [id, z] of Object.entries(regs)) por[id] = { id, nome: z.nome || id, setor: !!z.setor, segundos: 0, exib: 0, carros: {} };
+    let total = 0, fora = 0;
+    for (const r of (resumo && resumo.regioes) || []) {
+      total += r.segundos || 0;
+      for (const [c, s] of Object.entries(r.porCarro || {})) porCarro[c] = porCarro[c] || { carro: c, segundos: 0, regioes: {}, fora: 0 }, porCarro[c].segundos += s;
+      const ids = regioesEm(pacote, centroGeohash(r.regiao)).filter(id => por[id]);
+      if (!ids.length) {
+        fora += r.segundos || 0;
+        for (const [c, s] of Object.entries(r.porCarro || {})) porCarro[c].fora += s;
+      }
+      for (const id of ids) {
+        const o = por[id];
+        o.segundos += r.segundos || 0; o.exib += r.exib || 0;
+        for (const [c, s] of Object.entries(r.porCarro || {})) {
+          o.carros[c] = (o.carros[c] || 0) + s;
+          porCarro[c].regioes[id] = (porCarro[c].regioes[id] || 0) + s;
+        }
+      }
+    }
+    // regiões grandes primeiro (as que repartem a cidade), depois as menores; cada grupo da mais rodada para a menos
+    const regioes = Object.values(por).sort((a, b) => (b.setor - a.setor) || (b.segundos - a.segundos));
+    return { regioes, carros: Object.values(porCarro).sort((a, b) => b.segundos - a.segundos), total, fora };
+  }
+
   // Horas andando de uma hora do lote: o que der mais entre o GPS e a vibração (como no resumo)
   function movDaHora(v, faixaMovimento) {
     const tela = v.t || 0, vib = v.v || [];
@@ -531,7 +563,7 @@
     anotarExibicao, anotarTela, anotarVibracao, anotarCarregando, anotarBateria, anotarToque, anotarKm, anotarRegiao, desvio, lotes, novoId, novaChave,
     PRECISAO_REGIAO, VELOCIDADE_ANDANDO, geohash, caixaGeohash, centroGeohash, distanciaM,
     valor, campos, lerValor, lerCampos, urlCriar, urlDoc, linkQR, linkPareamento, lerPareamento, pinMenu,
-    tokenMotorista, linkMotorista, scansValidos, resumoMes, resumoMotorista, movDaHora, diasSemSinal,
+    tokenMotorista, linkMotorista, scansValidos, resumoMes, resumoMotorista, horasPorRegiao, movDaHora, diasSemSinal,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = API;
   else raiz.TelaNucleo = API;

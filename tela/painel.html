@@ -24,6 +24,7 @@
   nav button.on{background:var(--verde);border-color:var(--verde);color:#fff}
   .cartao{background:var(--cartao);border:1px solid var(--linha);border-radius:14px;padding:16px;margin-bottom:14px}
   .cartao h2{margin:0 0 6px;font-size:17px}
+  .cartao h3{margin:18px 0 6px;font-size:15px}
   .cartao p.leg{margin:0 0 12px;color:var(--fraco);font-size:14px}
   .rolar{overflow-x:auto;-webkit-overflow-scrolling:touch}
   table{border-collapse:collapse;width:100%;font-size:14px;font-variant-numeric:tabular-nums}
@@ -147,6 +148,13 @@
           <label class="marcar"><input type="checkbox" id="ver-regioes" checked> Regiões de anúncio</label></div>
         <div id="mapa"></div>
         <p class="leg" id="leg-regioes" style="margin:8px 0 0"></p>
+      </div>
+      <div class="cartao">
+        <h2>Onde os motoristas rodam</h2>
+        <p class="leg">Tempo andando (pelo GPS) em cada região de anúncio, no mês escolhido. Antes de vender um espaço regional, veja se tem carro rodando lá e se a região não depende de um motorista só. <b>Espaço regional passa</b> = quantas vezes um espaço do loop passou com o carro andando na região (dividido entre os anunciantes que revezam nele).</p>
+        <div class="rolar"><table id="tab-regioes"></table></div>
+        <h3>Por motorista</h3>
+        <div class="rolar"><table id="tab-regioes-carros"></table></div>
       </div>
       <div class="cartao">
         <h2>Bairros com mais tela</h2>
@@ -478,7 +486,39 @@ function desenharBairros() {
     com.map(a => `<option value="${esc(a.anuncio)}">${esc((pacote.anuncios[a.anuncio] || {}).nome || a.anuncio)} (exibições)</option>`).join('');
   sel.value = com.some(a => a.anuncio === antes) ? antes : '';
   desenharTabelaBairros();
+  desenharRegioesMotoristas();
   desenharMapa();
+}
+// ── ONDE OS MOTORISTAS RODAM (por região de anúncio) ──
+function desenharRegioesMotoristas() {
+  const hr = resumo ? N.horasPorRegiao(resumo, pacote) : { regioes: [], carros: [], total: 0, fora: 0 };
+  const loop = (pacote.loop || []).length ? N.duracaoLoop(pacote, new Date(), 'campinas') : 0;
+  const pct = (a, b) => !(b > 0) ? '—' : a > 0 && 100 * a / b < 1 ? '&lt;1%' : fmt(100 * a / b) + '%';
+  const nomeCarro = id => { const c = carros.find(x => x.id === id); return c && c.motorista ? `${id} · ${c.motorista}` : id; };
+  const cor = coresDosSetores();
+  if (!hr.regioes.length || !hr.total) {
+    $('tab-regioes').innerHTML = `<tbody><tr><td>${!hr.regioes.length ? 'Ainda não há regiões de anúncio no pacote.'
+      : 'Nenhum tablet mandou GPS neste mês. A localização liga quando o motorista toca em Permitir localização no Configurar a tela.'}</td></tr></tbody>`;
+    $('tab-regioes-carros').innerHTML = '';
+    return;
+  }
+  const quem = o => Object.entries(o.carros).sort((a, b) => b[1] - a[1]).slice(0, 2).map(([c, x]) => `${esc(nomeCarro(c))} ${pct(x, o.segundos)}`).join(' · ');
+  const marca = o => o.setor ? `<span class="amostra" style="background:${cor[o.id]}"></span>` : '<span class="tracejado" style="margin-left:0"></span>';
+  $('tab-regioes').innerHTML = `<thead><tr><th>Região</th><th class="n">Horas andando</th><th class="n">Do tempo</th><th class="n">Carros</th><th>Quem mais roda lá</th>${loop ? '<th class="n">Espaço regional passa</th>' : ''}</tr></thead><tbody>` +
+    hr.regioes.map(o => {
+      const n = Object.keys(o.carros).length;
+      return `<tr><td>${marca(o)}${esc(o.nome)}</td><td class="n">${fmt(o.segundos / 3600, 1)} h</td><td class="n">${pct(o.segundos, hr.total)}</td>` +
+        `<td class="n">${n}${n === 1 ? ' <span class="selo aviso">só 1</span>' : ''}</td><td style="white-space:normal;min-width:220px">${n ? quem(o) : '<span class="leg">ninguém passou</span>'}</td>` +
+        (loop ? `<td class="n">${fmt(o.segundos / loop)} vezes</td>` : '') + '</tr>';
+    }).join('') +
+    `<tr><td>Fora das regiões</td><td class="n">${fmt(hr.fora / 3600, 1)} h</td><td class="n">${pct(hr.fora, hr.total)}</td><td></td><td></td>${loop ? '<td></td>' : ''}</tr></tbody>`;
+  const setores = hr.regioes.filter(o => o.setor), menores = hr.regioes.filter(o => !o.setor);
+  const onde = (c, grupo) => grupo.map(o => [o, c.regioes[o.id] || 0]).filter(([, x]) => x > 0).sort((a, b) => b[1] - a[1]).slice(0, 3)
+    .map(([o, x]) => `${esc(o.nome.replace(/^Região /, ''))} ${pct(x, c.segundos)}`).join(' · ') || '—';
+  const quebra = 'style="white-space:normal;min-width:190px"';
+  $('tab-regioes-carros').innerHTML = `<thead><tr><th>Carro</th><th class="n">Horas andando</th><th class="n">Fora das regiões</th><th>Onde mais roda</th><th>Áreas menores</th></tr></thead><tbody>` +
+    hr.carros.map(c => `<tr><td>${esc(nomeCarro(c.carro))}</td><td class="n">${fmt(c.segundos / 3600, 1)} h</td><td class="n">${pct(c.fora, c.segundos)}</td>` +
+      `<td ${quebra}>${onde(c, setores)}</td><td ${quebra}>${onde(c, menores)}</td></tr>`).join('') + '</tbody>';
 }
 function desenharTabelaBairros() {
   const { de, lista } = dadosBairros();

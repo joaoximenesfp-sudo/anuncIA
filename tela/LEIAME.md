@@ -157,6 +157,10 @@ começou. Se nenhuma opção bater, a cota é pulada.
   exibições dele por bairro (a parte dele de cada hora, espalhada pelos bairros daquela
   hora). O nome do bairro vem do OpenStreetMap (1 pedido por segundo, só o meio da
   área) e fica guardado no navegador.
+- **Onde os motoristas rodam** (aba Bairros): horas andando em cada região de anúncio,
+  quem mais roda em cada uma (com aviso quando só um carro passa lá) e quantas vezes um
+  espaço regional passaria lá no mês; por motorista, as regiões onde mais roda. É o que
+  diz se já dá para vender espaço regional numa região, ou se falta motorista lá.
 - **Relatório do anunciante**: também leva os km que os carros rodaram nas horas em
   que o anúncio passava e os bairros onde mais passou.
 

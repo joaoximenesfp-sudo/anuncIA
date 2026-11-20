@@ -65,6 +65,7 @@ const gC = N.programacao(pacR, em('2026-11-20T12:00:00'), 'campinas', { regioes:
 ok(['lojac1', 'lojac2', 'eletr'].every(d => gC.some(a => a.dono === d)) && !gC.some(a => a.dono === 'pizzab' || a.dono === 'tech'), 'programação no Centro mostra só os do Centro');
 const regioesUsadas = pac => (pac.loop || []).flatMap(e => e.cota ? e.opcoes : [e]).flatMap(o => o.regioes || []);
 
+
 console.log('\nregiões em faixa e regiões que repartem a cidade');
 const pacS = { regioes: {
   centro: { nome: 'Centro', lat: -22.9056, lon: -47.0608, km: 1.5 },
@@ -85,6 +86,25 @@ const pacSL = Object.assign({}, pacS, { midias: { o1: { tipo: 'imagem', dono: 'm
 const seqS = (la, lo) => Array.from({ length: 4 }, () => N.escolher(pacSL.loop[0], em('2026-11-20T12:00:00'), 'campinas', { regioes: N.regioesEm(pacSL, { lat: la, lon: lo }) }, giroT).midia).sort().join(',');
 ok(seqS(-22.90, -47.105) === 'o1,o1,w1,w1', 'na avenida (que fica na Oeste): reveza o da avenida e o que atende a Oeste toda');
 ok(seqS(-22.888, -47.18) === 'w1,w1,w1,w1', 'na Oeste, longe da avenida: só o da região');
+
+console.log('\nonde os carros rodam, por região de anúncio');
+{
+  const cel = (la, lo) => N.geohash(la, lo, 6);
+  const resumoR = { regioes: [
+    { regiao: cel(-22.9056, -47.0608), segundos: 3600, exib: 20, porCarro: { C01: 3000, C02: 600 } }, // Centro (e Leste)
+    { regiao: cel(-22.885, -47.20), segundos: 1800, exib: 9, porCarro: { C02: 1800 } },              // Oeste, longe da avenida
+    { regiao: cel(-22.8219, -47.2669), segundos: 900, exib: 4, porCarro: { C03: 900 } },             // Sumaré: fora
+  ] };
+  const hr = N.horasPorRegiao(resumoR, pacS), Rg = id => hr.regioes.find(r => r.id === id);
+  ok(hr.regioes.length === 4 && Rg('avenida').segundos === 0, 'todas as regiões aparecem, até as que ninguém passou');
+  ok(Rg('centro').segundos === 3600 && Rg('leste').segundos === 3600 && Rg('oeste').segundos === 1800, 'a área do Centro conta no Centro e na Leste');
+  ok(hr.total === 6300 && hr.fora === 900, 'total andando e o tempo fora das regiões');
+  ok(Rg('centro').carros.C01 === 3000 && Rg('centro').carros.C02 === 600 && Rg('oeste').carros.C02 === 1800, 'quanto cada carro rodou em cada região');
+  ok(hr.regioes[0].setor && hr.regioes[1].setor && !hr.regioes[3].setor && hr.regioes[0].id === 'leste', 'as regiões grandes primeiro, da mais rodada para a menos');
+  const c2 = hr.carros.find(c => c.carro === 'C02'), c3 = hr.carros.find(c => c.carro === 'C03');
+  ok(c2.segundos === 2400 && c2.regioes.leste === 600 && c2.regioes.oeste === 1800 && c3.fora === 900, 'por carro: onde cada motorista roda');
+  ok(N.horasPorRegiao({ regioes: [] }, {}).regioes.length === 0 && N.horasPorRegiao(null, pacS).total === 0, 'sem dados ou sem regiões: vazio, sem quebrar');
+}
 
 console.log('\ncontagem do que passou');
 const ag = {};
@@ -167,6 +187,7 @@ ok(!D('C01').semSensor && D('C02').semSensor, 'com GPS não é "sem sensor"; tab
 ok(D('C02').km === 0 && D('C02').bairros === 0 && D('C02').ligado === 0 && D('C02').naBateria === 0, 'versão antiga do tablet: os dados novos ficam zerados, sem quebrar');
 ok(JSON.stringify(D('C01').turno) === '["pico"]' && JSON.stringify(D('C02').turno) === '["manha"]', 'turno = faixa em que o carro mais roda');
 ok(r3.regioes.length === 2 && r3.regioes[0].regiao === centro && r3.regioes[0].segundos === 310 && r3.regioes[0].carros.size === 1, 'bairros do mês, do mais rodado para o menos');
+ok(r3.regioes[0].porCarro.C01 === 310 && !r3.regioes[0].porCarro.C02, 'cada área guarda os segundos de cada carro');
 const hb = r3.anuncios.find(a => a.anuncio === 'hamb');
 // hora com 4 exibições, 3 delas com o carro andando (2 no Centro, 1 na outra área); a hamburgueria teve 2
 ok(Math.abs(hb.bairros[0].exib - 1) < 1e-9 && hb.bairros[0].regiao === centro && Math.abs(hb.bairros[1].exib - 0.5) < 1e-9, 'bairros do anunciante: a parte dele, espalhada como as exibições');
