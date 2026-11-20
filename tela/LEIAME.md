@@ -7,7 +7,8 @@ anúncios e conteúdo. São três peças:
 |---|---|---|
 | Player | `/tela/` | Baixa `pacote.json` e `midia/` quando tem internet, roda sem internet, troca o QR da arte pelo QR do carro e anota o que passou |
 | Contador de QR | `/q/<anuncio>/<carro>` → `api/q.js` | Registra o scan (sem IP) e manda a pessoa para o destino do anúncio |
-| Painel | `/tela/painel.html` | Carros, pareamento, sumidos, eficiência, bônus do mês, jornada, mapa de bairros e relatório por anunciante. `?demo` mostra com números inventados |
+| Painel (gestor) | `/tela/painel.html` | Carros, pareamento, sumidos, eficiência, bônus do mês, jornada, mapa de bairros e relatório por anunciante. Só os sócios. `?demo` mostra com números inventados |
+| Página do motorista | `/tela/motorista.html#<id>` | Só os números daquele motorista: horas rodando, km, scans, posição no ranking (sem nomes), a parte dele no bônus e avisos (cabo, sem sinal). `?demo` mostra um exemplo |
 
 O tablet não faz login. Ele grava no Firestore pela API REST, levando a chave do
 carro; o `firestore.rules` só aceita se a chave bater com `tela_carros/<carro>` e
@@ -51,6 +52,18 @@ O GitHub Actions (`.github/workflows/app-tela.yml`) monta o APK, testa a trava n
 Android 13 (`android/testar-no-emulador.sh`) e, se passar, publica em `tela/app/tela-do-carro.apk`.
 A chave de assinatura (`android/tela.jks`) fica no repositório porque o app é instalado à mão só nos
 tablets da rede; atualização precisa ser assinada com ela.
+
+## Página do motorista
+O motorista não entra no painel. Cada um recebe um link só dele (painel → Carros → Link do
+tablet → **Página do motorista** → Mandar no WhatsApp), que abre sem login e mostra só os
+números do carro dele. Não aparece nada dos outros motoristas, dos anunciantes nem o total do
+bônus: só a posição (ex.: 2º de 5) e a parte dele.
+- O painel publica sozinho: toda vez que um sócio abre a aba Eficiência e bônus (e quando muda
+  bônus ou pesos), grava o resumo de cada carro ativo em `tela_motorista/<id>`. O id sai da
+  chave do carro (sha-256), então ninguém adivinha o link de outro.
+- **Trocar chave** troca também o link do motorista (o antigo para de abrir). **Desativar** tira
+  a página do ar.
+- Precisa das regras novas do `firestore.rules` publicadas (bloco `tela_motorista`).
 
 ## Publicar as regras
 Uma vez, e sempre que o `firestore.rules` mudar: Firebase console → Firestore →

@@ -128,6 +128,20 @@ const hb = r3.anuncios.find(a => a.anuncio === 'hamb');
 ok(Math.abs(hb.bairros[0].exib - 1) < 1e-9 && hb.bairros[0].regiao === centro && Math.abs(hb.bairros[1].exib - 0.5) < 1e-9, 'bairros do anunciante: a parte dele, espalhada como as exibições');
 ok(Math.abs(hb.km - 4.2) < 1e-9, 'km dos carros nas horas em que o anúncio passou (a hora sem GPS não soma)');
 
+console.log('\npágina do motorista');
+(() => {
+  const o = { a: 1, b: 1.5, c: 'x', d: new Date('2026-11-20T10:00:00Z'), e: [1, 'y'], f: { g: { h: [2, 3] } }, n: null, t: true };
+  ok(JSON.stringify(N.lerCampos(N.campos(o))) === JSON.stringify(o), 'lê de volta o formato do Firestore (números, datas, listas, mapas)');
+  const rm = N.resumoMes({ lotes: [lote('C01', 3600, 3600), lote('C02', 3600, 1800)], scans: [s('C01', 'a'), s('C01', 'b'), s('C02', 'c')], pesoHora: 1, pesoScan: 2, valorBonus: 100 });
+  const m1 = N.resumoMotorista({ resumo: rm, carro: 'C01', lotes: [lote('C01', 3600, 3600), lote('C02', 3600, 1800)], scans: [s('C01', 'a'), s('C01', 'b'), s('C02', 'c')] });
+  const m2 = N.resumoMotorista({ resumo: rm, carro: 'C02', lotes: [lote('C01', 3600, 3600), lote('C02', 3600, 1800)], scans: [s('C01', 'a'), s('C01', 'b'), s('C02', 'c')] });
+  ok(m1.posicao === 1 && m2.posicao === 2 && m1.total === 2, 'posição no ranking, sem nomes');
+  ok(Math.abs(m1.bonus + m2.bonus - 100) < 0.011 && m1.bonus > m2.bonus, 'a parte de cada um no bônus');
+  ok(m1.horasMov === 1 && m1.scans === 2 && JSON.stringify(m1.porDia) === '{"2026-11-20":[1,0,2]}', 'dia a dia do motorista: horas rodando, km e scans');
+  ok(!JSON.stringify(m1).includes('C02') && !('anuncios' in m1) && !('valorBonus' in m1), 'nada dos outros carros, dos anunciantes nem do total do bônus');
+  ok(N.resumoMotorista({ resumo: rm, carro: 'C09' }) === null, 'carro sem dados no mês: nada');
+})();
+
 console.log('\npacote publicado (tela/pacote.json)');
 const pacote = JSON.parse(fs.readFileSync(path.join(RAIZ, 'tela/pacote.json'), 'utf8'));
 const crypto = require('crypto');
@@ -178,6 +192,10 @@ console.log('\n/q/:anuncio/:carro (api/q.js)');
   global.fetch = async () => { throw new Error('fora do ar'); };
   res = await chamar({ anuncio: 'gio', carro: 'C01' });
   ok(res.statusCode === 302 && res.headers.location === pacote.anuncios.gio.destino, 'Firestore fora do ar: a pessoa chega no WhatsApp mesmo assim');
+
+  const t1 = await N.tokenMotorista('abcdef123456'), t2 = await N.tokenMotorista('abcdef123457');
+  ok(/^[0-9a-f]{32}$/.test(t1) && t1 === await N.tokenMotorista('abcdef123456') && t1 !== t2, 'link do motorista: id secreto de 32 letras, muda com a chave');
+  ok(N.linkMotorista(t1) === 'https://anunc-ia.vercel.app/tela/motorista.html#' + t1, 'endereço da página do motorista');
 
   const vj = JSON.parse(fs.readFileSync(path.join(RAIZ, 'vercel.json'), 'utf8'));
   ok(vj.rewrites.some(r => r.source === '/q/:anuncio/:carro' && r.destination.startsWith('/api/q')), 'vercel.json leva /q/ para a função');

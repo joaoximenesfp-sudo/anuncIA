@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="referrer" content="no-referrer">
+<title>Minha tela</title>
+<link rel="icon" href="icone-192.png">
+<style>
+  :root{--fundo:#f4f6f9;--cartao:#fff;--texto:#16202e;--fraco:#5d6b80;--linha:#e3e8ef;--verde:#14945a;--verde-claro:#e5f6ee;
+    --amarelo:#a86b00;--amarelo-claro:#fff4dc;--vermelho:#c0392b;--vermelho-claro:#fdecea}
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--fundo:#0e131b;--cartao:#161d28;--texto:#e8edf4;--fraco:#9aa8bd;--linha:#283244;
+    --verde:#3ccf8e;--verde-claro:#14301f;--amarelo:#f0b54a;--amarelo-claro:#33280f;--vermelho:#ff8a7a;--vermelho-claro:#3a1a17}}
+  :root[data-theme="dark"]{--fundo:#0e131b;--cartao:#161d28;--texto:#e8edf4;--fraco:#9aa8bd;--linha:#283244;
+    --verde:#3ccf8e;--verde-claro:#14301f;--amarelo:#f0b54a;--amarelo-claro:#33280f;--vermelho:#ff8a7a;--vermelho-claro:#3a1a17}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--fundo);color:var(--texto);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+  header{max-width:720px;margin:0 auto;padding:18px 16px 6px}
+  header h1{margin:0;font-size:22px}
+  header small{color:var(--fraco);font-size:14px}
+  main{max-width:720px;margin:0 auto;padding:8px 16px 40px}
+  .cartao{background:var(--cartao);border:1px solid var(--linha);border-radius:14px;padding:16px;margin-bottom:12px}
+  .cartao h2{margin:0 0 8px;font-size:17px}
+  .leg{color:var(--fraco);font-size:14px;margin:0}
+  .kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:12px}
+  @media (min-width:560px){.kpis{grid-template-columns:repeat(3,1fr)}}
+  .kpi{background:var(--cartao);border:1px solid var(--linha);border-radius:14px;padding:12px 14px}
+  .kpi b{display:block;font-size:24px;font-variant-numeric:tabular-nums}
+  .kpi span{color:var(--fraco);font-size:13px}
+  .grande{font-size:30px;font-weight:800;font-variant-numeric:tabular-nums;margin:2px 0 4px}
+  .aviso{background:var(--amarelo-claro);color:var(--amarelo);border-radius:12px;padding:10px 12px;margin-bottom:10px;font-weight:600;font-size:15px}
+  .dica{background:var(--verde-claro);color:var(--verde);border-radius:12px;padding:10px 12px;margin-bottom:10px;font-size:15px}
+  label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--fraco);font-weight:600;margin-bottom:12px}
+  select{font:inherit;color:var(--texto);background:var(--cartao);border:1px solid var(--linha);border-radius:10px;padding:8px 10px;max-width:220px}
+  table{border-collapse:collapse;width:100%;font-size:15px;font-variant-numeric:tabular-nums}
+  th,td{padding:8px 6px;border-bottom:1px solid var(--linha);text-align:left}
+  th{color:var(--fraco);font-weight:600;font-size:13px}
+  td.n,th.n{text-align:right}
+  .demo{background:var(--amarelo-claro);color:var(--amarelo);padding:8px 12px;border-radius:10px;font-weight:600;margin-bottom:12px}
+  [hidden]{display:none!important}
+</style>
+</head>
+<body>
+<header>
+  <h1 id="ola">Minha tela</h1>
+  <small id="sub">Seus números da tela no carro</small>
+</header>
+<main>
+  <div id="carregando" class="cartao"><p class="leg">Carregando seus números…</p></div>
+  <div id="erro" class="cartao" hidden><h2>Não deu para abrir</h2><p class="leg" id="erro-txt"></p></div>
+  <div id="app" hidden>
+    <div id="aviso-demo" class="demo" hidden>Demonstração: números inventados.</div>
+    <label>Mês<select id="mes"></select></label>
+    <div id="avisos"></div>
+    <div class="cartao" id="bonus"></div>
+    <div class="kpis" id="kpis"></div>
+    <div class="cartao">
+      <h2>Dia a dia</h2>
+      <table id="dias"></table>
+    </div>
+    <p class="leg" id="rodape"></p>
+  </div>
+</main>
+<script src="nucleo.js"></script>
+<script>
+(function () {
+  'use strict';
+  const N = window.TelaNucleo;
+  const $ = id => document.getElementById(id);
+  const DEMO = new URLSearchParams(location.search).has('demo');
+  const fmt = (n, d = 0) => Number(n || 0).toLocaleString('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d });
+  const reais = n => Number(n || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const quando = d => d ? new Date(d).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—';
+  const nomeMes = m => { const [a, n] = m.split('-').map(Number); const t = new Date(a, n - 1, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }); return t.charAt(0).toUpperCase() + t.slice(1); };
+  let dados = null;
+
+  function erro(txt) { $('carregando').hidden = true; $('erro').hidden = false; $('erro-txt').textContent = txt; }
+
+  async function carregar() {
+    if (DEMO) return demo();
+    const token = decodeURIComponent((location.hash || '').slice(1)).trim().toLowerCase();
+    if (!/^[0-9a-f]{32}$/.test(token)) return erro('Este endereço está incompleto. Abra o link que o gestor mandou no WhatsApp.');
+    let r;
+    try { r = await fetch(N.urlDoc('tela_motorista', token), { cache: 'no-store' }); }
+    catch (e) { return erro('Sem internet agora. Tente de novo daqui a pouco.'); }
+    if (r.status === 404) return erro('Ainda não tem números para este link. O gestor publica quando abre o painel: tente mais tarde.');
+    if (!r.ok) return erro('Este link não está liberado. Peça um link novo ao gestor.');
+    return N.lerCampos((await r.json()).fields || {});
+  }
+
+  function desenhar() {
+    const mes = $('mes').value, m = (dados.meses || {})[mes] || {};
+    const st = dados.status || {};
+    const nome = String(dados.motorista || '').split(' ')[0];
+    $('ola').textContent = nome ? `Olá, ${nome}!` : 'Minha tela';
+    $('sub').textContent = [dados.carro, dados.cidade].filter(Boolean).join(' · ');
+    const vazio = !m || m.vazio || !(m.horasTela > 0);
+
+    // avisos: o que o motorista pode resolver
+    const avisos = [];
+    const diasSem = st.visto ? N.diasSemSinal(+new Date(st.visto), Date.now()) : Infinity;
+    if (diasSem >= 1) avisos.push(st.visto ? `O tablet não manda sinal desde ${quando(st.visto)}. Ligue ele no Wi-Fi (ou no 4G do celular) por uns minutos.` : 'O tablet ainda não mandou sinal. Abra o link do tablet nele e deixe no Wi-Fi.');
+    if (!vazio && m.naBateria >= 0.15) avisos.push(`${fmt(m.naBateria * 100)}% do tempo a tela rodou na bateria. Confira o cabo e o carregador: com o tablet descarregado, as horas param de contar.`);
+    if (st.pacoteEmDia === false) avisos.push('O tablet está com o pacote de vídeos antigo. Deixe ele no Wi-Fi um pouco para atualizar.');
+    if (!vazio && !(m.km > 0) && !(m.bairros > 0)) avisos.push('A localização do tablet está desligada. Com ela ligada, seus km e bairros aparecem aqui.');
+    $('avisos').innerHTML = avisos.map(a => `<div class="aviso">${esc(a)}</div>`).join('');
+
+    // bônus e posição
+    if (vazio) {
+      $('bonus').innerHTML = '<h2>Bônus</h2><p class="leg">Ainda sem números neste mês. Com a tela ligada e o carro rodando, eles aparecem aqui.</p>';
+    } else {
+      const pos = m.posicao > 0 ? `Você está em <b>${m.posicao}º</b> de ${m.total} motoristas.` : '';
+      const conta = `Pontos: ${fmt(m.horasMov, 1)} h rodando × ${fmt(m.pesoHora, 1)} + ${fmt(m.scans)} scans × ${fmt(m.pesoScan, 1)} = <b>${fmt(m.pontos, 1)}</b>`;
+      $('bonus').innerHTML = m.bonus > 0
+        ? `<h2>Sua parte do bônus</h2><div class="grande">${reais(m.bonus)}</div><p class="leg">Estimativa: fecha no fim do mês. ${pos}</p><p class="leg" style="margin-top:6px">${conta}</p>`
+        : `<h2>Seus pontos</h2><div class="grande">${fmt(m.pontos, 1)}</div><p class="leg">${pos} O valor do bônus deste mês ainda não foi definido.</p><p class="leg" style="margin-top:6px">${conta}</p>`;
+    }
+
+    $('kpis').innerHTML = [
+      [fmt(m.horasMov, 1), 'horas rodando com a tela ligada'],
+      [fmt(m.km), 'km rodados'],
+      [fmt(m.scans), 'pessoas escanearam o QR'],
+      [fmt(m.dias), 'dias com a tela ligada'],
+      [fmt(m.horasTela, 1), 'horas de tela'],
+      [fmt(m.toques), 'toques na tela'],
+    ].map(([v, t]) => `<div class="kpi"><b>${v}</b><span>${t}</span></div>`).join('');
+
+    const dias = Object.entries(m.porDia || {}).sort((a, b) => b[0].localeCompare(a[0]));
+    $('dias').innerHTML = dias.length
+      ? '<thead><tr><th>Dia</th><th class="n">Horas rodando</th><th class="n">Km</th><th class="n">Scans</th></tr></thead><tbody>' +
+        dias.map(([d, x]) => `<tr><td>${d.slice(8, 10)}/${d.slice(5, 7)}</td><td class="n">${fmt(x[0], 1)}</td><td class="n">${fmt(x[1])}</td><td class="n">${fmt(x[2])}</td></tr>`).join('') + '</tbody>'
+      : '<tbody><tr><td class="leg">Nenhum dia com a tela ligada neste mês ainda.</td></tr></tbody>';
+
+    $('rodape').textContent = `Números até ${quando(dados.atualizado)} (atualizam quando o gestor abre o painel). Esta página é só sua: não passe o link adiante.`;
+  }
+
+  function demo() {
+    $('aviso-demo').hidden = false;
+    const hoje = new Date(), mes = N.partesData(hoje).mes, porDia = {};
+    let semente = 3; const rnd = () => (semente = (semente * 16807) % 2147483647) / 2147483647;
+    for (let d = 1; d <= Math.min(hoje.getDate(), 28); d++) if (rnd() > 0.15) porDia[`${mes}-${String(d).padStart(2, '0')}`] = [Math.round((4 + rnd() * 5) * 10) / 10, Math.round(60 + rnd() * 90), Math.floor(rnd() * 4)];
+    const dd = Object.values(porDia), h = dd.reduce((a, x) => a + x[0], 0), km = dd.reduce((a, x) => a + x[1], 0), sc = dd.reduce((a, x) => a + x[2], 0);
+    return { carro: 'C01', motorista: 'Maria Aparecida', cidade: 'Campinas', atualizado: new Date(Date.now() - 3 * 3600000),
+      status: { visto: new Date(Date.now() - 20 * 60000), bateria: 86, carregando: true, pacoteEmDia: true },
+      meses: { [mes]: { dias: dd.length, horasTela: h * 1.25, horasMov: h, horasGPS: h * 0.9, km, scans: sc, toques: 64, naBateria: 0.21, bairros: 23,
+        turno: ['tarde', 'pico'], pontos: h + 2 * sc, posicao: 3, total: 12, bonus: 142.35, pesoHora: 1, pesoScan: 2, porDia } } };
+  }
+
+  carregar().then(d => {
+    if (!d) return;
+    dados = d;
+    const meses = Object.keys(dados.meses || {}).sort().reverse();
+    if (!meses.length) return erro('Ainda não tem números para este link. Tente mais tarde.');
+    $('mes').innerHTML = meses.map(m => `<option value="${esc(m)}">${esc(nomeMes(m))}</option>`).join('');
+    $('mes').onchange = desenhar;
+    $('carregando').hidden = true; $('app').hidden = false;
+    desenhar();
+  }).catch(() => erro('Não consegui ler seus números agora. Tente de novo daqui a pouco.'));
+})();
+</script>
+</body>
+</html>

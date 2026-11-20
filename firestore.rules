@@ -144,6 +144,15 @@ service cloud.firestore {
         && request.resource.data.h is string && request.resource.data.h.size() <= 32;
     }
 
+    // Página do motorista (tela/motorista.html). O painel dos sócios publica o resumo de cada
+    // carro num documento cujo id é secreto (sai da chave do carro). Quem tem o link lê o seu;
+    // ninguém lista a coleção, nem lê o dos outros, nem grava.
+    match /tela_motorista/{token} {
+      allow get: if token.size() >= 32;
+      allow list: if false;
+      allow write: if socio();
+    }
+
     // ── PADRÃO: nega o resto ──
     // Coleção que não estiver listada acima fica inacessível.
     match /{document=**} {

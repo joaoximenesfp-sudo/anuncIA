@@ -113,6 +113,7 @@
           <label>Pontos por scan<input id="peso-scan" type="number" min="0" step="0.5" value="2"></label>
           <button class="sec" id="bt-copiar-bonus">Copiar para o WhatsApp</button>
         </div>
+        <p class="leg" id="aviso-motoristas" style="margin:10px 0 0"></p>
       </div>
       <div class="kpis" id="kpis-mes"></div>
       <div class="cartao">
@@ -244,7 +245,23 @@ function mostrarPareamento(c) {
     <a class="sec" style="text-decoration:none;padding:6px 10px;border:1px solid var(--linha);border-radius:10px;color:inherit" target="_blank" rel="noopener"
        href="https://wa.me/${tel ? '55' + tel.replace(/^55/, '') : ''}?text=${encodeURIComponent(msg)}">Mandar no WhatsApp</a></p>
     <p>PIN do menu do tablet: <b id="pin-menu">${N.pinMenu(c.chave)}</b> <span class="leg">(5 toques no canto de cima à esquerda; muda quando troca a chave)</span></p>
-    <p class="leg">O link leva a chave do carro: mande só para o motorista. O PIN fica com você.</p></div></div>`;
+    <p class="leg">O link leva a chave do carro: mande só para o motorista. O PIN fica com você.</p>
+    <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--linha)">
+      <p><b>Página do motorista</b> <span class="leg">— só os números dele: horas rodando, km, scans, posição e a parte dele no bônus. Não vê os outros motoristas nem os anunciantes.</span></p>
+      <p><code id="lm-link">gerando…</code></p>
+      <p class="linha"><button class="sec" id="bt-copiar-lm">Copiar link</button>
+      <a class="sec" id="lm-zap" style="text-decoration:none;padding:6px 10px;border:1px solid var(--linha);border-radius:10px;color:inherit" target="_blank" rel="noopener" href="#">Mandar no WhatsApp</a>
+      <a class="sec" id="lm-ver" style="text-decoration:none;padding:6px 10px;border:1px solid var(--linha);border-radius:10px;color:inherit" target="_blank" rel="noopener" href="#">Ver como o motorista</a></p>
+    </div></div></div>`;
+  N.tokenMotorista(c.chave).then(token => {
+    if (!$('lm-link')) return;
+    const lm = N.linkMotorista(token);
+    const txt = `Oi, ${c.motorista.split(' ')[0]}! Aqui você acompanha as suas horas rodando, km, scans e a sua parte do bônus do mês: ${lm}\nEsse link é só seu, não passe adiante.`;
+    $('lm-link').textContent = lm;
+    $('lm-ver').href = DEMO ? 'motorista.html?demo' : lm;
+    $('lm-zap').href = `https://wa.me/${tel ? '55' + tel.replace(/^55/, '') : ''}?text=${encodeURIComponent(txt)}`;
+    $('bt-copiar-lm').onclick = () => navigator.clipboard.writeText(lm).then(() => $('bt-copiar-lm').textContent = 'Copiado');
+  });
   const qr = qrcode(0, 'M'); qr.addData(link); qr.make();
   const cv = $('qr-par'), ctx = cv.getContext('2d'), n = qr.getModuleCount(), m = Math.floor(cv.width / (n + 4)), off = Math.floor((cv.width - m * n) / 2);
   ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cv.width, cv.height); ctx.fillStyle = '#000';
@@ -268,19 +285,59 @@ $('form-carro').onsubmit = async e => {
   const c = { id: proximoCodigo(), motorista: $('nc-nome').value.trim(), telefone: $('nc-tel').value.trim(),
     cidade: N.slug(nome), cidadeNome: nome, chave: N.novaChave(), ativo: true, criado: new Date() };
   try { await salvarCarro(c); } catch (err) { alert('Não gravou: ' + err.message); return; }
-  carros.push(c); e.target.reset(); desenharCarros(); mostrarPareamento(c);
+  carros.push(c); e.target.reset(); desenharCarros(); mostrarPareamento(c); agendarPublicar(true);
 };
 $('tab-carros').onclick = async e => {
   const b = e.target.closest('button'); if (!b) return;
   const c = carros.find(x => x.id === (b.dataset.link || b.dataset.chave || b.dataset.ativo)); if (!c) return;
   if (b.dataset.link) return mostrarPareamento(c);
+  const tokenAntigo = await N.tokenMotorista(c.chave);
   if (b.dataset.chave) {
-    if (!confirm(`Trocar a chave do ${c.id}? O tablet atual para de enviar até abrir o link novo.`)) return;
+    if (!confirm(`Trocar a chave do ${c.id}? O tablet atual para de enviar até abrir o link novo, e o link do motorista também muda.`)) return;
     c.chave = N.novaChave();
   } else c.ativo = !c.ativo;
   try { await salvarCarro(c); } catch (err) { alert('Não gravou: ' + err.message); return; }
+  // link antigo do motorista (chave trocada) ou carro desativado: a página dele deixa de abrir
+  if (b.dataset.chave || !c.ativo) await apagarMotorista(tokenAntigo);
   desenharCarros(); if (b.dataset.chave) mostrarPareamento(c);
+  agendarPublicar(true);
 };
+
+// ── PÁGINA DO MOTORISTA: cada um vê só o dele ──
+// O painel publica o resumo de cada carro ativo em tela_motorista/<id secreto que sai da chave>.
+// O motorista abre tela/motorista.html#<id> sem login. Publica sozinho sempre que o painel
+// calcula o mês (e só o que mudou).
+const publicados = {};
+let publicarT = 0;
+function agendarPublicar(logo) { clearTimeout(publicarT); publicarT = setTimeout(publicarMotoristas, logo ? 300 : 2500); }
+async function apagarMotorista(token) {
+  if (DEMO || !fb) return;
+  try { await fb.deleteDoc(fb.doc(fb.db, 'tela_motorista', token)); } catch (e) { /* sem as regras novas: nada a apagar */ }
+  for (const k of Object.keys(publicados)) if (k.startsWith(token)) delete publicados[k];
+}
+async function publicarMotoristas() {
+  if (DEMO) { $('aviso-motoristas').textContent = 'Motoristas: cada um vê só os números dele na página do motorista (Carros → Link do tablet). Na demonstração nada é publicado.'; return; }
+  if (!fb || !resumo) return;
+  const mes = $('mes').value, conf = { pesoHora: +$('peso-hora').value || 0, pesoScan: +$('peso-scan').value || 0 };
+  let feitos = 0, erro = '';
+  for (const c of carros.filter(x => x.ativo && x.chave)) {
+    const m = N.resumoMotorista({ resumo, carro: c.id, lotes: dadosMes.lotes, scans: dadosMes.scans, ...conf });
+    const token = await N.tokenMotorista(c.chave), s = status[c.id] || {};
+    const dados = {
+      carro: c.id, motorista: c.motorista || '', cidade: c.cidadeNome || c.cidade || '', atualizado: new Date(),
+      status: { visto: s.visto ? new Date(s.visto) : null, bateria: s.bateria ?? -1, carregando: !!s.carregando, pacoteEmDia: !pacote.versao || !s.pacote || s.pacote === pacote.versao },
+      meses: { [mes]: m || { vazio: true } },
+    };
+    const k = token + mes, assinatura = JSON.stringify([dados.motorista, dados.cidade, dados.status.visto && +dados.status.visto, dados.status.pacoteEmDia, m]);
+    if (publicados[k] === assinatura) continue;
+    try { await fb.setDoc(fb.doc(fb.db, 'tela_motorista', token), dados, { merge: true }); publicados[k] = assinatura; feitos++; }
+    catch (e) { erro = e && e.code === 'permission-denied' ? 'regras' : String((e && e.message) || e); break; }
+  }
+  $('aviso-motoristas').textContent = erro === 'regras'
+    ? '⚠ Os motoristas ainda não veem os números: publique as regras novas do Firestore (Firebase → Firestore → Regras → colar o firestore.rules → Publicar).'
+    : erro ? `⚠ Não publiquei para os motoristas agora (${erro}). Tento de novo na próxima vez que o painel calcular.`
+    : `Motoristas: cada um vê só os números dele na página do motorista (Carros → Link do tablet). Atualizado às ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}${feitos ? ` (${feitos} página${feitos > 1 ? 's' : ''})` : ''}.`;
+}
 
 // ── MÊS: EFICIÊNCIA E BÔNUS ──
 let resumo = null;
@@ -313,6 +370,7 @@ function calcular() {
   desenharJornada();
   desenharAnuncios();
   desenharBairros();
+  agendarPublicar();
 }
 
 // ── JORNADA E MOVIMENTO ──
@@ -552,7 +610,7 @@ async function iniciarFirebase() {
   const app = initializeApp({ apiKey: N.CHAVE_API, authDomain: 'anuncia-70b88.firebaseapp.com', projectId: N.PROJETO,
     storageBucket: 'anuncia-70b88.firebasestorage.app', messagingSenderId: '325014740359', appId: '1:325014740359:web:eff4e874f9f18a2ba54722' });
   const a = auth.getAuth(app);
-  fb = { db: fs.getFirestore(app), collection: fs.collection, getDocs: fs.getDocs, doc: fs.doc, setDoc: fs.setDoc, query: fs.query, where: fs.where };
+  fb = { db: fs.getFirestore(app), collection: fs.collection, getDocs: fs.getDocs, doc: fs.doc, setDoc: fs.setDoc, deleteDoc: fs.deleteDoc, query: fs.query, where: fs.where };
   $('form-entrar').onsubmit = async e => {
     e.preventDefault(); $('erro-entrar').textContent = '';
     try { await auth.signInWithEmailAndPassword(a, $('email').value.trim(), $('senha').value); }

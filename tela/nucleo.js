@@ -216,6 +216,16 @@
     return String(h % 10000).padStart(4, '0');
   }
 
+  // Página do motorista: o resumo dele fica num documento com id secreto, que sai da chave do
+  // carro (sha-256). Trocar a chave no painel troca também o link do motorista.
+  async function tokenMotorista(chave) {
+    const sutil = (raiz.crypto || require('crypto').webcrypto).subtle;
+    const dados = new TextEncoder().encode('motorista:' + String(chave || ''));
+    const h = new Uint8Array(await sutil.digest('SHA-256', dados));
+    return Array.from(h.slice(0, 16), x => x.toString(16).padStart(2, '0')).join('');
+  }
+  const linkMotorista = token => `${SITE}/tela/motorista.html#${token}`;
+
   function novoId() {
     const b = new Uint8Array(12);
     (raiz.crypto || require('crypto').webcrypto).getRandomValues(b);
@@ -256,6 +266,23 @@
     const f = {};
     for (const [k, v] of Object.entries(obj)) if (v !== undefined) f[k] = valor(v);
     return f;
+  }
+  function lerValor(v) {
+    if (!v || typeof v !== 'object') return null;
+    if ('nullValue' in v) return null;
+    if ('booleanValue' in v) return v.booleanValue;
+    if ('integerValue' in v) return Number(v.integerValue);
+    if ('doubleValue' in v) return Number(v.doubleValue);
+    if ('stringValue' in v) return v.stringValue;
+    if ('timestampValue' in v) return new Date(v.timestampValue);
+    if ('arrayValue' in v) return (v.arrayValue.values || []).map(lerValor);
+    if ('mapValue' in v) return lerCampos(v.mapValue.fields || {});
+    return null;
+  }
+  function lerCampos(fields) {
+    const o = {};
+    for (const [k, v] of Object.entries(fields || {})) o[k] = lerValor(v);
+    return o;
   }
   const urlCriar = (colecao, id) => `${BASE_FS}/${colecao}?documentId=${encodeURIComponent(id)}&key=${CHAVE_API}`;
   const urlDoc = (colecao, id) => `${BASE_FS}/${colecao}/${encodeURIComponent(id)}?key=${CHAVE_API}`;
@@ -388,6 +415,39 @@
       foraDoCadastro: fora, regioes: Object.values(regioes).sort((a, b) => b.segundos - a.segundos) };
   }
 
+  // Horas andando de uma hora do lote: o que der mais entre o GPS e a vibração (como no resumo)
+  function movDaHora(v, faixaMovimento) {
+    const tela = v.t || 0, vib = v.v || [];
+    const gps = Math.min(tela, Object.values(v.g || {}).reduce((a, sn) => a + (sn[0] || 0), 0));
+    return Math.max(gps, Math.min(tela, vib.slice(faixaMovimento).reduce((a, b) => a + b, 0) * JANELA_VIBRACAO));
+  }
+
+  // O que vai para a página do motorista: só os números dele, a posição no ranking (sem nomes)
+  // e a parte dele no bônus. Nada dos outros carros nem dos anunciantes.
+  function resumoMotorista({ resumo, carro, lotes = [], scans = [], pesoHora = 1, pesoScan = 2, faixaMovimento = FAIXA_MOVIMENTO }) {
+    const c = resumo.carros.find(x => x.carro === carro);
+    if (!c) return null;
+    const ranking = resumo.carros.filter(x => x.pontos > 0).sort((a, b) => b.pontos - a.pontos);
+    const dec = (x, n = 1) => Math.round(x * 10 ** n) / 10 ** n;
+    const porDia = {};
+    const D = dia => porDia[dia] || (porDia[dia] = [0, 0, 0]);
+    for (const l of lotes) {
+      if (l.carro !== carro) continue;
+      for (const v of Object.values(l.horas || {})) {
+        if (!(v.t > 0)) continue;
+        const d = D(l.dia); d[0] += movDaHora(v, faixaMovimento) / 3600; d[1] += (v.d || 0) / 1000;
+      }
+    }
+    for (const s of scansValidos(scans)) if (s.carro === carro) D(s.dia)[2] += 1;
+    for (const d of Object.values(porDia)) { d[0] = dec(d[0]); d[1] = dec(d[1]); }
+    return {
+      dias: c.diasAtivos, horasTela: dec(c.horasTela), horasMov: dec(c.horasMov), horasGPS: dec(c.horasGPS), km: dec(c.km),
+      scans: c.scans, toques: c.toques, naBateria: dec(c.naBateria, 3), bairros: c.bairros, turno: c.turno, exib: c.exib,
+      semSensor: c.semSensor, pontos: dec(c.pontos), posicao: c.pontos > 0 ? ranking.indexOf(c) + 1 : 0, total: ranking.length,
+      bonus: c.bonus || 0, pesoHora, pesoScan, porDia,
+    };
+  }
+
   function diasSemSinal(visto, agora) {
     if (!visto) return Infinity;
     return Math.floor((agora - visto) / 86400000);
@@ -398,8 +458,8 @@
     partesData, faixaDaHora, slug, vale, escolher, segundosDe, proximo, duracaoLoop,
     anotarExibicao, anotarTela, anotarVibracao, anotarCarregando, anotarBateria, anotarToque, anotarKm, anotarRegiao, desvio, lotes, novoId, novaChave,
     PRECISAO_REGIAO, VELOCIDADE_ANDANDO, geohash, caixaGeohash, centroGeohash, distanciaM,
-    valor, campos, urlCriar, urlDoc, linkQR, linkPareamento, lerPareamento, pinMenu,
-    scansValidos, resumoMes, diasSemSinal,
+    valor, campos, lerValor, lerCampos, urlCriar, urlDoc, linkQR, linkPareamento, lerPareamento, pinMenu,
+    tokenMotorista, linkMotorista, scansValidos, resumoMes, resumoMotorista, movDaHora, diasSemSinal,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = API;
   else raiz.TelaNucleo = API;
