@@ -7,7 +7,7 @@
 (function () {
   'use strict';
   const N = window.TelaNucleo;
-  const APP = '2026-11-20.2';
+  const APP = '2026-11-20.3';
   const CACHE_MIDIA = 'tela-midia';
   const FADE = 250;
   const MIN = 60000;
@@ -427,6 +427,7 @@
       ['Internet', navigator.onLine ? 'conectado' : 'sem conexão'],
       ['Na tomada', (c => c == null ? 'o tablet não informa' : c ? 'sim (carro ligado)' : 'não')(carregando())],
       ['Localização', textoLocal()],
+      ['Tela sempre acesa', nativo ? 'sim (o app segura)' : travaTela ? 'sim' : `não: ${erroTela || 'tentando…'} · ligue "Permanecer ativo" nas opções do desenvolvedor`],
       ['Trava', nativo ? (a => (a.fixado ? 'fixado' : 'solto') + (a.frota ? ' · modo frota' : '') + (a.modoCarro ? ' · modo carro ligado' : ''))(appEstado()) : 'no Chrome, sem o app'],
       ['Versão do app', APP + (nativo ? ' · Android ' + (appEstado().app || '') : '') + (novaVersao ? ` · nova ${novaVersao} (atualiza ${modoApp() ? 'já' : 'quando o carro desligar'})` : '')],
     ];
@@ -600,9 +601,22 @@
   document.addEventListener('fullscreenchange', atualizarConfig);
   $('bt-config').onclick = () => { $('menu').classList.remove('on'); abrirConfig(); };
   if (par || !ler('tela.configurada', false)) abrirConfig();
+  // Tela sempre acesa: pede ao navegador e, se ele soltar ou negar (economia de energia, por
+  // exemplo), tenta de novo a cada 30 s e a cada toque. O menu mostra se está segurando.
+  let travaTela = null, erroTela = '';
   async function manterAcesa() {
-    try { if ('wakeLock' in navigator && document.visibilityState === 'visible') await navigator.wakeLock.request('screen'); } catch (e) { /* segue */ }
+    if (!('wakeLock' in navigator)) { erroTela = 'este navegador não deixa'; return; }
+    if (document.visibilityState !== 'visible' || (travaTela && !travaTela.released)) return;
+    try {
+      travaTela = await navigator.wakeLock.request('screen'); erroTela = '';
+      travaTela.addEventListener('release', () => { travaTela = null; });
+    } catch (e) {
+      travaTela = null;
+      erroTela = e && e.name === 'NotAllowedError' ? 'o Android não deixou (economia de energia ligada?)' : 'não deu agora';
+    }
   }
+  setInterval(manterAcesa, 30000);
+  document.addEventListener('pointerdown', manterAcesa);
 
   // ── PARTIDA ──
   window.TelaAcoes = { sincronizar, enviar, avisar, tocarProximo, pedirLocal, regiaoAgora, local: loc }; // console / testes
