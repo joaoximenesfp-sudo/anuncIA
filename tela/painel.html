@@ -109,6 +109,11 @@
       </div>
       <div class="kpis" id="kpis-mes"></div>
       <div class="cartao">
+        <h2>Últimos scans</h2>
+        <p class="leg">Cada vez que alguém aponta a câmera para o QR de uma tela. "Repetido" é o mesmo celular de novo no mesmo dia: não conta duas vezes.</p>
+        <div class="rolar"><table id="tab-scans"></table></div>
+      </div>
+      <div class="cartao">
         <h2>Eficiência por carro</h2>
         <p class="leg">Horas rodando = tela ligada com o carro em movimento (sensor do tablet). Scans contam uma pessoa por dia, até 6 por hora em cada carro. Pontos = horas rodando × peso + scans × peso; o bônus é dividido pelos pontos. * tablet sem sensor: conta as horas de tela.</p>
         <div class="rolar"><table id="tab-mes"></table></div>
@@ -264,7 +269,7 @@ function calcular() {
     [fmt(r.filter(c => c.horasTela > 0).length), 'carros com tela ligada'],
     [fmt(soma('horasTela'), 0), 'horas de tela'],
     [fmt(soma('exib')), 'exibições'],
-    [fmt(resumo.scansValidos), `scans válidos (de ${fmt(resumo.scansBrutos)}${resumo.foraDoCadastro ? `; ${fmt(resumo.foraDoCadastro)} de carro fora do cadastro` : ''})`],
+    [fmt(resumo.scansTodos), `pessoas escanearam o QR${resumo.foraDoCadastro ? ` (${fmt(resumo.foraDoCadastro)} em tablet sem carro cadastrado, fora do bônus)` : ''}`],
   ].map(([v, t]) => `<div class="kpi"><b>${v}</b><span>${t}</span></div>`).join('');
   $('tab-mes').innerHTML = `<thead><tr><th>Carro</th><th>Motorista</th><th>Cidade</th><th class="n">Dias</th><th class="n">Horas de tela</th><th class="n">Horas rodando</th>
     <th class="n">Exibições</th><th class="n">Scans</th><th class="n">Scans a cada 10 h</th><th class="n">Pontos</th><th class="n">Bônus</th></tr></thead><tbody>` +
@@ -274,6 +279,7 @@ function calcular() {
     `</tbody><tfoot><tr><td colspan="4">Total</td><td class="n">${fmt(soma('horasTela'), 1)}</td><td class="n">${fmt(soma('horasMov'), 1)}</td><td class="n">${fmt(soma('exib'))}</td>
       <td class="n">${fmt(soma('scans'))}</td><td></td><td class="n">${fmt(resumo.totalPontos, 1)}</td><td class="n">${reais(soma('bonus'))}</td></tr></tfoot>`;
   if (!r.length) $('tab-mes').innerHTML = '<tbody><tr><td>Nenhum tablet mandou dados neste mês ainda.</td></tr></tbody>';
+  desenharScans();
   desenharAnuncios();
 }
 $('bt-copiar-bonus').onclick = () => {
@@ -283,6 +289,23 @@ $('bt-copiar-bonus').onclick = () => {
     .map((c, i) => `${i + 1}. ${nome(c.carro)} (${c.carro}): ${fmt(c.horasMov, 1)} h rodando, ${c.scans} scans → ${reais(c.bonus)}`).join('\n');
   navigator.clipboard.writeText(txt).then(() => $('bt-copiar-bonus').textContent = 'Copiado');
 };
+
+// ── ÚLTIMOS SCANS ──
+function desenharScans() {
+  const vistos = new Set();
+  const lista = dadosMes.scans.slice().sort((a, b) => a.em - b.em).map(s => {
+    const k = `${s.h}|${s.anuncio}|${s.carro}|${s.dia}`;
+    const repetido = vistos.has(k); vistos.add(k);
+    return Object.assign({ repetido }, s);
+  }).reverse().slice(0, 40);
+  const nomeCarro = id => id === 'X' ? 'tablet sem carro' : (carros.find(c => c.id === id) ? `${id} · ${(carros.find(c => c.id === id) || {}).motorista}` : `${id} (fora do cadastro)`);
+  const quando = ms => ms ? new Date(ms).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—';
+  $('tab-scans').innerHTML = lista.length
+    ? `<thead><tr><th>Quando</th><th>Anúncio</th><th>Carro</th><th></th></tr></thead><tbody>` + lista.map(s =>
+        `<tr><td>${quando(s.em)}</td><td>${esc((pacote.anuncios[s.anuncio] || {}).nome || s.anuncio)}</td><td>${esc(nomeCarro(s.carro))}</td>` +
+        `<td>${s.repetido ? '<span class="selo aviso">Repetido</span>' : '<span class="selo ok">Contou</span>'}</td></tr>`).join('') + '</tbody>'
+    : '<tbody><tr><td>Ninguém escaneou ainda neste mês. Quando alguém apontar a câmera para um QR da tela, aparece aqui.</td></tr></tbody>';
+}
 
 // ── ANUNCIANTES ──
 function desenharAnuncios() {

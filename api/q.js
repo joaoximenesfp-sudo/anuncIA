@@ -32,12 +32,15 @@ module.exports = async (req, res) => {
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), 2500);
     try {
-      await fetch(N.urlCriar('tela_scans', N.novoId()), {
+      const r = await fetch(N.urlCriar('tela_scans', N.novoId()), {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: ctrl.signal,
         body: JSON.stringify({ fields: N.campos({ anuncio, carro, em, dia, mes, hora, h }) }),
       });
+      // aparece nos logs da Vercel: dá para conferir os scans da última hora sem abrir o painel
+      console.log(`scan anuncio=${anuncio} carro=${carro} ${dia} ${hora}h firestore=${r.status}`);
     } catch (e) {
       // o registro não pode segurar a pessoa: segue para o destino
+      console.log(`scan anuncio=${anuncio} carro=${carro} ${dia} ${hora}h firestore=falhou`);
     } finally {
       clearTimeout(t);
     }

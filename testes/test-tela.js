@@ -89,6 +89,7 @@ const r2 = N.resumoMes({ lotes: [lote('C01', 3600, 3600), lote('C02', 3600, 1800
   cadastrados: ['C01', 'C02', 'C03'] });
 ok(!r2.carros.some(c => c.carro === 'X' || c.carro === 'ZZZ') && r2.foraDoCadastro === 3, 'scan de carro fora do cadastro (X, código inventado) não entra');
 ok(r2.carros.find(c => c.carro === 'C01').bonus === C('C01').bonus, 'e não muda o bônus de quem é do cadastro');
+ok(r2.scansTodos === 6 && r2.scansValidos === 3 && r2.anuncios.find(a => a.anuncio === 'tech').scans === 5, 'para o anunciante conta todo scan único, inclusive de tablet sem carro');
 
 console.log('\npacote publicado (tela/pacote.json)');
 const pacote = JSON.parse(fs.readFileSync(path.join(RAIZ, 'tela/pacote.json'), 'utf8'));

@@ -238,8 +238,14 @@
         }
       }
     }
-    const validos = scansValidos(scans.filter(s => dentro(s.carro)));
-    for (const s of validos) { C(s.carro).scans += 1; A(s.anuncio).scans += 1; }
+    // Para o anunciante conta todo scan único (é gente de verdade apontando a câmera, inclusive em
+    // tablet ainda sem carro). Para o motorista, só o carro cadastrado: é o que vale bônus.
+    const todos = scansValidos(scans);
+    let validos = 0, fora = 0;
+    for (const s of todos) {
+      A(s.anuncio).scans += 1;
+      if (dentro(s.carro)) { C(s.carro).scans += 1; validos++; } else fora++;
+    }
 
     const lista = Object.values(carros);
     let total = 0;
@@ -259,8 +265,8 @@
     const maior = lista.slice().sort((a, b) => b.pontos - a.pontos)[0];
     if (maior && total > 0) maior.bonus = Math.round((maior.bonus * 100) + (cent - soma)) / 100;
     lista.sort((a, b) => b.pontos - a.pontos);
-    return { carros: lista, anuncios: Object.values(anuncios).sort((a, b) => b.exib - a.exib), totalPontos: total, scansValidos: validos.length, scansBrutos: scans.length,
-      foraDoCadastro: scans.filter(s => !dentro(s.carro)).length };
+    return { carros: lista, anuncios: Object.values(anuncios).sort((a, b) => b.exib - a.exib), totalPontos: total, scansValidos: validos, scansTodos: todos.length, scansBrutos: scans.length,
+      foraDoCadastro: fora };
   }
 
   function diasSemSinal(visto, agora) {
