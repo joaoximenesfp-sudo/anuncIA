@@ -623,6 +623,15 @@ input[type=number].inp{padding-left:32px}
 .insta-box{border:1px solid #f5d0fe;border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;background:linear-gradient(135deg,#fdf4ff,#fff7ed)}
 .insta-top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:.8rem}
 .insta-tit{font-weight:600}
+/* os dois lados do Publicar do editor: Instagram (a arte) e Mercado Livre (a máquina) */
+.pub-lados{display:inline-flex;gap:2px;background:rgba(11,18,33,.07);border-radius:999px;padding:3px}
+.pub-lados button{border:0;background:none;border-radius:999px;padding:5px 11px;font:500 .74rem var(--fonte);color:var(--mu);cursor:pointer;white-space:nowrap}
+.pub-lados button.on{background:var(--w);color:var(--tx);font-weight:600;box-shadow:0 1px 3px rgba(11,18,33,.14)}
+.insta-box.lado-ml{border-color:#fde68a;background:linear-gradient(135deg,#fffbeb,#fff)}
+.insta-box.lado-ml a{color:#a16207}
+.ml-ed-it{border:1px solid var(--b);border-radius:12px;padding:9px 11px;margin-top:8px;display:flex;flex-direction:column;gap:7px;background:var(--w)}
+.ml-ed-nome{font-size:.8rem;font-weight:600}
+.ml-ed-it .bok{width:100%}
 .insta-conta{font-size:.72rem;color:#a21caf;font-weight:600}
 .insta-box a{color:#a21caf;font-weight:600}
 .insta-guia summary{cursor:pointer;font-weight:600;font-size:.78rem}
@@ -3204,7 +3213,17 @@ div:has(> .fc2){flex-wrap:wrap;row-gap:6px}
             <button class="bcan" style="width:100%" onclick="anBaixarPar()" id="anBaixarParBt">🗂️ Baixar em 2 partes (carrossel)</button>
             <div class="tipo-auto" id="anStatus"></div>
             <div class="insta-box" id="instaBox">
-              <div class="insta-top"><span class="insta-tit">📸 Publicar esta arte no Instagram</span></div>
+              <div class="insta-top"><span class="insta-tit">📤 Publicar</span>
+                <div class="pub-lados" role="tablist" aria-label="Onde publicar">
+                  <button type="button" role="tab" class="on" data-lado="insta" aria-selected="true" onclick="pubLado('insta')">📸 Instagram</button>
+                  <button type="button" role="tab" data-lado="ml" aria-selected="false" onclick="pubLado('ml')">🛒 Mercado Livre</button>
+                </div></div>
+              <div id="pubLadoMl" hidden>
+                <div class="tipo-auto" id="mlEditorAviso"></div>
+                <div id="mlEditorLista"></div>
+                <div class="tipo-auto" id="mlEditorStatus"></div>
+              </div>
+              <div id="pubLadoInsta">
               <div class="tipo-auto" id="instaPubAviso">Para publicar daqui, conecte o Instagram no quadro do topo desta página.</div>
               <div id="instaPub" style="display:none">
                 <div class="fc"><span class="fla">Publicar como</span>
@@ -3222,6 +3241,7 @@ div:has(> .fc2){flex-wrap:wrap;row-gap:6px}
                 <button class="bok" style="width:100%" onclick="instaPublicar()" id="instaPubBt">📤 Publicar no Instagram</button>
               </div>
               <div class="tipo-auto" id="instaStatus"></div>
+              </div>
             </div>
           </div>
           <div class="an-prev">
@@ -11465,6 +11485,7 @@ window.anAlternar=async id=>{
 // Uma linha por máquina, com o preço de tabela do lado e um campo pra promoção.
 // Era chip antes; virou linha porque agora tem um número pra digitar em cada uma.
 function anChips(){
+  mlEditorMontar(); // trocou a máquina: o lado Mercado Livre do Publicar acompanha
   const box=document.getElementById('anEscolhidas'); if(!box) return;
   if(!anEscolhidas.length){
     box.innerHTML='<span class="tipo-auto">Nenhuma escolhida — o anúncio sai só com a chamada.</span>';
@@ -12502,6 +12523,42 @@ window.instaPublicar=async()=>{
     if(bt){ bt.disabled=false; bt.textContent='📤 Publicar no Instagram'; }
   }
 };
+// ── O lado Mercado Livre do Publicar do editor ──
+// O anúncio do Mercado Livre é da máquina (fotos e descrição do cadastro): o Mercado
+// Livre não aceita foto com preço ou texto, então a arte fica para o Instagram.
+window.pubLado=l=>{
+  document.querySelectorAll('.pub-lados button').forEach(b=>{ const on=b.dataset.lado===l; b.classList.toggle('on',on); b.setAttribute('aria-selected',on?'true':'false'); });
+  const ml=l==='ml', box=document.getElementById('instaBox');
+  document.getElementById('pubLadoInsta').hidden=ml; document.getElementById('pubLadoMl').hidden=!ml;
+  if(box) box.classList.toggle('lado-ml',ml);
+  if(ml) mlEditorMontar();
+};
+function mlEditorMontar(){
+  const lado=document.getElementById('pubLadoMl'), av=document.getElementById('mlEditorAviso'), li=document.getElementById('mlEditorLista');
+  if(!lado||lado.hidden||!av||!li) return;
+  if(!mlConectado()){ av.textContent='Para publicar daqui, conecte o Mercado Livre no quadro do topo desta página.'; li.innerHTML=''; return; }
+  if(!anEscolhidas.length){ av.textContent='Escolha a máquina (no campo Máquina, mais acima).'; li.innerHTML=''; return; }
+  av.textContent='O anúncio usa as fotos e a descrição do cadastro da máquina: o Mercado Livre não aceita foto com preço ou texto, então a arte fica para o Instagram.';
+  const o=mlOpcoes();
+  li.innerHTML=anEscolhidas.map(e=>{
+    const p=prods.find(x=>x.id===e.id)||e, preco=parseFloat(p.venda)||0;
+    const bt=mlNoAr(p)||mlFaltam[p.id]?'':!(preco>0)?'<div class="tipo-auto">Sem preço de venda: ponha o preço no cadastro para anunciar.</div>'
+      :`<button class="bok" onclick="mlEditorPublicar('${p.id}')">🛒 Publicar no Mercado Livre · ${mlTipoNome(o.tipo)} · ${fmt(preco)}</button>`;
+    return `<div class="ml-ed-it" data-id="${p.id}"><div class="ml-ed-nome">#${esc(String(p.num||'?'))} ${esc(p.nome||'')}</div>${mlStatusHTML(p)||'<div class="ancat-ml">🛒 ainda não está no Mercado Livre</div>'}${bt}</div>`;
+  }).join('');
+}
+window.mlEditorPublicar=async id=>{
+  const p=prods.find(x=>x.id===id); if(!p) return;
+  if(mlNoAr(p)){ mlEditorMontar(); return; }
+  const st=document.getElementById('mlEditorStatus');
+  document.querySelectorAll('#pubLadoMl button').forEach(b=>b.disabled=true);
+  try{
+    const r=await anCatPublicarCanais(p,['ml'],t=>{ if(st) st.textContent=t; });
+    anCatAvisarResultado(p,r);
+    if(st) st.innerHTML=!r.ml?'':r.ml.erro?'⚠️ '+esc(r.ml.erro):r.ml.faltam?'🛒 O Mercado Livre pede mais dados: responda logo acima (uma vez só).'
+      :'✅ No Mercado Livre'+(r.ml.link?` · <a href="${encodeURI(r.ml.link)}" target="_blank" rel="noopener">ver o anúncio</a>`:'');
+  }finally{ anCatMontar(); mlEditorMontar(); }
+};
 // Botão 📸 na linha da máquina: só o que pode ir pro Instagram (anunciada, com
 // preço, sem reserva) — o mesmo filtro do Gerar anúncio.
 function instaBtn(p){
@@ -12866,7 +12923,7 @@ function mlFaltamHTML(p){
     return `<label>${esc(a.nome)}${ctrl}${extra}</label>`;
   };
   return `<div class="ancat-mlf" data-marca="${escAttr(f.marca)}"><b>🛒 O Mercado Livre pede${fl.categoria&&fl.categoria.nome?' (categoria '+esc(fl.categoria.nome)+')':''}:</b>${fl.faltam.map(campo).join('')}
-    <button class="pub" onclick="mlCompletar('${p.id}')">🛒 Salvar e publicar no Mercado Livre</button></div>`;
+    <button class="pub" onclick="mlCompletar('${p.id}',this)">🛒 Salvar e publicar no Mercado Livre</button></div>`;
 }
 // Digitou o modelo ("Latitude 3420", "Dell 3420"): a tela, se estiver vazia, sai dele.
 window.mlModeloDigitado=inp=>{
@@ -12875,19 +12932,23 @@ window.mlModeloDigitado=inp=>{
   const pol=mlTelaDoModelo((box.dataset.marca||'')+' '+inp.value);
   tela.value=pol?pol+' "':''; tela.dataset.auto=pol?'1':'';
 };
-window.mlCompletar=async id=>{
+window.mlCompletar=async (id,el)=>{
   const p=prods.find(x=>x.id===id); if(!p) return;
   const card=document.querySelector(`.ancat-it[data-id="${id}"]`), at={...(p.ml_atributos||{})};
-  if(card) card.querySelectorAll('[data-ml-at]').forEach(el=>{ const v=el.value.trim(); if(v) at[el.dataset.mlAt]=v; else delete at[el.dataset.mlAt]; });
+  const quadro=(el&&el.closest('.ancat-mlf'))||(card&&card.querySelector('.ancat-mlf'));
+  const noEditor=!!(quadro&&quadro.closest('#pubLadoMl'));
+  if(quadro) quadro.querySelectorAll('[data-ml-at]').forEach(c=>{ const v=c.value.trim(); if(v) at[c.dataset.mlAt]=v; else delete at[c.dataset.mlAt]; });
   const falta=((mlFaltam[id]||{}).faltam||[]).filter(a=>!at[a.id]);
   if(falta.length){ alert('Falta preencher: '+falta.map(a=>a.nome).join(', ')+'.'); return; }
   try{ await updateDoc(doc(db,'products',id),{ml_atributos:at}); }catch(e){}
   p.ml_atributos=at;
   if(card) card.querySelectorAll('button').forEach(b=>b.disabled=true);
-  const st=card&&card.querySelector('.ancat-st');
+  if(quadro) quadro.querySelectorAll('button').forEach(b=>b.disabled=true);
+  const st=noEditor?document.getElementById('mlEditorStatus'):(card&&card.querySelector('.ancat-st'));
   const r=await anCatPublicarCanais(p,['ml'],t=>{ if(st) st.textContent=t; });
   anCatAvisarResultado(p,r);
-  anCatMontar();
+  if(noEditor&&st) st.innerHTML=!r.ml?'':r.ml.erro?'⚠️ '+esc(r.ml.erro):r.ml.faltam?'🛒 Ainda falta: responda acima.':'✅ No Mercado Livre'+(r.ml.link?` · <a href="${encodeURI(r.ml.link)}" target="_blank" rel="noopener">ver o anúncio</a>`:'');
+  anCatMontar(); mlEditorMontar();
 };
 // O anúncio acompanha a máquina: vendida aqui encerra; reservada, chegando ou fora do
 // catálogo pausa (e volta quando ela volta); o preço do cadastro é o preço de lá.
