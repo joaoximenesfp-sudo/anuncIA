@@ -4,6 +4,7 @@
     { "source": "/insta/img/:arq", "destination": "/api/insta?img=:arq" }
   ],
   "functions": {
-    "api/insta.js": { "maxDuration": 60 }
+    "api/insta.js": { "maxDuration": 60 },
+    "api/ml.js": { "maxDuration": 60 }
   }
 }

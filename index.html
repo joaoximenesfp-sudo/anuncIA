@@ -636,6 +636,26 @@ input[type=number].inp{padding-left:32px}
 .ancat-bts button.pub{background:#fdf4ff;border-color:#f5d0fe;color:#a21caf;font-weight:700}
 .ancat-bts button:disabled{opacity:.5;cursor:wait}
 .ancat-lista{display:block}
+/* Instagram e Mercado Livre lado a lado (um embaixo do outro no celular) */
+.canais{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:10px;align-items:start}
+.ml-box{border-color:#fde68a;background:linear-gradient(135deg,#fffbeb,#fefce8)}
+.ml-box .insta-conta,.ml-box a{color:#a16207}
+.ml-opc-grade{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr));gap:8px;margin:8px 0}
+.ml-opc-grade label{display:flex;flex-direction:column;gap:3px;font-size:.72rem;font-weight:600;color:var(--mu)}
+.ml-opc-grade label.ml-chk{flex-direction:row;align-items:center;gap:6px;align-self:end}
+.ml-caixa{display:flex;align-items:center;gap:4px}
+.ml-caixa .inp{padding:8px 6px}
+.ml-venda{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:.76rem;background:#fff;border:1px solid #fde68a;border-radius:8px;padding:7px 9px;margin-top:6px}
+.ml-venda button{font-size:.72rem;padding:3px 9px;border-radius:7px;border:1px solid #f59e0b;background:#fef3c7;color:#92400e;font-weight:700;cursor:pointer}
+.ml-aviso{margin:0 0 12px}
+.ml-aviso[hidden]{display:none}
+.ancat-ml{font-size:.68rem;color:var(--li)}
+.ancat-ml.ok{color:#a16207}
+.ancat-ml a{color:#a16207;font-weight:700}
+.ancat-mlf{font-size:.7rem;background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:6px 7px;display:flex;flex-direction:column;gap:5px}
+.ancat-mlf label{display:flex;flex-direction:column;gap:2px;font-weight:600;color:var(--mu)}
+.ancat-mlf .inp{padding:5px 7px;font-size:.74rem}
+.ancat-mlf button{font-size:.72rem;padding:5px 8px;border-radius:7px;border:1px solid #f59e0b;background:#fef3c7;color:#92400e;font-weight:700;cursor:pointer}
 /* A busca gruda embaixo do menu: com a lista comprida, dá pra procurar de
    qualquer ponto sem subir a página. */
 #anCatCard{overflow:visible}
@@ -1632,6 +1652,7 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
   <!-- VENDAS -->
   <div class="pg on" id="pg-vendas">
     <div class="wr">
+      <div class="ml-aviso" id="mlAvisoVendas" hidden></div>
       <div class="ph">
         <div><div class="pht">Minhas Vendas</div><div class="phs">Estoque e resultados em tempo real</div></div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
@@ -2882,10 +2903,18 @@ select.fin-inp{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xm
       <div class="cdh"><span class="cdht">⚡ Anúncios do catálogo</span>
         <span style="font-size:.74rem;color:var(--li)">post e story de cada notebook anunciado, prontos — saem das fotos e da descrição do cadastro</span></div>
       <div class="cdb">
-        <div class="insta-box">
-          <div class="insta-top"><span class="insta-tit">📸 Instagram da loja</span><span class="insta-conta" id="instaConta">…</span></div>
-          <div id="instaLigar"></div>
-          <div class="tipo-auto" id="instaMsg"></div>
+        <div class="canais">
+          <div class="insta-box">
+            <div class="insta-top"><span class="insta-tit">📸 Instagram da loja</span><span class="insta-conta" id="instaConta">…</span></div>
+            <div id="instaLigar"></div>
+            <div class="tipo-auto" id="instaMsg"></div>
+          </div>
+          <div class="insta-box ml-box" id="mlBox">
+            <div class="insta-top"><span class="insta-tit">🛒 Mercado Livre da loja</span><span class="insta-conta ml-conta" id="mlConta">…</span></div>
+            <div id="mlLigar"></div>
+            <div class="tipo-auto" id="mlMsg"></div>
+            <div id="mlVendas"></div>
+          </div>
         </div>
         <div class="ancat-topo"><span class="tipo-auto" id="anCatResumo"></span>
           <button class="bok" id="anCatNovasBt" style="display:none" onclick="anCatPublicarNovas()">📤 Publicar as novas</button></div>
@@ -3858,6 +3887,7 @@ onAuthStateChanged(auth,u=>{
     try{ initSpecBuilder(); loadCpuOutros(); }catch(e){}
     try{ grMontar(); }catch(e){}
     try{ instaVoltaDoLogin(); }catch(e){}
+    try{ mlVoltaDoLogin(); }catch(e){}
     setTimeout(carregarAvisos, 2000); // carregar avisos após login
     // Depois do login os cards já existem na tela; antes disso não havia o
     // que observar.
@@ -4012,6 +4042,7 @@ async function loadProds(){
   // ela sobrescrevia o status salvo no Firestore a cada load, revertendo
   // alterações manuais (Anunciado/Estoque/etc). O Firestore é a fonte da verdade agora.
   render();renderSecoes();calcStats();renderAlertas();renderMeta();
+  try{ mlIniciar(); }catch(e){} // Mercado Livre: acompanha os anúncios e os pedidos de lá
 }
 
 // ── MONTADOR DE SPECS POR SELEÇÃO ──
@@ -7822,6 +7853,8 @@ function renderTabela(lista, tipo){
 }
 
 function render(){
+  // vendeu, reservou ou mudou o preço: o anúncio do Mercado Livre acompanha (logo depois)
+  try{ mlAgendarSinc(); }catch(e){}
   const list=document.getElementById('PL');
   // Reservado e Chegando não podem ser comparação exata de status: a marcação
   // antiga de "aguardando" era um campo à parte, e quem foi marcado assim
@@ -8384,7 +8417,7 @@ window.sp2=p=>{
   if(p==='painel'){ try{ buildPainel(); }catch(e){ console.error('buildPainel:',e); } buildPainelCharts(); }
   if(p==='financas'){renderFinLabel();checkNotificacoes();}
   if(p==='admin'){carregarAvisos();}
-  if(p==='anuncio'){ try{ anMontarSelect(); anTrocouModo(); anGradeFotos(); anLigarEditor(); }catch(e){ console.error('anuncio:',e); } try{ instaCarregar(); }catch(e){} try{ anCatMontar(); }catch(e){} }
+  if(p==='anuncio'){ try{ anMontarSelect(); anTrocouModo(); anGradeFotos(); anLigarEditor(); }catch(e){ console.error('anuncio:',e); } try{ instaCarregar(); }catch(e){} try{ mlCarregar().then(()=>anCatMontar()).catch(()=>{}); }catch(e){} try{ anCatMontar(); }catch(e){} }
   if(p==='clientes'){ if(cliAba==='fornecedores')renderFornecedores(); else renderClientes(); }
   else{const bar=document.getElementById('notifBar');if(bar){bar.innerHTML='';bar.classList.remove('on');adjustPageTop();}}
 };
@@ -12196,6 +12229,332 @@ window.instaMaquina=async id=>{
   const box=document.getElementById('instaBox'); if(box) box.scrollIntoView({behavior:'smooth',block:'center'});
 };
 
+// ── MERCADO LIVRE DA LOJA ──────────────────────────────────────────────
+// Publica cada máquina do catálogo como anúncio na conta da loja, pela API oficial
+// (api/ml.js, na Vercel), e cuida dele depois: mudou o preço aqui, muda lá; vendeu
+// aqui, o anúncio encerra; reservou, pausa; vendeu lá, o sistema avisa para registrar
+// a venda. Conectar abre a autorização do próprio Mercado Livre; os tokens voltam
+// CIFRADOS e ficam em config/mercadolivre — quem abre é só o servidor. Título e
+// descrição saem do cadastro, sem contato de fora (o Mercado Livre não deixa); custo,
+// lucro e fornecedor nunca entram.
+let mlCfg=null, mlConfigurado=null, mlFila=Promise.resolve(), mlPedidos=[], mlPerguntas=null;
+let mlIniciado=false, mlSincTimer=null, mlSincRodando=false;
+const mlFaltam={};      // id da máquina -> { faltam, categoria }: o que o ML pediu e a ficha não sabe
+const mlFotosFeitas={}; // id da máquina -> { ass, ids }: fotos já enviadas nesta sessão
+const ML_DEV='https://developers.mercadolivre.com.br/devcenter';
+const ML_VOLTA='https://anunc-ia.vercel.app/api/ml';
+const ML_OPC={tipo:'gold_special',retirada:true,garantia:90,caixa:{alt:10,larg:30,comp:40,peso:2.5}};
+function mlOpcoes(){ const o=(mlCfg&&mlCfg.opcoes)||{}; return {...ML_OPC,...o,caixa:{...ML_OPC.caixa,...(o.caixa||{})}}; }
+const mlTipoNome=t=>t==='gold_pro'?'Premium':'Clássico';
+const mlNoAr=p=>!!(p&&p.ml_id&&p.ml_status!=='closed');
+function mlMsg(t,html){ const m=document.getElementById('mlMsg'); if(m){ if(html) m.innerHTML=t; else m.textContent=t; } }
+// Uma chamada por vez: o refresh token do Mercado Livre é de uso único, e duas
+// renovações ao mesmo tempo derrubariam a conexão.
+function mlApi(dados){
+  const vez=mlFila.then(async()=>{
+    const u=auth.currentUser; if(!u) throw new Error('Entre no sistema primeiro.');
+    const idToken=await u.getIdToken();
+    const r=await fetch('/api/ml',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...dados,idToken})});
+    const j=await r.json().catch(()=>({}));
+    // renovou o token e o banco não aceitou lá: grava daqui (o refresh antigo já não vale)
+    if(j&&j.cifraNova){ try{ await setDoc(doc(db,'config','mercadolivre'),{cifra:j.cifraNova,renovadoEm:new Date()},{merge:true}); if(mlCfg) mlCfg.cifra=j.cifraNova; }catch(e){} }
+    if(!r.ok) throw new Error(j.erro||('Erro '+r.status+' no servidor'));
+    return j;
+  });
+  mlFila=vez.catch(()=>{});
+  return vez;
+}
+async function mlCarregar(){
+  let est=null;
+  try{ est=await (await fetch('/api/ml')).json(); }catch(e){}
+  mlConfigurado=!!(est&&est.configurado);
+  try{ const s=await getDoc(doc(db,'config','mercadolivre')); mlCfg=s.exists()?s.data():null; }catch(e){ mlCfg=null; }
+  mlMostrar();
+}
+function mlConectado(){ return !!(mlConfigurado&&mlCfg&&mlCfg.cifra); }
+function mlGuia(){
+  return `<details class="insta-guia" open><summary>Como ligar o Mercado Livre (uma vez só)</summary><ol>
+    <li>Entre no <a href="${ML_DEV}" target="_blank" rel="noopener">DevCenter do Mercado Livre</a> com a conta <b>da loja</b> → <b>Criar uma aplicação</b> (no Brasil é uma por conta, com os dados validados).</li>
+    <li>Nome (ex.: "Tech Campinas Sistema"), nome curto e descrição.</li>
+    <li><b>URI de redirect</b>: <code>${ML_VOLTA}</code> · <a href="#" onclick="mlCopiarVolta();return false">copiar</a></li>
+    <li>Permissões: <b>leitura</b>, <b>escrita</b> e <b>acesso offline</b> (offline_access). Se pedir notificações: a mesma URL, com Orders, Items e Questions.</li>
+    <li>Salve. Leve o <b>App ID</b> e a <b>Secret Key</b> para as <a href="${INSTA_VERCEL}" target="_blank" rel="noopener">variáveis da Vercel</a>, como <code>ML_APP_ID</code> e <code>ML_SECRET</code>, e faça o <b>Redeploy</b>. A Secret Key vai só lá: nunca em mensagem nem em print.</li>
+    <li>Volte aqui e toque em <b>Conectar Mercado Livre</b>.</li>
+  </ol></details>`;
+}
+window.mlCopiarVolta=()=>{ try{ navigator.clipboard.writeText(ML_VOLTA).then(()=>mlMsg('Endereço copiado: é só colar na URI de redirect.')); }catch(e){} };
+function mlMostrar(){
+  const lig=document.getElementById('mlLigar'), conta=document.getElementById('mlConta');
+  if(lig&&conta){
+    if(mlConectado()){
+      const o=mlOpcoes();
+      conta.textContent=mlCfg.usuario||'conta da loja';
+      lig.innerHTML=`<div class="tipo-auto">Conectado${mlCfg.offline===false?' · ⚠️ sem acesso offline: a conexão cai em 6 horas (marque offline_access no app e conecte de novo)':''}.
+          <a href="#" onclick="mlConectar();return false">Reconectar</a> · <a href="#" onclick="mlDesconectar();return false">Desconectar</a></div>
+        <details class="insta-guia ml-opc"><summary>Como os anúncios saem: ${mlTipoNome(o.tipo)} · Mercado Envios${o.retirada?' + retirada em Campinas':''} · garantia de ${o.garantia} dias</summary>
+          <div class="ml-opc-grade">
+            <label>Tipo de anúncio<select class="inp" id="mlOpTipo"><option value="gold_special"${o.tipo!=='gold_pro'?' selected':''}>Clássico — tarifa menor</option><option value="gold_pro"${o.tipo==='gold_pro'?' selected':''}>Premium — parcelado sem juros, tarifa maior</option></select></label>
+            <label>Garantia (dias)<input class="inp" type="number" id="mlOpGar" min="0" max="365" value="${o.garantia}"></label>
+            <label>Caixa em cm (altura × largura × comprimento)<span class="ml-caixa"><input class="inp" type="number" id="mlOpAlt" min="1" value="${o.caixa.alt}"> × <input class="inp" type="number" id="mlOpLarg" min="1" value="${o.caixa.larg}"> × <input class="inp" type="number" id="mlOpComp" min="1" value="${o.caixa.comp}"></span></label>
+            <label>Peso com a caixa (kg)<input class="inp" type="number" id="mlOpPeso" min="0.1" step="0.1" value="${o.caixa.peso}"></label>
+            <label class="ml-chk"><input type="checkbox" id="mlOpRet"${o.retirada?' checked':''}> Retirada em mãos em Campinas</label>
+          </div>
+          <button class="bok" onclick="mlSalvarOpcoes()">Salvar</button> <span class="tipo-auto">Vale para os próximos anúncios. A condição é sempre <b>usado</b>.</span>
+        </details>`;
+    }else{
+      conta.textContent=mlConfigurado?'não conectado':'não configurado';
+      lig.innerHTML=!mlConfigurado?mlGuia()
+        :`<button class="bok" onclick="mlConectar()">🔗 Conectar Mercado Livre</button>
+          <div class="tipo-auto">Abre a autorização do próprio Mercado Livre: entre com a conta da loja e autorize.</div>`;
+    }
+  }
+  mlMostrarVendas();
+  anCatBotaoNovas();
+}
+window.mlSalvarOpcoes=async()=>{
+  const g=id=>document.getElementById(id);
+  const num=(id,min,max,pad)=>{ const v=parseFloat(String((g(id)||{}).value||'').replace(',','.')); return isFinite(v)?Math.min(max,Math.max(min,v)):pad; };
+  const o={tipo:(g('mlOpTipo')||{}).value==='gold_pro'?'gold_pro':'gold_special', retirada:!!(g('mlOpRet')||{}).checked, garantia:Math.round(num('mlOpGar',0,365,90)),
+    caixa:{alt:Math.round(num('mlOpAlt',1,200,10)),larg:Math.round(num('mlOpLarg',1,200,30)),comp:Math.round(num('mlOpComp',1,200,40)),peso:Math.round(num('mlOpPeso',0.1,50,2.5)*10)/10}};
+  try{ await setDoc(doc(db,'config','mercadolivre'),{opcoes:o},{merge:true}); mlCfg={...(mlCfg||{}),opcoes:o}; mlMostrar(); mlMsg('✅ Opções salvas: valem para os próximos anúncios.'); }
+  catch(e){ mlMsg('⚠️ Não consegui salvar: '+e.message); }
+};
+window.mlConectar=async()=>{
+  try{ mlMsg('Abrindo a autorização do Mercado Livre...'); const r=await mlApi({acao:'conectar'}); location.href=r.url; }
+  catch(e){ mlMsg('⚠️ '+e.message); }
+};
+window.mlDesconectar=async()=>{
+  if(!confirm('Desconectar o Mercado Livre da loja? Os anúncios continuam lá; o sistema só para de publicar e de acompanhar.')) return;
+  const o=mlOpcoes();
+  try{ await setDoc(doc(db,'config','mercadolivre'),{opcoes:o}); mlCfg={opcoes:o}; mlMostrar(); anCatMontar(); mlMsg('Mercado Livre desconectado.'); }
+  catch(e){ alert('Não consegui desconectar: '+e.message); }
+};
+// Volta da autorização: o servidor manda a conexão cifrada no endereço (#ml=…).
+// Guarda em config/mercadolivre (sem apagar as opções) e limpa o endereço.
+async function mlVoltaDoLogin(){
+  const h=new URLSearchParams(location.hash.slice(1));
+  if(!h.has('ml')&&!h.has('ml_erro')) return;
+  history.replaceState(null,'',location.pathname+location.search);
+  sp2('anuncio');
+  if(h.has('ml_erro')){ mlMsg('⚠️ Mercado Livre: '+h.get('ml_erro')); return; }
+  const usuario=(h.get('ml_user')||'').replace(/[^\w.\- ]/g,'').slice(0,60);
+  try{
+    await setDoc(doc(db,'config','mercadolivre'),{cifra:h.get('ml'),usuario,user_id:(h.get('ml_id')||'').replace(/\D/g,''),offline:h.get('ml_offline')!=='0',
+      conectadoEm:new Date(),renovadoEm:new Date(),conectadoPor:(auth.currentUser&&auth.currentUser.email)||''},{merge:true});
+    await mlCarregar();
+    mlMsg('✅ Mercado Livre conectado'+(usuario?': '+usuario:'')+'. O "Publicar" de cada máquina agora manda para o Mercado Livre também.');
+    anCatMontar(); mlNovidades();
+  }catch(e){ mlMsg('⚠️ Não consegui guardar a conexão: '+e.message); }
+}
+// O que a ficha sabe, já separado como o Mercado Livre pede (o servidor casa com os
+// atributos da categoria): marca, linha, número do modelo, processador, memória, disco, tela.
+function mlFicha(p){
+  const f=anFichaRapida(p)||{}, nome=String(p.nome||'');
+  const fam=Object.values(FICHA_FAMILIA).find(x=>f.modelo&&cliNorm(f.modelo).startsWith(cliNorm(x)))||'';
+  const numero=fam?String(f.modelo).slice(fam.length).trim():'';
+  const cpu=String(f.cpu||''), m=nome.match(/\bi[3579][-\s]?(\d{4,5}[a-z]{0,2}\d?)\b/i);
+  const qtd=s=>{ const x=String(s||'').match(/(\d+(?:[.,]\d+)?)\s*(tb|gb)/i); return x?x[1].replace(',','.')+' '+x[2].toUpperCase():''; };
+  const disco=String(f.armaz||''), ehHd=/^hd\b/i.test(disco);
+  return { marca:f.marca||'', linha:fam, modelo:f.modelo||'', numero,
+    cpu_marca:/^(i[3579]|celeron|pentium)/i.test(cpu)?'Intel':/^ryzen/i.test(cpu)?'AMD':'',
+    cpu_linha:/^i[3579]$/i.test(cpu)?'Core '+cpu.toLowerCase():cpu, cpu_modelo:m?m[1].toUpperCase():'',
+    ram:qtd(f.ram), ram_tipo:f.ram_tipo||'', ssd:ehHd?'':qtd(disco), hd:ehHd?qtd(disco):'',
+    tela:(String(f.tela||'').match(/\d+(?:[.,]\d+)?/)||[''])[0].replace(',','.') };
+}
+function mlTitulo(p){
+  const n=String(p.nome||'').replace(/\s+/g,' ').trim();
+  const mesa=/\b(optiplex|think\s?centre|elite\s?desk|pro\s?desk|idea\s?centre|desktop|all[\s-]?in[\s-]?one)\b/i.test(n);
+  const pre=/^(notebook|computador|pc\b|desktop|macbook|ultrabook|chromebook|laptop)/i.test(n)?'':(mesa?'Computador ':'Notebook ');
+  return (pre+n).replace(/[”“]/g,'"');
+}
+// O Mercado Livre não aceita contato de fora no anúncio (telefone, WhatsApp, redes, link).
+function mlLimparTexto(t){
+  return String(t||'')
+    .replace(/https?:\/\/\S+|www\.\S+/gi,'').replace(/\S+@\S+\.\S+/g,'').replace(/(^|\s)@[\w.]{2,}/g,'$1')
+    .replace(/(\+?55\s?)?\(?\b\d{2}\)?\s?9?\d{4}[-\s.]?\d{4}\b/g,'')
+    .replace(/\b(whats\s?app|whats|wpp|zap|instagram|insta|facebook|telefone|ligue|chama no)\b[^.\n]*/gi,'')
+    .replace(/[ \t]+/g,' ').replace(/ +\n/g,'\n').replace(/\n{3,}/g,'\n\n').trim().slice(0,4000);
+}
+function mlDescricao(p,o){
+  o=o||mlOpcoes();
+  const f=mlFicha(p), g=(anFichaRapida(p)||{}).ger||'', L=[mlTitulo(p),''];
+  const cpu=[f.cpu_marca,f.cpu_linha,f.cpu_modelo].filter(Boolean).join(' ');
+  if(cpu) L.push('- Processador: '+cpu+(g?' ('+(/ª$/.test(g)?g+' geração':'série '+g)+')':''));
+  if(f.ram) L.push('- Memória RAM: '+f.ram+(f.ram_tipo?' '+f.ram_tipo:''));
+  if(f.ssd) L.push('- Armazenamento: SSD '+f.ssd); else if(f.hd) L.push('- Armazenamento: HD '+f.hd);
+  if(f.tela) L.push('- Tela: '+f.tela.replace('.',',')+' polegadas');
+  try{ (hwResumo(p,true)||[]).forEach(x=>{ const s=String(x).replace(/[^\p{L}\p{N}\s.,:;()\/+%"·-]/gu,'').replace(/\s+/g,' ').trim(); if(s) L.push('- '+s); }); }catch(e){}
+  const d=mlLimparTexto(p.descricao); if(d) L.push('',d);
+  L.push('','Usado, revisado e testado'+(o.garantia?', com '+o.garantia+' dias de garantia':'')+'.');
+  L.push('Envio para todo o Brasil pelo Mercado Envios'+(o.retirada?' ou retirada em mãos em Campinas (SP)':'')+'.');
+  return L.join('\n').replace(/\n{3,}/g,'\n\n').trim();
+}
+// A foto do cadastro em JPEG (até 1600 px), sobre fundo branco.
+function mlJpegDe(img){
+  const k=Math.min(1,1600/Math.max(img.width,img.height)), c=document.createElement('canvas');
+  c.width=Math.max(1,Math.round(img.width*k)); c.height=Math.max(1,Math.round(img.height*k));
+  const ctx=c.getContext('2d'); ctx.fillStyle='#fff'; ctx.fillRect(0,0,c.width,c.height); ctx.drawImage(img,0,0,c.width,c.height);
+  return c.toDataURL('image/jpeg',0.9).split(',')[1];
+}
+// Uma máquina no Mercado Livre: as fotos (uma por vez), depois o anúncio. Se a
+// categoria pedir algo que a ficha não sabe, volta { faltam } e o cartão pergunta.
+async function mlPublicarMaquina(p,aviso){
+  if(mlNoAr(p)) return {jaEstava:true,link:p.ml_link||''};
+  const preco=Math.round(parseFloat(p.venda)||0);
+  if(!(preco>0)) throw new Error('sem preço de venda');
+  await anCarregarFoto(p.id);
+  const imgs=anFotosDe(p.id).slice(0,10);
+  if(!imgs.length) throw new Error('sem foto no cadastro (o Mercado Livre exige pelo menos uma)');
+  const ass=imgs.length+'|'+imgs.map(i=>String(i.src).length).join(',');
+  let ids=mlFotosFeitas[p.id]&&mlFotosFeitas[p.id].ass===ass?mlFotosFeitas[p.id].ids:null;
+  if(!ids){
+    ids=[];
+    for(const [i,img] of imgs.entries()){
+      if(aviso) aviso(`Mercado Livre: enviando a foto ${i+1} de ${imgs.length}...`);
+      ids.push((await mlApi({acao:'foto',jpg:mlJpegDe(img)})).id);
+    }
+    mlFotosFeitas[p.id]={ass,ids};
+  }
+  const o=mlOpcoes();
+  if(aviso) aviso('Mercado Livre: criando o anúncio...');
+  const r=await mlApi({acao:'publicar',item:{titulo:mlTitulo(p),preco,descricao:mlDescricao(p,o),fotos:ids,ficha:mlFicha(p),atributos:p.ml_atributos||{},
+    tipo:o.tipo,retirada:o.retirada,garantia_dias:o.garantia,pacote:o.caixa,sku:p.num?String(p.num):'',categoria:p.ml_categoria||''}});
+  if(!r.ok&&r.faltam){ mlFaltam[p.id]={faltam:r.faltam,categoria:r.categoria||{}}; return {faltam:r.faltam}; }
+  delete mlFaltam[p.id];
+  const campos={ml_id:r.id,ml_link:r.link||'',ml_em:new Date().toISOString(),ml_status:r.status||'active',ml_preco:r.preco||preco,ml_tipo:r.tipo||o.tipo,
+    ml_categoria:(r.categoria&&r.categoria.id)||'',ml_categoria_nome:(r.categoria&&r.categoria.nome)||'',ml_pausado_pelo_sistema:false};
+  Object.assign(p,campos);
+  // sem marcar na máquina, o próximo "Publicar" criaria um anúncio repetido: insiste
+  let marcou=false;
+  for(let i=0;i<3&&!marcou;i++){ try{ await updateDoc(doc(db,'products',p.id),campos); marcou=true; }catch(e){ await new Promise(ok=>setTimeout(ok,800)); } }
+  const avisos=[...(r.avisos||[])];
+  if(!marcou) avisos.push(`publicado (${r.id}), mas não consegui marcar na máquina: não publique de novo`);
+  return {link:campos.ml_link,avisos};
+}
+function mlStatusHTML(p){
+  if(mlFaltam[p.id]) return mlFaltamHTML(p);
+  const link=/^https:\/\/([a-z]+\.)?mercadolivre\.com\.br\//.test(p.ml_link||'')?p.ml_link:'';
+  const ver=link?` · <a href="${encodeURI(link)}" target="_blank" rel="noopener">ver</a>`:'';
+  if(mlNoAr(p)){
+    const sit={paused:p.ml_pausado_pelo_sistema?' (pausado: reservada)':' (pausado)',under_review:' (em revisão do ML)',inactive:' (inativo)'}[p.ml_status]||'';
+    return `<div class="ancat-ml ok">🛒 no Mercado Livre${p.ml_em?' desde '+new Date(p.ml_em).toLocaleDateString('pt-BR'):''}${sit}${ver}</div>`;
+  }
+  if(p.ml_id) return `<div class="ancat-ml">🛒 anúncio encerrado no Mercado Livre${ver}</div>`;
+  return mlConectado()?'<div class="ancat-ml">🛒 ainda não está no Mercado Livre</div>':'';
+}
+// O que a categoria pede e a ficha não sabe: ele responde aqui, uma vez por máquina.
+function mlFaltamHTML(p){
+  const f=mlFaltam[p.id], at=p.ml_atributos||{};
+  const campo=a=>{
+    const atual=String(at[a.id]||'');
+    const ctrl=a.valores&&a.valores.length
+      ?`<select class="inp" data-ml-at="${escAttr(a.id)}"><option value="">escolha…</option>${a.valores.map(v=>`<option value="${escAttr(v.nome)}"${cliNorm(v.nome)===cliNorm(atual)?' selected':''}>${esc(v.nome)}</option>`).join('')}</select>`
+      :`<input class="inp" data-ml-at="${escAttr(a.id)}" value="${escAttr(atual)}"${a.unidades&&a.unidades.length?` placeholder="ex.: 15 ${escAttr(a.unidades[0])}"`:''}>`;
+    return `<label>${esc(a.nome)}${ctrl}</label>`;
+  };
+  return `<div class="ancat-mlf"><b>🛒 O Mercado Livre pede${f.categoria&&f.categoria.nome?' (categoria '+esc(f.categoria.nome)+')':''}:</b>${f.faltam.map(campo).join('')}
+    <button class="pub" onclick="mlCompletar('${p.id}')">🛒 Salvar e publicar no Mercado Livre</button></div>`;
+}
+window.mlCompletar=async id=>{
+  const p=prods.find(x=>x.id===id); if(!p) return;
+  const card=document.querySelector(`.ancat-it[data-id="${id}"]`), at={...(p.ml_atributos||{})};
+  if(card) card.querySelectorAll('[data-ml-at]').forEach(el=>{ const v=el.value.trim(); if(v) at[el.dataset.mlAt]=v; else delete at[el.dataset.mlAt]; });
+  const falta=((mlFaltam[id]||{}).faltam||[]).filter(a=>!at[a.id]);
+  if(falta.length){ alert('Falta preencher: '+falta.map(a=>a.nome).join(', ')+'.'); return; }
+  try{ await updateDoc(doc(db,'products',id),{ml_atributos:at}); }catch(e){}
+  p.ml_atributos=at;
+  if(card) card.querySelectorAll('button').forEach(b=>b.disabled=true);
+  const st=card&&card.querySelector('.ancat-st');
+  const r=await anCatPublicarCanais(p,['ml'],t=>{ if(st) st.textContent=t; });
+  anCatAvisarResultado(p,r);
+  anCatMontar();
+};
+// O anúncio acompanha a máquina: vendida aqui encerra; reservada, chegando ou fora do
+// catálogo pausa (e volta quando ela volta); o preço do cadastro é o preço de lá.
+function mlQuer(p){
+  if(p.status==='Vendido') return 'closed';
+  if(p.status!=='Anunciado'||aguardandoP(p)||reservadoP(p)||!((parseFloat(p.venda)||0)>0)) return 'paused';
+  return 'active';
+}
+function mlAgendarSinc(){ if(!mlConectado()) return; clearTimeout(mlSincTimer); mlSincTimer=setTimeout(mlSincronizar,2500); }
+async function mlSincronizar(){
+  if(mlSincRodando||!mlConectado()) return;
+  mlSincRodando=true;
+  let mudou=false;
+  try{
+    for(const p of prods.filter(mlNoAr)){
+      const quer=mlQuer(p), preco=Math.round(parseFloat(p.venda)||0), mud={};
+      if(quer==='closed') mud.status='closed';
+      else if(quer==='paused'&&p.ml_status==='active') mud.status='paused';
+      else if(quer==='active'&&p.ml_status==='paused'&&p.ml_pausado_pelo_sistema) mud.status='active';
+      if(quer==='active'&&preco>0&&['active','paused'].includes(p.ml_status)&&preco!==Number(p.ml_preco)) mud.preco=preco;
+      if(!Object.keys(mud).length) continue;
+      try{
+        const r=await mlApi({acao:'atualizar',id:p.ml_id,...mud});
+        const campos={ml_sinc_em:new Date().toISOString()};
+        if(mud.status){ campos.ml_status=r.status||mud.status; campos.ml_pausado_pelo_sistema=mud.status==='paused'; }
+        if(mud.preco) campos.ml_preco=r.preco||mud.preco;
+        try{ await updateDoc(doc(db,'products',p.id),campos); }catch(e){}
+        Object.assign(p,campos); mudou=true;
+      }catch(e){
+        console.warn('Mercado Livre (acompanhar):',p.num,e.message);
+        if(/Conectar Mercado Livre|Conecte o Mercado Livre|sócios/.test(e.message)){ mlMsg('⚠️ '+e.message); break; }
+      }
+    }
+  }finally{ mlSincRodando=false; }
+  if(mudou&&pgAtual==='anuncio') anCatMontar();
+}
+// Situação de cada anúncio lá (pausado pelo ML, encerrado, vendido) e os pedidos dos
+// últimos 30 dias: o que vendeu lá e ainda não foi registrado aqui vira aviso.
+async function mlNovidades(){
+  if(!mlConectado()) return;
+  let mudou=false;
+  try{
+    const comMl=prods.filter(mlNoAr);
+    for(let i=0;i<comMl.length;i+=20){
+      const r=await mlApi({acao:'itens',ids:comMl.slice(i,i+20).map(p=>p.ml_id)});
+      for(const it of r.itens||[]){
+        const p=comMl.find(x=>x.ml_id===it.id); if(!p) continue;
+        const campos={};
+        if(it.status&&it.status!==p.ml_status) campos.ml_status=it.status;
+        if(it.link&&it.link!==p.ml_link) campos.ml_link=it.link;
+        if(it.preco!=null&&Number(it.preco)!==Number(p.ml_preco)) campos.ml_preco=Number(it.preco);
+        if((it.vendidos||0)!==(p.ml_vendidos||0)) campos.ml_vendidos=it.vendidos||0;
+        if(Object.keys(campos).length){ try{ await updateDoc(doc(db,'products',p.id),campos); }catch(e){} Object.assign(p,campos); mudou=true; }
+      }
+    }
+    const r=await mlApi({acao:'novidades',desde:new Date(Date.now()-30*864e5).toISOString()});
+    mlPedidos=Array.isArray(r.pedidos)?r.pedidos:[]; mlPerguntas=r.perguntas;
+  }catch(e){ console.warn('Mercado Livre (novidades):',e.message); }
+  mlMostrarVendas(); mlAgendarSinc();
+  if(mudou&&pgAtual==='anuncio') anCatMontar();
+}
+function mlVendasPendentes(){
+  return mlPedidos.filter(o=>o.status==='paid').map(o=>({o,p:prods.find(p=>p.ml_id&&p.ml_id===o.item)})).filter(x=>x.p&&x.p.status!=='Vendido');
+}
+function mlMostrarVendas(){
+  const pend=mlVendasPendentes();
+  const html=pend.map(({o,p})=>`<div class="ml-venda"><span>🛒 <b>Vendeu no Mercado Livre:</b> #${esc(String(p.num||'?'))} ${esc(p.nome||'')} · ${fmt(o.valor)}${o.em?' · '+new Date(o.em).toLocaleDateString('pt-BR'):''}${o.comprador?' · comprador '+esc(o.comprador):''}</span>
+    <button onclick="mlRegistrarVenda('${p.id}',${Number(o.valor)||0})">Registrar a venda</button></div>`).join('');
+  const box=document.getElementById('mlVendas');
+  if(box) box.innerHTML=html+(mlPerguntas?`<div class="tipo-auto">💬 ${mlPerguntas} pergunta${mlPerguntas!==1?'s':''} sem resposta no Mercado Livre.</div>`:'');
+  const av=document.getElementById('mlAvisoVendas');
+  if(av){ av.innerHTML=html; av.hidden=!pend.length; }
+}
+// Abre a venda de sempre (a mesma do "Vendido" da lista), já com a origem e o valor do pedido.
+window.mlRegistrarVenda=(id,valor)=>{
+  updStatus(id,'Vendido');
+  const pl=document.getElementById('smPlat'); if(pl) pl.value='Mercado Livre';
+  const pr=document.getElementById('smPreco'); if(pr&&valor>0){ pr.value=Math.round(valor); pr.dispatchEvent(new Event('input')); }
+};
+// Depois do login: carrega a conexão e acompanha a cada 10 minutos, em qualquer página.
+function mlIniciar(){
+  if(mlIniciado){ mlAgendarSinc(); return; }
+  mlIniciado=true;
+  mlCarregar().then(()=>{ if(mlConectado()) mlNovidades(); }).catch(()=>{});
+  setInterval(()=>{ if(mlConectado()&&document.visibilityState!=='hidden') mlNovidades(); },10*60000);
+}
+
 // ── ANÚNCIOS DO CATÁLOGO ───────────────────────────────────────────────
 // Cada notebook do catálogo (anunciado, com preço) ganha um post e um story
 // prontos, desenhados pelo mesmo editor daqui de baixo, com as fotos e a
@@ -12255,6 +12614,7 @@ function anCatCartao(p,a){
     <div class="ancat-preco">${pr.de?`<s>${fmt(pr.de)}</s> `:''}${fmt(pr.por)}</div>
     ${a?anCatAnaliseHTML(p,a):''}
     <div class="ancat-st${pub?' ok':''}">${pub?'📸 publicado em '+new Date(pub).toLocaleDateString('pt-BR')+(link?` · <a href="${encodeURI(link)}" target="_blank" rel="noopener">ver</a>`:''):'ainda não foi pro Instagram'}</div>
+    ${mlStatusHTML(p)}
     <div class="ancat-bts">
       <button onclick="anCatBaixar('${p.id}','feed')">⬇️ Post</button>
       <button onclick="anCatBaixar('${p.id}','story')">⬇️ Story</button>
@@ -12265,7 +12625,7 @@ function anCatCartao(p,a){
 function anCatMontar(){
   const grade=document.getElementById('anCatGrade'), res=document.getElementById('anCatResumo'); if(!grade) return;
   const lista=anCatMaquinas();
-  const novas=lista.filter(p=>!anCatPublicada(p)), feitas=lista.filter(p=>anCatPublicada(p));
+  const novas=lista.filter(anCatNova), feitas=lista.filter(p=>!anCatNova(p));
   // vendidas depois de publicadas: o post continua no Instagram até alguém tirar
   const vendidas=prods.filter(p=>p.status==='Vendido'&&anCatPublicada(p)&&!p.insta_removido_em)
                       .sort((x,y)=>String(y.data_venda||'').localeCompare(String(x.data_venda||'')));
@@ -12514,9 +12874,41 @@ function anCatPintar(id){
 }
 function anCatBotaoNovas(){
   const bt=document.getElementById('anCatNovasBt'); if(!bt) return;
-  const n=anCatMaquinas().filter(p=>!anCatPublicada(p)).length;
-  bt.style.display=instaConectado()&&n?'':'none';
+  const n=anCatMaquinas().filter(p=>anCatFaltam(p).length).length;
+  bt.style.display=(instaConectado()||mlConectado())&&n?'':'none';
   bt.textContent=`📤 Publicar as novas (${Math.min(n,20)})`;
+}
+// Canais ligados em que a máquina ainda não está. No Mercado Livre, só a que nunca
+// foi: anúncio encerrado (vendeu lá, por exemplo) só volta pelo botão da máquina.
+function anCatFaltam(p){
+  const f=[];
+  if(instaConectado()&&!anCatPublicada(p)) f.push('insta');
+  if(mlConectado()&&!p.ml_id) f.push('ml');
+  return f;
+}
+// "Para publicar": falta em algum canal ligado (sem nenhum ligado: o que nunca foi pro Instagram).
+const anCatNova=p=>(instaConectado()||mlConectado())?anCatFaltam(p).length>0:!anCatPublicada(p);
+// Publica nos canais pedidos; o erro de um não impede o outro.
+async function anCatPublicarCanais(p,canais,aviso){
+  const r={};
+  if(canais.includes('insta')){ try{ r.insta=await anCatPublicarMaquina(p,aviso); }catch(e){ r.insta={erro:e.message}; } }
+  if(canais.includes('ml')){ try{ r.ml=await mlPublicarMaquina(p,aviso); }catch(e){ r.ml={erro:e.message}; } }
+  return r;
+}
+function anCatAvisarResultado(p,r){
+  const nome=esc(p.nome||'Notebook');
+  if(r.insta){
+    if(r.insta.erro) instaMsg('⚠️ '+r.insta.erro);
+    else instaMsg('✅ '+nome+' publicado'+(r.insta.usuario?' em @'+esc(r.insta.usuario):'')
+      +(r.insta.link?` · <a href="${encodeURI(r.insta.link)}" target="_blank" rel="noopener">ver no Instagram</a>`:'')
+      +(r.insta.erroStory?` · ⚠️ o story não foi: ${esc(r.insta.erroStory)}`:''),true);
+  }
+  if(r.ml){
+    if(r.ml.erro) mlMsg('⚠️ '+nome+' — '+esc(r.ml.erro),true);
+    else if(r.ml.faltam) mlMsg('🛒 O Mercado Livre pede mais dados de '+nome+': responda no cartão da máquina (uma vez só).',true);
+    else mlMsg('✅ '+nome+' no Mercado Livre'+(r.ml.link?` · <a href="${encodeURI(r.ml.link)}" target="_blank" rel="noopener">ver o anúncio</a>`:'')
+      +((r.ml.avisos||[]).length?' · ⚠️ '+r.ml.avisos.map(esc).join(' · '):''),true);
+  }
 }
 window.anCatBaixar=async(id,f)=>{
   const p=prods.find(x=>x.id===id); if(!p) return;
@@ -12576,39 +12968,69 @@ async function anCatPublicarMaquina(p,aviso){
   try{ await instaEnviar('story',[story],'',aviso); await instaMarcar(p,'story'); }catch(e){ erroStory=e.message; }
   return { link:r.link, usuario:r.usuario, erroStory };
 }
+// O "Publicar" da máquina: manda para cada canal ligado em que ela ainda não está
+// (Instagram: post + story; Mercado Livre: o anúncio). Já está em tudo: no Instagram dá
+// pra publicar de novo; no Mercado Livre não (seria anúncio repetido), só se o anterior
+// tiver sido encerrado.
 window.anCatPublicar=async id=>{
   const p=prods.find(x=>x.id===id); if(!p) return;
-  if(!instaConectado()){
-    instaMsg('Para publicar, conecte o Instagram aqui em cima. Enquanto isso, dá pra baixar o post e o story e postar pelo celular.');
+  const ig=instaConectado(), ml=mlConectado();
+  if(!ig&&!ml){
+    instaMsg('Para publicar, conecte o Instagram aqui em cima (ou o Mercado Livre). Enquanto isso, dá pra baixar o post e o story e postar pelo celular.');
     const card=document.getElementById('anCatCard'); if(card) card.scrollIntoView({behavior:'smooth',block:'start'});
     return;
   }
-  const pub=anCatPublicada(p);
-  if(!confirm(pub?`${p.nome} já foi publicado em ${new Date(pub).toLocaleDateString('pt-BR')}. Publicar o post e o story de novo?`
-                 :`Publicar no Instagram agora o post (a arte${anFotosDe(p.id).length?' + '+Math.min(9,anFotosDe(p.id).length)+' foto'+(Math.min(9,anFotosDe(p.id).length)!==1?'s':''):''}) e o story de ${p.nome}?`)) return;
+  const nF=Math.min(9,anFotosDe(p.id).length);
+  const txt={insta:`no Instagram o post (a arte${nF?' + '+nF+' foto'+(nF!==1?'s':''):''}) e o story`,
+             ml:`no Mercado Livre (${mlTipoNome(mlOpcoes().tipo)}, ${fmt(parseFloat(p.venda)||0)})`};
+  let canais=anCatFaltam(p), pergunta;
+  if(canais.length) pergunta=`Publicar ${p.nome} agora ${canais.map(c=>txt[c]).join(' e ')}?`;
+  else{
+    const pub=anCatPublicada(p), mlFechado=ml&&p.ml_id&&p.ml_status==='closed';
+    if(ig) canais.push('insta');
+    if(mlFechado) canais.push('ml');
+    if(!canais.length){ mlMsg(`${p.nome} já está no Mercado Livre.`); return; }
+    pergunta=(pub?`${p.nome} já foi publicado em ${new Date(pub).toLocaleDateString('pt-BR')}. `:'')
+      +'Publicar de novo '+canais.map(c=>c==='insta'?'o post e o story no Instagram':'um anúncio novo no Mercado Livre (o anterior foi encerrado)').join(' e ')+'?';
+  }
+  if(!confirm(pergunta)) return;
   const st=document.querySelector(`.ancat-it[data-id="${id}"] .ancat-st`);
   document.querySelectorAll(`.ancat-it[data-id="${id}"] button`).forEach(b=>b.disabled=true);
   try{
-    const r=await anCatPublicarMaquina(p,t=>{ if(st) st.textContent=t; });
-    instaMsg('✅ '+esc(p.nome||'Notebook')+' publicado'+(r.usuario?' em @'+esc(r.usuario):'')
-      +(r.link?` · <a href="${encodeURI(r.link)}" target="_blank" rel="noopener">ver no Instagram</a>`:'')
-      +(r.erroStory?` · ⚠️ o story não foi: ${esc(r.erroStory)}`:''),true);
-  }catch(e){ instaMsg('⚠️ '+e.message); }
-  finally{ anCatMontar(); }
+    const r=await anCatPublicarCanais(p,canais,t=>{ if(st) st.textContent=t; });
+    anCatAvisarResultado(p,r);
+  }finally{ anCatMontar(); }
 };
 window.anCatPublicarNovas=async()=>{
-  const novas=anCatMaquinas().filter(p=>!anCatPublicada(p)).slice(0,20); // a Meta deixa 100 por dia
-  if(!novas.length||!instaConectado()) return;
-  if(!confirm(`Publicar ${novas.length} notebook${novas.length!==1?'s':''} no Instagram, um post e um story de cada?`)) return;
+  const novas=anCatMaquinas().filter(p=>anCatFaltam(p).length).slice(0,20); // a Meta deixa 100 por dia
+  if(!novas.length) return;
+  const nIg=novas.filter(p=>anCatFaltam(p).includes('insta')).length, nMl=novas.filter(p=>anCatFaltam(p).includes('ml')).length;
+  const partes=[nIg?`${nIg} no Instagram, um post e um story de cada`:'',nMl?`${nMl} no Mercado Livre`:''].filter(Boolean);
+  if(!confirm(`Publicar ${novas.length} notebook${novas.length!==1?'s':''}: ${partes.join(' e ')}?`)) return;
   const bt=document.getElementById('anCatNovasBt'); if(bt) bt.disabled=true;
-  let feitas=0; const falhas=[];
+  const aviso=t=>{ if(nIg) instaMsg(t); else mlMsg(t); };
+  let feitasIg=0, feitasMl=0, pararIg=false, pararMl=false; const falhasIg=[], falhasMl=[], pedem=[];
   try{
     for(const [i,p] of novas.entries()){
-      instaMsg(`Publicando ${i+1} de ${novas.length}: ${p.nome||'notebook'}...`);
-      try{ const r=await anCatPublicarMaquina(p); feitas++; if(r.erroStory) falhas.push((p.nome||p.id)+' (o story)'); }
-      catch(e){ falhas.push((p.nome||p.id)+': '+e.message); if(/Conectar Instagram de novo|limitou|Só os sócios|Conecte/.test(e.message)) break; }
+      const canais=anCatFaltam(p).filter(c=>c==='insta'?!pararIg:!pararMl);
+      if(!canais.length) continue;
+      aviso(`Publicando ${i+1} de ${novas.length}: ${p.nome||'notebook'}...`);
+      const r=await anCatPublicarCanais(p,canais);
+      const nome=p.nome||p.id;
+      if(r.insta){
+        if(r.insta.erro){ falhasIg.push(nome+': '+r.insta.erro); if(/Conectar Instagram de novo|limitou|Só os sócios|Conecte/.test(r.insta.erro)) pararIg=true; }
+        else{ feitasIg++; if(r.insta.erroStory) falhasIg.push(nome+' (o story)'); }
+      }
+      if(r.ml){
+        if(r.ml.erro){ falhasMl.push(nome+': '+r.ml.erro); if(/Conectar Mercado Livre|Conecte o Mercado Livre|pediu um tempo|sócios/.test(r.ml.erro)) pararMl=true; }
+        else if(r.ml.faltam) pedem.push(nome);
+        else feitasMl++;
+      }
     }
-    instaMsg((feitas?`✅ ${feitas} publicado${feitas!==1?'s':''} no Instagram.`:'')+(falhas.length?` ⚠️ Não foram: ${falhas.join(' · ')}`:''));
+    if(nIg) instaMsg((feitasIg?`✅ ${feitasIg} publicado${feitasIg!==1?'s':''} no Instagram.`:'')+(falhasIg.length?` ⚠️ Não foram: ${falhasIg.join(' · ')}`:''));
+    if(nMl) mlMsg((feitasMl?`✅ ${feitasMl} anunciado${feitasMl!==1?'s':''} no Mercado Livre.`:'')
+      +(pedem.length?` 🛒 O Mercado Livre pede mais dados de ${pedem.join(', ')}: responda no cartão de cada uma.`:'')
+      +(falhasMl.length?` ⚠️ Não foram: ${falhasMl.join(' · ')}`:''));
   }finally{ if(bt) bt.disabled=false; anCatMontar(); }
 };
 
