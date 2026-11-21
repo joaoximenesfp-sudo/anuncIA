@@ -61,10 +61,50 @@
   :root[data-theme="dark"] .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.9) contrast(.9)}
   .leaflet-container{font:inherit}
   [hidden]{display:none!important}
+
+  /* ══ visual novo: o mesmo do sistema e do catálogo (azul-noite + verde da marca,
+     faixa escura com brilho e grade no topo, cartões arredondados, pílulas) ══ */
+  :root{--navy:#0b1221;--g1:#1cf08f;--g2:#00b368;--verde:#00875a;--verde-claro:#ecfdf5;--texto:#0b1221;--fraco:#556070;--linha:#e3e7ed}
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--verde:#1cf08f;--texto:#e9eef6;--fundo:#070b14;--cartao:#101828;--linha:#1d2839}}
+  :root[data-theme="dark"]{--verde:#1cf08f;--texto:#e9eef6;--fundo:#070b14;--cartao:#101828;--linha:#1d2839}
+  body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  header{position:relative;overflow:hidden;max-width:none;margin:0 0 18px;color:#fff;
+    padding:22px max(16px,calc(50% - 574px));
+    background:radial-gradient(55% 140% at 92% 0%,rgba(28,240,143,.20),transparent 60%),
+               radial-gradient(45% 120% at 0% 120%,rgba(45,212,245,.14),transparent 60%),linear-gradient(160deg,#0b1221,#060a13)}
+  header::before{content:"";position:absolute;inset:0;pointer-events:none;
+    background-image:linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px);
+    background-size:40px 40px;-webkit-mask-image:radial-gradient(ellipse 70% 140% at 85% 0%,#000 15%,transparent 72%);
+    mask-image:radial-gradient(ellipse 70% 140% at 85% 0%,#000 15%,transparent 72%)}
+  header>*{position:relative}
+  header h1{color:#fff;font-weight:800;letter-spacing:-.03em}
+  header small{color:#a3b1c4}
+  .mk{width:34px;height:34px;border-radius:10px;display:inline-grid;place-items:center;flex:none;vertical-align:middle;
+    background:linear-gradient(150deg,var(--g1),var(--g2));box-shadow:0 0 16px rgba(28,240,143,.35)}
+  .mk svg{width:21px;height:21px}
+  .cartao,.kpi{border-color:rgba(11,18,33,.06);border-radius:20px;box-shadow:0 1px 2px rgba(11,18,33,.05),0 8px 24px rgba(11,18,33,.06)}
+  .kpi{border-radius:18px}
+  .kpi b{font-weight:800;letter-spacing:-.03em}
+  .cartao h2{font-weight:800;letter-spacing:-.02em}
+  input,select{border-radius:12px}
+  input:focus,select:focus{outline:none;border-color:var(--g2);box-shadow:0 0 0 4px rgba(0,179,104,.15)}
+  button.acao{border-radius:999px;background:linear-gradient(135deg,var(--g1),var(--g2));color:#03140c;font-weight:800;box-shadow:0 8px 20px rgba(28,240,143,.22)}
+  button.sec{border-radius:999px}
+  header button.sec{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2);color:#fff}
+  header{border-bottom:1px solid rgba(255,255,255,.06)}
+  nav button{transition:background .15s,color .15s,border-color .15s}
+  nav button.on{background:var(--navy);border-color:var(--navy);color:#fff}
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]) nav button.on{background:#fff;border-color:#fff;color:#0b1221}
+    :root:not([data-theme="light"]) .cartao,:root:not([data-theme="light"]) .kpi{border-color:var(--linha);box-shadow:none}}
+  :root[data-theme="dark"] nav button.on{background:#fff;border-color:#fff;color:#0b1221}
+  :root[data-theme="dark"] .cartao,:root[data-theme="dark"] .kpi{border-color:var(--linha);box-shadow:none}
+  header #quem{color:#a3b1c4;font-size:13px}
 </style>
 </head>
 <body>
 <header>
+  <span class="mk"><svg viewBox="0 0 800 800" aria-hidden="true"><rect x="232" y="222" width="336" height="232" rx="26" fill="none" stroke="#06231A" stroke-width="46"/><polyline points="300,347 356,403 492,268" fill="none" stroke="#06231A" stroke-width="56" stroke-linecap="round" stroke-linejoin="round"/><rect x="168" y="486" width="464" height="52" rx="26" fill="#06231A"/></svg></span>
   <h1>Painel da Tela <small>· rede de tablets nos carros</small></h1>
   <span id="quem"></span>
   <button class="sec" id="bt-sair" hidden>Sair</button>
