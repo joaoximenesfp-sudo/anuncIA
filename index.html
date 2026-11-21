@@ -12745,6 +12745,8 @@ const mlSO=t=>{ const s=cliNorm(t);
   return /\bwindows\b|\bwin\s?1[01]\b/.test(s)?'Windows':/\b(linux|ubuntu)\b/.test(s)?'Linux':/\bchrome\s?os\b/.test(s)?'Chrome OS':/\bmac\s?os\b/.test(s)?'macOS':''; };
 function mlFicha(p){
   const f={...(anFichaRapida(p)||{})}, nome=String(p.nome||''), desc=String(p.descricao||'');
+  // ficha gravada com campo vazio: o nome da máquina diz o que ela tem ("8GB DDR4 RAM")
+  if(p.ficha&&typeof p.ficha==='object'){ const dn=fichaDoNome(nome); for(const k of FICHA_CAMPOS) if(!f[k]&&dn[k]) f[k]=dn[k]; }
   if(desc){
     const d=fichaDoNome(desc);
     if(!f.marca&&d.marca) f.marca=d.marca;

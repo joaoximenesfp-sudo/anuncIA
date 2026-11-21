@@ -202,7 +202,7 @@ function formatar(a, valor) {
     valor = valor.value_name;
   }
   if (valor === undefined || valor === null || String(valor).trim() === '') return null;
-  valor = String(valor).trim();
+  valor = String(valor).replace(/\s+/g, ' ').trim();
   const valores = Array.isArray(a.values) ? a.values : [];
   const tipo = a.value_type || 'string';
   if (tipo === 'boolean') {
@@ -274,13 +274,16 @@ const causasDe = j => (Array.isArray(j && j.cause) ? j.cause : j && j.cause && t
 const resumoItem = item => JSON.stringify({ cat: item.category_id, tipo: item.listing_type_id, titulo: item.title || item.family_name, preco: item.price,
   fotos: (item.pictures || []).length, frete: item.shipping, garantia: (item.sale_terms || []).map(t => t.id + '=' + t.value_name),
   atributos: (item.attributes || []).map(a => a.id + '=' + (a.value_name || a.value_id)) }).slice(0, 1500);
-// O que uma recusa (da validação ou da criação) diz: os erros; sem eles, as advertências
-// (são elas que dizem o motivo); sem nada, "vago".
-function lerRecusa(r) {
+// O que uma recusa diz. Com erro, os erros. Só com advertência: na validação, ela não
+// impede (a validação devolve 400 mesmo assim, como no "User has not mode me1" de quem
+// não usa o Mercado Envios 1), então quem decide é a criação; na criação que falhou, a
+// advertência é o motivo. Sem nada: "vago" (quem decide também é a criação).
+function lerRecusa(r, criacao) {
   const causas = causasDe(r.j), erros = causas.filter(c => c.type !== 'warning');
-  if (erros.length) return { erros, avisos: causas.filter(c => c.type === 'warning').map(c => c.message).filter(Boolean), vago: false };
-  if (causas.length) return { erros: causas, avisos: [], vago: false };
-  return { erros: [{ code: r.j.error || 'erro', message: r.j.message || traduzir(r) }], avisos: [], vago: true };
+  const avisos = causas.filter(c => c.type === 'warning').map(c => c.message || c.code).filter(Boolean);
+  if (erros.length) return { erros, avisos, vago: false };
+  if (causas.length && criacao) return { erros: causas, avisos: [], vago: false };
+  return { erros: [{ code: r.j.error || 'erro', message: [r.j.message || traduzir(r), ...avisos].join(' · ') }], avisos, vago: true };
 }
 async function validar(item, token) {
   const r = await ml('POST', '/items/validate', { token, corpo: item });
@@ -383,6 +386,8 @@ async function publicar(corpo) {
   const lista = ra.j, porId = new Map(lista.map(a => [a.id, a]));
   const manual = it.atributos && typeof it.atributos === 'object' ? it.atributos : {};
   const m = montarAtributos(lista, it.ficha, manual, { pacote: it.pacote });
+  console.log('ml atributos sem valor em', cat, lista.filter(a => a && a.id && !somenteLeitura(a) && !m.atributos.some(x => x.id === a.id))
+    .map(a => a.id + (obrigatorio(a) ? '*' : '') + ':' + (a.name || '') + ':' + (a.value_type || '')).join(', ').slice(0, 1800));
   if (m.faltam.length) return { ok: false, faltam: m.faltam, categoria: { id: cat, nome: catNome }, cifraNova: s.cifraNova };
   // 3) o anúncio, validado antes de criar: o Mercado Livre diz o que falta sem publicar nada
   const item = {
@@ -402,13 +407,13 @@ async function publicar(corpo) {
     if (r.ok && r.j.id) return { r };
     console.log('ml publicar: POST /items', r.status, JSON.stringify(r.j).slice(0, 1500), '|', resumoItem(item));
     if (r.status !== 400 && r.status !== 422) throw erro(502, traduzir(r));
-    return { v: lerRecusa(r) };
+    return { v: lerRecusa(r, true) };
   };
   let v = await validar(item, s.token), feito = null;
   for (let volta = 0; volta < 5 && !feito; volta++) {
     if (!v.erros.length || v.vago) {
-      // validou; ou a validação recusou sem dizer o motivo: cria (ou sai, ou a criação diz o que é)
-      if (v.vago) console.log('ml publicar: a validação não disse o motivo em', cat, '; tentando criar |', resumoItem(item));
+      // validou; ou a validação recusou sem erro (só advertência, ou nada): cria (ou sai, ou a criação diz o que é)
+      if (v.vago) console.log('ml publicar: a validação não trouxe erro em', cat, '; criando |', resumoItem(item));
       else avisos.push(...v.avisos);
       const c = await criar();
       if (c.r) { feito = c.r; break; }

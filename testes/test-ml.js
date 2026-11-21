@@ -259,9 +259,18 @@ const ITEM = { titulo: 'Notebook Dell Latitude 5490 i5 8ª 16GB SSD 256GB', prec
   validacoes = []; criacoes = [[{ code: 'body.required_fields', message: 'The body does not contains some or none of the following properties [family_name]', type: 'error' }]]; criados = [];
   r = await post({ acao: 'publicar', item: { ...ITEM, atributos: KL } });
   ok(r.json().ok && criados.length === 1 && criados[0].family_name === ITEM.titulo && !criados[0].title, 'validou, mas a criação pediu family_name: refaz e cria');
-  validacoes = [[{ code: 'item.attributes.missing_conditional_required', message: 'The attributes [KEYBOARD_LANGUAGE] are conditionally required', type: 'warning' }]]; criados = [];
-  r = await post({ acao: 'publicar', item: { ...ITEM, atributos: { OS_NAME: 'Windows' } } });
-  ok(r.json().ok === false && r.json().faltam.map(f => f.id).join() === 'KEYBOARD_LANGUAGE' && !criados.length, 'recusou só com advertência: é ela que diz o que falta (vira pergunta)');
+  // o que aconteceu de verdade com o #480: pede family_name; depois só a advertência do me1
+  const ME1 = { department: 'shipping', cause_id: 4053, type: 'warning', code: 'shipping.lost_me1_by_user', references: ['user.shipping_preferences.modes'], message: 'User has not mode me1' };
+  validacoes = [[{ code: 'body.required_fields', message: 'The body does not contains some or none of the following properties [family_name]', type: 'error' }], [ME1]];
+  criados = []; criacoes = [];
+  r = await post({ acao: 'publicar', item: { ...ITEM, atributos: KL } });
+  ok(r.json().ok && criados.length === 1 && criados[0].family_name === ITEM.titulo && !criados[0].title && criados[0].shipping.mode === 'me2' && !(r.json().avisos || []).some(a => /me1/.test(a)),
+    'validação com só advertência ("User has not mode me1"): não impede, cria (o caso do #480)');
+  validacoes = [[ME1]]; criacoes = [[ME1]]; criados = [];
+  r = await post({ acao: 'publicar', item: { ...ITEM, atributos: KL } });
+  ok(r.status === 422 && /recusou o anúncio: User has not mode me1$/.test(r.json().erro) && !criados.length, 'a criação falhou só com advertência: aí ela é o motivo');
+  criacoes = [];
+  ok(T.formatar({ id: 'MODEL', value_type: 'string' }, 'E14  vPRO ').value_name === 'E14 vPRO', 'texto sem espaço dobrado ("E14  vPRO")');
   validacoes = [[{ code: 'item.attribute.invalid', message: 'Attribute [OS_NAME] has an invalid value', type: 'error' }]];
   r = await post({ acao: 'publicar', item: { ...ITEM, atributos: KL } });
   ok(r.json().ok === false && r.json().faltam.map(f => f.id).join() === 'OS_NAME' && /invalid value/.test(r.json().motivo) && !criados.length,

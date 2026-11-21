@@ -59,6 +59,9 @@ ok(g.modelo==='3420' && g.tela==='14', '"Dell 3420" (sem a família) também ser
 const h=M.mlFicha({id:'c',nome:'Dell Latitude 5490 i5-8350U 16GB SSD 256GB 14"'});
 ok(h.cpu_modelo==='8350U' && h.tela==='14' && h.numero==='5490', 'código no nome vai direto; tela escrita no nome vale');
 ok(M.mlFicha({id:'d',nome:'Lenovo ThinkPad E14 Ryzen 5 16GB SSD 512GB'}).cpu_linha==='Ryzen 5', 'Ryzen continua com a linha certa');
+const p480=M.mlFicha({id:'p480',nome:'Lenovo E14 vPRO · i5 10ª · NVMe 256GB · 8GB DDR4 RAM',
+  ficha:{marca:'Lenovo',modelo:'E14  vPRO',cpu:'i5',ger:'10ª',ram:'',ram_tipo:'DDR4',armaz:'NVMe 256GB',tela:''}});
+ok(p480.ram==='8 GB' && p480.ssd==='256 GB' && p480.modelo==='E14  vPRO', 'ficha gravada sem a RAM: a RAM sai do nome da máquina (o #480 foi sem os 8 GB)');
 
 console.log('\nlista de processadores e respostas de máquina igual');
 const vals=['10110U','1005G1','10210U','8350U','1135G7','i5-10310U','i3-10110U'];
