@@ -647,6 +647,18 @@ input[type=number].inp{padding-left:32px}
 .ancat-bts button{font-size:.72rem;padding:4px 7px;border-radius:7px;border:1px solid var(--b);background:var(--bg);color:var(--tx);cursor:pointer}
 .ancat-bts button.pub{background:#fdf4ff;border-color:#f5d0fe;color:#a21caf;font-weight:600}
 .ancat-bts button:disabled{opacity:.5;cursor:wait}
+/* menu do Publicar: escolhe o canal (fica no body, para o cartão não cortar) */
+.menu-pub{position:fixed;z-index:450;min-width:260px;max-width:min(330px,calc(100vw - 16px));background:var(--w);border:1px solid var(--b);
+  border-radius:14px;box-shadow:var(--shm);padding:6px;display:flex;flex-direction:column;gap:2px;animation:menuEntra .12s ease-out}
+.menu-pub button{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;text-align:left;border:0;background:none;
+  border-radius:10px;padding:8px 10px;cursor:pointer;font-family:var(--fonte);color:var(--tx)}
+.menu-pub button:hover:not(:disabled),.menu-pub button:focus-visible{background:var(--bg);outline:none}
+.menu-pub button b{font-size:.82rem;font-weight:600}
+.menu-pub button small{font-size:.7rem;color:var(--mu);line-height:1.35}
+.menu-pub button:disabled{cursor:not-allowed;opacity:.5}
+.menu-pub hr{border:0;border-top:1px solid var(--b);margin:3px 6px}
+@keyframes menuEntra{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.menu-pub{animation:none}}
 .ancat-lista{display:block}
 /* Instagram e Mercado Livre lado a lado (um embaixo do outro no celular) */
 .canais{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:10px;align-items:start}
@@ -3081,7 +3093,7 @@ div:has(> .fc2){flex-wrap:wrap;row-gap:6px}
           </div>
         </div>
         <div class="ancat-topo"><span class="tipo-auto" id="anCatResumo"></span>
-          <button class="bok" id="anCatNovasBt" style="display:none" onclick="anCatPublicarNovas()">📤 Publicar as novas</button></div>
+          <button class="bok" id="anCatNovasBt" style="display:none" aria-haspopup="menu" aria-expanded="false" onclick="anCatMenuNovas(this)">📤 Publicar as novas ▾</button></div>
         <div class="ancat-busca" id="anCatBuscaBox">
           <span class="ancat-busca-ic" aria-hidden="true">🔍</span>
           <input class="inp" type="text" id="anCatBusca" inputmode="search" enterkeyhint="search" autocomplete="off" spellcheck="false"
@@ -12787,7 +12799,7 @@ function anCatCartao(p,a){
     <div class="ancat-bts">
       <button onclick="anCatBaixar('${p.id}','feed')">⬇️ Post</button>
       <button onclick="anCatBaixar('${p.id}','story')">⬇️ Story</button>
-      <button class="pub" onclick="anCatPublicar('${p.id}')">📤 Publicar</button>
+      <button class="pub" aria-haspopup="menu" aria-expanded="false" onclick="anCatMenuPub(this,'${p.id}')">📤 Publicar ▾</button>
       <button onclick="instaMaquina('${p.id}')" title="Abrir no editor para mudar fotos, texto ou promoção">✏️ Editar</button>
     </div></div>`;
 }
@@ -13054,7 +13066,7 @@ function anCatBotaoNovas(){
   const bt=document.getElementById('anCatNovasBt'); if(!bt) return;
   const n=anCatMaquinas().filter(p=>anCatFaltam(p).length).length;
   bt.style.display=(instaConectado()||mlConectado())&&n?'':'none';
-  bt.textContent=`📤 Publicar as novas (${Math.min(n,20)})`;
+  bt.textContent=`📤 Publicar as novas (${Math.min(n,20)}) ▾`;
 }
 // Canais ligados em que a máquina ainda não está. No Mercado Livre, só a que nunca
 // foi: anúncio encerrado (vendeu lá, por exemplo) só volta pelo botão da máquina.
@@ -13146,11 +13158,70 @@ async function anCatPublicarMaquina(p,aviso){
   try{ await instaEnviar('story',[story],'',aviso); await instaMarcar(p,'story'); }catch(e){ erroStory=e.message; }
   return { link:r.link, usuario:r.usuario, erroStory };
 }
+// ── Menu que abre embaixo de um botão (Publicar: Instagram, Mercado Livre ou os dois) ──
+let menuAtual=null;
+function menuFechar(){
+  if(!menuAtual) return;
+  const {m,bt}=menuAtual; menuAtual=null; m.remove(); bt.setAttribute('aria-expanded','false');
+  document.removeEventListener('pointerdown',menuFora,true); document.removeEventListener('keydown',menuTecla,true);
+  removeEventListener('scroll',menuPosicionar,true); removeEventListener('resize',menuPosicionar);
+}
+// rolou ou mudou o tamanho: o menu acompanha o botão (e fecha se o botão sair da tela)
+function menuPosicionar(){
+  if(!menuAtual) return;
+  const {m,bt}=menuAtual, r=bt.getBoundingClientRect();
+  if(r.bottom<0||r.top>innerHeight||!bt.isConnected){ menuFechar(); return; }
+  const w=m.offsetWidth, h=m.offsetHeight;
+  let y=r.bottom+6; if(y+h>innerHeight-8&&r.top-h-6>8) y=r.top-h-6; // sem espaço embaixo: abre em cima
+  m.style.left=Math.max(8,Math.min(r.left,innerWidth-w-8))+'px'; m.style.top=Math.max(8,y)+'px';
+}
+function menuFora(e){ if(menuAtual&&!menuAtual.m.contains(e.target)&&!menuAtual.bt.contains(e.target)) menuFechar(); }
+function menuTecla(e){
+  if(!menuAtual) return;
+  if(e.key==='Escape'){ e.preventDefault(); const bt=menuAtual.bt; menuFechar(); bt.focus(); return; }
+  if(e.key==='ArrowDown'||e.key==='ArrowUp'){
+    e.preventDefault();
+    const bs=[...menuAtual.m.querySelectorAll('button:not([disabled])')]; if(!bs.length) return;
+    const i=bs.indexOf(document.activeElement);
+    bs[(i+(e.key==='ArrowDown'?1:-1)+bs.length)%bs.length].focus();
+  }
+}
+// itens: [{rot, det, ok, acao}] ou '-' (linha separando)
+function menuAbrir(bt,itens){
+  const mesmo=menuAtual&&menuAtual.bt===bt; menuFechar(); if(mesmo) return; // clicar de novo fecha
+  const m=document.createElement('div'); m.className='menu-pub'; m.setAttribute('role','menu');
+  m.innerHTML=itens.map((it,k)=>it==='-'?'<hr>':`<button type="button" role="menuitem" data-k="${k}"${it.ok?'':' disabled'}><b>${it.rot}</b>${it.det?`<small>${it.det}</small>`:''}</button>`).join('');
+  document.body.appendChild(m);
+  menuAtual={m,bt}; menuPosicionar();
+  m.querySelectorAll('button[data-k]').forEach(b=>{ b.onclick=()=>{ const it=itens[+b.dataset.k]; menuFechar(); it.acao(); }; });
+  bt.setAttribute('aria-expanded','true');
+  document.addEventListener('pointerdown',menuFora,true); document.addEventListener('keydown',menuTecla,true);
+  addEventListener('scroll',menuPosicionar,true); addEventListener('resize',menuPosicionar);
+  const pri=m.querySelector('button:not([disabled])'); if(pri) pri.focus({preventScroll:true});
+}
+// As opções de uma máquina: cada canal diz o que vai sair (ou por que não dá).
+window.anCatMenuPub=(bt,id)=>{
+  const p=prods.find(x=>x.id===id); if(!p) return;
+  const ig=instaConectado(), ml=mlConectado(), pub=anCatPublicada(p);
+  const nF=Math.min(9,anFotosDe(p.id).length), fotos=nF?` + ${nF} foto${nF!==1?'s':''}`:'';
+  const igDet=!ig?'não está conectado (conecte aqui em cima)'
+    :pub?`já foi em ${new Date(pub).toLocaleDateString('pt-BR')} · sai de novo: post (arte${fotos}) e story`
+    :`post (arte${fotos}) e story`;
+  const mlPode=ml&&!mlNoAr(p);
+  const mlDet=!ml?'não está conectado (conecte aqui em cima)'
+    :mlNoAr(p)?'já está no Mercado Livre'
+    :`${p.ml_id?'anúncio novo (o anterior foi encerrado) · ':''}${mlTipoNome(mlOpcoes().tipo)} · ${fmt(parseFloat(p.venda)||0)}`;
+  const itens=[
+    {rot:'📸 Instagram',det:igDet,ok:ig,acao:()=>anCatPublicar(id,['insta'])},
+    {rot:'🛒 Mercado Livre',det:mlDet,ok:mlPode,acao:()=>anCatPublicar(id,['ml'])}];
+  if(ig&&mlPode) itens.push('-',{rot:'📤 Instagram e Mercado Livre',det:'os dois de uma vez',ok:true,acao:()=>anCatPublicar(id,['insta','ml'])});
+  menuAbrir(bt,itens);
+};
 // O "Publicar" da máquina: manda para cada canal ligado em que ela ainda não está
 // (Instagram: post + story; Mercado Livre: o anúncio). Já está em tudo: no Instagram dá
 // pra publicar de novo; no Mercado Livre não (seria anúncio repetido), só se o anterior
 // tiver sido encerrado.
-window.anCatPublicar=async id=>{
+window.anCatPublicar=async (id,escolha)=>{
   const p=prods.find(x=>x.id===id); if(!p) return;
   const ig=instaConectado(), ml=mlConectado();
   if(!ig&&!ml){
@@ -13162,7 +13233,15 @@ window.anCatPublicar=async id=>{
   const txt={insta:`no Instagram o post (a arte${nF?' + '+nF+' foto'+(nF!==1?'s':''):''}) e o story`,
              ml:`no Mercado Livre (${mlTipoNome(mlOpcoes().tipo)}, ${fmt(parseFloat(p.venda)||0)})`};
   let canais=anCatFaltam(p), pergunta;
-  if(canais.length) pergunta=`Publicar ${p.nome} agora ${canais.map(c=>txt[c]).join(' e ')}?`;
+  if(escolha){
+    // escolhido no menu: a escolha já é a confirmação; só pergunta o que repete
+    // (post de novo no Instagram) — anúncio repetido no Mercado Livre nem é oferecido
+    canais=escolha.filter(c=>c==='insta'?ig:(ml&&!mlNoAr(p)));
+    if(!canais.length) return;
+    const pub=anCatPublicada(p);
+    pergunta=canais.includes('insta')&&pub?`${p.nome} já foi publicado no Instagram em ${new Date(pub).toLocaleDateString('pt-BR')}. Publicar o post e o story de novo?`:'';
+  }
+  else if(canais.length) pergunta=`Publicar ${p.nome} agora ${canais.map(c=>txt[c]).join(' e ')}?`;
   else{
     const pub=anCatPublicada(p), mlFechado=ml&&p.ml_id&&p.ml_status==='closed';
     if(ig) canais.push('insta');
@@ -13171,7 +13250,7 @@ window.anCatPublicar=async id=>{
     pergunta=(pub?`${p.nome} já foi publicado em ${new Date(pub).toLocaleDateString('pt-BR')}. `:'')
       +'Publicar de novo '+canais.map(c=>c==='insta'?'o post e o story no Instagram':'um anúncio novo no Mercado Livre (o anterior foi encerrado)').join(' e ')+'?';
   }
-  if(!confirm(pergunta)) return;
+  if(pergunta&&!confirm(pergunta)) return;
   const st=document.querySelector(`.ancat-it[data-id="${id}"] .ancat-st`);
   document.querySelectorAll(`.ancat-it[data-id="${id}"] button`).forEach(b=>b.disabled=true);
   try{
@@ -13179,10 +13258,23 @@ window.anCatPublicar=async id=>{
     anCatAvisarResultado(p,r);
   }finally{ anCatMontar(); }
 };
-window.anCatPublicarNovas=async()=>{
-  const novas=anCatMaquinas().filter(p=>anCatFaltam(p).length).slice(0,20); // a Meta deixa 100 por dia
+window.anCatMenuNovas=bt=>{
+  const lista=anCatMaquinas(), ig=instaConectado(), ml=mlConectado();
+  const n=c=>Math.min(20,lista.filter(p=>anCatFaltam(p).includes(c)).length);
+  const nAmbos=Math.min(20,lista.filter(p=>anCatFaltam(p).length).length);
+  const de=k=>`${k} notebook${k!==1?'s':''}`;
+  const itens=[
+    {rot:'📸 Só no Instagram',det:!ig?'não está conectado':n('insta')?`${de(n('insta'))} · post e story de cada`:'todos já foram',ok:ig&&n('insta')>0,acao:()=>anCatPublicarNovas(['insta'])},
+    {rot:'🛒 Só no Mercado Livre',det:!ml?'não está conectado':n('ml')?`${de(n('ml'))} · ${mlTipoNome(mlOpcoes().tipo)}`:'todos já estão lá',ok:ml&&n('ml')>0,acao:()=>anCatPublicarNovas(['ml'])}];
+  if(ig&&ml&&n('insta')&&n('ml')) itens.push('-',{rot:'📤 Instagram e Mercado Livre',det:`${de(nAmbos)} · cada uma no que falta`,ok:true,acao:()=>anCatPublicarNovas(['insta','ml'])});
+  menuAbrir(bt,itens);
+};
+window.anCatPublicarNovas=async(escolha)=>{
+  const quer=escolha||['insta','ml'];
+  const faltam=p=>anCatFaltam(p).filter(c=>quer.includes(c));
+  const novas=anCatMaquinas().filter(p=>faltam(p).length).slice(0,20); // a Meta deixa 100 por dia
   if(!novas.length) return;
-  const nIg=novas.filter(p=>anCatFaltam(p).includes('insta')).length, nMl=novas.filter(p=>anCatFaltam(p).includes('ml')).length;
+  const nIg=novas.filter(p=>faltam(p).includes('insta')).length, nMl=novas.filter(p=>faltam(p).includes('ml')).length;
   const partes=[nIg?`${nIg} no Instagram, um post e um story de cada`:'',nMl?`${nMl} no Mercado Livre`:''].filter(Boolean);
   if(!confirm(`Publicar ${novas.length} notebook${novas.length!==1?'s':''}: ${partes.join(' e ')}?`)) return;
   const bt=document.getElementById('anCatNovasBt'); if(bt) bt.disabled=true;
@@ -13190,7 +13282,7 @@ window.anCatPublicarNovas=async()=>{
   let feitasIg=0, feitasMl=0, pararIg=false, pararMl=false; const falhasIg=[], falhasMl=[], pedem=[];
   try{
     for(const [i,p] of novas.entries()){
-      const canais=anCatFaltam(p).filter(c=>c==='insta'?!pararIg:!pararMl);
+      const canais=faltam(p).filter(c=>c==='insta'?!pararIg:!pararMl);
       if(!canais.length) continue;
       aviso(`Publicando ${i+1} de ${novas.length}: ${p.nome||'notebook'}...`);
       const r=await anCatPublicarCanais(p,canais);
