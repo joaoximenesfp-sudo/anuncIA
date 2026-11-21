@@ -72,6 +72,13 @@ Livre (o anúncio). Usa a API oficial (`api/ml.js`):
   caixa...) saem da ficha. O anúncio passa pela validação do Mercado Livre antes de ser
   criado: se a categoria pedir algo que a ficha não sabe (o sistema operacional, por
   exemplo), o cartão da máquina pergunta, e a resposta fica guardada na máquina.
+- **Preenche sozinho o que der**: o que faltar na ficha do cadastro sai da descrição
+  (modelo, processador, tela e o sistema operacional: "com Windows 11"); a tela sai também
+  do número do modelo (Latitude 3420 e ThinkPad T480 são 14", EliteBook 850 é 15,6"); o
+  código do processador (i3-10110U) vale escrito no nome ou na descrição. Resposta dada a
+  uma máquina vale para as iguais (mesmo nome). Quando ainda assim pergunta, o quadro vem
+  preenchido ("do cadastro · confira"), a lista de processadores começa pelos da mesma
+  geração (e diz onde ver o código no Windows) e digitar o modelo preenche a tela.
 - **Acompanhar**: preço mudou aqui, muda lá; vendeu aqui, o anúncio encerra; reservada,
   chegando ou fora do catálogo, pausa (e volta quando ela volta). A cada 10 minutos com o
   sistema aberto (e ao abrir), confere a situação dos anúncios e os pedidos dos últimos

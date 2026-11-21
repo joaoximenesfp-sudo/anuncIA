@@ -17,6 +17,7 @@ node testes/test-desconto.js       # análise de preço: dias no estoque, pareci
 node testes/test-busca.js          # busca do Gerar anúncio: palavras em qualquer ordem, sem acento, "#12" pelo número
 node testes/test-ml.js             # Mercado Livre: autorização (PKCE), tokens cifrados e renovados, foto, atributos, validação, preço/situação e pedidos
 node testes/test-captcha.js        # imagem de confirmação do login: código sem letra que confunde, só desenho, resposta conferida no servidor, validade
+node testes/test-ml-ficha.js       # o que vai preenchido para o Mercado Livre: descrição, tela pelo modelo, código do processador, máquina igual
 ```
 
 Rode o `checar.js` sempre antes de subir. Tag desbalanceada ou chave de CSS

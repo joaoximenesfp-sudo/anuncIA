@@ -272,6 +272,22 @@ const ITEM = { titulo: 'Notebook Dell Latitude 5490 i5 8ª 16GB SSD 256GB', prec
   r = await post({ acao: 'xyz' });
   ok(r.status === 400, 'ação desconhecida: 400');
 
+  console.log('\no que a categoria pede, preenchido pela ficha');
+  const cpuLista = { id: 'PROCESSOR_MODEL', name: 'Modelo do processador', value_type: 'list', tags: { required: true },
+    values: [{ id: '91', name: 'i3-10110U' }, { id: '92', name: 'i5-10210U' }, { id: '93', name: '1005G1' }] };
+  const fx = T.formatar(cpuLista, '10110U');
+  ok(fx && fx.value_id === '91' && fx.value_name === 'i3-10110U', 'código "10110U" casa com a opção "i3-10110U" (vai o id da lista)');
+  ok(T.formatar(cpuLista, '1005G1').value_id === '93' && !T.formatar(cpuLista, '10U').value_id, 'igual também casa; pedaço curto ("10U") não chuta opção');
+  ok(T.daFicha({ so: 'Windows' }).OS_NAME === 'Windows' && T.daFicha({}).OS_NAME === '', 'sistema operacional sai da ficha (lido da descrição)');
+  const soLista = { id: 'OPERATING_SYSTEM_NAME', name: 'Sistema operacional', value_type: 'list', tags: { required: true }, values: [{ id: '7', name: 'Windows' }, { id: '8', name: 'Linux' }] };
+  const telaAt = { id: 'DISPLAY_SIZE', name: 'Tamanho da tela', value_type: 'number_unit', tags: { required: true }, allowed_units: [{ id: '"', name: '"' }], default_unit: '"' };
+  const mx = T.montarAtributos([cpuLista, soLista, telaAt], { cpu_modelo: '10110U', so: 'Windows', tela: '14' }, {}, {});
+  ok(!mx.faltam.length && mx.atributos.find(x => x.id === 'OPERATING_SYSTEM_NAME').value_id === '7' && mx.atributos.find(x => x.id === 'PROCESSOR_MODEL').value_id === '91' &&
+    mx.atributos.find(x => x.id === 'DISPLAY_SIZE').value_name === '14 "', 'com processador, sistema e tela na ficha, a categoria não pergunta nada');
+  const longa = { id: 'PROCESSOR_MODEL', name: 'Modelo do processador', value_type: 'list', tags: { required: true },
+    values: Array.from({ length: 320 }, (_, i) => ({ id: String(i), name: (1000 + i) + 'U' })) };
+  ok(T.infoAtributo(longa).valores.length === 320, 'a lista inteira vai para a tela (antes cortava em 120 e a opção certa podia ficar de fora)');
+
   console.log('\n' + (falhas ? falhas + ' FALHA(S)' : 'tudo verde'));
   process.exit(falhas ? 1 : 0);
 })();

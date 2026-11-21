@@ -173,6 +173,7 @@ function daFicha(f) {
     RAM_MEMORY: s('ram'), RAM_MEMORY_TYPE: s('ram_tipo'),
     SSD_DATA_STORAGE_CAPACITY: s('ssd'), HDD_DATA_STORAGE_CAPACITY: s('hd'),
     DISPLAY_SIZE: s('tela') ? s('tela') + ' "' : '',
+    OS_NAME: s('so'),
     ITEM_CONDITION: 'Usado',
   };
 }
@@ -183,7 +184,7 @@ const PELO_NOME = [
   [/^(capacidade (da |de )?)?memoria ram$/, 'RAM_MEMORY'], [/^tipo de memoria ram$/, 'RAM_MEMORY_TYPE'],
   [/^capacidade (de armazenamento )?(do |de )?ssd$/, 'SSD_DATA_STORAGE_CAPACITY'],
   [/^capacidade (de armazenamento )?(do |de )?(hd|disco rigido)$/, 'HDD_DATA_STORAGE_CAPACITY'],
-  [/^tamanho da tela$/, 'DISPLAY_SIZE'], [/^condicao do item$/, 'ITEM_CONDITION'],
+  [/^tamanho da tela$/, 'DISPLAY_SIZE'], [/^condicao do item$/, 'ITEM_CONDITION'], [/^(nome do )?sistema operacional$/, 'OS_NAME'],
 ];
 const PACOTE = { SELLER_PACKAGE_HEIGHT: ['alt', 'cm'], SELLER_PACKAGE_WIDTH: ['larg', 'cm'], SELLER_PACKAGE_LENGTH: ['comp', 'cm'], SELLER_PACKAGE_WEIGHT: ['peso', 'g'] };
 const obrigatorio = a => !!(a.tags && a.tags.required);
@@ -191,7 +192,7 @@ const somenteLeitura = a => !!(a.tags && (a.tags.read_only || a.tags.fixed || a.
 function infoAtributo(a) {
   return { id: a.id, nome: a.name || a.id, tipo: a.value_type || 'string',
     unidades: (a.allowed_units || []).map(u => u.name || u.id).filter(Boolean).slice(0, 8),
-    valores: (Array.isArray(a.values) ? a.values : []).slice(0, 120).map(v => ({ id: String(v.id), nome: v.name })),
+    valores: (Array.isArray(a.values) ? a.values : []).slice(0, 500).map(v => ({ id: String(v.id), nome: v.name })),
     dica: String(a.hint || a.tooltip || '').slice(0, 200) };
 }
 // Um valor no formato que o atributo pede (lista, número com unidade, sim/não, texto).
@@ -220,7 +221,9 @@ function formatar(a, valor) {
   }
   if (tipo === 'number') { const m = valor.match(/\d+(?:[.,]\d+)?/); return m ? { id: a.id, value_name: m[0].replace(',', '.') } : null; }
   if (tipo === 'list' && valores.length) {
-    const v = valores.find(x => norm(x.name) === norm(valor));
+    // igual; senão o código no fim da opção ("10110U" é a opção "i3-10110U")
+    const so = x => norm(x).replace(/[^a-z0-9]/g, ''), alvo = so(valor);
+    const v = valores.find(x => norm(x.name) === norm(valor)) || (alvo.length >= 4 ? valores.find(x => so(x.name).endsWith(alvo)) : null);
     if (v) return { id: a.id, value_id: String(v.id), value_name: v.name };
   }
   return { id: a.id, value_name: valor.slice(0, 255) };
@@ -489,4 +492,4 @@ module.exports = async (req, res) => {
     return json(res, e.status || 500, { erro: e.message || 'Erro inesperado.' });
   }
 };
-module.exports._teste = { cifrar, decifrar, novoEstado, estadoValido, verificador, desafio, montarAtributos, formatar, idsDosErros, limparTitulo, daFicha, VOLTA };
+module.exports._teste = { cifrar, decifrar, novoEstado, estadoValido, verificador, desafio, montarAtributos, formatar, idsDosErros, limparTitulo, daFicha, infoAtributo, VOLTA };
