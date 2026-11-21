@@ -17,9 +17,12 @@ const codigo =
   trecho('const BC={', '// Texto onde toda busca de produto procura.') +
   extrair('function cliNorm(s)') +
   'function esc(s){return(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}' +
+  trecho('const BAT_OPC=[', 'function hwCampos(pre){') +
+  extrair('function slotsLivres(total,ocup)') +
   'let prods=[]; const anFichaRapida=p=>fichaDe(p);' +
   trecho('// ── FICHA PARA O MERCADO LIVRE ──', 'function mlTitulo(p){') +
-  'return {mlFicha, mlTelaDoModelo, mlCpuCodigo, mlSO, mlRespostasIguais, mlCpuProvaveis, mlCasar, mlSugestao, poe:l=>{prods=l;}};';
+  'return {mlFicha, mlTelaDoModelo, mlCpuCodigo, mlSO, mlRespostasIguais, mlCpuProvaveis, mlCasar, mlSugestao, mlCpusDaLoja, mlCpusComuns,' +
+  ' mlRespostasDaLoja, mlPadrao, mlHwLinhas, mlChave, poe:l=>{prods=l;}};';
 const window={}, document={getElementById:()=>null};
 const M=new Function('window','document',codigo)(window,document);
 
@@ -74,6 +77,66 @@ const sTela=M.mlSugestao(p477,{id:'DISPLAY_SIZE',nome:'Tamanho da tela'}), sSO=M
 ok(sTela.v==='14 "' && sTela.de==='cadastro' && sSO.v==='Windows' && sSO.de==='cadastro', 'tela e sistema: do cadastro (o sistema achado pelo nome do campo)');
 p477.ml_atributos={PROCESSOR_MODEL:'1005G1'};
 ok(M.mlSugestao(p477,{id:'PROCESSOR_MODEL',nome:'Modelo do processador'}).de==='sua', 'a resposta desta máquina manda sobre a da igual');
+
+console.log('\no que a descrição e as abas da máquina dizem');
+const d1=M.mlFicha({id:'h1',nome:'Dell Latitude 5490 i5-8350U 16GB SSD 256GB',descricao:'Tela Full HD, cor preta, bateria dura 5h. Suporta até 32GB de RAM. GeForce MX130 2GB.'});
+ok(d1.gpu==='GeForce MX130' && d1.resolucao==='1920 x 1080' && d1.bateria_h==='5' && d1.ram_max==='32' && d1.cor==='Preto' && !d1.touch,
+  'vídeo, resolução, bateria (horas), RAM máxima e cor saem da descrição: '+JSON.stringify({gpu:d1.gpu,res:d1.resolucao,bat:d1.bateria_h,max:d1.ram_max,cor:d1.cor}));
+ok(M.mlFicha({id:'h2',nome:'HP 840 G6',descricao:'Tela com mancha preta no canto, não é touch.'}).cor==='' && !M.mlFicha({id:'h2',nome:'HP 840 G6',descricao:'não é touch'}).touch &&
+  M.mlFicha({id:'h3',nome:'Dell 7400 2 em 1',descricao:'Tela touch'}).touch, '"mancha preta" não vira a cor; "não é touch" não vira touch');
+const hw={slots_ram:2,slots_ram_ocup:1,slots_m2:1,slots_m2_ocup:0,tela_estado:'riscos',bateria_estado:'boa'};
+ok(JSON.stringify(M.mlHwLinhas(hw))==='["Slots de memória RAM: 2 (1 livre)","Slots M.2: 1","Estado da tela: Riscos leves","Bateria: Boa"]' &&
+  JSON.stringify(M.mlHwLinhas({bateria_pct:85}))==='["Bateria: 85%"]', 'slots, tela e bateria das abas vão para a descrição com o nome de cada coisa: '+JSON.stringify(M.mlHwLinhas(hw)));
+const pad=(nome,p,f)=>M.mlPadrao({id:'X',nome},f||M.mlFicha(p),p);
+const nb={id:'n1',nome:'Dell Latitude 5490 i5 8ª 8GB SSD 256GB',descricao:'',bateria_estado:'segura',tela_estado:'perfeita',slots_ram:2};
+ok(JSON.stringify(pad('Com Wi-Fi',nb))==='{"v":"Sim","de":"padrao"}' && pad('Com Wi-Fi',{id:'n2',nome:'Dell OptiPlex 3080 i5 10ª'})===null &&
+  pad('Com tela touch',nb).v==='Não' && pad('É gamer',nb).v==='Não' && pad('É gamer',{id:'n3',nome:'Acer Nitro 5 i5 RTX 3050'}).v==='Sim',
+  'Wi-Fi sim (no de mesa, não chuta), touch e gamer não (gamer sim com RTX no nome)');
+ok(pad('Saúde da bateria',nb).v==='Segurando carga' && pad('Estado da tela',nb).v==='Perfeita' && pad('Quantidade de slots de memória RAM',nb).v==='2' &&
+  pad('Memória RAM máxima suportada',{id:'n4',nome:'x',descricao:'Suporta até 32GB'}).v==='32 GB', 'bateria, tela e slots vêm das abas da máquina; RAM máxima da descrição');
+ok(pad('Modelo da placa de vídeo',nb).v==='Intel UHD Graphics' && pad('Modelo da placa de vídeo',{id:'n5',nome:'Dell Latitude 5420 i5 11ª'}).v==='Intel Iris Xe Graphics' &&
+  pad('Modelo da placa de vídeo',{id:'n6',nome:'Lenovo E14 Ryzen 5 5500U'}).v==='AMD Radeon Graphics' && pad('Modelo da placa de vídeo',{id:'h1',nome:'x',descricao:'GeForce MX130'},d1).v==='GeForce MX130' &&
+  pad('Marca da placa de vídeo',{id:'h1',nome:'x'},d1).v==='NVIDIA' && pad('Resolução da tela',{id:'h1',nome:'x'},d1).v==='1920 x 1080',
+  'vídeo pela descrição ou o integrado da geração; marca do vídeo; resolução');
+ok(M.mlCasar(['1366 px x 768 px','1920 px x 1080 px'],'1920 x 1080')==='1920 px x 1080 px', 'resolução casa com a opção do Mercado Livre pelos números');
+
+console.log('\no que a loja já teve (anunciadas, vendidas, em estoque)');
+ok(JSON.stringify(M.mlCpusComuns({cpu_linha:'Core i5',cpu_ger:'8'},false))==='["8250U","8350U","8265U","8365U"]' &&
+  JSON.stringify(M.mlCpusComuns({cpu_linha:'Core i5',cpu_ger:'8'},true))==='["8500T","8400T","8500"]' &&
+  M.mlCpusComuns({cpu_linha:'Ryzen 5',cpu_ger:'5'},false).includes('5500U') && M.mlCpusComuns({cpu_linha:'Celeron',cpu_ger:''},false).includes('N4020') &&
+  M.mlCpusComuns({cpu_linha:'Core i5',cpu_ger:''},false).length===0, 'os processadores comuns da linha e geração (de mesa: os T); sem geração, nenhum');
+const l13={id:'g1',nome:'Dell Latitude 7490 · i5 8ª · SSD 256GB · 16GB RAM',status:'Anunciado'};
+const loja=[l13,
+  {id:'g2',nome:'Dell Latitude 7490 i5-8350U 8ª 8GB SSD 256GB',status:'Vendido'},
+  {id:'g3',nome:'Dell Latitude 7490 i5-8250U 8GB',status:'Vendido'},
+  {id:'g4',nome:'Dell Latitude 7490 i5-8350U 16GB',status:'Estoque'},
+  {id:'g5',nome:'HP EliteBook 840 G5 i5-8365U 8GB',status:'Vendido'},
+  {id:'g6',nome:'Dell Latitude 7490 i7-8650U 16GB',status:'Vendido'},
+  {id:'g7',nome:'Dell Latitude 7480 i5 7ª',status:'Vendido',ml_atributos:{PROCESSOR_MODEL:'7300U'}}];
+M.poe(loja);
+const c13=M.mlCpusDaLoja(l13,M.mlFicha(l13));
+ok(c13.sugestao==='8350U' && JSON.stringify(c13.todos)==='["8350U","8250U","8365U"]',
+  'processador: o mais comum nas outras Latitude 7490 de i5 8ª; depois as outras de i5 8ª (o i7 e o de 7ª ficam de fora): '+JSON.stringify(c13));
+const s13=M.mlSugestao(l13,{id:'PROCESSOR_MODEL',nome:'Modelo do processador'});
+ok(s13.v==='8350U' && s13.de==='modelo', 'e vem preenchido, marcado "como nas outras do mesmo modelo"');
+const semModelo={id:'g8',nome:'Dell · i5 8ª · SSD 256GB · 8GB RAM'};
+ok(M.mlSugestao(semModelo,{id:'PROCESSOR_MODEL',nome:'Modelo do processador'}).v==='' && M.mlCpusDaLoja(semModelo,M.mlFicha(semModelo)).todos[0]==='8350U',
+  'sem o modelo, não escolhe sozinho (só põe os da loja primeiro na lista)');
+loja.push({id:'c1',nome:'Dell Latitude 7490 i5 8GB',ml_atributos:{COLOR:'Prata'}},{id:'c2',nome:'Dell Vostro 3400 i5',ml_atributos:{COLOR:'Preto'}},
+  {id:'c3',nome:'Dell Inspiron 15 i3',ml_atributos:{COLOR:'Preto'}},{id:'c4',nome:'HP 250 G7',ml_atributos:{COLOR:'Cinza',MODEL:'250 G7'}},
+  {id:'c5',nome:'Lenovo E14',ml_atributos:{COLOR:'Cinza'}},{id:'c6',nome:'Acer A515',ml_atributos:{COLOR:'Cinza'}});
+const r13=M.mlRespostasDaLoja('COLOR',M.mlFicha(l13)), cor13=M.mlSugestao(l13,{id:'COLOR',nome:'Cor'});
+ok(r13.sugestao==='Prata' && JSON.stringify(r13.todos)==='["Prata","Preto","Cinza"]' && cor13.v==='Prata' && cor13.de==='loja',
+  'outros campos: a resposta das do mesmo modelo, depois da mesma marca, depois de qualquer uma: '+JSON.stringify(r13));
+ok(M.mlSugestao(l13,{id:'MODEL',nome:'Modelo'}).de==='cadastro' && M.mlSugestao(semModelo,{id:'MODEL',nome:'Modelo'}).v==='' && M.mlSugestao(semModelo,{id:'X9',nome:'Número de série'}).v==='',
+  'modelo e número de série nunca vêm de outra máquina');
+const tw1={id:'t1',nome:'Dell · i3 10ª · 8GB RAM',descricao:'Dell Latitude 3420 revisado'}, tw2={id:'t2',nome:'Dell · i3 10ª · 8GB RAM',descricao:''};
+M.poe([tw1,tw2]);
+const twM=M.mlSugestao(tw2,{id:'MODEL',nome:'Modelo'}), twT=M.mlSugestao(tw2,{id:'DISPLAY_SIZE',nome:'Tamanho da tela'});
+ok(twM.v==='Latitude 3420' && twM.de==='igual' && twT.v==='14 "' && twT.de==='igual', 'a unidade igual sem descrição: modelo (inteiro) e tela vêm da ficha da outra, para confirmar');
+const gb1={id:'s1',nome:'Samsung Galaxy Book i5 11ª 8GB SSD 256GB'};
+M.poe([gb1,{id:'s2',nome:'Samsung Galaxy Book i5 11ª 8GB SSD 256GB 15.6"'}]);
+ok(M.mlFicha(gb1).tela==='15.6', 'modelo sem regra de tela: a tela das outras do mesmo modelo');
 
 console.log('\n'+(falhas?falhas+' FALHA(S)':'tudo verde'));
 process.exit(falhas?1:0);

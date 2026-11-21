@@ -74,11 +74,21 @@ Livre (o anúncio). Usa a API oficial (`api/ml.js`):
   exemplo), o cartão da máquina pergunta, e a resposta fica guardada na máquina.
 - **Preenche sozinho o que der**: o que faltar na ficha do cadastro sai da descrição
   (modelo, processador, tela e o sistema operacional: "com Windows 11"); a tela sai também
-  do número do modelo (Latitude 3420 e ThinkPad T480 são 14", EliteBook 850 é 15,6"); o
-  código do processador (i3-10110U) vale escrito no nome ou na descrição. Resposta dada a
-  uma máquina vale para as iguais (mesmo nome). Quando ainda assim pergunta, o quadro vem
-  preenchido ("do cadastro · confira"), a lista de processadores começa pelos da mesma
-  geração (e diz onde ver o código no Windows) e digitar o modelo preenche a tela.
+  do número do modelo (Latitude 3420 e ThinkPad T480 são 14", EliteBook 850 é 15,6") ou
+  das outras máquinas do mesmo modelo; o código do processador (i3-10110U) vale escrito no
+  nome ou na descrição. Resposta dada a uma máquina vale para as iguais (mesmo nome).
+- **O que ainda perguntar vem preenchido: é só confirmar**. Cada campo vem com a resposta
+  e de onde ela saiu, para conferir: a ficha ou a descrição ("do cadastro"); a unidade
+  igual; as outras do mesmo modelo que a loja já teve, anunciadas, vendidas ou em estoque
+  (o processador da Latitude 7490 vendida vale para a próxima Latitude 7490); o que quase
+  todo notebook tem (Wi-Fi, Bluetooth e webcam sim; touch e gamer não, a não ser que o
+  nome ou a descrição digam; o vídeo integrado da geração); e a resposta que a loja mais
+  deu (a cor, por exemplo). Estado da tela, bateria e slots saem das abas da máquina (e
+  vão para a descrição como "Bateria: Boa", "Estado da tela: Perfeita"). Com tudo
+  preenchido, o botão é **✓ Confirmar e publicar**. Para trocar, cada campo é uma lista
+  com **Outro (digitar)**; a do processador traz os da mesma linha e geração (os que a
+  loja já teve e os mais comuns) e diz onde ver o código no Windows. Modelo, processador
+  e tela nunca vêm de máquina de outro modelo, e digitar o modelo preenche a tela.
 - **Acompanhar**: preço mudou aqui, muda lá; vendeu aqui, o anúncio encerra; reservada,
   chegando ou fora do catálogo, pausa (e volta quando ela volta). A cada 10 minutos com o
   sistema aberto (e ao abrir), confere a situação dos anúncios e os pedidos dos últimos

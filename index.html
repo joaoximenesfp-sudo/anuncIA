@@ -692,6 +692,8 @@ input[type=number].inp{padding-left:32px}
 .ancat-mlf small{font-weight:500;font-size:.66rem;line-height:1.35}
 .ancat-mlf .mlf-auto{color:#047857}
 .ancat-mlf .mlf-dica{color:#92400e}
+.ancat-mlf .mlf-resumo{color:var(--mu)}
+.ancat-mlf button.pronto{border-color:#10b981;background:#d1fae5;color:#065f46}
 /* A busca gruda embaixo do menu: com a lista comprida, dá pra procurar de
    qualquer ponto sem subir a página. */
 #anCatCard{overflow:visible}
@@ -12760,12 +12762,121 @@ function mlFicha(p){
   const disco=String(f.armaz||''), ehHd=/^hd\b/i.test(disco);
   let tela=(String(f.tela||'').match(/\d+(?:[.,]\d+)?/)||[''])[0].replace(',','.');
   if(!tela) tela=mlTelaDoModelo([f.marca,f.modelo,nome].join(' '))||mlTelaDoModelo(desc);
+  // sem tela ainda: a das máquinas do mesmo modelo que a loja já teve (mesmo modelo, mesma tela)
+  if(!tela&&f.modelo) tela=mlMaisComum(prods.filter(q=>q&&q.id!==p.id&&cliNorm(fichaDe(q).modelo)===cliNorm(f.modelo))
+    .map(q=>(String(fichaDe(q).tela||'').match(/\d+(?:[.,]\d+)?/)||[''])[0].replace(',','.')));
+  const txt=cliNorm(nome+' · '+desc); let x;
+  const gpu=(x=txt.match(/\b(rtx|gtx)\s?(\d{3,4}(?:\s?ti)?)\b/))?'GeForce '+x[1].toUpperCase()+' '+x[2].toUpperCase()
+    :(x=txt.match(/\bmx\s?(\d{3})\b/))?'GeForce MX'+x[1]:(x=txt.match(/\bradeon\s?(rx\s?\d{3,4}|vega\s?\d{1,2})\b/))?'Radeon '+x[1].toUpperCase()
+    :/\biris\s?xe\b/.test(txt)?'Intel Iris Xe Graphics':(x=txt.match(/\buhd\s?(?:graphics\s?)?(\d{3})\b/))?'Intel UHD Graphics '+x[1]:'';
+  const resolucao=/\b(full\s?hd|fhd|1920\s?x\s?1080|1080p)\b/.test(txt)?'1920 x 1080':/\b(qhd|2560\s?x\s?1440)\b/.test(txt)?'2560 x 1440'
+    :/\b1366\s?x\s?768\b|\btela\s?hd\b/.test(txt)?'1366 x 768':'';
+  const bateria_h=((txt.match(/\bbateria[^.\n]{0,40}?\b(\d{1,2}(?:[.,]\d)?)\s?h(?:oras?)?\b/)||[])[1]||'').replace(',','.');
+  const ram_max=(txt.match(/\b(?:suporta|aceita|expansivel|expande)\b[^.\n]{0,25}?\b(\d{1,3})\s?gb\b/)||[])[1]||'';
+  // a cor só quando a descrição diz que é a cor ("cor preta"; "tela preta" não é)
+  const cor=(x=txt.match(/\bcor\b[^.\n]{0,12}?\b(preto|preta|prata|cinza|grafite|branco|branca|azul|dourado|rosa|vermelho|vermelha)\b/))
+    ?({preta:'Preto',branca:'Branco',vermelha:'Vermelho'}[x[1]]||x[1][0].toUpperCase()+x[1].slice(1)):'';
   return { marca:f.marca||'', linha:fam, modelo:f.modelo||'', numero,
     cpu_marca:/^(i[3579]|celeron|pentium)/i.test(cpu)?'Intel':/^ryzen/i.test(cpu)?'AMD':'',
     cpu_linha:/^i[3579]$/i.test(cpu)?'Core '+cpu.toLowerCase():cpu, cpu_modelo:mlCpuCodigo(nome)||mlCpuCodigo(desc),
     cpu_ger:/^ryzen/i.test(cpu)?gerN.slice(0,1):gerN,
     ram:qtd(f.ram), ram_tipo:f.ram_tipo||'', ssd:ehHd?'':qtd(disco), hd:ehHd?qtd(disco):'',
-    tela, so:mlSO(nome+' '+desc) };
+    tela, so:mlSO(nome+' '+desc), gpu, resolucao, bateria_h, ram_max, cor,
+    touch:/\btouch\b|sensivel ao toque/.test(txt)&&!/\b(nao|sem)\s(e\s)?touch\b/.test(txt) };
+}
+// Nos de mesa (OptiPlex, ThinkCentre, EliteDesk...) mudam o título e os processadores.
+const ML_RE_MESA=/\b(optiplex|think\s?centre|elite\s?desk|pro\s?desk|idea\s?centre|desktop|all[\s-]?in[\s-]?one)\b/i;
+// Valores do mais para o menos repetido.
+const mlPorFreq=l=>{ const c={}; for(const v of l) if(v) c[v]=(c[v]||0)+1; return Object.keys(c).sort((a,b)=>c[b]-c[a]); };
+const mlMaisComum=l=>mlPorFreq(l)[0]||'';
+const mlCodigoDe=q=>mlCpuCodigo(q.nome)||mlCpuCodigo(q.descricao)||String(((q.ml_atributos||{}).PROCESSOR_MODEL)||'');
+// Mesmo processador (linha e geração) que a máquina: das fichas das outras máquinas da loja.
+const mlMesmaCpu=(f,g)=>{ const l=/^i[3579]$/i.test(g.cpu||'')?'Core '+String(g.cpu).toLowerCase():String(g.cpu||''), ger=(String(g.ger||'').match(/\d+/)||[''])[0];
+  return !!l&&l===f.cpu_linha&&!!ger&&(/ryzen/i.test(l)?ger.slice(0,1):ger)===f.cpu_ger; };
+// Códigos de processador que a loja já teve com a mesma linha e geração (anunciadas, vendidas,
+// em estoque): primeiro os do mesmo modelo de máquina. O primeiro é a sugestão.
+function mlCpusDaLoja(p,f){
+  const mod=cliNorm(f.modelo), mesmoModelo=[], mesmaGer=[];
+  for(const q of prods){
+    if(!q||q.id===p.id) continue;
+    const g=fichaDe(q); if(!mlMesmaCpu(f,g)) continue;
+    const c=mlCodigoDe(q); if(!c) continue;
+    (mod&&cliNorm(g.modelo)===mod?mesmoModelo:mesmaGer).push(c);
+  }
+  const ordem=[mlMaisComum(mesmoModelo),...mlPorFreq(mesmoModelo),...mlPorFreq(mesmaGer)].filter(Boolean);
+  return {sugestao:mlMaisComum(mesmoModelo), todos:[...new Set(ordem)]};
+}
+// Os processadores mais comuns em notebook usado, por linha e geração (série, no Ryzen),
+// para escolher quando o código exato não está escrito em lugar nenhum. Nos de mesa, os
+// "T" (dos mini) e os de 65 W.
+const ML_CPUS={
+  'i3 4':'4005U 4010U 4030U','i3 5':'5005U 5010U','i3 6':'6006U 6100U','i3 7':'7020U 7100U','i3 8':'8130U 8145U','i3 10':'10110U 1005G1',
+  'i3 11':'1115G4 1125G4','i3 12':'1215U 1220P',
+  'i5 3':'3210M 3230M 3320M 3340M 3360M','i5 4':'4200U 4210U 4300U 4310U 4300M','i5 5':'5200U 5300U','i5 6':'6200U 6300U','i5 7':'7200U 7300U',
+  'i5 8':'8250U 8350U 8265U 8365U','i5 9':'9300H 9400H','i5 10':'10210U 10310U 1035G1 10300H','i5 11':'1135G7 1145G7 11400H',
+  'i5 12':'1235U 1245U 1240P','i5 13':'1335U 1345U',
+  'i7 3':'3520M 3540M 3632QM','i7 4':'4500U 4510U 4600U 4800MQ','i7 5':'5500U 5600U','i7 6':'6500U 6600U 6820HQ','i7 7':'7500U 7600U 7700HQ',
+  'i7 8':'8550U 8650U 8565U 8665U 8750H','i7 9':'9750H 9850H','i7 10':'10510U 10610U 1065G7 10750H','i7 11':'1165G7 1185G7 11800H',
+  'i7 12':'1255U 1265U 1260P','i7 13':'1355U 1365U',
+  'ryzen 3 2':'2200U 2300U','ryzen 3 3':'3200U 3250U','ryzen 3 4':'4300U','ryzen 3 5':'5300U 5425U','ryzen 3 7':'7320U 7330U',
+  'ryzen 5 2':'2500U','ryzen 5 3':'3500U','ryzen 5 4':'4500U 4600H 4650U','ryzen 5 5':'5500U 5600H 5625U 5650U','ryzen 5 7':'7520U 7530U',
+  'ryzen 7 2':'2700U','ryzen 7 3':'3700U','ryzen 7 4':'4700U 4750U 4800H','ryzen 7 5':'5700U 5800H 5825U 5850U','ryzen 7 7':'7730U',
+  celeron:'N4020 N4000 N4500 N5100 N3060 3865U 4205U',pentium:'4415U 5405U N5000 N5030 7505'};
+const ML_CPUS_MESA={'i3 6':'6100T 6100','i3 7':'7100T 7100','i3 8':'8100T 8100','i3 9':'9100T 9100','i3 10':'10100T 10100',
+  'i5 4':'4570T 4590T 4590','i5 6':'6500T 6500','i5 7':'7500T 7500','i5 8':'8500T 8400T 8500','i5 9':'9500T 9500','i5 10':'10500T 10500',
+  'i7 4':'4785T 4790','i7 6':'6700T 6700','i7 7':'7700T 7700','i7 8':'8700T 8700','i7 9':'9700T 9700','i7 10':'10700T 10700'};
+function mlCpusComuns(f,mesa){
+  const k=(cliNorm(f.cpu_linha).replace(/^core\s/,'')+' '+(f.cpu_ger||'')).trim();
+  return String((mesa?ML_CPUS_MESA[k]:ML_CPUS[k])||'').split(' ').filter(Boolean);
+}
+// A resposta que a loja mais deu para o campo: primeiro nas do mesmo modelo, depois nas
+// da mesma marca, depois em qualquer uma.
+function mlRespostasDaLoja(id,f){
+  const mod=cliNorm(f.modelo), marca=cliNorm(f.marca), t=[[],[],[]];
+  for(const q of prods){
+    const v=q&&q.ml_atributos&&q.ml_atributos[id]; if(!v) continue;
+    const g=fichaDe(q);
+    t[mod&&cliNorm(g.modelo)===mod?0:marca&&cliNorm(g.marca)===marca?1:2].push(String(v));
+  }
+  return {sugestao:mlMaisComum(t[0])||mlMaisComum(t[1])||mlMaisComum(t[2]), todos:[...new Set(t.flatMap(mlPorFreq))]};
+}
+// O vídeo que vem junto com o processador (integrado), quando a descrição não diz.
+function mlVideoIntegrado(f){
+  const g=parseInt(f.cpu_ger)||0, l=f.cpu_linha||'';
+  if(/ryzen/i.test(l)) return {v:'AMD Radeon Graphics',de:'padrao'};
+  if(/core i[3579]/i.test(l)&&g) return {v:g<=7?'Intel HD Graphics':g>=11&&!/i3/i.test(l)?'Intel Iris Xe Graphics':'Intel UHD Graphics',de:'padrao'};
+  return null;
+}
+// O que dá para responder pelo nome do campo, com o que o cadastro e as abas da máquina
+// têm (descrição, estado da tela, bateria, slots). "padrao" é o que quase todo notebook
+// tem: vem marcado "confira".
+function mlPadrao(a,f,p){
+  const n=cliNorm(a.nome), txt=cliNorm((p.nome||'')+' · '+(p.descricao||'')), mesa=ML_RE_MESA.test(String(p.nome||''));
+  const sn=(v,de)=>({v:v?'Sim':'Não',de:de||'padrao'});
+  if(/bateria/.test(n)){
+    if(/(saude|condicao|estado|capacidade atual)/.test(n)){ const b=batRotulo(p); return b?{v:b,de:'cadastro'}:null; }
+    return /(dura|autonomia|hora)/.test(n)&&f.bateria_h?{v:f.bateria_h+' h',de:'cadastro'}:null;
+  }
+  if(/tela/.test(n)&&/(estado|condicao)/.test(n)) return p.tela_estado?{v:(TELA_OPC.find(o=>o[0]===p.tela_estado)||[])[1]||p.tela_estado,de:'cadastro'}:null;
+  if(/(ram|memoria)/.test(n)&&/(slot|ranhura|entrada)/.test(n)) return p.slots_ram?{v:String(p.slots_ram),de:'cadastro'}:null;
+  if(/(ram|memoria)/.test(n)&&/(maxima|suportada|expansivel)/.test(n)) return f.ram_max?{v:f.ram_max+' GB',de:'cadastro'}:null;
+  if(/m\.?2/.test(n)&&/(slot|entrada)/.test(n)) return p.slots_m2?{v:String(p.slots_m2),de:'cadastro'}:null;
+  if(/touch|sensivel ao toque/.test(n)) return sn(f.touch,f.touch?'cadastro':'padrao');
+  if(/wi-?fi|bluetooth|webcam|camera/.test(n)) return mesa?null:{v:'Sim',de:'padrao'};
+  if(/gamer/.test(n)){ const g=/\bgamer\b|\bgaming\b|\bgtx\b|\brtx\b|geforce/.test(txt); return sn(g,g?'cadastro':'padrao'); }
+  if(/(impressao|leitor de) digital|biometri/.test(n)) return /digital|biometri|fingerprint/.test(txt)?{v:'Sim',de:'cadastro'}:null;
+  if(/retroilumin/.test(n)) return /retroilumin|backlight|teclado iluminado/.test(txt)?{v:'Sim',de:'cadastro'}:null;
+  if(/^cor\b|cor principal|cor do/.test(n)) return f.cor?{v:f.cor,de:'cadastro'}:null;
+  if(/resolucao/.test(n)) return f.resolucao?{v:f.resolucao,de:'cadastro'}:null;
+  if(/placa de video|processador grafico|\bgpu\b|grafic/.test(n)&&!/memoria/.test(n)){
+    const g=f.gpu?{v:f.gpu,de:'cadastro'}:mlVideoIntegrado(f); if(!g) return null;
+    const dedicada=/geforce|\brtx\b|\bgtx\b|radeon rx/i.test(g.v);
+    if(/marca/.test(n)) return {v:/geforce|nvidia/i.test(g.v)?'NVIDIA':/radeon|amd/i.test(g.v)?'AMD':'Intel',de:g.de};
+    if(/dedicad/.test(n)) return sn(dedicada,g.de);
+    if(/tipo/.test(n)) return {v:dedicada?'Dedicada':'Integrada',de:g.de};
+    return g;
+  }
+  return null;
 }
 // Respostas dadas ao Mercado Livre numa máquina igual (mesmo nome) valem para esta.
 function mlRespostasIguais(p){
@@ -12791,31 +12902,70 @@ function mlCpuProvaveis(f,vals){
     return /\d{4,5}/.test(s)&&mlCpuGer(s,ryzen)===ger;
   });
 }
-// A opção da lista que é o valor (igual, ou "10110U" para a opção "i3-10110U").
+// A opção da lista que é o valor (igual; "10110U" para a opção "i3-10110U"; os mesmos
+// números: "1920 x 1080" para "1920 px x 1080 px").
 function mlCasar(vals,sug){
   const a=cliNorm(sug); if(!a) return '';
-  const so=x=>cliNorm(x).replace(/[^a-z0-9]/g,'');
-  return vals.find(v=>cliNorm(v)===a)||(so(sug).length>=4?vals.find(v=>so(v).endsWith(so(sug))):'')||'';
+  const so=x=>cliNorm(x).replace(/[^a-z0-9]/g,''), num=x=>String(x).replace(/[^\d.]+/g,' ').trim();
+  return vals.find(v=>cliNorm(v)===a)||(so(sug).length>=4?vals.find(v=>so(v).endsWith(so(sug))):'')
+    ||(/\d\s\d/.test(num(sug))?vals.find(v=>num(v)===num(sug)):'')||'';
 }
-// O que pôr em cada campo que o Mercado Livre pediu: a resposta que já foi dada a esta
-// máquina; senão a de uma máquina igual; senão o que a ficha sabe.
+// O que pôr em cada campo que o Mercado Livre pediu, nesta ordem: a resposta que já foi
+// dada a esta máquina; a de uma máquina igual (mesmo nome); o que a ficha sabe; o que a
+// ficha da máquina igual sabe; o processador das outras do mesmo modelo; o que dá para
+// dizer pelo nome do campo (Wi-Fi, cor, vídeo...); e a resposta que a loja mais deu.
 const ML_DA_FICHA={MODEL:f=>f.numero&&f.linha?f.numero:f.modelo, ALPHANUMERIC_MODEL:f=>f.numero, LINE:f=>f.linha, BRAND:f=>f.marca,
   PROCESSOR_BRAND:f=>f.cpu_marca, PROCESSOR_LINE:f=>f.cpu_linha, PROCESSOR_MODEL:f=>f.cpu_modelo,
   RAM_MEMORY:f=>f.ram, RAM_MEMORY_TYPE:f=>f.ram_tipo, SSD_DATA_STORAGE_CAPACITY:f=>f.ssd, HDD_DATA_STORAGE_CAPACITY:f=>f.hd,
   DISPLAY_SIZE:f=>f.tela?f.tela+' "':'', OS_NAME:f=>f.so};
-const ML_PELO_NOME=[[/^modelo$/,'MODEL'],[/^linha$/,'LINE'],[/^marca$/,'BRAND'],[/^modelo do processador$/,'PROCESSOR_MODEL'],
-  [/^linha do processador$/,'PROCESSOR_LINE'],[/^tamanho da tela$/,'DISPLAY_SIZE'],[/sistema operacional/,'OS_NAME']];
+const ML_PELO_NOME=[[/^modelo$/,'MODEL'],[/^linha$/,'LINE'],[/^marca$/,'BRAND'],[/^modelo alfanumerico$/,'ALPHANUMERIC_MODEL'],
+  [/^marca do processador$/,'PROCESSOR_BRAND'],[/^linha do processador$/,'PROCESSOR_LINE'],[/^modelo do processador$/,'PROCESSOR_MODEL'],
+  [/^(capacidade (da |de )?)?memoria ram$/,'RAM_MEMORY'],[/^tipo de memoria ram$/,'RAM_MEMORY_TYPE'],
+  [/^capacidade (de armazenamento )?(do |de )?ssd$/,'SSD_DATA_STORAGE_CAPACITY'],[/^capacidade (de armazenamento )?(do |de )?(hd|disco rigido)$/,'HDD_DATA_STORAGE_CAPACITY'],
+  [/^tamanho da tela$/,'DISPLAY_SIZE'],[/sistema operacional/,'OS_NAME']];
+const mlChave=a=>ML_DA_FICHA[a.id]?a.id:((ML_PELO_NOME.find(([re])=>re.test(cliNorm(a.nome)))||[])[1]||'');
+// Campos que dizem como é esta máquina: a resposta dada a outra (de outro modelo) não serve.
+const ML_DA_MAQUINA=new Set(['MODEL','ALPHANUMERIC_MODEL','LINE','BRAND','PROCESSOR_MODEL','PROCESSOR_LINE','PROCESSOR_BRAND',
+  'RAM_MEMORY','RAM_MEMORY_TYPE','SSD_DATA_STORAGE_CAPACITY','HDD_DATA_STORAGE_CAPACITY','DISPLAY_SIZE']);
+// Para escolher na lista quando não se sabe (ou para trocar o que veio).
+const ML_COMUNS={DISPLAY_SIZE:['11.6 "','12.5 "','13.3 "','14 "','15.6 "','16 "','17.3 "'],RAM_MEMORY:['4 GB','8 GB','12 GB','16 GB','32 GB'],
+  RAM_MEMORY_TYPE:['DDR3','DDR3L','DDR4','DDR5','LPDDR4X'],SSD_DATA_STORAGE_CAPACITY:['120 GB','128 GB','240 GB','256 GB','480 GB','512 GB','1 TB'],
+  HDD_DATA_STORAGE_CAPACITY:['320 GB','500 GB','1 TB'],OS_NAME:['Windows','Linux','Chrome OS']};
+// As fichas das máquinas iguais (mesmo nome), com o que cada uma tem na descrição.
+function mlFichasIguais(p){
+  const k=cliNorm(p&&p.nome); if(!k) return [];
+  return prods.filter(q=>q&&q!==p&&(!p.id||q.id!==p.id)&&cliNorm(q.nome)===k).map(mlFicha);
+}
 function mlSugestao(p,a,f){
   const at=p.ml_atributos||{};
   if(at[a.id]) return {v:String(at[a.id]),de:'sua'};
   const ig=mlRespostasIguais(p); if(ig[a.id]) return {v:String(ig[a.id]),de:'igual'};
-  const id=ML_DA_FICHA[a.id]?a.id:((ML_PELO_NOME.find(([re])=>re.test(cliNorm(a.nome)))||[])[1]);
-  const v=id?ML_DA_FICHA[id](f||mlFicha(p)):'';
-  return {v:v||'',de:v?'cadastro':''};
+  f=f||mlFicha(p);
+  const n=cliNorm(a.nome), id=mlChave(a);
+  if(id){
+    const v=ML_DA_FICHA[id](f); if(v) return {v,de:'cadastro'};
+    // da igual, o modelo vai inteiro ("Latitude 3420") quando esta não tem a linha
+    const vi=mlFichasIguais(p).map(q=>id==='MODEL'&&!f.linha?q.modelo:ML_DA_FICHA[id](q)).find(Boolean); if(vi) return {v:vi,de:'igual'};
+    if(id==='PROCESSOR_MODEL'){ const c=mlCpusDaLoja(p,f).sugestao; if(c) return {v:c,de:'modelo'}; }
+  }
+  const d=mlPadrao(a,f,p); if(d&&d.v) return d;
+  if(ML_DA_MAQUINA.has(id)||/modelo|linha|gtin|codigo|serie/.test(n)) return {v:'',de:''};
+  const l=mlRespostasDaLoja(a.id,f).sugestao; return l?{v:l,de:'loja'}:{v:'',de:''};
+}
+// Slots, estado da tela e bateria, das abas da máquina, como o comprador lê na descrição
+// ("Bateria: Boa", não só "Boa"). Slot vazio fica como no catálogo: só a quantidade.
+function mlHwLinhas(p){
+  const L=[], livres=(t,o)=>{ const l=o?slotsLivres(t,o):null; return l>0?` (${l} livre${l!==1?'s':''})`:''; };
+  if(p.slots_ram) L.push(`Slots de memória RAM: ${p.slots_ram}${livres(p.slots_ram,p.slots_ram_ocup)}`);
+  if(p.slots_m2) L.push(`Slots M.2: ${p.slots_m2}${livres(p.slots_m2,p.slots_m2_ocup)}`);
+  if(p.baia_25) L.push('Baia para SSD ou HD de 2,5"');
+  if(p.tela_estado) L.push('Estado da tela: '+((TELA_OPC.find(o=>o[0]===p.tela_estado)||[])[1]||p.tela_estado));
+  const b=batRotulo(p); if(b) L.push('Bateria: '+b);
+  return L;
 }
 function mlTitulo(p){
   const n=String(p.nome||'').replace(/\s+/g,' ').trim();
-  const mesa=/\b(optiplex|think\s?centre|elite\s?desk|pro\s?desk|idea\s?centre|desktop|all[\s-]?in[\s-]?one)\b/i.test(n);
+  const mesa=ML_RE_MESA.test(n);
   const pre=/^(notebook|computador|pc\b|desktop|macbook|ultrabook|chromebook|laptop)/i.test(n)?'':(mesa?'Computador ':'Notebook ');
   return (pre+n).replace(/[”“]/g,'"');
 }
@@ -12835,7 +12985,7 @@ function mlDescricao(p,o){
   if(f.ram) L.push('- Memória RAM: '+f.ram+(f.ram_tipo?' '+f.ram_tipo:''));
   if(f.ssd) L.push('- Armazenamento: SSD '+f.ssd); else if(f.hd) L.push('- Armazenamento: HD '+f.hd);
   if(f.tela) L.push('- Tela: '+f.tela.replace('.',',')+' polegadas');
-  try{ (hwResumo(p,true)||[]).forEach(x=>{ const s=String(x).replace(/[^\p{L}\p{N}\s.,:;()\/+%"·-]/gu,'').replace(/\s+/g,' ').trim(); if(s) L.push('- '+s); }); }catch(e){}
+  try{ mlHwLinhas(p).forEach(s=>L.push('- '+s)); }catch(e){}
   const d=mlLimparTexto(p.descricao); if(d) L.push('',d);
   L.push('','Usado, revisado e testado'+(o.garantia?', com '+o.garantia+' dias de garantia':'')+'.');
   L.push('Envio para todo o Brasil pelo Mercado Envios'+(o.retirada?' ou retirada em mãos em Campinas (SP)':'')+'.');
@@ -12894,50 +13044,99 @@ function mlStatusHTML(p){
   if(p.ml_id) return `<div class="ancat-ml">🛒 anúncio encerrado no Mercado Livre${ver}</div>`;
   return mlConectado()?'<div class="ancat-ml">🛒 ainda não está no Mercado Livre</div>':'';
 }
-// O que a categoria pede e a ficha não sabe: ele responde aqui, uma vez por máquina.
+// O que a categoria pede e a ficha não sabe: vem preenchido com o que a loja já sabe (o
+// cadastro, a máquina igual, as outras do mesmo modelo, o que quase todo notebook tem).
+// Ele confere e confirma, escolhe outro na lista ou digita ("Outro"). A resposta fica na
+// máquina e vale para as iguais.
 function mlFaltamHTML(p){
-  const fl=mlFaltam[p.id], f=mlFicha(p);
-  const nota={igual:'como na máquina igual',cadastro:'do cadastro · confira'};
+  const fl=mlFaltam[p.id], f=mlFicha(p), mesa=ML_RE_MESA.test(String(p.nome||''));
+  const nota={sua:'respondido antes',igual:'como na máquina igual · confira',cadastro:'do cadastro · confira',
+    modelo:`como nas outras ${f.modelo||'iguais'} da loja · confira`,loja:'como nas outras máquinas da loja · confira',
+    padrao:`o comum em ${mesa?'computador':'notebook'} · confira`};
+  const rotGer=[f.cpu_linha,f.cpu_ger?(f.cpu_ger+(/ryzen/i.test(f.cpu_linha)?'000':'ª')):''].filter(Boolean).join(' · ');
+  const comGer=r=>r+(rotGer?' ('+rotGer+')':'');
+  const igual=x=>cliNorm(x).replace(/^i[3579]\s?-?\s?/,'').replace(/[^a-z0-9.]/g,'');
+  const vazios=[];
   const campo=a=>{
-    const sug=mlSugestao(p,a,f), vals=(a.valores||[]).map(v=>v.nome);
-    let ctrl, extra='';
-    if(vals.length){
-      const escolhido=mlCasar(vals,sug.v);
-      const ehCpu=a.id==='PROCESSOR_MODEL'||/modelo do processador/.test(cliNorm(a.nome));
+    const sug=mlSugestao(p,a,f), vals=(a.valores||[]).map(v=>v.nome).filter(Boolean), tipo=a.tipo||'string';
+    const chave=mlChave(a), ehCpu=chave==='PROCESSOR_MODEL', ehModelo=chave==='MODEL';
+    const at=` data-ml-at="${escAttr(a.id)}"${chave?` data-ml-chave="${chave}"`:''}${ehModelo?' data-modelo="1"':''}`;
+    const notaSug=sug.v&&nota[sug.de]?`<small class="mlf-auto">✓ ${nota[sug.de]}</small>`:'';
+    let sel='', ctrl='', extra='';
+    const opt=v=>`<option value="${escAttr(v)}"${v===sel?' selected':''}>${esc(v)}</option>`;
+    const grupo=(rot,l)=>l.length?`<optgroup label="${escAttr(rot)}">${l.map(opt).join('')}</optgroup>`:'';
+    const lista=corpo=>`<select class="inp"${at} onchange="mlEscolheu(this)"><option value="">escolha…</option>${corpo}</select>`;
+    if(tipo==='boolean'){
+      sel=/^(s|sim|y|yes|true|1)$/i.test(sug.v)?'Sim':/^(n|nao|não|no|false|0)$/i.test(sug.v)?'Não':'';
+      ctrl=lista(opt('Sim')+opt('Não')); if(sel) extra=notaSug;
+    } else if(tipo==='list'&&vals.length){
+      // lista fechada: só vale o que está nela
+      sel=mlCasar(vals,sug.v); if(sel) extra=notaSug;
       // processador sem código exato: os da mesma geração primeiro (o único, já escolhido)
-      const prov=ehCpu&&!escolhido?mlCpuProvaveis(f,vals):[];
-      const unico=prov.length===1?prov[0]:'', sel=escolhido||unico;
-      const opt=v=>`<option value="${escAttr(v)}"${v===sel?' selected':''}>${esc(v)}</option>`;
-      const rotGer=[f.cpu_linha,f.cpu_ger?(f.cpu_ger+(/ryzen/i.test(f.cpu_linha)?'000':'ª')):''].filter(Boolean).join(' · ');
-      ctrl=`<select class="inp" data-ml-at="${escAttr(a.id)}"><option value="">escolha…</option>${prov.length>1
-        ?`<optgroup label="Mais prováveis${rotGer?' ('+esc(rotGer)+')':''}">${prov.map(opt).join('')}</optgroup><optgroup label="Todos">${vals.filter(v=>!prov.includes(v)).map(opt).join('')}</optgroup>`
-        :vals.map(opt).join('')}</select>`;
-      if(escolhido&&nota[sug.de]) extra=`<small class="mlf-auto">✓ ${nota[sug.de]}</small>`;
-      else if(unico) extra=`<small class="mlf-auto">✓ o único ${esc(rotGer)} da lista · confira</small>`;
-      if(ehCpu&&!escolhido) extra+=`<small class="mlf-dica">O código exato está no Windows, em Configurações → Sistema → Sobre (ex.: i3-10110U). Escrito no nome ou na descrição da máquina, ele entra sozinho da próxima vez.</small>`;
+      const prov=ehCpu&&!sel?mlCpuProvaveis(f,vals):[];
+      if(prov.length===1){ sel=prov[0]; extra=`<small class="mlf-auto">✓ o único ${esc(rotGer)} da lista · confira</small>`; }
+      ctrl=lista(prov.length>1?grupo(comGer('Mais prováveis'),prov)+grupo('Todos',vals.filter(v=>!prov.includes(v))):vals.map(opt).join(''));
+      if(sug.v&&!sel) extra=`<small class="mlf-dica">O cadastro diz "${esc(sug.v)}": escolha a opção que corresponde.</small>`;
     } else {
-      const ehModelo=a.id==='MODEL'||/^modelo$/.test(cliNorm(a.nome));
-      ctrl=`<input class="inp" data-ml-at="${escAttr(a.id)}" value="${escAttr(sug.v)}"${a.unidades&&a.unidades.length?` placeholder="ex.: 15 ${escAttr(a.unidades[0])}"`:''}${ehModelo?` oninput="mlModeloDigitado(this)"`:''}>`;
-      if(sug.v&&nota[sug.de]) extra=`<small class="mlf-auto">✓ ${nota[sug.de]}</small>`;
+      // campo aberto: a sugestão já escolhida e, para trocar, o que a loja já teve e o
+      // comum; ou "Outro" para digitar
+      sel=mlCasar(vals,sug.v)||sug.v; if(sel) extra=notaSug;
+      const visto=new Set(sel?[igual(sel)]:[]), novos=l=>l.filter(v=>v&&!visto.has(igual(v))&&visto.add(igual(v)));
+      let corpo;
+      if(ehCpu){
+        const daLoja=novos(mlCpusDaLoja(p,f).todos), comuns=novos([...mlCpusComuns(f,mesa),...mlCpuProvaveis(f,vals)]);
+        // sem a geração, as sugestões do Mercado Livre como vieram (com ela, só as da geração)
+        corpo=grupo(comGer('Já teve na loja'),daLoja)+grupo(comGer('Comuns'),comuns)+grupo('Sugestões do Mercado Livre',f.cpu_ger?[]:novos(vals.slice(0,80)));
+      } else {
+        const daLoja=ML_DA_MAQUINA.has(chave)||/modelo|linha|gtin|codigo|serie/.test(cliNorm(a.nome))?[]:mlRespostasDaLoja(a.id,f).todos;
+        corpo=novos([...daLoja,...(ML_COMUNS[chave]||[]),...vals.slice(0,80)]).map(opt).join('');
+      }
+      if(corpo) ctrl=lista((sel?opt(sel):'')+corpo+'<option value="__outro">✏️ Outro (digitar)…</option>');
+      else ctrl=`<input class="inp"${at} value="${escAttr(sel)}"${a.unidades&&a.unidades.length?` placeholder="ex.: 15 ${escAttr(a.unidades[0])}"`:ehCpu?' placeholder="ex.: 8350U"':''} oninput="mlDigitou(this)">`;
     }
+    // processador que não veio desta máquina: onde conferir o código
+    if(ehCpu&&!['sua','cadastro'].includes(sug.de))
+      extra+=sel?`<small class="mlf-dica">Para conferir: Windows → Configurações → Sistema → Sobre.</small>`
+        :`<small class="mlf-dica">O código exato está no Windows, em Configurações → Sistema → Sobre (ex.: i3-10110U). Escrito no nome ou na descrição da máquina, ele entra sozinho da próxima vez.</small>`;
+    if(!sel) vazios.push(a.nome);
     return `<label>${esc(a.nome)}${ctrl}${extra}</label>`;
   };
-  return `<div class="ancat-mlf" data-marca="${escAttr(f.marca)}"><b>🛒 O Mercado Livre pede${fl.categoria&&fl.categoria.nome?' (categoria '+esc(fl.categoria.nome)+')':''}:</b>${fl.faltam.map(campo).join('')}
-    <button class="pub" onclick="mlCompletar('${p.id}',this)">🛒 Salvar e publicar no Mercado Livre</button></div>`;
+  const campos=fl.faltam.map(campo).join(''), pronto=!vazios.length;
+  const resumo=pronto?'Tudo já veio preenchido com o que a loja sabe: confira e confirme.'
+    :'Falta escolher: '+vazios.join(', ')+'.'+(vazios.length<fl.faltam.length?' O resto já veio preenchido.':'');
+  return `<div class="ancat-mlf" data-marca="${escAttr(f.marca)}"><b>🛒 O Mercado Livre pede${fl.categoria&&fl.categoria.nome?' (categoria '+esc(fl.categoria.nome)+')':''}:</b>${campos}
+    <small class="mlf-resumo">${esc(resumo)}</small>
+    <button class="pub${pronto?' pronto':''}" onclick="mlCompletar('${p.id}',this)">${pronto?'✓ Confirmar e publicar no Mercado Livre':'🛒 Salvar e publicar no Mercado Livre'}</button></div>`;
+}
+// Põe o valor no campo (na lista, entra como opção se não estiver lá).
+function mlPorValor(el,v){
+  if(el.tagName==='SELECT'&&v&&![...el.options].some(o=>o.value===v)) el.add(new Option(v,v),1);
+  el.value=v;
 }
 // Digitou o modelo ("Latitude 3420", "Dell 3420"): a tela, se estiver vazia, sai dele.
-window.mlModeloDigitado=inp=>{
-  const box=inp.closest('.ancat-mlf'); if(!box) return;
-  const tela=box.querySelector('[data-ml-at="DISPLAY_SIZE"]'); if(!tela||(tela.value&&tela.dataset.auto!=='1')) return;
-  const pol=mlTelaDoModelo((box.dataset.marca||'')+' '+inp.value);
-  tela.value=pol?pol+' "':''; tela.dataset.auto=pol?'1':'';
+window.mlModeloDigitado=el=>{
+  const box=el.closest('.ancat-mlf'); if(!box) return;
+  const tela=box.querySelector('[data-ml-chave="DISPLAY_SIZE"]'); if(!tela||(tela.value&&tela.dataset.auto!=='1')) return;
+  const pol=mlTelaDoModelo((box.dataset.marca||'')+' '+el.value);
+  mlPorValor(tela,pol?pol+' "':''); tela.dataset.auto=pol?'1':'';
+};
+// Mexeu no campo: o que ele pôs manda (a tela não muda mais sozinha).
+window.mlDigitou=el=>{ el.dataset.auto=''; if(el.dataset.modelo) mlModeloDigitado(el); };
+// Escolheu na lista; "Outro" troca a lista por um campo para digitar.
+window.mlEscolheu=el=>{
+  if(el.value!=='__outro') return mlDigitou(el);
+  const inp=document.createElement('input');
+  inp.className='inp'; inp.placeholder='digite aqui';
+  for(const k of ['mlAt','mlChave','modelo']) if(el.dataset[k]) inp.dataset[k]=el.dataset[k];
+  inp.addEventListener('input',()=>mlDigitou(inp));
+  el.replaceWith(inp); inp.focus();
 };
 window.mlCompletar=async (id,el)=>{
   const p=prods.find(x=>x.id===id); if(!p) return;
   const card=document.querySelector(`.ancat-it[data-id="${id}"]`), at={...(p.ml_atributos||{})};
   const quadro=(el&&el.closest('.ancat-mlf'))||(card&&card.querySelector('.ancat-mlf'));
   const noEditor=!!(quadro&&quadro.closest('#pubLadoMl'));
-  if(quadro) quadro.querySelectorAll('[data-ml-at]').forEach(c=>{ const v=c.value.trim(); if(v) at[c.dataset.mlAt]=v; else delete at[c.dataset.mlAt]; });
+  if(quadro) quadro.querySelectorAll('[data-ml-at]').forEach(c=>{ const v=c.value.trim(); if(v&&v!=='__outro') at[c.dataset.mlAt]=v; else delete at[c.dataset.mlAt]; });
   const falta=((mlFaltam[id]||{}).faltam||[]).filter(a=>!at[a.id]);
   if(falta.length){ alert('Falta preencher: '+falta.map(a=>a.nome).join(', ')+'.'); return; }
   try{ await updateDoc(doc(db,'products',id),{ml_atributos:at}); }catch(e){}
