@@ -274,6 +274,14 @@ const causasDe = j => (Array.isArray(j && j.cause) ? j.cause : j && j.cause && t
 const resumoItem = item => JSON.stringify({ cat: item.category_id, tipo: item.listing_type_id, titulo: item.title || item.family_name, preco: item.price,
   fotos: (item.pictures || []).length, frete: item.shipping, garantia: (item.sale_terms || []).map(t => t.id + '=' + t.value_name),
   atributos: (item.attributes || []).map(a => a.id + '=' + (a.value_name || a.value_id)) }).slice(0, 1500);
+// O que uma recusa (da validação ou da criação) diz: os erros; sem eles, as advertências
+// (são elas que dizem o motivo); sem nada, "vago".
+function lerRecusa(r) {
+  const causas = causasDe(r.j), erros = causas.filter(c => c.type !== 'warning');
+  if (erros.length) return { erros, avisos: causas.filter(c => c.type === 'warning').map(c => c.message).filter(Boolean), vago: false };
+  if (causas.length) return { erros: causas, avisos: [], vago: false };
+  return { erros: [{ code: r.j.error || 'erro', message: r.j.message || traduzir(r) }], avisos: [], vago: true };
+}
 async function validar(item, token) {
   const r = await ml('POST', '/items/validate', { token, corpo: item });
   if (r.ok) return { erros: [], avisos: [], vago: false };
@@ -281,14 +289,7 @@ async function validar(item, token) {
   if (r.status !== 400 && r.status !== 422) throw erro(502, traduzir(r));
   // a resposta inteira vai para o log: é por ela que se acha o motivo quando a mensagem é vaga
   console.log('ml validar', r.status, JSON.stringify(r.j).slice(0, 1500));
-  const causas = causasDe(r.j);
-  let erros = causas.filter(c => c.type !== 'warning');
-  const avisos = causas.filter(c => c.type === 'warning').map(c => c.message).filter(Boolean);
-  // recusou só com advertências: são elas que dizem o motivo
-  if (!erros.length && causas.length) return { erros: causas, avisos: [], vago: false };
-  // recusou sem dizer por quê
-  if (!erros.length) return { erros: [{ code: r.j.error || 'erro', message: r.j.message || traduzir(r) }], avisos: [], vago: true };
-  return { erros, avisos, vago: false };
+  return lerRecusa(r);
 }
 const txtErros = es => es.map(e => [e.code, e.message].filter(Boolean).join(': ')).join(' | ');
 // Erro por erro: o atributo que faltou (não foi no anúncio) e o que foi e o Mercado Livre
@@ -395,8 +396,25 @@ async function publicar(corpo) {
   if (it.sku) item.seller_custom_field = String(it.sku).slice(0, 60);
   const avisos = [];
   const motivo = es => es.map(e => e.message || e.code).filter(Boolean).join(' · ');
-  let v = await validar(item, s.token);
-  for (let volta = 0; v.erros.length && !v.vago && volta < 4; volta++) {
+  // cria: { r } quando saiu; senão a recusa lida, que segue o mesmo caminho da validação
+  const criar = async () => {
+    const r = await ml('POST', '/items', { token: s.token, corpo: item });
+    if (r.ok && r.j.id) return { r };
+    console.log('ml publicar: POST /items', r.status, JSON.stringify(r.j).slice(0, 1500), '|', resumoItem(item));
+    if (r.status !== 400 && r.status !== 422) throw erro(502, traduzir(r));
+    return { v: lerRecusa(r) };
+  };
+  let v = await validar(item, s.token), feito = null;
+  for (let volta = 0; volta < 5 && !feito; volta++) {
+    if (!v.erros.length || v.vago) {
+      // validou; ou a validação recusou sem dizer o motivo: cria (ou sai, ou a criação diz o que é)
+      if (v.vago) console.log('ml publicar: a validação não disse o motivo em', cat, '; tentando criar |', resumoItem(item));
+      else avisos.push(...v.avisos);
+      const c = await criar();
+      if (c.r) { feito = c.r; break; }
+      v = c.v;
+      if (v.vago) break;
+    }
     const txt = txtErros(v.erros);
     let mudou = false;
     // categorias de "produto de usuário" pedem family_name no lugar do título
@@ -420,22 +438,13 @@ async function publicar(corpo) {
     if (!mudou) break;
     v = await validar(item, s.token);
   }
-  if (v.erros.length && !v.vago) {
+  if (!feito && !v.erros.length) { const c = await criar(); if (c.r) feito = c.r; else v = c.v; }
+  if (!feito) {
     console.log('ml publicar: recusado em', cat, txtErros(v.erros).slice(0, 900), '|', resumoItem(item));
-    throw erro(422, 'O Mercado Livre recusou o anúncio: ' + motivo(v.erros));
+    throw erro(422, 'O Mercado Livre recusou o anúncio: ' + motivo(v.erros)
+      + (v.vago ? ' (o Mercado Livre não disse o motivo; confira a conta: endereço, Mercado Envios e limite de anúncios)' : ''));
   }
-  // a validação recusou sem dizer o motivo: tenta criar (ou cria, ou o Mercado Livre diz o que é)
-  if (v.vago) console.log('ml publicar: a validação não disse o motivo em', cat, '; tentando criar |', resumoItem(item));
-  else avisos.push(...v.avisos);
-  const r = await ml('POST', '/items', { token: s.token, corpo: item });
-  if (!r.ok || !r.j.id) {
-    console.log('ml publicar: POST /items', r.status, JSON.stringify(r.j).slice(0, 1500), '|', resumoItem(item));
-    const es = causasDe(r.j).filter(c => c.type !== 'warning'), todas = causasDe(r.j);
-    if (r.status === 400 || r.status === 422)
-      throw erro(422, 'O Mercado Livre recusou o anúncio: ' + (motivo(es.length ? es : todas) || r.j.message || 'erro ' + r.status)
-        + (es.length || todas.length ? '' : ' (o Mercado Livre não disse o motivo; confira a conta: endereço, Mercado Envios e limite de anúncios)'));
-    throw erro(502, traduzir(r));
-  }
+  const r = feito;
   console.log(`ml publicou ${r.j.id} (${cat}, ${tipo}) ${r.j.status || ''}`);
   return { ok: true, id: r.j.id, link: r.j.permalink || '', status: r.j.status || 'active', preco: r.j.price || preco, tipo,
     categoria: { id: cat, nome: catNome }, avisos, cifraNova: s.cifraNova };

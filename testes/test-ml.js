@@ -252,6 +252,13 @@ const ITEM = { titulo: 'Notebook Dell Latitude 5490 i5 8ª 16GB SSD 256GB', prec
   validacoes = [[]]; criacoes = [[]];
   r = await post({ acao: 'publicar', item: { ...ITEM, atributos: KL } });
   ok(r.status === 422 && /Validation error/.test(r.json().erro) && /confira a conta/.test(r.json().erro), 'nem a criação disse o motivo: diz o que conferir na conta');
+  validacoes = [[], []]; criacoes = [[{ code: 'shipping.free_shipping.mandatory', message: 'free_shipping is mandatory for this item', type: 'error' }]]; criados = []; pedidos = [];
+  r = await post({ acao: 'publicar', item: { ...ITEM, atributos: KL } });
+  ok(r.json().ok && criados.length === 1 && criados[0].shipping.free_shipping === true && r.json().avisos.some(a => /Frete grátis é obrigatório/.test(a)) &&
+    pedidos.filter(p => p.url.endsWith('/items') && p.metodo === 'POST').length === 2, 'a criação disse o motivo (frete grátis obrigatório): corrige sozinho e cria');
+  validacoes = []; criacoes = [[{ code: 'body.required_fields', message: 'The body does not contains some or none of the following properties [family_name]', type: 'error' }]]; criados = [];
+  r = await post({ acao: 'publicar', item: { ...ITEM, atributos: KL } });
+  ok(r.json().ok && criados.length === 1 && criados[0].family_name === ITEM.titulo && !criados[0].title, 'validou, mas a criação pediu family_name: refaz e cria');
   validacoes = [[{ code: 'item.attributes.missing_conditional_required', message: 'The attributes [KEYBOARD_LANGUAGE] are conditionally required', type: 'warning' }]]; criados = [];
   r = await post({ acao: 'publicar', item: { ...ITEM, atributos: { OS_NAME: 'Windows' } } });
   ok(r.json().ok === false && r.json().faltam.map(f => f.id).join() === 'KEYBOARD_LANGUAGE' && !criados.length, 'recusou só com advertência: é ela que diz o que falta (vira pergunta)');
