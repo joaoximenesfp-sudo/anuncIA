@@ -93,6 +93,12 @@ global.fetch = async (url, op = {}) => {
   if (u.pathname === '/items' && p.metodo === 'POST') { const corpo = JSON.parse(p.corpo); const falha = criacoes.shift();
     if (falha) return resposta(400, { message: 'Validation error', error: 'validation_error', status: 400, cause: falha }); criados.push(corpo); return resposta(201, { id: 'MLB4000000' + criados.length, permalink: 'https://produto.mercadolivre.com.br/MLB-4000000' + criados.length + '-notebook', status: 'active', price: corpo.price, condition: condicaoCriado }); }
   if (/^\/items\/MLB\d+$/.test(u.pathname) && p.metodo === 'GET') return itemLa ? resposta(200, itemLa) : resposta(404, { message: 'item not found' });
+  if (/^\/item\/MLB\d+\/performance$/.test(u.pathname)) return resposta(200, { entity_type: 'ITEM', entity_id: u.pathname.split('/')[2], score: 54, level: 'Standard', level_wording: 'Satisfatória', buckets: [
+    { key: 'CHARACTERISTICS', status: 'PENDING', title: 'Características', variables: [{ key: 'TECH', status: 'PENDING', title: 'Ficha técnica',
+      rules: [{ key: 'WRONG_ATTRIBUTES', status: 'PENDING', wordings: { title: 'Corrija as características para receber menos perguntas e devoluções' } }] }] },
+    { key: 'COMMERCIAL', status: 'PENDING', variables: [
+      { key: 'INSTALLMENTS', status: 'PENDING', rules: [{ status: 'PENDING', wordings: { title: 'Ofereça parcelamento sem juros' } }] },
+      { key: 'PICTURES', status: 'COMPLETED', rules: [{ status: 'COMPLETED', wordings: { title: 'Fotos boas' } }] }] }] });
   if (/^\/items\/MLB\d+$/.test(u.pathname) && p.metodo === 'PUT') {
     const corpo = JSON.parse(p.corpo);
     if (u.pathname.endsWith('MLB999999999')) return resposta(400, { message: 'Item with status closed can not be modified', error: 'item.status.invalid', status: 400, cause: [] });
@@ -341,7 +347,36 @@ const ITEM = { titulo: 'Notebook Dell Latitude 5490 i5 8ª 16GB SSD 256GB', prec
   itemLa = { ...itemLa, condition: 'new', sold_quantity: 1 }; pedidos = [];
   r = await post({ acao: 'completar', id: 'MLB8033815524', ficha: FICHA2 });
   ok(!pedidos.some(p => p.metodo === 'PUT' && /"condition"/.test(p.corpo || '')) && r.json().condicao === 'new', 'com venda, a condição não muda (o Mercado Livre não deixa)');
+  // a máquina mudou depois de publicada: o que o sistema preenche e está diferente lá também vai;
+  // o "Não" antigo de extra que ninguém marcou sai; o vídeo entra
+  itemLa = { id: 'MLB8033909936', category_id: 'MLB1652', condition: 'used', sold_quantity: 0, video_id: '',
+    attributes: [{ id: 'BRAND', value_id: '2005', value_name: 'Dell' }, { id: 'MODEL', value_name: '3410' }, { id: 'DISPLAY_SIZE', value_name: '14 "' },
+      { id: 'WITH_WEBCAM', value_id: '242084', value_name: 'Não' }, { id: 'WITH_MEMORY_CARD_READER', value_id: '242084', value_name: 'Não' }, { id: 'WITH_NUMERIC_PAD', value_id: '242084', value_name: 'Não' }] };
+  pedidos = []; putRecusas = [];
+  r = await post({ acao: 'completar', id: 'MLB8033909936', ficha: { ...FICHA2, tem: { webcam: true } }, video: 'dQw4w9WgXcQ' });
+  const puts3 = pedidos.filter(p => p.metodo === 'PUT' && p.url.endsWith('/items/MLB8033909936')).map(p => JSON.parse(p.corpo));
+  const attrs3 = (puts3.find(c => c.attributes && c.attributes.some(a => a.value_name)) || { attributes: [] }).attributes, tira3 = puts3.find(c => c.attributes && c.attributes.every(a => a.value_name === null));
+  ok(attrs3.some(a => a.id === 'WITH_WEBCAM' && a.value_name === 'Sim') && !attrs3.some(a => a.id === 'DISPLAY_SIZE' || a.id === 'MODEL' || a.id === 'BRAND'),
+    'a webcam que estava "Não" lá e agora é "Sim": atualiza; a tela igual e o modelo (identidade) não mexem');
+  ok(tira3 && JSON.stringify(tira3.attributes.map(a => a.id)) === '["WITH_MEMORY_CARD_READER"]' && JSON.stringify(r.json().limpos) === '["WITH_MEMORY_CARD_READER"]',
+    'o "Não" do leitor de cartão que ninguém marcou sai (o do teclado numérico fica)');
+  ok(puts3.some(c => c.video_id === 'dQw4w9WgXcQ') && r.json().video === 'ok', 'o vídeo do YouTube entra no anúncio');
   itemLa = null;
+
+  console.log('\na qualidade do anúncio (o relatório do Mercado Livre)');
+  pedidos = [];
+  r = await post({ acao: 'qualidade', ids: ['MLB8033909936', 'lixo'] });
+  const q1 = (r.json().itens || [])[0] || {};
+  ok(r.status === 200 && r.json().itens.length === 1 && q1.score === 54 && q1.nivel === 'Satisfatória' &&
+    JSON.stringify(q1.pendentes) === '["Corrija as características para receber menos perguntas e devoluções","Ofereça parcelamento sem juros"]' &&
+    pedidos.some(p => p.url.includes('/item/MLB8033909936/performance')), 'a nota e só o que está pendente (o que já foi alcançado não aparece): ' + JSON.stringify(q1.pendentes));
+  ok(T.lerQualidade({}).score === null && JSON.stringify(T.lerQualidade(null).pendentes) === '[]', 'relatório vazio não quebra');
+
+  console.log('\nvídeo ao publicar');
+  validacoes = []; criacoes = []; criados = []; pedidos = [];
+  r = await post({ acao: 'publicar', item: { ...ITEM, atributos: KL, video: 'dQw4w9WgXcQ' } });
+  ok(r.json().ok && pedidos.some(p => p.metodo === 'PUT' && /\/items\/MLB4000000\d+$/.test(p.url) && JSON.parse(p.corpo).video_id === 'dQw4w9WgXcQ') && !('video_id' in criados[0]),
+    'o vídeo vai depois de criar (se o Mercado Livre recusar, o anúncio já está no ar)');
   ok(T.daFicha({ anatel: '054282003153' }).ANATEL_HOMOLOGATION_NUMBER === '054282003153' && T.daFicha({ anatel: '12' }).ANATEL_HOMOLOGATION_NUMBER === '',
     'a homologação da Anatel vai no anúncio (só número de homologação de verdade)');
 

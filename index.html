@@ -685,6 +685,8 @@ input[type=number].inp{padding-left:32px}
 .ancat-ml{font-size:.68rem;color:var(--li)}
 .ancat-ml.ok{color:#a16207}
 .ancat-ml.erro{color:#b91c1c;font-weight:500;line-height:1.4}
+.ml-qual summary{cursor:pointer;color:var(--mu)}
+.ml-qual ul{margin:4px 0 0;padding-left:16px}
 .ancat-mlf .mlf-erro{color:#b91c1c;font-weight:500}
 .ancat-ml a{color:#a16207;font-weight:600}
 .ancat-mlf{font-size:.7rem;background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:6px 7px;display:flex;flex-direction:column;gap:5px}
@@ -941,6 +943,7 @@ tr.marcada>td:first-child{box-shadow:inset 3px 0 0 var(--gr)}
 .hw-rec{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
 .hw-par{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:8px}
 @media (max-width:420px){.hw-par{grid-template-columns:1fr}}
+.hw-f .inp.erro{border-color:#dc2626}
 .hw-sub{grid-column:1/-1;font-size:.72rem;font-weight:600;color:var(--tx);border-top:1px dashed var(--b2);padding-top:9px;margin-top:2px}
 .ml-anatel{display:flex;flex-direction:column;gap:6px;margin-top:8px}
 .ml-anatel-it{display:grid;grid-template-columns:1fr minmax(150px,210px);gap:8px;align-items:center;font-size:.74rem;color:var(--mu)}
@@ -7353,6 +7356,15 @@ const RECURSOS_PADRAO=['wifi','bluetooth','webcam','microfone','fone'];
 const SISTEMAS=['Windows 11 Pro','Windows 11 Home','Windows 11','Windows 10 Pro','Windows 10 Home','Windows 10','Windows','Linux','Sem sistema'];
 const RESOLUCOES=[['','—'],['1366 x 768','HD (1366 × 768)'],['1920 x 1080','Full HD (1920 × 1080)'],['2560 x 1440','QHD (2560 × 1440)'],['3840 x 2160','4K (3840 × 2160)']];
 const recRotulo=k=>(RECURSOS.find(r=>r[0]===k)||[,,k])[2];
+// O id do vídeo do YouTube (11 letras), de qualquer jeito que o link vier.
+// Campo do vídeo: borda vermelha enquanto o link não é do YouTube.
+window.hwVideoChecar=el=>el.classList.toggle('erro',!!el.value.trim()&&!ytId(el.value));
+function ytId(u){
+  const s=String(u||'').trim(); let m;
+  if(/^[\w-]{11}$/.test(s)) return s;
+  if((m=s.match(/(?:youtu\.be\/|youtube(?:-nocookie)?\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/|live\/|v\/))([\w-]{11})/))) return m[1];
+  return '';
+}
 // O que a máquina tem: o marcado no cadastro; máquina antiga, sem marcação, o que a
 // descrição diz (e o básico de notebook), igual ao que vai para o Mercado Livre.
 function recursosDe(p){
@@ -7385,13 +7397,14 @@ function hwCampos(pre){
     cpu_codigo: hwCodigo((g('CpuCod')&&g('CpuCod').value)||''),
     sistema: (g('So')&&g('So').value)||'',
     resolucao: (g('Res')&&g('Res').value)||'',
+    video: ((g('Video')&&g('Video').value)||'').trim(),
     // sem o quadro na tela, não grava "nenhum recurso" por engano
     ...(g('Rec')?{recursos:[...g('Rec').querySelectorAll('.rec-chip.on')].map(b=>b.dataset.r)}:{}),
   };
 }
 // Volta o quadro do cadastro ao começo (o básico de notebook marcado).
 function hwLimpar(pre){
-  ['SlotsRam','SlotsRamOc','SlotsM2','SlotsM2Oc','Tela','Bat','Anatel','CpuCod','So','Res'].forEach(id=>{ const e=document.getElementById(pre+id); if(e) e.value=''; });
+  ['SlotsRam','SlotsRamOc','SlotsM2','SlotsM2Oc','Tela','Bat','Anatel','CpuCod','So','Res','Video'].forEach(id=>{ const e=document.getElementById(pre+id); if(e) e.value=''; });
   const b=document.getElementById(pre+'Baia25'); if(b) b.checked=false;
   const rec=document.getElementById(pre+'Rec'); if(rec) rec.querySelectorAll('.rec-chip').forEach(x=>x.classList.toggle('on',RECURSOS_PADRAO.includes(x.dataset.r)));
 }
@@ -7412,7 +7425,7 @@ function hwPreencher(pre,p){
   const set=(id,v)=>{const e=document.getElementById(pre+id); if(e) e.value=(v===null||v===undefined)?'':v;};
   set('SlotsRam',p.slots_ram); set('SlotsRamOc',p.slots_ram_ocup);
   set('SlotsM2',p.slots_m2);   set('SlotsM2Oc',p.slots_m2_ocup);
-  set('Tela',p.tela_estado||''); set('Bat',p.bateria_estado||''); set('Anatel',p.anatel||''); set('CpuCod',p.cpu_codigo||'');
+  set('Tela',p.tela_estado||''); set('Bat',p.bateria_estado||''); set('Anatel',p.anatel||''); set('CpuCod',p.cpu_codigo||''); set('Video',p.video||'');
   // máquina antiga sem marcação: mostra o que vai para o anúncio (dá para corrigir aqui)
   const rec=document.getElementById(pre+'Rec');
   if(rec){ const tem=recursosDe(p); rec.querySelectorAll('.rec-chip').forEach(b=>b.classList.toggle('on',tem.includes(b.dataset.r))); }
@@ -7492,6 +7505,7 @@ function hwHTML(pre){
       <div class="hw-rec" id="${pre}Rec">${RECURSOS.map(([k,ic,t])=>`<button type="button" class="rec-chip${pre==='p'&&RECURSOS_PADRAO.includes(k)?' on':''}" data-r="${k}" onclick="this.classList.toggle('on')">${ic} ${t}</button>`).join('')}</div></div>
     <div class="hw-par"><label class="hw-f"><span>Sistema</span><select class="inp" id="${pre}So"><option value="">—</option>${SISTEMAS.map(v=>`<option>${v}</option>`).join('')}</select></label>
       <label class="hw-f"><span>Resolução da tela</span><select class="inp" id="${pre}Res">${RESOLUCOES.map(([v,t])=>`<option value="${v}">${t}</option>`).join('')}</select></label></div>
+    <label class="hw-f hw-largo"><span>🎥 Vídeo · link do YouTube (pode ser "não listado"): vai no catálogo e no Mercado Livre</span><input class="inp" id="${pre}Video" inputmode="url" placeholder="https://youtu.be/... ou youtube.com/shorts/..." oninput="hwVideoChecar(this)"></label>
     <label class="hw-f hw-largo"><span>Código do processador (no Windows: Configurações → Sistema → Sobre) · o Mercado Livre pede</span><input class="inp" id="${pre}CpuCod" list="${pre}CpuCodLista" maxlength="20" autocomplete="off" placeholder="ex.: 8350U" onfocus="hwCodigos('${pre}')"><datalist id="${pre}CpuCodLista"></datalist></label>
     <label class="hw-f hw-largo"><span>Homologação Anatel (na etiqueta embaixo do notebook) · uma vez por modelo: as iguais usam a mesma</span><input class="inp" id="${pre}Anatel" inputmode="numeric" maxlength="20" placeholder="ex.: 05428-20-03153"></label>
   </div>`;
@@ -12934,7 +12948,10 @@ function mlFicha(p){
   const falha=w=>new RegExp(`\\bsem\\s(?:a\\s|o\\s)?${w}|\\b${w}\\s(?:\\w+\\s){0,2}?(?:nao funciona|com defeito|quebrad|danificad)`).test(txt);
   const padrao=w=>mesa?undefined:!falha(w), citado=w=>new RegExp(w).test(txt)?!falha(w):undefined;
   // marcado no cadastro: é o que vale (o que não está marcado, ela não tem)
-  const tem=rec?Object.fromEntries(['wifi','bluetooth','webcam','microfone','fone','touch','digital','retroiluminado','numerico','sd','hdmi','usbc'].map(k=>[k,rec.includes(k)]))
+  // (o básico desmarcado é "não tem"; extra não marcado é "não se sabe": um "não" ali
+  // contradiz o que o Mercado Livre sabe do modelo, e ele pede para corrigir)
+  const tem=rec?Object.fromEntries([...['wifi','bluetooth','webcam','microfone','fone','touch'].map(k=>[k,rec.includes(k)]),
+      ...['digital','retroiluminado','numerico','sd','hdmi','usbc'].map(k=>[k,rec.includes(k)?true:undefined])])
     :{wifi:padrao('wi-?fi'),bluetooth:padrao('bluetooth'),webcam:padrao('(?:webcam|camera)'),microfone:padrao('microfone'),fone:padrao('fone'),
     touch:mesa?undefined:touch,digital:citado('(?:leitor (?:de )?digital|impressao digital|biometri|fingerprint)'),
     retroiluminado:citado('(?:retroilumin|backlight|teclado iluminado)'),numerico:citado('teclado numerico'),
@@ -13218,7 +13235,7 @@ async function mlPublicarMaquina(p,aviso){
   const o=mlOpcoes();
   if(aviso) aviso('Mercado Livre: criando o anúncio...');
   const r=await mlApi({acao:'publicar',item:{titulo:mlTitulo(p),preco,descricao:mlDescricao(p,o),fotos:ids,ficha:mlFicha(p),atributos:{...mlRespostasIguais(p),...(p.ml_atributos||{})},
-    tipo:o.tipo,retirada:o.retirada,frete_gratis:!!o.frete_gratis,garantia_dias:o.garantia,pacote:o.caixa,sku:p.num?String(p.num):'',categoria:p.ml_categoria||''}});
+    tipo:o.tipo,retirada:o.retirada,frete_gratis:!!o.frete_gratis,garantia_dias:o.garantia,pacote:o.caixa,sku:p.num?String(p.num):'',categoria:p.ml_categoria||'',video:ytId(p.video)}});
   const assFicha=mlAssFicha(p);
   if(!r.ok&&r.faltam){ mlFaltam[p.id]={faltam:r.faltam,categoria:r.categoria||{},motivo:r.motivo||''}; delete mlErros[p.id]; return {faltam:r.faltam}; }
   delete mlFaltam[p.id]; delete mlErros[p.id];
@@ -13243,7 +13260,9 @@ function mlStatusHTML(p){
   const ver=link?` · <a href="${encodeURI(link)}" target="_blank" rel="noopener">ver</a>`:'';
   if(mlNoAr(p)){
     const sit={paused:p.ml_pausado_pelo_sistema?' (pausado: reservada)':' (pausado)',under_review:' (em revisão do ML)',inactive:' (inativo)'}[p.ml_status]||'';
-    return `<div class="ancat-ml ok">🛒 no Mercado Livre${p.ml_em?' desde '+new Date(p.ml_em).toLocaleDateString('pt-BR'):''}${sit}${ver}</div>`;
+    const q=p.ml_qualidade, pend=q&&Array.isArray(q.pendentes)?q.pendentes:[];
+    const nota=q&&q.score!=null?`<div class="ancat-ml">📊 Qualidade no Mercado Livre: <b>${q.score}</b>${q.nivel?' ('+esc(q.nivel)+')':''}${pend.length?`<details class="ml-qual"><summary>o que ele ainda pede (${pend.length})</summary><ul>${pend.map(t=>`<li>${esc(t)}</li>`).join('')}</ul></details>`:''}</div>`:'';
+    return `<div class="ancat-ml ok">🛒 no Mercado Livre${p.ml_em?' desde '+new Date(p.ml_em).toLocaleDateString('pt-BR'):''}${sit}${ver}</div>${nota}`;
   }
   if(p.ml_id) return `<div class="ancat-ml">🛒 anúncio encerrado no Mercado Livre${ver}</div>`;
   return mlConectado()?'<div class="ancat-ml">🛒 ainda não está no Mercado Livre</div>':'';
@@ -13411,6 +13430,7 @@ async function mlNovidades(){
         if(Object.keys(campos).length){ try{ await updateDoc(doc(db,'products',p.id),campos); }catch(e){} Object.assign(p,campos); mudou=true; }
       }
     }
+    await mlBuscarQualidade(comMl);
     const r=await mlApi({acao:'novidades',desde:new Date(Date.now()-30*864e5).toISOString()});
     mlPedidos=Array.isArray(r.pedidos)?r.pedidos:[]; mlPerguntas=r.perguntas;
   }catch(e){ console.warn('Mercado Livre (novidades):',e.message); }
@@ -13420,7 +13440,7 @@ async function mlNovidades(){
 // O que vai de características, resumido: muda quando muda a ficha, a descrição, as abas
 // (Anatel, slots, bateria), as respostas, ou o que vem de outra do mesmo modelo.
 const mlHash=t=>{ let h=5381; for(let i=0;i<t.length;i++) h=((h<<5)+h+t.charCodeAt(i))|0; return (h>>>0).toString(36); };
-const mlAssFicha=p=>mlHash(JSON.stringify([mlFicha(p),mlRespostasIguais(p),p.ml_atributos||{}]));
+const mlAssFicha=p=>mlHash(JSON.stringify([mlFicha(p),mlRespostasIguais(p),p.ml_atributos||{},ytId(p.video)]));
 // Anúncio que saiu com menos características (versão antiga), cuja máquina mudou depois de
 // publicada, ou que o Mercado Livre pôs como novo: ganha o que a ficha sabe e volta para
 // usado. Uma tentativa por mudança.
@@ -13432,7 +13452,7 @@ async function mlCompletarAnuncios(lista){
   for(const {p,ass} of fila){
     mlCompletarTentou.add(p.id+'|'+ass);
     try{
-      const r=await mlApi({acao:'completar',id:p.ml_id,ficha:mlFicha(p),atributos:{...mlRespostasIguais(p),...(p.ml_atributos||{})},sku:p.num?String(p.num):'',pacote:mlOpcoes().caixa});
+      const r=await mlApi({acao:'completar',id:p.ml_id,ficha:mlFicha(p),atributos:{...mlRespostasIguais(p),...(p.ml_atributos||{})},sku:p.num?String(p.num):'',pacote:mlOpcoes().caixa,video:ytId(p.video)});
       const campos={ml_ficha_v:ML_FICHA_V,ml_ficha_ass:ass}; if(r.condicao) campos.ml_condicao=r.condicao;
       if(p.ml_condicao&&p.ml_condicao!=='used'&&r.condicao==='used') usado++;
       try{ await updateDoc(doc(db,'products',p.id),campos); }catch(e){}
@@ -13441,6 +13461,25 @@ async function mlCompletarAnuncios(lista){
   }
   if(n||usado) mlMsg('✅ Anúncios no Mercado Livre melhorados: '+[n?'+'+n+' característica'+(n!==1?'s':''):'',usado?'condição de volta para Usado':''].filter(Boolean).join(' e ')+'.');
   return fila.length>0;
+}
+// A nota de qualidade de cada anúncio e o que o Mercado Livre ainda pede (no máximo uma
+// busca por hora): vai para o cartão da máquina.
+let mlQualidadeEm=0;
+async function mlBuscarQualidade(lista){
+  if(Date.now()-mlQualidadeEm<60*60000) return;
+  const ids=lista.filter(p=>p.status!=='Vendido'&&p.ml_status==='active').map(p=>p.ml_id).slice(0,30);
+  if(!ids.length) return;
+  mlQualidadeEm=Date.now();
+  for(let i=0;i<ids.length;i+=10){
+    let r; try{ r=await mlApi({acao:'qualidade',ids:ids.slice(i,i+10)}); }catch(e){ console.warn('Mercado Livre (qualidade):',e.message); return; }
+    for(const q of r.itens||[]){
+      const p=lista.find(x=>x.ml_id===q.id); if(!p||q.erro||q.score==null) continue;
+      const v={score:q.score,nivel:q.nivel||'',pendentes:(q.pendentes||[]).slice(0,12),em:new Date().toISOString()};
+      if(JSON.stringify([v.score,v.pendentes])===JSON.stringify([(p.ml_qualidade||{}).score,(p.ml_qualidade||{}).pendentes])) continue;
+      try{ await updateDoc(doc(db,'products',p.id),{ml_qualidade:v}); }catch(e){}
+      p.ml_qualidade=v;
+    }
+  }
 }
 function mlVendasPendentes(){
   return mlPedidos.filter(o=>o.status==='paid').map(o=>({o,p:prods.find(p=>p.ml_id&&p.ml_id===o.item)})).filter(x=>x.p&&x.p.status!=='Vendido');
@@ -14868,6 +14907,7 @@ window.publicarCatalogo=async()=>{
         marca:brand(p.nome),
         specs:hwResumo(p,true),
         ...(()=>{ try{ const r=recursosLinhas(p); return {recursos:r.recursos, sistema:r.sistema&&r.sistema!=='Sem sistema'?r.sistema:'', resolucao:r.resolucao}; }catch(e){ return {}; } })(),
+        video:ytId(p.video),
         descricao:String(p.descricao||'').slice(0,600),
         tipo:tipoMaquina(p),
         estado:(reservadoP(p)?'reservado':aguardandoP(p)?'chegando':'disponivel'),

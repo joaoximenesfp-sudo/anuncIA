@@ -22,7 +22,7 @@ const codigo =
   'let prods=[]; const anFichaRapida=p=>fichaDe(p);' +
   trecho('// ── FICHA PARA O MERCADO LIVRE ──', 'function mlTitulo(p){') +
   'return {mlFicha, mlTelaDoModelo, mlCpuCodigo, mlSO, mlRespostasIguais, mlCpuProvaveis, mlCasar, mlSugestao, mlCpusDaLoja, mlCpusComuns,' +
-  ' mlRespostasDaLoja, mlPadrao, mlHwLinhas, mlChave, recursosDe, sistemaDe, resolucaoDe, recursosLinhas, poe:l=>{prods=l;}};';
+  ' mlRespostasDaLoja, mlPadrao, mlHwLinhas, mlChave, recursosDe, sistemaDe, resolucaoDe, recursosLinhas, ytId, poe:l=>{prods=l;}};';
 const window={}, document={getElementById:()=>null};
 const M=new Function('window','document',codigo)(window,document);
 
@@ -126,9 +126,9 @@ console.log('\nrecursos marcados no cadastro (catálogo, Instagram e Mercado Liv
 const mk={id:'rk1',nome:'Dell Latitude 7490 · i5 8ª · SSD 256GB · 16GB RAM',descricao:'Tem webcam e leitor digital.',recursos:['wifi','bluetooth','retroiluminado','abnt2','hdmi'],
   sistema:'Windows 11 Pro',resolucao:'1920 x 1080'};
 const fm=M.mlFicha(mk);
-ok(fm.tem.wifi===true && fm.tem.bluetooth===true && fm.tem.retroiluminado===true && fm.tem.webcam===false && fm.tem.digital===false && fm.tem.hdmi===true &&
+ok(fm.tem.wifi===true && fm.tem.bluetooth===true && fm.tem.retroiluminado===true && fm.tem.webcam===false && fm.tem.digital===undefined && fm.tem.sd===undefined && fm.tem.hdmi===true &&
   fm.teclado==='Português' && fm.so==='Windows' && fm.so_versao==='11' && fm.so_edicao==='Pro' && fm.resolucao==='1920 x 1080',
-  'o marcado no cadastro é o que vale (o que não está marcado ela não tem, mesmo que a descrição diga): '+JSON.stringify({tem:fm.tem,t:fm.teclado,so:[fm.so,fm.so_versao,fm.so_edicao]}));
+  'o marcado no cadastro é o que vale: o básico desmarcado é "não tem"; extra não marcado é "não se sabe" (não vai "não", que contradiz o modelo no Mercado Livre): '+JSON.stringify({tem:fm.tem,t:fm.teclado,so:[fm.so,fm.so_versao,fm.so_edicao]}));
 const lk=M.recursosLinhas(mk);
 ok(JSON.stringify(lk)==='{"recursos":["Wi-Fi","Bluetooth","HDMI","Teclado retroiluminado","Teclado ABNT2"],"sistema":"Windows 11 Pro","resolucao":"Full HD"}',
   'para o anúncio: '+JSON.stringify(lk));
@@ -138,6 +138,10 @@ ok(JSON.stringify(M.recursosDe(velha))==='["wifi","bluetooth","webcam","microfon
 ok(JSON.stringify(M.recursosDe({id:'rk3',nome:'Dell OptiPlex 3080 i5 10ª'}))==='[]' && M.sistemaDe({id:'rk4',nome:'x',sistema:'Linux'})==='Linux' &&
   M.mlFicha({id:'rk4',nome:'x',sistema:'Linux'}).so==='Linux' && M.mlFicha({id:'rk5',nome:'x',sistema:'Sem sistema'}).so==='',
   'de mesa não ganha o básico de notebook; Linux e "sem sistema" também valem');
+
+const yt=['https://youtu.be/dQw4w9WgXcQ','https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=3s','youtube.com/shorts/dQw4w9WgXcQ','https://m.youtube.com/watch?feature=share&v=dQw4w9WgXcQ',
+  'https://www.youtube.com/embed/dQw4w9WgXcQ','dQw4w9WgXcQ'];
+ok(yt.every(u=>M.ytId(u)==='dQw4w9WgXcQ') && M.ytId('https://vimeo.com/123')==='' && M.ytId('olá')==='' && M.ytId('')==='', 'o vídeo do YouTube em qualquer formato de link (curto, normal, shorts, celular); o que não é YouTube não vai');
 
 console.log('\nhomologação da Anatel (uma vez por modelo)');
 const an1={id:'an1',nome:'Dell Latitude 3420 i5 11ª 16GB',anatel:'05428-20-03153'}, an2={id:'an2',nome:'Dell Latitude 3420 i5 11ª 8GB'}, an3={id:'an3',nome:'Dell Latitude 5490 i5 8ª 8GB'};

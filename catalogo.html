@@ -329,6 +329,11 @@ b,strong,th,h1,h2,h3,h4,h5,h6{font-weight:600}
   .fi b{font-size:.88rem;font-weight:600;overflow-wrap:anywhere}
   .fi.boa b{color:var(--g2)} .fi.ruim b{color:var(--al)}
   .dt-desc{font-size:.9rem;line-height:1.65;color:var(--mu);white-space:pre-line;margin:0 0 16px}
+  .vid{margin:0 0 16px}
+  .vid small{display:block;font-size:.62rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--li);margin-bottom:7px}
+  .vid-box{position:relative;aspect-ratio:16/9;border-radius:14px;overflow:hidden;background:#000}
+  .vid-box iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+  .cd-vd{position:absolute;left:12px;bottom:12px;background:rgba(11,18,33,.72);color:#fff;font-size:.7rem;font-weight:600;padding:4px 9px;border-radius:999px;backdrop-filter:blur(6px)}
   .rec{margin:0 0 16px}
   .rec small{display:block;font-size:.62rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--li);margin-bottom:7px}
   .rec div{display:flex;flex-wrap:wrap;gap:6px}
@@ -881,6 +886,8 @@ function render(){
 // publica mais isso, mas documento publicado antes do conserto ainda traz —
 // então a limpeza também acontece na leitura, sem depender de republicar.
 const ZERO_SPEC=/^\S+\s+(0\s+slots?\s|0\/0\s|sem\s)/;
+// Vídeo do YouTube da máquina (o id, 11 letras): no detalhe, um player sem cookies.
+const vidOk=i=>!!(i&&typeof i.video==='string'&&/^[\w-]{11}$/.test(i.video));
 function specsDe(i){
   return ((i&&i.specs)||[]).filter(s=>!ZERO_SPEC.test(String(s)));
 }
@@ -954,6 +961,7 @@ function cartao(g,k){
     <div class="cd-im">${capa}
       ${bds?`<div class="bdg">${bds}</div>`:''}
       ${nf>1?`<span class="cd-nf">${IC.foto}${nf}</span>`:''}
+      ${vidOk(i)?`<span class="cd-vd">▶ vídeo</span>`:''}
     </div>
     <div class="cd-bd">
       ${p.marca?`<div class="cd-mc">${esc(p.marca)}</div>`:''}
@@ -1095,6 +1103,7 @@ async function abrir(g,k){
              : cheg ? `<div class="dt-cheg">🚚 Essa máquina ainda está chegando. Dá pra reservar agora e garantir antes de entrar à venda.</div>` : '' }
       ${ficha.length?`<div class="ficha">${ficha.map(f=>`<div class="fi ${f.cls||''}"><small>${esc(f.k)}</small><b>${esc(f.v)}</b></div>`).join('')}</div>`:''}
       ${recursos.length?`<div class="rec"><small>O que ela tem</small><div>${recursos.map(r=>`<span>${esc(r)}</span>`).join('')}</div></div>`:''}
+      ${vidOk(i)?`<div class="vid"><small>Vídeo da máquina</small><div class="vid-box"><iframe src="https://www.youtube-nocookie.com/embed/${i.video}?rel=0&amp;modestbranding=1&amp;playsinline=1" title="Vídeo: ${esc(p.marca+' '+p.modelo)}" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div></div>`:''}
       ${ i.descricao ? `<p class="dt-desc">${esc(i.descricao)}</p>` : '' }
       <div class="gar">
         <div>${IC.escudo}<span><b>90 dias de garantia</b> a partir da entrega.</span></div>

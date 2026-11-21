@@ -100,9 +100,11 @@ Livre (o anúncio). Usa a API oficial (`api/ml.js`):
   A condição é sempre **usado**: se o Mercado Livre puser como novo, o sistema corrige. O
   anúncio que saiu com menos características é completado sozinho quando o sistema confere
   os anúncios (o que ele já tem não muda).
-- **Automático depois de publicar**: mudou a máquina (descrição, abas, Anatel, respostas)
-  ou outra do mesmo modelo trouxe um dado novo, o anúncio recebe o que falta sozinho,
-  segundos depois. A **homologação da Anatel** (na etiqueta embaixo do notebook) tem campo
+- **Automático depois de publicar**: mudou a máquina (descrição, abas, Anatel, vídeo,
+  respostas) ou outra do mesmo modelo trouxe um dado novo, o anúncio recebe o que falta e
+  o que mudou sozinho, segundos depois (marca, linha e modelo, que dizem qual é o produto,
+  só entram se faltarem). A **nota de qualidade** de cada anúncio e o que o Mercado Livre
+  ainda pede aparecem no cartão da máquina (o sistema busca uma vez por hora). A **homologação da Anatel** (na etiqueta embaixo do notebook) tem campo
   nas abas da máquina: basta numa máquina do modelo, as iguais usam a mesma. **Premium**
   (parcelado sem juros) e **frete grátis** ficam em "Como os anúncios saem": valem para os
   próximos, e ao salvar o sistema oferece pôr também nos que já estão lá.
@@ -144,9 +146,14 @@ No cadastro e no Editar (quadro "Revisão da máquina e o que vai no anúncio"),
 - **Recursos**: Wi-Fi, Bluetooth, webcam, microfone, saída de fone, HDMI, USB-C, teclado
   retroiluminado, ABNT2 e numérico, leitor digital, tela touch e leitor de cartão SD.
   Notebook novo no cadastro já vem com o básico marcado (Wi-Fi, Bluetooth, webcam,
-  microfone e fone); o que estiver marcado é o que ela tem. Máquina antiga, sem marcação,
-  mostra no Editar o que o sistema deduz da descrição (e o básico de notebook), e é isso
-  que vai até alguém corrigir.
+  microfone e fone). Desmarcar o básico é "não tem"; extra não marcado é "não se sabe"
+  (não vai "não" para o Mercado Livre: contradizer o que ele sabe do modelo derruba a
+  qualidade). Máquina antiga, sem marcação, mostra no Editar o que o sistema deduz da
+  descrição (e o básico de notebook), e é isso que vai até alguém corrigir.
+- **Vídeo**: o link do YouTube (pode ser "não listado"; vale link curto, normal ou de
+  shorts). No catálogo vira um player na página da máquina (e o cartão avisa "▶ vídeo");
+  no Mercado Livre vai como o vídeo do anúncio. O Instagram precisa do arquivo do vídeo:
+  por link do YouTube não dá.
 - **Sistema** (Windows 11 Pro, Linux, sem sistema...) e **resolução da tela** (HD, Full HD...).
 - **Código do processador** (8350U): a lista sugere os da linha e geração escolhidas; é o
   que o Mercado Livre sempre pede.

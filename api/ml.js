@@ -479,6 +479,7 @@ async function publicar(corpo) {
   const r = feito;
   console.log(`ml publicou ${r.j.id} (${cat}, ${tipo}) ${r.j.status || ''} condição=${r.j.condition || '?'} sub=${JSON.stringify(r.j.sub_status || [])}`,
     'título:', r.j.title || '', '| avisos:', JSON.stringify(r.j.warnings || []).slice(0, 600));
+  if (it.video) { const v = await videoNoAnuncio(r.j.id, s.token, it.video, ''); if (v === 'recusou') avisos.push('O Mercado Livre não aceitou o vídeo (confira se o link do YouTube abre para todos).'); }
   // a loja só vende usado: se o Mercado Livre puser como novo, corrige na hora
   if (r.j.condition && r.j.condition !== 'used') {
     const c = await usado(r.j.id, s.token, porId);
@@ -564,9 +565,14 @@ async function completar(corpo) {
   const lista = ra.j, porId = new Map(lista.map(a => [a.id, a]));
   const manual = corpo.atributos && typeof corpo.atributos === 'object' ? corpo.atributos : {};
   const m = montarAtributos(lista, { ...(corpo.ficha || {}), sku: corpo.sku ? String(corpo.sku).slice(0, 60) : '' }, manual, { pacote: corpo.pacote });
-  const ja = new Set((g.j.attributes || []).filter(a => a && (a.value_id || a.value_name)).map(a => a.id));
-  // os da embalagem e o motivo sem código de barras não mudam depois de publicado
-  let novos = m.atributos.filter(a => !ja.has(a.id) && !/^SELLER_PACKAGE_|^EMPTY_GTIN_REASON$|^ITEM_CONDITION$/.test(a.id));
+  const naLa = new Map((g.j.attributes || []).filter(a => a && (a.value_id || a.value_name)).map(a => [a.id, a])), ja = new Set(naLa.keys());
+  const igual = (a, la) => !!la && ((a.value_id && String(la.value_id) === String(a.value_id)) || norm(la.value_name || '') === norm(a.value_name || ''));
+  // o que falta, e o que o sistema preenche e está diferente lá (a máquina mudou); os da
+  // embalagem e o motivo sem código de barras não mudam depois de publicado
+  // (marca, linha e modelo dizem qual é o produto: lá, só entram se faltarem)
+  const identidade = /^(BRAND|LINE|MODEL|ALPHANUMERIC_MODEL)$/;
+  let novos = m.atributos.filter(a => !/^SELLER_PACKAGE_|^EMPTY_GTIN_REASON$|^ITEM_CONDITION$/.test(a.id)
+    && (!ja.has(a.id) || (m.doSistema.has(a.id) && !identidade.test(a.id) && !igual(a, naLa.get(a.id)))));
   const antes = g.j.condition || '';
   console.log('ml completar', id, cat, 'condição=' + antes, 'tem', ja.size, 'novos:', novos.map(a => a.id).join(','));
   const recusados = [];
@@ -580,8 +586,57 @@ async function completar(corpo) {
     if (!fora.length) { recusados.push(...novos.map(a => a.id)); novos = []; break; }
     recusados.push(...fora); novos = novos.filter(a => !fora.includes(a.id));
   }
+  // "Não" que foi antes para um extra que ninguém marcou (leitor de cartão, digital,
+  // retroiluminado): contradiz o que o Mercado Livre sabe do modelo; sai
+  const limpar = ['WITH_MEMORY_CARD_READER', 'WITH_FINGERPRINT_READER', 'WITH_BACKLIGHT_KEYBOARD']
+    .filter(x => naLa.has(x) && /^n[aã]o$/i.test(String(naLa.get(x).value_name || '')) && !m.atributos.some(a => a.id === x) && (manual[x] === undefined || manual[x] === ''));
+  let limpos = [];
+  if (limpar.length) {
+    const r = await ml('PUT', `/items/${id}`, { token: s.token, corpo: { attributes: limpar.map(x => ({ id: x, value_id: null, value_name: null })) } });
+    console.log('ml completar: tirar o "Não" de', limpar.join(','), id, r.status, r.ok ? '' : JSON.stringify(r.j).slice(0, 400));
+    if (r.ok) limpos = limpar;
+  }
+  const video = await videoNoAnuncio(id, s.token, corpo.video, g.j.video_id);
   const condicao = antes && antes !== 'used' && !(g.j.sold_quantity > 0) ? ((await usado(id, s.token, porId)) ? 'used' : antes) : antes;
-  return { ok: true, adicionados: novos.map(a => a.id), recusados, condicao, cifraNova: s.cifraNova };
+  return { ok: true, adicionados: novos.map(a => a.id), recusados, limpos, video, condicao, cifraNova: s.cifraNova };
+}
+// Vídeo do YouTube no anúncio (o id de 11 letras). Vai à parte, depois de criar: se o Mercado
+// Livre não aceitar, o anúncio continua no ar.
+const ID_VIDEO = /^[\w-]{11}$/;
+async function videoNoAnuncio(id, token, video, atual) {
+  const v = String(video || '').trim();
+  if (!ID_VIDEO.test(v) || v === atual) return v && v === atual ? 'ja' : '';
+  const r = await ml('PUT', `/items/${id}`, { token, corpo: { video_id: v } });
+  console.log('ml vídeo', id, v, r.status, r.ok ? '' : JSON.stringify(r.j).slice(0, 400));
+  return r.ok ? 'ok' : 'recusou';
+}
+// O relatório de qualidade do Mercado Livre ("Qualidade do anúncio"): a nota e o que ele
+// ainda pede, para mostrar no sistema e saber o que corrigir.
+async function qualidade(corpo) {
+  const s = await sessao(corpo);
+  const ids = [...new Set((Array.isArray(corpo.ids) ? corpo.ids : []).map(String).filter(id => ID_ITEM.test(id)))].slice(0, 10);
+  const itens = [];
+  for (const id of ids) {
+    const r = await ml('GET', `/item/${id}/performance`, { token: s.token });
+    console.log('ml qualidade', id, r.status, JSON.stringify(r.j).slice(0, 2500));
+    itens.push(r.ok ? { id, ...lerQualidade(r.j) } : { id, erro: traduzir(r) });
+  }
+  return { ok: true, itens, cifraNova: s.cifraNova };
+}
+// Do relatório: a nota, o nível e o texto de cada coisa pendente (sem repetir).
+function lerQualidade(j) {
+  const pend = [];
+  const andar = (o, fundo) => {
+    if (!o || typeof o !== 'object' || fundo > 8) return;
+    if (Array.isArray(o)) { o.forEach(x => andar(x, fundo + 1)); return; }
+    const st = String(o.status || '').toUpperCase(), w = o.wordings || {};
+    const t = String(w.title || w.label || o.title || '').trim();
+    if (st === 'PENDING' && t && !Array.isArray(o.variables) && !Array.isArray(o.rules) && !pend.includes(t)) pend.push(t);
+    for (const k of ['buckets', 'variables', 'rules']) if (Array.isArray(o[k])) andar(o[k], fundo + 1);
+  };
+  andar(j, 0);
+  const n = Number(j && j.score);
+  return { score: isFinite(n) ? Math.round(n) : null, nivel: String((j && (j.level_wording || j.level)) || ''), pendentes: pend.slice(0, 12) };
 }
 async function novidades(corpo) {
   const s = await sessao(corpo);
@@ -632,6 +687,7 @@ module.exports = async (req, res) => {
     if (corpo.acao === 'atualizar') return json(res, 200, await atualizar(corpo));
     if (corpo.acao === 'itens') return json(res, 200, await itens(corpo));
     if (corpo.acao === 'completar') return json(res, 200, await completar(corpo));
+    if (corpo.acao === 'qualidade') return json(res, 200, await qualidade(corpo));
     if (corpo.acao === 'novidades') return json(res, 200, await novidades(corpo));
     return json(res, 400, { erro: 'Ação desconhecida.' });
   } catch (e) {
@@ -639,4 +695,4 @@ module.exports = async (req, res) => {
     return json(res, e.status || 500, { erro: e.message || 'Erro inesperado.' });
   }
 };
-module.exports._teste = { cifrar, decifrar, novoEstado, estadoValido, verificador, desafio, montarAtributos, formatar, idsDosErros, limparTitulo, daFicha, infoAtributo, VOLTA };
+module.exports._teste = { cifrar, decifrar, novoEstado, estadoValido, verificador, desafio, montarAtributos, formatar, idsDosErros, limparTitulo, daFicha, infoAtributo, lerQualidade, VOLTA };
