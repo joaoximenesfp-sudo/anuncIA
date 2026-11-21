@@ -196,6 +196,8 @@ function daFicha(f) {
     KEYBOARD_LANGUAGE: s('teclado'), COLOR: s('cor'), MAIN_COLOR: s('cor'),
     MAX_BATTERY_LIFE: s('bateria_h') ? s('bateria_h') + ' h' : '',
     SELLER_SKU: s('sku'),
+    // homologação da Anatel (é por modelo; o sistema manda só os números)
+    ANATEL_HOMOLOGATION_NUMBER: /^\d{8,14}$/.test(s('anatel')) ? s('anatel') : '',
     ITEM_CONDITION: 'Usado',
   };
 }
@@ -483,6 +485,7 @@ async function publicar(corpo) {
     if (!c) avisos.push('O Mercado Livre pôs o anúncio como Novo e não deixou mudar: troque para Usado no próprio Mercado Livre.');
   }
   return { ok: true, id: r.j.id, link: r.j.permalink || '', status: r.j.status || 'active', preco: r.j.price || preco, tipo,
+    frete_gratis: !!((r.j.shipping && r.j.shipping.free_shipping) || item.shipping.free_shipping),
     categoria: { id: cat, nome: catNome }, avisos, cifraNova: s.cifraNova };
 }
 async function atualizar(corpo) {
@@ -498,7 +501,25 @@ async function atualizar(corpo) {
     if (!['active', 'paused', 'closed'].includes(corpo.status)) throw erro(400, 'Situação inválida.');
     mud.status = corpo.status;
   }
-  if (!Object.keys(mud).length) throw erro(400, 'Nada para mudar.');
+  if (corpo.tipo !== undefined && !['gold_special', 'gold_pro'].includes(corpo.tipo)) throw erro(400, 'Tipo de anúncio inválido.');
+  const frete = typeof corpo.frete_gratis === 'boolean';
+  if (!Object.keys(mud).length && !corpo.tipo && !frete) throw erro(400, 'Nada para mudar.');
+  const out = { ok: true, cifraNova: s.cifraNova };
+  // tipo (Clássico/Premium): rota própria do Mercado Livre
+  if (corpo.tipo) {
+    const t = await ml('POST', `/items/${id}/listing_type`, { token: s.token, corpo: { id: corpo.tipo } });
+    console.log('ml tipo', id, corpo.tipo, t.status, t.ok ? '' : JSON.stringify(t.j).slice(0, 400));
+    if (!t.ok) throw erro(502, traduzir(t));
+    out.tipo = t.j.listing_type_id || corpo.tipo;
+  }
+  // frete grátis: no envio (mantém o Mercado Envios e a retirada como estão nas opções)
+  if (frete) {
+    const f = await ml('PUT', `/items/${id}`, { token: s.token, corpo: { shipping: { mode: 'me2', free_shipping: corpo.frete_gratis, local_pick_up: corpo.retirada !== false } } });
+    console.log('ml frete', id, corpo.frete_gratis, f.status, f.ok ? '' : JSON.stringify(f.j).slice(0, 400));
+    if (!f.ok) throw erro(502, traduzir(f));
+    out.frete_gratis = f.j.shipping ? !!f.j.shipping.free_shipping : corpo.frete_gratis;
+  }
+  if (!Object.keys(mud).length) return out;
   const r = await ml('PUT', `/items/${id}`, { token: s.token, corpo: mud });
   if (!r.ok) {
     // já encerrado lá (vendido ou fechado à mão): para o sistema, é o que importa saber

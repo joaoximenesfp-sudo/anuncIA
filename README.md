@@ -99,9 +99,13 @@ Livre (o anúncio). Usa a API oficial (`api/ml.js`):
   se sabe fica de fora; o modelo alfanumérico também (é o código regulatório, não o número).
   A condição é sempre **usado**: se o Mercado Livre puser como novo, o sistema corrige. O
   anúncio que saiu com menos características é completado sozinho quando o sistema confere
-  os anúncios (o que ele já tem não muda). Frete grátis é opção em "Como os anúncios saem".
-  O número de homologação da Anatel (na etiqueta embaixo do notebook) o Mercado Livre
-  também pede para a qualidade: esse vai pelo próprio Mercado Livre.
+  os anúncios (o que ele já tem não muda).
+- **Automático depois de publicar**: mudou a máquina (descrição, abas, Anatel, respostas)
+  ou outra do mesmo modelo trouxe um dado novo, o anúncio recebe o que falta sozinho,
+  segundos depois. A **homologação da Anatel** (na etiqueta embaixo do notebook) tem campo
+  nas abas da máquina: basta numa máquina do modelo, as iguais usam a mesma. **Premium**
+  (parcelado sem juros) e **frete grátis** ficam em "Como os anúncios saem": valem para os
+  próximos, e ao salvar o sistema oferece pôr também nos que já estão lá.
 - **Quando o Mercado Livre recusa**, o motivo fica no cartão da máquina até ela ir (para
   tentar de novo: Publicar → Mercado Livre; as respostas ficam guardadas). Resposta que
   ele não aceitou volta como pergunta, com o motivo. Se a validação recusar sem dizer

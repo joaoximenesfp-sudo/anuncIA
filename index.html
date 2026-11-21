@@ -937,6 +937,7 @@ tr.marcada>td:first-child{box-shadow:inset 3px 0 0 var(--gr)}
 .ficha-acoes{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:7px}
 .ficha-hint{font-size:.67rem;color:var(--am);line-height:1.4}
 .hw-f .inp{width:100%}
+.hw-f.hw-largo{grid-column:1/-1}
 .hw-chk{grid-column:1/-1;display:flex;align-items:center;gap:7px;font-size:.72rem;color:var(--tx);cursor:pointer}
 .hw-chk input{width:15px;height:15px;accent-color:#16a34a;cursor:pointer}
 .hw-sug-box{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;padding:7px 10px;
@@ -7342,13 +7343,14 @@ function hwCampos(pre){
     baia_25:   !!(g('Baia25')&&g('Baia25').checked),
     tela_estado: (g('Tela')&&g('Tela').value)||'',
     bateria_estado: (g('Bat')&&g('Bat').value)||'',
+    anatel: ((g('Anatel')&&g('Anatel').value)||'').trim(),
   };
 }
 function hwPreencher(pre,p){
   const set=(id,v)=>{const e=document.getElementById(pre+id); if(e) e.value=(v===null||v===undefined)?'':v;};
   set('SlotsRam',p.slots_ram); set('SlotsRamOc',p.slots_ram_ocup);
   set('SlotsM2',p.slots_m2);   set('SlotsM2Oc',p.slots_m2_ocup);
-  set('Tela',p.tela_estado||''); set('Bat',p.bateria_estado||'');
+  set('Tela',p.tela_estado||''); set('Bat',p.bateria_estado||''); set('Anatel',p.anatel||'');
   const b=document.getElementById(pre+'Baia25'); if(b) b.checked=!!p.baia_25;
 }
 // Slot livre é o que sobra. Sem os dois números não dá pra saber, e chutar zero
@@ -7418,6 +7420,7 @@ function hwHTML(pre){
     <label class="hw-f"><span>Estado da tela</span><select class="inp" id="${pre}Tela">${opc}</select></label>
     <label class="hw-f"><span>Bateria</span><select class="inp" id="${pre}Bat">${opcBat}</select></label>
     <label class="hw-chk"><input type="checkbox" id="${pre}Baia25"><span>Tem baia 2.5" (cabe HD/SSD SATA)</span></label>
+    <label class="hw-f hw-largo"><span>Homologação Anatel (na etiqueta embaixo do notebook) · uma vez por modelo: as iguais usam a mesma</span><input class="inp" id="${pre}Anatel" inputmode="numeric" maxlength="20" placeholder="ex.: 05428-20-03153"></label>
   </div>`;
 }
 
@@ -12675,8 +12678,30 @@ window.mlSalvarOpcoes=async()=>{
   const o={tipo:(g('mlOpTipo')||{}).value==='gold_pro'?'gold_pro':'gold_special', retirada:!!(g('mlOpRet')||{}).checked, frete_gratis:!!(g('mlOpFrete')||{}).checked, garantia:Math.round(num('mlOpGar',0,365,90)),
     caixa:{alt:Math.round(num('mlOpAlt',1,200,10)),larg:Math.round(num('mlOpLarg',1,200,30)),comp:Math.round(num('mlOpComp',1,200,40)),peso:Math.round(num('mlOpPeso',0.1,50,2.5)*10)/10}};
   try{ await setDoc(doc(db,'config','mercadolivre'),{opcoes:o},{merge:true}); mlCfg={...(mlCfg||{}),opcoes:o}; mlMostrar(); mlMsg('✅ Opções salvas: valem para os próximos anúncios.'); }
-  catch(e){ mlMsg('⚠️ Não consegui salvar: '+e.message); }
+  catch(e){ mlMsg('⚠️ Não consegui salvar: '+e.message); return; }
+  await mlAplicarOpcoes(o);
 };
+// Premium e frete grátis também nos anúncios que já estão lá (só para ligar: voltar para
+// Clássico ou tirar o frete grátis de quem já tem fica com o Mercado Livre).
+async function mlAplicarOpcoes(o){
+  const noAr=prods.filter(p=>mlNoAr(p)&&p.status!=='Vendido');
+  const premium=o.tipo==='gold_pro'?noAr.filter(p=>p.ml_tipo!=='gold_pro'):[], frete=o.frete_gratis?noAr.filter(p=>!p.ml_frete_gratis):[];
+  const alvo=noAr.filter(p=>premium.includes(p)||frete.includes(p));
+  if(!alvo.length) return;
+  const oq=[premium.length?'Premium (parcelado sem juros, tarifa maior)':'',frete.length?'frete grátis (o Mercado Livre desconta parte do frete na venda)':''].filter(Boolean).join(' e ');
+  if(!confirm(`Pôr ${oq} também ${alvo.length===1?'no anúncio que já está':'nos '+alvo.length+' anúncios que já estão'} no Mercado Livre?`)) return;
+  let ok=0; const erros=[];
+  for(const p of alvo){
+    try{
+      const r=await mlApi({acao:'atualizar',id:p.ml_id,...(premium.includes(p)?{tipo:'gold_pro'}:{}),...(frete.includes(p)?{frete_gratis:true,retirada:o.retirada}:{})});
+      const campos={}; if(r.tipo) campos.ml_tipo=r.tipo; if(r.frete_gratis!==undefined) campos.ml_frete_gratis=!!r.frete_gratis;
+      try{ await updateDoc(doc(db,'products',p.id),campos); }catch(e){}
+      Object.assign(p,campos); ok++;
+    }catch(e){ erros.push('#'+(p.num||'?')+': '+e.message); }
+  }
+  mlMsg((ok?'✅ '+oq[0].toUpperCase()+oq.slice(1)+' em '+ok+' anúncio'+(ok!==1?'s':'')+' que já estava'+(ok!==1?'m':'')+' no Mercado Livre.':'')+(erros.length?' ⚠️ Não foi: '+erros.join(' · '):''));
+  if(pgAtual==='anuncio') anCatMontar();
+}
 window.mlConectar=async()=>{
   try{ mlMsg('Abrindo a autorização do Mercado Livre...'); const r=await mlApi({acao:'conectar'}); location.href=r.url; }
   catch(e){ mlMsg('⚠️ '+e.message); }
@@ -12796,6 +12821,11 @@ function mlFicha(p){
     touch:mesa?undefined:touch,digital:citado('(?:leitor (?:de )?digital|impressao digital|biometri|fingerprint)'),
     retroiluminado:citado('(?:retroilumin|backlight|teclado iluminado)'),numerico:citado('teclado numerico')};
   const video=mlVideoDaCpu({cpu_linha,cpu_ger,cpu_modelo})||{}, ded=mlVideoDedicado(txt)||{};
+  // homologação da Anatel: a desta máquina; senão a de outra do mesmo modelo (ela é por modelo)
+  const dig=v=>String(v||'').replace(/\D/g,''), mod=cliNorm(f.modelo);
+  let anatel=dig(p.anatel);
+  if(!anatel&&mod) anatel=mlMaisComum(prods.filter(q=>q&&q.id!==p.id&&q.anatel&&cliNorm(fichaDe(q).modelo)===mod).map(q=>dig(q.anatel)).filter(v=>/^\d{8,14}$/.test(v)));
+  if(!/^\d{8,14}$/.test(anatel)) anatel='';
   return { marca:f.marca||'', linha:fam, modelo:f.modelo||'', numero,
     cpu_marca:/^(i[3579]|celeron|pentium)/i.test(cpu)?'Intel':/^ryzen/i.test(cpu)?'AMD':'', cpu_linha, cpu_modelo, cpu_ger,
     ram:qtd(f.ram), ram_tipo:f.ram_tipo||'', ssd:ehHd?'':qtd(disco), hd:ehHd?qtd(disco):'',
@@ -12807,7 +12837,7 @@ function mlFicha(p){
     dedicada_marca:ded.marca||'', dedicada_linha:ded.linha||'', dedicada_modelo:ded.modelo||'',
     tipo_produto:mesa?'':/\b(2 em 1|2 in 1|x360|flip|yoga|conversivel)\b/.test(txt)?'2 em 1':'Notebook',
     teclado:/\babnt\s?2?\b|teclado (?:em |no padrao )?(?:portugues|brasileiro)\b/.test(txt)?'Português':/\bteclado (?:americano|ingles|internacional|us)\b/.test(txt)?'Inglês':'',
-    slots_ram:p.slots_ram!=null&&p.slots_ram!==''?String(p.slots_ram):'' };
+    slots_ram:p.slots_ram!=null&&p.slots_ram!==''?String(p.slots_ram):'', anatel };
 }
 // Nos de mesa (OptiPlex, ThinkCentre, EliteDesk...) mudam o título e os processadores.
 const ML_RE_MESA=/\b(optiplex|think\s?centre|elite\s?desk|pro\s?desk|idea\s?centre|desktop|all[\s-]?in[\s-]?one)\b/i;
@@ -13063,10 +13093,12 @@ async function mlPublicarMaquina(p,aviso){
   if(aviso) aviso('Mercado Livre: criando o anúncio...');
   const r=await mlApi({acao:'publicar',item:{titulo:mlTitulo(p),preco,descricao:mlDescricao(p,o),fotos:ids,ficha:mlFicha(p),atributos:{...mlRespostasIguais(p),...(p.ml_atributos||{})},
     tipo:o.tipo,retirada:o.retirada,frete_gratis:!!o.frete_gratis,garantia_dias:o.garantia,pacote:o.caixa,sku:p.num?String(p.num):'',categoria:p.ml_categoria||''}});
+  const assFicha=mlAssFicha(p);
   if(!r.ok&&r.faltam){ mlFaltam[p.id]={faltam:r.faltam,categoria:r.categoria||{},motivo:r.motivo||''}; delete mlErros[p.id]; return {faltam:r.faltam}; }
   delete mlFaltam[p.id]; delete mlErros[p.id];
   const campos={ml_id:r.id,ml_link:r.link||'',ml_em:new Date().toISOString(),ml_status:r.status||'active',ml_preco:r.preco||preco,ml_tipo:r.tipo||o.tipo,
-    ml_categoria:(r.categoria&&r.categoria.id)||'',ml_categoria_nome:(r.categoria&&r.categoria.nome)||'',ml_pausado_pelo_sistema:false,ml_ficha_v:ML_FICHA_V};
+    ml_categoria:(r.categoria&&r.categoria.id)||'',ml_categoria_nome:(r.categoria&&r.categoria.nome)||'',ml_pausado_pelo_sistema:false,ml_ficha_v:ML_FICHA_V,ml_ficha_ass:assFicha,
+    ml_frete_gratis:!!r.frete_gratis};
   Object.assign(p,campos);
   // sem marcar na máquina, o próximo "Publicar" criaria um anúncio repetido: insiste
   let marcou=false;
@@ -13228,6 +13260,8 @@ async function mlSincronizar(){
         if(/Conectar Mercado Livre|Conecte o Mercado Livre|sócios/.test(e.message)){ mlMsg('⚠️ '+e.message); break; }
       }
     }
+    // mudou a máquina (Anatel, descrição, abas) ou o Mercado Livre trocou a condição: o anúncio acompanha
+    if(await mlCompletarAnuncios(prods.filter(mlNoAr))) mudou=true;
   }finally{ mlSincRodando=false; }
   if(mudou&&pgAtual==='anuncio') anCatMontar();
 }
@@ -13251,24 +13285,29 @@ async function mlNovidades(){
         if(Object.keys(campos).length){ try{ await updateDoc(doc(db,'products',p.id),campos); }catch(e){} Object.assign(p,campos); mudou=true; }
       }
     }
-    if(await mlCompletarAnuncios(comMl)) mudou=true;
     const r=await mlApi({acao:'novidades',desde:new Date(Date.now()-30*864e5).toISOString()});
     mlPedidos=Array.isArray(r.pedidos)?r.pedidos:[]; mlPerguntas=r.perguntas;
   }catch(e){ console.warn('Mercado Livre (novidades):',e.message); }
   mlMostrarVendas(); mlAgendarSinc();
   if(mudou&&pgAtual==='anuncio') anCatMontar();
 }
-// Anúncio que saiu com menos características (versão antiga) ou que o Mercado Livre pôs
-// como novo: ganha o que a ficha sabe e volta para usado. Uma tentativa por sessão.
+// O que vai de características, resumido: muda quando muda a ficha, a descrição, as abas
+// (Anatel, slots, bateria), as respostas, ou o que vem de outra do mesmo modelo.
+const mlHash=t=>{ let h=5381; for(let i=0;i<t.length;i++) h=((h<<5)+h+t.charCodeAt(i))|0; return (h>>>0).toString(36); };
+const mlAssFicha=p=>mlHash(JSON.stringify([mlFicha(p),mlRespostasIguais(p),p.ml_atributos||{}]));
+// Anúncio que saiu com menos características (versão antiga), cuja máquina mudou depois de
+// publicada, ou que o Mercado Livre pôs como novo: ganha o que a ficha sabe e volta para
+// usado. Uma tentativa por mudança.
 const mlCompletarTentou=new Set();
 async function mlCompletarAnuncios(lista){
-  const fila=lista.filter(p=>mlNoAr(p)&&p.status!=='Vendido'&&!mlCompletarTentou.has(p.id)&&((p.ml_ficha_v||0)<ML_FICHA_V||(p.ml_condicao&&p.ml_condicao!=='used')));
+  const fila=lista.map(p=>({p,ass:mlNoAr(p)&&p.status!=='Vendido'?mlAssFicha(p):''}))
+    .filter(({p,ass})=>ass&&!mlCompletarTentou.has(p.id+'|'+ass)&&((p.ml_ficha_v||0)<ML_FICHA_V||p.ml_ficha_ass!==ass||(p.ml_condicao&&p.ml_condicao!=='used')));
   let n=0, usado=0;
-  for(const p of fila){
-    mlCompletarTentou.add(p.id);
+  for(const {p,ass} of fila){
+    mlCompletarTentou.add(p.id+'|'+ass);
     try{
       const r=await mlApi({acao:'completar',id:p.ml_id,ficha:mlFicha(p),atributos:{...mlRespostasIguais(p),...(p.ml_atributos||{})},sku:p.num?String(p.num):'',pacote:mlOpcoes().caixa});
-      const campos={ml_ficha_v:ML_FICHA_V}; if(r.condicao) campos.ml_condicao=r.condicao;
+      const campos={ml_ficha_v:ML_FICHA_V,ml_ficha_ass:ass}; if(r.condicao) campos.ml_condicao=r.condicao;
       if(p.ml_condicao&&p.ml_condicao!=='used'&&r.condicao==='used') usado++;
       try{ await updateDoc(doc(db,'products',p.id),campos); }catch(e){}
       Object.assign(p,campos); n+=(r.adicionados||[]).length;

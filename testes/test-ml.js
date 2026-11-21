@@ -98,7 +98,10 @@ global.fetch = async (url, op = {}) => {
     if (u.pathname.endsWith('MLB999999999')) return resposta(400, { message: 'Item with status closed can not be modified', error: 'item.status.invalid', status: 400, cause: [] });
     const recusa = corpo.attributes && putRecusas.shift();
     if (recusa) return resposta(400, { message: 'Validation error', error: 'validation_error', status: 400, cause: recusa });
-    return resposta(200, { id: u.pathname.split('/').pop(), status: corpo.status || 'active', price: corpo.price || 2199, condition: corpo.condition || 'used' });
+    return resposta(200, { id: u.pathname.split('/').pop(), status: corpo.status || 'active', price: corpo.price || 2199, condition: corpo.condition || 'used', ...(corpo.shipping ? { shipping: corpo.shipping } : {}) });
+  }
+  if (/^\/items\/MLB\d+\/listing_type$/.test(u.pathname) && p.metodo === 'POST') {
+    const corpo = JSON.parse(p.corpo); return resposta(200, { id: u.pathname.split('/')[2], listing_type_id: corpo.id });
   }
   if (u.pathname === '/items' && p.metodo === 'GET') {
     return resposta(200, u.searchParams.get('ids').split(',').map(id => id === 'MLB404040404'
@@ -339,6 +342,17 @@ const ITEM = { titulo: 'Notebook Dell Latitude 5490 i5 8ª 16GB SSD 256GB', prec
   r = await post({ acao: 'completar', id: 'MLB8033815524', ficha: FICHA2 });
   ok(!pedidos.some(p => p.metodo === 'PUT' && /"condition"/.test(p.corpo || '')) && r.json().condicao === 'new', 'com venda, a condição não muda (o Mercado Livre não deixa)');
   itemLa = null;
+  ok(T.daFicha({ anatel: '054282003153' }).ANATEL_HOMOLOGATION_NUMBER === '054282003153' && T.daFicha({ anatel: '12' }).ANATEL_HOMOLOGATION_NUMBER === '',
+    'a homologação da Anatel vai no anúncio (só número de homologação de verdade)');
+
+  console.log('\nPremium e frete grátis no anúncio que já está lá');
+  pedidos = [];
+  r = await post({ acao: 'atualizar', id: 'MLB8033815524', tipo: 'gold_pro', frete_gratis: true, retirada: true });
+  const lt = pedidos.find(p => p.url.endsWith('/items/MLB8033815524/listing_type')), fr = pedidos.find(p => p.metodo === 'PUT' && p.url.endsWith('/items/MLB8033815524'));
+  ok(r.status === 200 && r.json().tipo === 'gold_pro' && r.json().frete_gratis === true && lt && JSON.parse(lt.corpo).id === 'gold_pro' &&
+    fr && JSON.stringify(JSON.parse(fr.corpo).shipping) === '{"mode":"me2","free_shipping":true,"local_pick_up":true}', 'passa para Premium (rota do tipo) e liga o frete grátis (mantém a retirada)');
+  r = await post({ acao: 'atualizar', id: 'MLB8033815524', tipo: 'diamante' });
+  ok(r.status === 400, 'tipo que não existe: 400');
   r = await post({ acao: 'publicar', item: { ...ITEM, fotos: [] } });
   const r4 = await post({ acao: 'publicar', item: { ...ITEM, preco: 0 } });
   ok(r.status === 400 && /pelo menos uma foto/.test(r.json().erro) && r4.status === 400, 'sem foto ou sem preço: nem tenta');

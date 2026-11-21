@@ -122,6 +122,15 @@ const opt=M.mlFicha({id:'o1',nome:'Dell OptiPlex 3080 i5 10ª 8GB SSD 256GB'}), 
 ok(opt.mesa && opt.tem.wifi===undefined && opt.tem.webcam===undefined && opt.tipo_produto==='' && yoga.tipo_produto==='2 em 1' && yoga.tem.touch===true,
   'de mesa: não chuta Wi-Fi nem webcam; 2 em 1 com touch');
 
+console.log('\nhomologação da Anatel (uma vez por modelo)');
+const an1={id:'an1',nome:'Dell Latitude 3420 i5 11ª 16GB',anatel:'05428-20-03153'}, an2={id:'an2',nome:'Dell Latitude 3420 i5 11ª 8GB'}, an3={id:'an3',nome:'Dell Latitude 5490 i5 8ª 8GB'};
+M.poe([an1,an2,an3]);
+ok(M.mlFicha(an1).anatel==='054282003153' && M.mlFicha(an2).anatel==='054282003153' && M.mlFicha(an3).anatel==='',
+  'a desta máquina (só os números); a outra Latitude 3420 usa a mesma; a de outro modelo não');
+ok(M.mlFicha({id:'an4',nome:'Dell Latitude 3420',anatel:'abc'}).anatel==='054282003153', 'digitou errado nesta: vale a do modelo');
+M.poe([]);
+ok(M.mlFicha({id:'an4',nome:'Dell Latitude 3420',anatel:'abc'}).anatel==='' && M.mlFicha({id:'an5',nome:'Dell Latitude 3420',anatel:'123'}).anatel==='', 'o que não é número de homologação não vai');
+
 console.log('\no que a loja já teve (anunciadas, vendidas, em estoque)');
 ok(JSON.stringify(M.mlCpusComuns({cpu_linha:'Core i5',cpu_ger:'8'},false))==='["8250U","8350U","8265U","8365U"]' &&
   JSON.stringify(M.mlCpusComuns({cpu_linha:'Core i5',cpu_ger:'8'},true))==='["8500T","8400T","8500"]' &&
