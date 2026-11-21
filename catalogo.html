@@ -121,6 +121,29 @@ b,strong,th,h1,h2,h3,h4,h5,h6{font-weight:600}
     background-size:200% 100%;animation:sh 1.3s linear infinite}
   @media(max-width:600px){ .dest{border-radius:24px;padding:8px} .dest img{border-radius:18px}
     .dest-tag{left:16px;right:16px;bottom:16px;padding:11px 13px} .dest-pr{font-size:1.1rem} }
+  /* vitrine: alguns modelos passando sozinhos na moldura (um some, o outro aparece
+     com um zoom leve); a barrinha do ponto ativo mostra quanto falta para o próximo */
+  .vit-pal{position:relative;aspect-ratio:4/3;border-radius:22px;overflow:hidden;touch-action:pan-y;background:rgba(255,255,255,.04)}
+  .vit-sl{position:absolute;inset:0;opacity:0;transform:scale(1.045);pointer-events:none;
+    transition:opacity .8s ease,transform 1.6s cubic-bezier(.2,.7,.2,1)}
+  .vit-sl.on{opacity:1;transform:none;pointer-events:auto}
+  .vit-sl img{width:100%;height:100%;aspect-ratio:auto;border-radius:0}
+  .vit-sl .dest-tag{left:12px;right:12px;bottom:12px;opacity:0;transform:translateY(10px);
+    transition:opacity .5s ease .25s,transform .6s cubic-bezier(.2,.7,.2,1) .25s}
+  .vit-sl.on .dest-tag{opacity:1;transform:none}
+  .vit-dots{display:flex;justify-content:center;gap:2px;margin-top:12px}
+  .vit-d{border:0;background:none;padding:8px 4px;cursor:pointer;line-height:0}
+  .vit-d span{display:block;position:relative;overflow:hidden;width:8px;height:8px;border-radius:999px;
+    background:rgba(255,255,255,.26);transition:width .35s ease,background .2s}
+  .vit-d:hover span{background:rgba(255,255,255,.45)}
+  .vit-d.on span{width:30px;background:rgba(255,255,255,.2)}
+  .vit-d:focus-visible{outline:none} .vit-d:focus-visible span{box-shadow:0 0 0 2px var(--g1)}
+  .vit-d i{position:absolute;inset:0;border-radius:inherit;background:linear-gradient(90deg,var(--g1),var(--ciano));
+    transform-origin:left;transform:scaleX(0);animation:vitT var(--vit-t,5s) linear forwards}
+  .vit.pausa .vit-d i{animation-play-state:paused}
+  @keyframes vitT{to{transform:scaleX(1)}}
+  @media(max-width:600px){ .vit-pal{border-radius:18px} .vit-sl .dest-tag{left:8px;right:8px;bottom:8px} }
+  @media(prefers-reduced-motion:reduce){ .vit-sl,.vit-sl .dest-tag{transition:none} .vit-d i{animation:none;transform:scaleX(1)} }
   /* faixa de confiança */
   .conf{position:relative;display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:6px 0 60px}
   @media(max-width:900px){ .conf{grid-template-columns:1fr 1fr;padding-bottom:38px} }
@@ -936,19 +959,85 @@ function cartao(g,k){
   </div>`;
 }
 
-// A máquina mais cara disponível e com foto abre a página, em destaque.
+// Vitrine do topo: até 6 modelos disponíveis e com foto, passando sozinhos.
+// A mais cara abre a vitrine; depois vai alternando a marca (a mais cara de cada
+// uma, depois a segunda de cada...), para não ficar só Dell ou só Lenovo.
+const VIT_MAX=6, VIT_SEG=5;
+let vitLimpa=null;
+function vitrineModelos(){
+  const cand=agrupar(itens).filter(g=>{ const i=g.itens[0];
+    return i.capa && i.estado!=='reservado' && i.estado!=='chegando' && (Number(i.preco)||0)>0; });
+  const filas=new Map();
+  for(const g of cand){ const m=norm(partesNome(g.itens[0]).marca)||'-'; if(!filas.has(m)) filas.set(m,[]); filas.get(m).push(g); }
+  const fs=[...filas.values()], out=[];
+  for(let r=0; out.length<VIT_MAX && fs.some(f=>f.length>r); r++)
+    for(const f of fs) if(f[r] && out.length<VIT_MAX) out.push(f[r]);
+  return out;
+}
 function destaque(){
-  const g=agrupar(itens).find(x=>x.itens[0].capa && x.itens[0].estado!=='reservado' && x.itens[0].estado!=='chegando' && (Number(x.itens[0].preco)||0)>0);
-  if(!g){ $('destaque').innerHTML=''; $('heroG').classList.add('so'); return; }
-  const i=g.itens[0], p=partesNome(i);
-  $('destaque').innerHTML=`<div class="dest" id="destCard" tabindex="0" role="button" aria-label="Ver ${esc(p.marca+' '+p.modelo)}">
-    <img src="${i.capa}" alt="${esc(p.marca+' '+p.modelo)}">
-    <div class="dest-tag"><div style="min-width:0"><div class="dest-k">Destaque${p.marca?' · '+esc(p.marca):''}</div>
-      <div class="dest-nm">${esc(p.modelo)}</div></div><div class="dest-pr">${fmt(i.preco)}</div></div>
+  if(vitLimpa){ vitLimpa(); vitLimpa=null; }
+  const gs=vitrineModelos();
+  if(!gs.length){ $('destaque').innerHTML=''; $('heroG').classList.add('so'); return; }
+  const rot=g=>{ const p=partesNome(g.itens[0]); return (p.marca?p.marca+' ':'')+p.modelo; };
+  const n=gs.length;
+  $('destaque').innerHTML=`<div class="vit" id="vit" role="region" aria-roledescription="carrossel" aria-label="Máquinas em destaque" style="--vit-t:${VIT_SEG}s">
+    <div class="dest" id="destCard" tabindex="0" role="button" aria-label="Ver ${esc(rot(gs[0]))}">
+      <div class="vit-pal">${gs.map((g,k)=>{ const i=g.itens[0], p=partesNome(i); return `
+        <div class="vit-sl" aria-hidden="${k?'true':'false'}">
+          <img src="${i.capa}" alt="${esc(rot(g))}" decoding="async">
+          <div class="dest-tag"><div style="min-width:0"><div class="dest-k">Destaque${p.marca?' · '+esc(p.marca):''}</div>
+            <div class="dest-nm">${esc(p.modelo)}</div></div><div class="dest-pr">${fmt(i.preco)}</div></div>
+        </div>`; }).join('')}
+      </div>
+    </div>${n>1?`
+    <div class="vit-dots">${gs.map((g,k)=>`<button type="button" class="vit-d" aria-label="Mostrar ${esc(rot(g))} (${k+1} de ${n})"><span></span></button>`).join('')}</div>`:''}
   </div>`;
-  const d=$('destCard');
-  d.onclick=()=>abrir(g,0);
-  d.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); abrir(g,0); } };
+  const vit=$('vit'), card=$('destCard'), pal=vit.querySelector('.vit-pal');
+  const sls=[...vit.querySelectorAll('.vit-sl')], ds=[...vit.querySelectorAll('.vit-d')];
+  let atual=0, x0=null, y0=0, mexeu=false;
+  // parada por qualquer motivo (mouse em cima, foco do teclado, dedo na tela, fora da
+  // tela, detalhe aberto, aba escondida): a barrinha congela e retoma de onde estava
+  const motivos=new Set();
+  const pausa=(m,sim)=>{ if(sim) motivos.add(m); else motivos.delete(m); vit.classList.toggle('pausa',motivos.size>0); };
+  const ir=k=>{
+    k=((k%n)+n)%n; atual=k;
+    sls.forEach((sl,j)=>{ sl.classList.toggle('on',j===k); sl.setAttribute('aria-hidden',j===k?'false':'true'); });
+    ds.forEach((d,j)=>{ d.classList.toggle('on',j===k);
+      if(j===k) d.setAttribute('aria-current','true'); else d.removeAttribute('aria-current');
+      d.firstElementChild.innerHTML=j===k?'<i></i>':''; });
+    card.setAttribute('aria-label','Ver '+rot(gs[k]));
+    // a barrinha termina → próximo (sem animação, no "reduzir movimento", não passa sozinho)
+    const barra=ds[k]&&ds[k].querySelector('i');
+    if(barra) barra.addEventListener('animationend',()=>ir(atual+1),{once:true});
+  };
+  ds.forEach((d,k)=>{ d.onclick=()=>ir(k); });
+  card.onclick=()=>{ if(mexeu){ mexeu=false; return; } abrir(gs[atual],0); };
+  card.onkeydown=e=>{
+    if(e.key==='Enter'||e.key===' '){ e.preventDefault(); abrir(gs[atual],0); }
+    else if(n>1&&e.key==='ArrowRight'){ e.preventDefault(); ir(atual+1); }
+    else if(n>1&&e.key==='ArrowLeft'){ e.preventDefault(); ir(atual-1); }
+  };
+  vit.addEventListener('pointerenter',e=>{ if(e.pointerType==='mouse') pausa('mouse',true); });
+  vit.addEventListener('pointerleave',e=>{ if(e.pointerType==='mouse') pausa('mouse',false); });
+  vit.addEventListener('focusin',e=>{ let kb=false; try{ kb=e.target.matches(':focus-visible'); }catch(_){} pausa('foco',kb); });
+  vit.addEventListener('focusout',e=>{ if(!vit.contains(e.relatedTarget)) pausa('foco',false); });
+  // celular: arrastar para o lado troca de modelo (para cima e para baixo continua rolando a página)
+  pal.addEventListener('pointerdown',e=>{ if(e.pointerType==='mouse') return; x0=e.clientX; y0=e.clientY; mexeu=false; pausa('dedo',true); });
+  pal.addEventListener('pointermove',e=>{ if(x0!==null&&Math.abs(e.clientX-x0)>10) mexeu=true; });
+  pal.addEventListener('pointerup',e=>{
+    if(x0===null) return;
+    const dx=e.clientX-x0, dy=e.clientY-y0; x0=null; pausa('dedo',false);
+    if(n>1&&Math.abs(dx)>40&&Math.abs(dx)>Math.abs(dy)) ir(atual+(dx<0?1:-1));
+  });
+  pal.addEventListener('pointercancel',()=>{ x0=null; pausa('dedo',false); });
+  const io='IntersectionObserver' in window?new IntersectionObserver(es=>es.forEach(e=>pausa('fora',!e.isIntersecting)),{threshold:.2}):null;
+  if(io) io.observe(vit);
+  const mo='MutationObserver' in window?new MutationObserver(()=>pausa('detalhe',$('ov').classList.contains('on'))):null;
+  if(mo&&$('ov')) mo.observe($('ov'),{attributes:true,attributeFilter:['class']});
+  const aba=()=>pausa('aba',document.hidden);
+  document.addEventListener('visibilitychange',aba);
+  vitLimpa=()=>{ if(io) io.disconnect(); if(mo) mo.disconnect(); document.removeEventListener('visibilitychange',aba); };
+  ir(0);
 }
 
 // ── detalhe ─────────────────────────────────────────────────────────────
