@@ -95,8 +95,16 @@ Livre (o anúncio). Usa a API oficial (`api/ml.js`):
   vídeo integrado (pela geração do processador; com o código, o modelo exato) e dedicado
   (pela descrição), Wi-Fi, Bluetooth, webcam, microfone e saída de fone (notebook tem, a
   não ser que a descrição diga que não), leitor digital e teclado retroiluminado (só se a
-  descrição disser), teclado ABNT, tipo de produto e o SKU (número da máquina). O que não
+  descrição disser), teclado ABNT, tipo de produto e o SKU (número da máquina). Das
+  "características principais": a cor (e a cor principal, o tom mais perto da lista do
+  Mercado Livre), núcleos e velocidade mínima e máxima do processador (pelo código, numa
+  tabela dos comuns: Intel e AMD com o mesmo número não se confundem), tela LED (60 Hz se
+  não tiver placa dedicada), som estéreo, refrigeração a ar, o fabricante, a resolução da
+  webcam (HD), conectividade (HDMI, USB-C), "acompanha carregador" e tela antirreflexo. O que não
   se sabe fica de fora; o modelo alfanumérico também (é o código regulatório, não o número).
+- **Descrição**: o Mercado Livre ignora a descrição mandada junto com o anúncio (nos
+  anúncios de "produto do usuário"); ela vai numa chamada própria, logo depois de criar.
+  Mudou a descrição, a cor ou a ficha da máquina, o anúncio recebe a descrição nova sozinho.
   A condição é sempre **usado**: se o Mercado Livre puser como novo, o sistema corrige. O
   anúncio que saiu com menos características é completado sozinho quando o sistema confere
   os anúncios (o que ele já tem não muda).
@@ -143,10 +151,12 @@ renovações não se atropelarem).
 No cadastro e no Editar (quadro "Revisão da máquina e o que vai no anúncio"), a parte
 **📢 Vai no anúncio** tem:
 
-- **Recursos**: Wi-Fi, Bluetooth, webcam, microfone, saída de fone, HDMI, USB-C, teclado
-  retroiluminado, ABNT2 e numérico, leitor digital, tela touch e leitor de cartão SD.
-  Notebook novo no cadastro já vem com o básico marcado (Wi-Fi, Bluetooth, webcam,
-  microfone e fone). Desmarcar o básico é "não tem"; extra não marcado é "não se sabe"
+- **Recursos** (cada um com a caixinha de marcar): Wi-Fi, Bluetooth, webcam, microfone,
+  saída de fone, HDMI, USB-C, teclado retroiluminado, ABNT2 e numérico, leitor digital,
+  tela touch, leitor de cartão SD, tela antirreflexo e acompanha carregador. Notebook novo
+  no cadastro já vem com o básico marcado (Wi-Fi, Bluetooth, webcam, microfone, fone e
+  carregador). Sem marcação, o carregador só conta quando a descrição fala dele ("sem
+  carregador" é não). Desmarcar o básico é "não tem"; extra não marcado é "não se sabe"
   (não vai "não" para o Mercado Livre: contradizer o que ele sabe do modelo derruba a
   qualidade). Máquina antiga, sem marcação, mostra no Editar o que o sistema deduz da
   descrição (e o básico de notebook), e é isso que vai até alguém corrigir.
@@ -154,16 +164,26 @@ No cadastro e no Editar (quadro "Revisão da máquina e o que vai no anúncio"),
   shorts). No catálogo vira um player na página da máquina (e o cartão avisa "▶ vídeo");
   no Mercado Livre vai como o vídeo do anúncio. O Instagram precisa do arquivo do vídeo:
   por link do YouTube não dá.
-- **Sistema** (Windows 11 Pro, Linux, sem sistema...) e **resolução da tela** (HD, Full HD...).
+- **Sistema** (Windows 11 Pro, Linux, sem sistema...), **resolução da tela** (HD, Full HD...)
+  e **cor** (as cores que o Mercado Livre conhece; sem escolher, vale a que a descrição diz:
+  "cor prata" é Prateado).
 - **Código do processador** (8350U): a lista sugere os da linha e geração escolhidas; é o
   que o Mercado Livre sempre pede.
 - **Homologação Anatel**: uma vez por modelo. No quadro do Mercado Livre, "Homologação
   Anatel por modelo" lista cada modelo uma vez: digitou, todas as máquinas daquele modelo
   recebem, e as que já estão no Mercado Livre são atualizadas em seguida.
 
-Onde aparece: no **catálogo** ("O que ela tem" e Sistema/Resolução na ficha, e a busca acha
-por recurso), na **legenda do Instagram** (🪟 sistema e tela; ✨ recursos) e no **Mercado
-Livre** (as características e a descrição). A homologação vai só para o Mercado Livre.
+Onde aparece: no **catálogo** ("O que ela tem" e Sistema/Resolução/Cor na ficha, e a busca
+acha por recurso e cor), na **legenda do Instagram** (🪟 sistema, tela e cor; ✨ recursos) e
+no **Mercado Livre** (as características e a descrição). A homologação vai só para o
+Mercado Livre.
+
+**Conferência do anúncio**: no fim do quadro, no cadastro e no Editar, a lista do que já
+está pronto para o anúncio sair completo e do que falta: 3 fotos ou mais, descrição, cor,
+sistema, resolução, código do processador e a homologação Anatel (a de outra máquina do
+mesmo modelo vale); o vídeo é opcional. Ela acompanha o que é digitado, marcado e as fotos.
+Ao **Adicionar** uma máquina como Anunciado com algo faltando, o sistema mostra o que falta
+e pergunta se adiciona assim mesmo.
 
 ## Letra do sistema e do site
 

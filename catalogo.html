@@ -837,7 +837,7 @@ function filtrados(){
     }
     if(!q) return true;
     const alvo=norm((i.nome||'')+' '+(i.marca||'')+' '+specsDe(i).join(' ')+' '+condicoes(i).map(c=>c.t).join(' ')
-      +' '+(i.recursos||[]).join(' ')+' '+(i.sistema||'')+' '+(i.resolucao||''));
+      +' '+(i.recursos||[]).join(' ')+' '+(i.sistema||'')+' '+(i.resolucao||'')+' '+(typeof i.cor==='string'?i.cor:''));
     return q.split(/\s+/).every(t=>alvo.includes(t));
   });
 }
@@ -1082,6 +1082,7 @@ async function abrir(g,k){
     ? `Olá! Vi no catálogo que o *${i.nome}*${qual} está chegando${temPreco?` por ${fmt(i.preco)}`:''}. Dá pra reservar?`
     : `Olá! Tenho interesse no *${i.nome}*${qual} por ${fmt(i.preco)}, que vi no catálogo. Ainda está disponível?`;
   const ficha=[...p.specs.map(s=>({k:rotuloSpec(s),v:s})), ...(i.sistema?[{k:'Sistema',v:i.sistema}]:[]), ...(i.resolucao?[{k:'Resolução',v:i.resolucao}]:[]),
+    ...(typeof i.cor==='string'&&i.cor.trim()?[{k:'Cor',v:i.cor.trim()}]:[]),
     ...condicoes(i).map(c=>({k:c.k,v:c.v,cls:c.cls}))];
   const recursos=(Array.isArray(i.recursos)?i.recursos:[]).filter(r=>typeof r==='string'&&r.trim());
   $('dt').innerHTML=`

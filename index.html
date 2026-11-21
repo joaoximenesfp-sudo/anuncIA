@@ -941,7 +941,7 @@ tr.marcada>td:first-child{box-shadow:inset 3px 0 0 var(--gr)}
 .hw-f .inp{width:100%}
 .hw-f.hw-largo{grid-column:1/-1}
 .hw-rec{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
-.hw-par{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.hw-par{grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));gap:8px}
 @media (max-width:420px){.hw-par{grid-template-columns:1fr}}
 .hw-f .inp.erro{border-color:#dc2626}
 .hw-sub{grid-column:1/-1;font-size:.72rem;font-weight:600;color:var(--tx);border-top:1px dashed var(--b2);padding-top:9px;margin-top:2px}
@@ -953,6 +953,12 @@ tr.marcada>td:first-child{box-shadow:inset 3px 0 0 var(--gr)}
 .rec-chip{border:1px solid var(--b2);background:var(--w);color:var(--mu);font-size:.72rem;font-weight:500;padding:5px 10px;border-radius:999px;cursor:pointer;transition:.12s;font-family:inherit}
 .rec-chip:hover{border-color:var(--tx)}
 .rec-chip.on{background:var(--tx);color:var(--w);border-color:var(--tx)}
+.rec-chip::before{content:'';display:inline-block;width:11px;height:11px;border:1.5px solid currentColor;border-radius:3px;margin-right:6px;vertical-align:-1px;opacity:.7}
+.rec-chip.on::before{content:'✓';width:auto;height:auto;border:0;margin-right:5px;opacity:1;font-weight:700;color:#34d399;vertical-align:0}
+.hw-conf{grid-column:1/-1;border:1px solid var(--b2);border-radius:10px;padding:9px 11px;font-size:.72rem;background:var(--w)}
+.hw-conf b{font-weight:600;color:var(--tx)}
+.hw-conf ul{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:5px 12px}
+.hw-conf li.ok{color:#047857} .hw-conf li.falta{color:#b91c1c} .hw-conf li.opc{color:var(--li)}
 .hw-chk{grid-column:1/-1;display:flex;align-items:center;gap:7px;font-size:.72rem;color:var(--tx);cursor:pointer}
 .hw-chk input{width:15px;height:15px;accent-color:#16a34a;cursor:pointer}
 .hw-sug-box{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;padding:7px 10px;
@@ -4974,6 +4980,10 @@ window.addProd=async()=>{
   const nome=g('pN'),custo=parseFloat(document.getElementById('pC').value)||0,venda=parseFloat(document.getElementById('pV').value)||0,status=document.getElementById('pS').value,dc=document.getElementById('pDC').value,investidor=document.getElementById('pInv').value;
   const canal=document.getElementById('pCanal').value;
   if(!nome){alert('Digite o nome!');return;}
+  // o check do anúncio: anunciada com algo faltando, pergunta antes
+  if(status==='Anunciado'){ try{ const c=hwConferencia('p');
+    if(c.falta.length&&!confirm('Para o anúncio sair completo (catálogo, Instagram e Mercado Livre), falta:\n\n• '+c.falta.join('\n• ')+'\n\nAdicionar assim mesmo?')) return;
+  }catch(e){} }
   // Máquina sem data de compra some de TODO relatório mensal — comprados do
   // mês, gasto por sócio, receita vs gasto — e some sem dizer nada. Foi assim
   // que um lote inteiro cadastrado por cópia ficou fora dos números.
@@ -6570,7 +6580,7 @@ function montarHw(){
     e.addEventListener('input', ()=>{ try{ eHwSugerir(); }catch(err){} });
     e.addEventListener('change', ()=>{ try{ eHwSugerir(); }catch(err){} });
   }
-  const c=document.getElementById('pHwMount'); if(c && !c.innerHTML) c.innerHTML=hwHTML('p');
+  const c=document.getElementById('pHwMount'); if(c && !c.innerHTML){ c.innerHTML=hwHTML('p'); try{ hwConferir('p'); }catch(err){} }
 }
 // Nome sugerido a partir do que foi conferido. NÃO sobrescreve sozinho: mostra a
 // sugestão e você aplica se quiser. Sobrescrever nome que você escreveu à mão
@@ -6945,6 +6955,7 @@ function fpRender(chave){
       </div>`).join('')
     : '';
   if(st) st.textContent = arr.length ? `${arr.length} foto${arr.length!==1?'s':''} prontas — entram junto no cadastro.` : '';
+  if(chave==='prod') try{ hwConferir('p'); }catch(e){}
 }
 
 window.fpSubir=async(input, chave)=>{
@@ -7042,6 +7053,7 @@ function foRender(msg){
   if(dica) dica.textContent = fotosDoProduto.length>1
     ? '✋ Segure uma foto e arraste para trocar de lugar. A primeira é a capa.' : '';
   if(!lista._arrOn){ lista._arrOn=true; lista.addEventListener('pointerdown',foArrDown); }
+  try{ hwConferir('e'); }catch(e){}
   if(st){
     const kb=Math.round(fotosDoProduto.reduce((s,f)=>s+((f.dataUrl||'').length),0)/1024);
     st.textContent = fotosDoProduto.length
@@ -7351,8 +7363,11 @@ const TELA_OPC=[
 const RECURSOS=[['wifi','📶','Wi-Fi'],['bluetooth','🔵','Bluetooth'],['webcam','📷','Webcam'],['microfone','🎙️','Microfone'],
   ['fone','🎧','Saída de fone'],['hdmi','🖥️','HDMI'],['usbc','🔌','USB-C'],['retroiluminado','⌨️','Teclado retroiluminado'],
   ['abnt2','Ç','Teclado ABNT2'],['numerico','🔢','Teclado numérico'],['digital','👆','Leitor digital'],['touch','👉','Tela touch'],
-  ['sd','💳','Leitor de cartão SD']];
-const RECURSOS_PADRAO=['wifi','bluetooth','webcam','microfone','fone'];
+  ['sd','💳','Leitor de cartão SD'],['antirreflexo','🕶️','Tela antirreflexo (fosca)'],['carregador','⚡','Acompanha carregador']];
+const RECURSOS_PADRAO=['wifi','bluetooth','webcam','microfone','fone','carregador'];
+// As cores que o Mercado Livre conhece (a "cor principal" lá é o tom mais perto).
+const CORES=['Preto','Cinza','Cinza-escuro','Prateado','Branco','Azul','Azul-escuro','Dourado','Rosa','Vermelho','Verde'];
+const corDe=p=>(p&&p.cor)||mlFicha(p||{}).cor||'';
 const SISTEMAS=['Windows 11 Pro','Windows 11 Home','Windows 11','Windows 10 Pro','Windows 10 Home','Windows 10','Windows','Linux','Sem sistema'];
 const RESOLUCOES=[['','—'],['1366 x 768','HD (1366 × 768)'],['1920 x 1080','Full HD (1920 × 1080)'],['2560 x 1440','QHD (2560 × 1440)'],['3840 x 2160','4K (3840 × 2160)']];
 const recRotulo=k=>(RECURSOS.find(r=>r[0]===k)||[,,k])[2];
@@ -7382,7 +7397,7 @@ const resRotulo=v=>((RESOLUCOES.find(r=>r[0]===v)||[])[1]||v||'').replace(/\s*\(
 // Para o anúncio: "Wi-Fi · Bluetooth · Webcam" e "Windows 11 Pro · tela Full HD".
 function recursosLinhas(p){
   const r=recursosDe(p).map(recRotulo), so=sistemaDe(p), res=resolucaoDe(p);
-  return {recursos:r, sistema:so, resolucao:res?resRotulo(res):''};
+  return {recursos:r, sistema:so, resolucao:res?resRotulo(res):'', cor:corDe(p)};
 }
 function hwCampos(pre){
   const g=id=>document.getElementById(pre+id);
@@ -7398,15 +7413,48 @@ function hwCampos(pre){
     sistema: (g('So')&&g('So').value)||'',
     resolucao: (g('Res')&&g('Res').value)||'',
     video: ((g('Video')&&g('Video').value)||'').trim(),
+    cor: (g('Cor')&&g('Cor').value)||'',
     // sem o quadro na tela, não grava "nenhum recurso" por engano
     ...(g('Rec')?{recursos:[...g('Rec').querySelectorAll('.rec-chip.on')].map(b=>b.dataset.r)}:{}),
   };
 }
+// Conferência do anúncio: o que já está pronto para o anúncio sair completo (catálogo,
+// Instagram, Mercado Livre) e o que falta. No cadastro, "Adicionar" avisa se falta algo.
+function hwConferencia(pre){
+  const g=id=>document.getElementById(pre+id), val=id=>((g(id)||{}).value||'').trim();
+  const ed=pre==='e', pe=ed?(prods.find(x=>x.id===editId)||{}):{};
+  const nome=ed?val('N')||pe.nome||'':val('N');
+  const desc=((document.getElementById(ed?'eDescricao':'pDescricao')||{}).value||'').trim();
+  const nFotos=ed?fotosDoProduto.length:((fotosPend&&fotosPend.prod)||[]).length;
+  const mod=cliNorm((fichaDoNome(nome)||{}).modelo);
+  const anatelModelo=!!mod&&prods.some(q=>q&&q.id!==pe.id&&/^\d{8,14}$/.test(String(q.anatel||'').replace(/\D/g,''))&&cliNorm(fichaDe(q).modelo)===mod);
+  const itens=[
+    ['Fotos (3 ou mais)',nFotos>=3,nFotos?nFotos+' foto'+(nFotos!==1?'s':''):''],
+    ['Descrição',desc.length>=40,''],
+    ['Cor',!!val('Cor'),''],['Sistema',!!val('So'),''],['Resolução da tela',!!val('Res'),''],
+    ['Código do processador',!!val('CpuCod')||!!mlCpuCodigo(nome),''],
+    ['Homologação Anatel',/^\d{8,14}$/.test(val('Anatel').replace(/\D/g,''))||anatelModelo,anatelModelo&&!val('Anatel')?'a do modelo':''],
+  ];
+  return {itens, falta:itens.filter(i=>!i[1]).map(i=>i[0]), video:!!ytId(val('Video'))};
+}
+window.hwConferir=pre=>{
+  const box=document.getElementById(pre+'Conf'); if(!box) return;
+  const c=hwConferencia(pre), feitos=c.itens.length-c.falta.length;
+  box.innerHTML=`<b>${c.falta.length?'📋':'✅'} Conferência do anúncio</b> · ${feitos} de ${c.itens.length}${c.falta.length?'':' — tudo pronto para sair completo'}
+    <ul>${c.itens.map(([t,ok,x])=>`<li class="${ok?'ok':'falta'}">${ok?'✓':'✗'} ${esc(t)}${x?' ('+esc(x)+')':''}</li>`).join('')}<li class="${c.video?'ok':'opc'}">${c.video?'✓':'○'} Vídeo${c.video?'':' (opcional)'}</li></ul>`;
+};
+// a conferência acompanha o que é digitado, marcado e as fotos
+['input','change','click'].forEach(ev=>document.addEventListener(ev,e=>{
+  const t=e.target; if(!(t instanceof Element)) return;
+  if(t.closest('#pHwMount')||t.id==='pDescricao'||t.id==='pN'||t.closest('#chipsCpu,#chipsGer')) setTimeout(()=>{ try{ hwConferir('p'); }catch(_){} },0);
+  else if(t.closest('#eHwMount')||t.id==='eDescricao'||t.id==='eN') setTimeout(()=>{ try{ hwConferir('e'); }catch(_){} },0);
+}));
 // Volta o quadro do cadastro ao começo (o básico de notebook marcado).
 function hwLimpar(pre){
-  ['SlotsRam','SlotsRamOc','SlotsM2','SlotsM2Oc','Tela','Bat','Anatel','CpuCod','So','Res','Video'].forEach(id=>{ const e=document.getElementById(pre+id); if(e) e.value=''; });
+  ['SlotsRam','SlotsRamOc','SlotsM2','SlotsM2Oc','Tela','Bat','Anatel','CpuCod','So','Res','Video','Cor'].forEach(id=>{ const e=document.getElementById(pre+id); if(e) e.value=''; });
   const b=document.getElementById(pre+'Baia25'); if(b) b.checked=false;
   const rec=document.getElementById(pre+'Rec'); if(rec) rec.querySelectorAll('.rec-chip').forEach(x=>x.classList.toggle('on',RECURSOS_PADRAO.includes(x.dataset.r)));
+  try{ hwConferir(pre); }catch(e){}
 }
 // Código do processador como o Mercado Livre usa: "i5-8350U", "8350u" → "8350U".
 function hwCodigo(v){ v=String(v||'').trim(); return v?(mlCpuCodigo(v)||mlCpuCodigo('i5 '+v)||v.toUpperCase().slice(0,20)):''; }
@@ -7430,7 +7478,8 @@ function hwPreencher(pre,p){
   const rec=document.getElementById(pre+'Rec');
   if(rec){ const tem=recursosDe(p); rec.querySelectorAll('.rec-chip').forEach(b=>b.classList.toggle('on',tem.includes(b.dataset.r))); }
   const so=sistemaDe(p), res=resolucaoDe(p);
-  set('So',SISTEMAS.includes(so)?so:''); set('Res',RESOLUCOES.some(r=>r[0]===res)?res:'');
+  set('So',SISTEMAS.includes(so)?so:''); set('Res',RESOLUCOES.some(r=>r[0]===res)?res:''); const cr=corDe(p); set('Cor',CORES.includes(cr)?cr:'');
+  try{ hwConferir(pre); }catch(e){}
   const b=document.getElementById(pre+'Baia25'); if(b) b.checked=!!p.baia_25;
 }
 // Slot livre é o que sobra. Sem os dois números não dá pra saber, e chutar zero
@@ -7504,10 +7553,12 @@ function hwHTML(pre){
     <div class="hw-f hw-largo"><span>✨ Recursos · marque o que a máquina tem</span>
       <div class="hw-rec" id="${pre}Rec">${RECURSOS.map(([k,ic,t])=>`<button type="button" class="rec-chip${pre==='p'&&RECURSOS_PADRAO.includes(k)?' on':''}" data-r="${k}" onclick="this.classList.toggle('on')">${ic} ${t}</button>`).join('')}</div></div>
     <div class="hw-par"><label class="hw-f"><span>Sistema</span><select class="inp" id="${pre}So"><option value="">—</option>${SISTEMAS.map(v=>`<option>${v}</option>`).join('')}</select></label>
-      <label class="hw-f"><span>Resolução da tela</span><select class="inp" id="${pre}Res">${RESOLUCOES.map(([v,t])=>`<option value="${v}">${t}</option>`).join('')}</select></label></div>
+      <label class="hw-f"><span>Resolução da tela</span><select class="inp" id="${pre}Res">${RESOLUCOES.map(([v,t])=>`<option value="${v}">${t}</option>`).join('')}</select></label>
+      <label class="hw-f"><span>🎨 Cor</span><select class="inp" id="${pre}Cor"><option value="">—</option>${CORES.map(v=>`<option>${v}</option>`).join('')}</select></label></div>
     <label class="hw-f hw-largo"><span>🎥 Vídeo · link do YouTube (pode ser "não listado"): vai no catálogo e no Mercado Livre</span><input class="inp" id="${pre}Video" inputmode="url" placeholder="https://youtu.be/... ou youtube.com/shorts/..." oninput="hwVideoChecar(this)"></label>
     <label class="hw-f hw-largo"><span>Código do processador (no Windows: Configurações → Sistema → Sobre) · o Mercado Livre pede</span><input class="inp" id="${pre}CpuCod" list="${pre}CpuCodLista" maxlength="20" autocomplete="off" placeholder="ex.: 8350U" onfocus="hwCodigos('${pre}')"><datalist id="${pre}CpuCodLista"></datalist></label>
     <label class="hw-f hw-largo"><span>Homologação Anatel (na etiqueta embaixo do notebook) · uma vez por modelo: as iguais usam a mesma</span><input class="inp" id="${pre}Anatel" inputmode="numeric" maxlength="20" placeholder="ex.: 05428-20-03153"></label>
+    <div class="hw-conf" id="${pre}Conf"></div>
   </div>`;
 }
 
@@ -12396,7 +12447,7 @@ function instaOpcoes(desc,tema){
   tema=tema||{selo:document.getElementById('anSelo')?.value||'', frase:document.getElementById('anFrase')?.value||''};
   return { selo:tema.selo, frase:tema.frase, desc,
     preco:anPreco, specs:p=>{ try{ return hwResumo(p,true); }catch(e){ return []; } }, marca:p=>brand(p.nome),
-    recursos:p=>{ try{ const r=recursosLinhas(p), so=[r.sistema&&r.sistema!=='Sem sistema'?r.sistema:'',r.resolucao?'tela '+r.resolucao:''].filter(Boolean);
+    recursos:p=>{ try{ const r=recursosLinhas(p), so=[r.sistema&&r.sistema!=='Sem sistema'?r.sistema:'',r.resolucao?'tela '+r.resolucao:'',r.cor?'🎨 '+r.cor:''].filter(Boolean);
       return [so.length?'🪟 '+so.join(' · '):'',r.recursos.length?'✨ '+r.recursos.join(' · '):''].filter(Boolean); }catch(e){ return []; } },
     cidade:(catCfg&&catCfg.cidade)||'Campinas', zap:instaZap(catCfg&&catCfg.whatsapp), loja:(catCfg&&catCfg.nome)||'Tech Campinas' };
 }
@@ -12937,8 +12988,8 @@ function mlFicha(p){
   const bateria_h=((txt.match(/\bbateria[^.\n]{0,40}?\b(\d{1,2}(?:[.,]\d)?)\s?h(?:oras?)?\b/)||[])[1]||'').replace(',','.');
   const ram_max=(txt.match(/\b(?:suporta|aceita|expansivel|expande)\b[^.\n]{0,25}?\b(\d{1,3})\s?gb\b/)||[])[1]||'';
   // a cor só quando a descrição diz que é a cor ("cor preta"; "tela preta" não é)
-  const cor=(x=txt.match(/\bcor\b[^.\n]{0,12}?\b(preto|preta|prata|cinza|grafite|branco|branca|azul|dourado|rosa|vermelho|vermelha)\b/))
-    ?({preta:'Preto',branca:'Branco',vermelha:'Vermelho'}[x[1]]||x[1][0].toUpperCase()+x[1].slice(1)):'';
+  const cor=p.cor||((x=txt.match(/\bcor\b[^.\n]{0,12}?\b(preto|preta|prata|prateado|cinza|grafite|branco|branca|azul|dourado|rosa|vermelho|vermelha|verde)\b/))
+    ?({preta:'Preto',branca:'Branco',vermelha:'Vermelho',prata:'Prateado',grafite:'Cinza-escuro'}[x[1]]||x[1][0].toUpperCase()+x[1].slice(1)):'');
   const touch=/\btouch\b|sensivel ao toque|\b2 em 1\b|\bx360\b/.test(txt)&&!/\b(nao|sem)\s(e\s)?touch\b/.test(txt), mesa=ML_RE_MESA.test(nome);
   const cpu_linha=/^i[3579]$/i.test(cpu)?'Core '+cpu.toLowerCase():cpu, cpu_ger=/^ryzen/i.test(cpu)?gerN.slice(0,1):gerN, cpu_modelo=mlCpuCodigo(nome)||mlCpuCodigo(desc)||String(p.cpu_codigo||'');
   // o que a máquina tem: notebook tem Wi-Fi, Bluetooth, webcam, microfone e saída de fone, a não
@@ -12950,12 +13001,13 @@ function mlFicha(p){
   // marcado no cadastro: é o que vale (o que não está marcado, ela não tem)
   // (o básico desmarcado é "não tem"; extra não marcado é "não se sabe": um "não" ali
   // contradiz o que o Mercado Livre sabe do modelo, e ele pede para corrigir)
-  const tem=rec?Object.fromEntries([...['wifi','bluetooth','webcam','microfone','fone','touch'].map(k=>[k,rec.includes(k)]),
-      ...['digital','retroiluminado','numerico','sd','hdmi','usbc'].map(k=>[k,rec.includes(k)?true:undefined])])
+  const tem=rec?Object.fromEntries([...['wifi','bluetooth','webcam','microfone','fone','touch','carregador'].map(k=>[k,rec.includes(k)]),
+      ...['digital','retroiluminado','numerico','sd','hdmi','usbc','antirreflexo'].map(k=>[k,rec.includes(k)?true:undefined])])
     :{wifi:padrao('wi-?fi'),bluetooth:padrao('bluetooth'),webcam:padrao('(?:webcam|camera)'),microfone:padrao('microfone'),fone:padrao('fone'),
     touch:mesa?undefined:touch,digital:citado('(?:leitor (?:de )?digital|impressao digital|biometri|fingerprint)'),
     retroiluminado:citado('(?:retroilumin|backlight|teclado iluminado)'),numerico:citado('teclado numerico'),
-    sd:citado('(?:leitor de cartao|cartao sd|cartao de memoria)'),hdmi:citado('hdmi'),usbc:citado('(?:usb[- ]?c|type[- ]?c|thunderbolt)')};
+    sd:citado('(?:leitor de cartao|cartao sd|cartao de memoria)'),hdmi:citado('hdmi'),usbc:citado('(?:usb[- ]?c|type[- ]?c|thunderbolt)'),
+    carregador:mesa||!/\bcarregador/.test(txt)?undefined:!/\b(sem|nao acompanha|nao vem com)\s(?:o\s)?carregador|\bcarregador\s(?:nao\s(?:incluso|incluido|acompanha)|vendido a parte|a parte)\b/.test(txt),antirreflexo:citado('(?:antirreflexo|anti-?reflexo|anti-?glare|tela fosca|matte)')};
   const video=mlVideoDaCpu({cpu_linha,cpu_ger,cpu_modelo})||{}, ded=mlVideoDedicado(txt)||{};
   // homologação da Anatel: a desta máquina; senão a de outra do mesmo modelo (ela é por modelo)
   const dig=v=>String(v||'').replace(/\D/g,''), mod=cliNorm(f.modelo);
@@ -12974,8 +13026,32 @@ function mlFicha(p){
     dedicada_marca:ded.marca||'', dedicada_linha:ded.linha||'', dedicada_modelo:ded.modelo||'',
     tipo_produto:mesa?'':/\b(2 em 1|2 in 1|x360|flip|yoga|conversivel)\b/.test(txt)?'2 em 1':'Notebook',
     teclado:rec?(rec.includes('abnt2')?'Português':''):/\babnt\s?2?\b|teclado (?:em |no padrao )?(?:portugues|brasileiro)\b/.test(txt)?'Português':/\bteclado (?:americano|ingles|internacional|us)\b/.test(txt)?'Inglês':'',
-    slots_ram:p.slots_ram!=null&&p.slots_ram!==''?String(p.slots_ram):'', anatel };
+    slots_ram:p.slots_ram!=null&&p.slots_ram!==''?String(p.slots_ram):'', anatel,
+    ...mlCpuInfo(cpu_marca_de(cpu),cpu_modelo) };
 }
+const cpu_marca_de=cpu=>/^(i[3579]|celeron|pentium)/i.test(cpu)?'Intel':/^ryzen/i.test(cpu)?'AMD':'';
+// Núcleos e velocidades (base e turbo, GHz) dos processadores comuns, pelo código. Intel e
+// AMD têm códigos iguais (i7-5500U e Ryzen 5 5500U): a chave leva a marca.
+const ML_CPU_INFO=Object.fromEntries(('i4005U:2:1.7 i4010U:2:1.7 i4030U:2:1.9 i5005U:2:2.0 i5010U:2:2.1 i6006U:2:2.0 i6100U:2:2.3 i7020U:2:2.3 i7100U:2:2.4 '
+  +'i8130U:2:2.2:3.4 i8145U:2:2.1:3.9 i10110U:2:2.1:4.1 i1005G1:2:1.2:3.4 i1115G4:2:3.0:4.1 i1125G4:4:2.0:3.7 i1215U:6:1.2:4.4 '
+  +'i3210M:2:2.5:3.1 i3230M:2:2.6:3.2 i3320M:2:2.6:3.3 i3340M:2:2.7:3.4 i3360M:2:2.8:3.5 i4200U:2:1.6:2.6 i4210U:2:1.7:2.7 i4300U:2:1.9:2.9 i4310U:2:2.0:3.0 i4300M:2:2.6:3.3 '
+  +'i5200U:2:2.2:2.7 i5300U:2:2.3:2.9 i6200U:2:2.3:2.8 i6300U:2:2.4:3.0 i7200U:2:2.5:3.1 i7300U:2:2.6:3.5 i8250U:4:1.6:3.4 i8350U:4:1.7:3.6 i8265U:4:1.6:3.9 i8365U:4:1.6:4.1 '
+  +'i9300H:4:2.4:4.1 i9400H:4:2.5:4.3 i10210U:4:1.6:4.2 i10310U:4:1.7:4.4 i1035G1:4:1.0:3.6 i10300H:4:2.5:4.5 i1135G7:4:2.4:4.2 i1145G7:4:2.6:4.4 i11400H:6:2.7:4.5 '
+  +'i1235U:10:1.3:4.4 i1245U:10:1.6:4.4 i1240P:12:1.7:4.4 i1335U:10:1.3:4.6 i1345U:10:1.6:4.7 '
+  +'i3520M:2:2.9:3.6 i3540M:2:3.0:3.7 i3632QM:4:2.2:3.2 i4500U:2:1.8:3.0 i4510U:2:2.0:3.1 i4600U:2:2.1:3.3 i4800MQ:4:2.7:3.7 i5500U:2:2.4:3.0 i5600U:2:2.6:3.2 '
+  +'i6500U:2:2.5:3.1 i6600U:2:2.6:3.4 i6820HQ:4:2.7:3.6 i7500U:2:2.7:3.5 i7600U:2:2.8:3.9 i7700HQ:4:2.8:3.8 i8550U:4:1.8:4.0 i8650U:4:1.9:4.2 i8565U:4:1.8:4.6 i8665U:4:1.9:4.8 '
+  +'i8750H:6:2.2:4.1 i9750H:6:2.6:4.5 i9850H:6:2.6:4.6 i10510U:4:1.8:4.9 i10610U:4:1.8:4.9 i1065G7:4:1.3:3.9 i10750H:6:2.6:5.0 i1165G7:4:2.8:4.7 i1185G7:4:3.0:4.8 i11800H:8:2.3:4.6 '
+  +'i1255U:10:1.7:4.7 i1265U:10:1.8:4.8 i1260P:12:2.1:4.7 i1355U:10:1.7:5.0 i1365U:10:1.8:5.2 '
+  +'iN4020:2:1.1:2.8 iN4000:2:1.1:2.6 iN4500:2:1.1:2.8 iN5100:4:1.1:2.8 iN3060:2:1.6:2.48 i3865U:2:1.8 i4205U:2:1.8 i4415U:2:2.3 i5405U:2:2.3 iN5000:4:1.1:2.7 iN5030:4:1.1:3.1 i7505:2:2.0:3.5 '
+  +'i6100T:2:3.2 i6100:2:3.7 i7100T:2:3.4 i7100:2:3.9 i8100T:4:3.1 i8100:4:3.6 i9100T:4:3.1:3.7 i9100:4:3.6:4.2 i10100T:4:3.0:3.8 i10100:4:3.6:4.3 '
+  +'i4570T:2:2.9:3.6 i4590T:4:2.0:3.0 i4590:4:3.3:3.7 i6500T:4:2.5:3.1 i6500:4:3.2:3.6 i7500T:4:2.7:3.3 i7500:4:3.4:3.8 i8500T:6:2.1:3.5 i8400T:6:1.7:3.3 i8500:6:3.0:4.1 '
+  +'i9500T:6:2.2:3.7 i9500:6:3.0:4.4 i10500T:6:2.3:3.8 i10500:6:3.1:4.5 i4785T:4:2.2:3.2 i4790:4:3.6:4.0 i6700T:4:2.8:3.6 i6700:4:3.4:4.0 i7700T:4:2.9:3.8 i7700:4:3.6:4.2 '
+  +'i8700T:6:2.4:4.0 i8700:6:3.2:4.6 i9700T:8:2.0:4.3 i9700:8:3.0:4.7 i10700T:8:2.0:4.5 i10700:8:2.9:4.8 '
+  +'r2200U:2:2.5:3.4 r2300U:4:2.0:3.4 r3200U:2:2.6:3.5 r3250U:2:2.6:3.5 r4300U:4:2.7:3.7 r5300U:4:2.6:3.8 r5425U:4:2.7:4.1 r7320U:4:2.4:4.1 r7330U:4:2.3:4.3 '
+  +'r2500U:4:2.0:3.6 r3500U:4:2.1:3.7 r4500U:6:2.3:4.0 r4600H:6:3.0:4.0 r4650U:6:2.1:4.0 r5500U:6:2.1:4.0 r5600H:6:3.3:4.2 r5625U:6:2.3:4.3 r5650U:6:2.3:4.2 r7520U:4:2.8:4.3 r7530U:6:2.0:4.5 '
+  +'r2700U:4:2.2:3.8 r3700U:4:2.3:4.0 r4700U:8:2.0:4.1 r4750U:8:1.7:4.1 r4800H:8:2.9:4.2 r5700U:8:1.8:4.3 r5800H:8:3.2:4.4 r5825U:8:2.0:4.5 r5850U:8:1.9:4.4 r7730U:8:2.0:4.5')
+  .split(' ').map(x=>{ const [k,n,b,t]=x.split(':'); return [k,{cpu_nucleos:n,cpu_base:b,cpu_turbo:t||''}]; }));
+function mlCpuInfo(marca,cod){ const i=cod&&ML_CPU_INFO[(marca==='AMD'?'r':'i')+String(cod).toUpperCase()]; return i?{...i}:{}; }
 // Nos de mesa (OptiPlex, ThinkCentre, EliteDesk...) mudam o título e os processadores.
 const ML_RE_MESA=/\b(optiplex|think\s?centre|elite\s?desk|pro\s?desk|idea\s?centre|desktop|all[\s-]?in[\s-]?one)\b/i;
 // Valores do mais para o menos repetido.
@@ -13199,10 +13275,11 @@ function mlDescricao(p,o){
     const r=recursosLinhas(p);
     if(r.sistema&&r.sistema!=='Sem sistema') L.push('- Sistema: '+r.sistema);
     if(r.resolucao) L.push('- Resolução da tela: '+r.resolucao);
+    if(r.cor) L.push('- Cor: '+r.cor);
     if(r.recursos.length) L.push('- Recursos: '+r.recursos.join(', '));
   }catch(e){}
   const d=mlLimparTexto(p.descricao); if(d) L.push('',d);
-  L.push('','Usado, revisado e testado'+(o.garantia?', com '+o.garantia+' dias de garantia':'')+'.');
+  L.push('','Revisado e testado'+(o.garantia?', com '+o.garantia+' dias de garantia':'')+'.');
   L.push('Envio para todo o Brasil pelo Mercado Envios'+(o.retirada?' ou retirada em mãos em Campinas (SP)':'')+'.');
   return L.join('\n').replace(/\n{3,}/g,'\n\n').trim();
 }
@@ -13440,7 +13517,7 @@ async function mlNovidades(){
 // O que vai de características, resumido: muda quando muda a ficha, a descrição, as abas
 // (Anatel, slots, bateria), as respostas, ou o que vem de outra do mesmo modelo.
 const mlHash=t=>{ let h=5381; for(let i=0;i<t.length;i++) h=((h<<5)+h+t.charCodeAt(i))|0; return (h>>>0).toString(36); };
-const mlAssFicha=p=>mlHash(JSON.stringify([mlFicha(p),mlRespostasIguais(p),p.ml_atributos||{},ytId(p.video)]));
+const mlAssFicha=p=>mlHash(JSON.stringify([mlFicha(p),mlRespostasIguais(p),p.ml_atributos||{},ytId(p.video),mlDescricao(p)]));
 // Anúncio que saiu com menos características (versão antiga), cuja máquina mudou depois de
 // publicada, ou que o Mercado Livre pôs como novo: ganha o que a ficha sabe e volta para
 // usado. Uma tentativa por mudança.
@@ -13452,7 +13529,7 @@ async function mlCompletarAnuncios(lista){
   for(const {p,ass} of fila){
     mlCompletarTentou.add(p.id+'|'+ass);
     try{
-      const r=await mlApi({acao:'completar',id:p.ml_id,ficha:mlFicha(p),atributos:{...mlRespostasIguais(p),...(p.ml_atributos||{})},sku:p.num?String(p.num):'',pacote:mlOpcoes().caixa,video:ytId(p.video)});
+      const r=await mlApi({acao:'completar',id:p.ml_id,ficha:mlFicha(p),atributos:{...mlRespostasIguais(p),...(p.ml_atributos||{})},sku:p.num?String(p.num):'',pacote:mlOpcoes().caixa,video:ytId(p.video),descricao:mlDescricao(p)});
       const campos={ml_ficha_v:ML_FICHA_V,ml_ficha_ass:ass}; if(r.condicao) campos.ml_condicao=r.condicao;
       if(p.ml_condicao&&p.ml_condicao!=='used'&&r.condicao==='used') usado++;
       try{ await updateDoc(doc(db,'products',p.id),campos); }catch(e){}
@@ -14906,7 +14983,7 @@ window.publicarCatalogo=async()=>{
         preco:parseFloat(p.venda)||0,
         marca:brand(p.nome),
         specs:hwResumo(p,true),
-        ...(()=>{ try{ const r=recursosLinhas(p); return {recursos:r.recursos, sistema:r.sistema&&r.sistema!=='Sem sistema'?r.sistema:'', resolucao:r.resolucao}; }catch(e){ return {}; } })(),
+        ...(()=>{ try{ const r=recursosLinhas(p); return {recursos:r.recursos, sistema:r.sistema&&r.sistema!=='Sem sistema'?r.sistema:'', resolucao:r.resolucao, cor:r.cor}; }catch(e){ return {}; } })(),
         video:ytId(p.video),
         descricao:String(p.descricao||'').slice(0,600),
         tipo:tipoMaquina(p),

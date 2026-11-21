@@ -173,7 +173,7 @@ function daFicha(f) {
   const s = k => String(f[k] == null ? '' : f[k]).trim();
   const tem = f.tem && typeof f.tem === 'object' ? f.tem : {};
   const sn = k => tem[k] === true ? 'Sim' : tem[k] === false ? 'Não' : '';
-  const disco = s('disco_tipo'), res = s('resolucao'), m2 = /nvme|m\.?2/i.test(disco);
+  const disco = s('disco_tipo'), res = s('resolucao'), m2 = /nvme|m\.?2/i.test(disco), nb = !f.mesa && !!s('marca');
   return {
     BRAND: s('marca'), LINE: s('linha'), MODEL: s('numero') && s('linha') ? s('numero') : s('modelo'),
     PROCESSOR_BRAND: s('cpu_marca'), PROCESSOR_LINE: s('cpu_linha'), PROCESSOR_MODEL: s('cpu_modelo'),
@@ -193,7 +193,16 @@ function daFicha(f) {
     WITH_HEADPHONES_OUTPUT: sn('fone'), WITH_TOUCH_SCREEN: sn('touch'), WITH_FINGERPRINT_READER: sn('digital'),
     WITH_BACKLIGHT_KEYBOARD: sn('retroiluminado'), WITH_NUMERIC_PAD: sn('numerico'), WITH_MEMORY_CARD_READER: sn('sd'),
     WITH_RETINA_DISPLAY: s('marca') && !/apple/i.test(s('marca')) ? 'Não' : '',
-    KEYBOARD_LANGUAGE: s('teclado'), COLOR: s('cor'), MAIN_COLOR: s('cor'),
+    KEYBOARD_LANGUAGE: s('teclado'), COLOR: s('cor'), MAIN_COLOR: corPrincipal(s('cor')),
+    // processador pelo código (núcleos e velocidades)
+    CORES_NUMBER: s('cpu_nucleos'), MIN_PROCESSOR_SPEED: s('cpu_base') ? s('cpu_base') + ' GHz' : '',
+    MAX_PROCESSOR_SPEED: (s('cpu_turbo') || s('cpu_base')) ? (s('cpu_turbo') || s('cpu_base')) + ' GHz' : '',
+    // o que todo notebook comum tem (de mesa não: lá varia)
+    DISPLAY_TYPE: nb ? 'LED' : '', DISPLAY_REFRESH_RATE: nb && !s('dedicada_marca') ? '60 Hz' : '', SOUND_MODES: nb ? 'Estéreo' : '',
+    COOLING_TYPE: s('marca') && !/apple/i.test(s('marca')) ? 'Ar' : '', MANUFACTURER: fabricante(s('marca')),
+    INCLUDES_OS_TRIAL: s('so') ? 'Não' : '', WEBCAM_VIDEO_RESOLUTION_TYPE: tem.webcam === true ? 'HD' : '',
+    ACCESSORIES_INCLUDED: tem.carregador === true ? 'Carregador' : '', WITH_ANTIREFLEX_SCREEN: sn('antirreflexo'),
+    CONNECTIVITY: [tem.hdmi === true ? 'HDMI' : '', tem.usbc === true ? 'USB-C' : ''].filter(Boolean),
     MAX_BATTERY_LIFE: s('bateria_h') ? s('bateria_h') + ' h' : '',
     SELLER_SKU: s('sku'),
     // homologação da Anatel (é por modelo; o sistema manda só os números)
@@ -201,6 +210,10 @@ function daFicha(f) {
     ITEM_CONDITION: 'Usado',
   };
 }
+// O fabricante como o Mercado Livre escreve (o nome da empresa); os outros, a marca.
+const fabricante = m => ({ dell: 'Dell Inc.', acer: 'Acer Incorporated', asus: 'Asustek Computer Inc.', samsung: 'Samsung', apple: 'Apple' })[norm(m)] || m;
+// A "cor principal" é uma lista mais curta que a "cor": o tom mais perto dela.
+const corPrincipal = c => ({ 'Cinza-escuro': 'Cinza', 'Azul-escuro': 'Azul', 'Azul-marinho': 'Azul', 'Prata': 'Prateado', 'Grafite': 'Cinza' })[c] || c;
 // Quando o id do atributo é outro, o nome dele costuma ser o mesmo.
 const PELO_NOME = [
   [/^marca$/, 'BRAND'], [/^linha$/, 'LINE'], [/^modelo$/, 'MODEL'], [/^modelo alfanumerico$/, 'ALPHANUMERIC_MODEL'],
@@ -221,6 +234,12 @@ function infoAtributo(a) {
 }
 // Um valor no formato que o atributo pede (lista, número com unidade, sim/não, texto).
 function formatar(a, valor) {
+  if (Array.isArray(valor)) {
+    const vs = valor.map(v => String(v == null ? '' : v).trim()).filter(Boolean);
+    if (vs.length < 2) return vs.length ? formatar(a, vs[0]) : null;
+    const valores = Array.isArray(a.values) ? a.values : [];
+    return { id: a.id, values: vs.map(v => { const m = valores.find(x => norm(x.name) === norm(v)); return m ? { id: String(m.id), name: m.name } : { name: v }; }) };
+  }
   if (valor && typeof valor === 'object') {
     if (valor.value_id) return { id: a.id, value_id: String(valor.value_id), value_name: valor.value_name || undefined };
     valor = valor.value_name;
@@ -480,6 +499,7 @@ async function publicar(corpo) {
   console.log(`ml publicou ${r.j.id} (${cat}, ${tipo}) ${r.j.status || ''} condição=${r.j.condition || '?'} sub=${JSON.stringify(r.j.sub_status || [])}`,
     'título:', r.j.title || '', '| avisos:', JSON.stringify(r.j.warnings || []).slice(0, 600));
   if (it.video) { const v = await videoNoAnuncio(r.j.id, s.token, it.video, ''); if (v === 'recusou') avisos.push('O Mercado Livre não aceitou o vídeo (confira se o link do YouTube abre para todos).'); }
+  if ((await descricaoNoAnuncio(r.j.id, s.token, it.descricao)) === 'recusou') avisos.push('A descrição não entrou no anúncio: confira no Mercado Livre.');
   // a loja só vende usado: se o Mercado Livre puser como novo, corrige na hora
   if (r.j.condition && r.j.condition !== 'used') {
     const c = await usado(r.j.id, s.token, porId);
@@ -597,8 +617,22 @@ async function completar(corpo) {
     if (r.ok) limpos = limpar;
   }
   const video = await videoNoAnuncio(id, s.token, corpo.video, g.j.video_id);
+  const descricao = await descricaoNoAnuncio(id, s.token, corpo.descricao);
   const condicao = antes && antes !== 'used' && !(g.j.sold_quantity > 0) ? ((await usado(id, s.token, porId)) ? 'used' : antes) : antes;
-  return { ok: true, adicionados: novos.map(a => a.id), recusados, limpos, video, condicao, cifraNova: s.cifraNova };
+  return { ok: true, adicionados: novos.map(a => a.id), recusados, limpos, video, descricao, condicao, cifraNova: s.cifraNova };
+}
+// A descrição do anúncio pela rota própria (a que vai no corpo do anúncio o Mercado Livre
+// ignora no "produto de usuário"): cria se não tem, troca se mudou, deixa se está igual.
+async function descricaoNoAnuncio(id, token, texto) {
+  const t = String(texto || '').trim().slice(0, 5000); if (!t) return '';
+  const g = await ml('GET', `/items/${id}/description`, { token });
+  const atual = g.ok ? String(g.j.plain_text || g.j.text || '').trim() : '';
+  const so = x => norm(x).replace(/\s+/g, ' ');
+  if (atual && so(atual) === so(t)) return 'ja';
+  let r = await ml(atual ? 'PUT' : 'POST', `/items/${id}/description`, { token, corpo: { plain_text: t }, query: atual ? { api_version: 2 } : {} });
+  if (!r.ok && !atual) r = await ml('PUT', `/items/${id}/description`, { token, corpo: { plain_text: t }, query: { api_version: 2 } });
+  console.log('ml descrição', id, g.status, atual ? 'trocou' : 'criou', r.status, r.ok ? '' : JSON.stringify(r.j).slice(0, 400));
+  return r.ok ? 'ok' : 'recusou';
 }
 // Vídeo do YouTube no anúncio (o id de 11 letras). Vai à parte, depois de criar: se o Mercado
 // Livre não aceitar, o anúncio continua no ar.
@@ -631,7 +665,8 @@ function lerQualidade(j) {
     if (Array.isArray(o)) { o.forEach(x => andar(x, fundo + 1)); return; }
     const st = String(o.status || '').toUpperCase(), w = o.wordings || {};
     const t = String(w.title || w.label || o.title || '').trim();
-    if (st === 'PENDING' && t && !Array.isArray(o.variables) && !Array.isArray(o.rules) && !pend.includes(t)) pend.push(t);
+    const pr = Number(o.progress), tx = t + (pr > 0 && pr < 1 ? ` (${Math.round(pr * 100)}% feito)` : '');
+    if (st === 'PENDING' && t && !Array.isArray(o.variables) && !Array.isArray(o.rules) && !pend.includes(tx)) pend.push(tx);
     for (const k of ['buckets', 'variables', 'rules']) if (Array.isArray(o[k])) andar(o[k], fundo + 1);
   };
   andar(j, 0);

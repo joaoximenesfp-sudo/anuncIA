@@ -130,14 +130,31 @@ ok(fm.tem.wifi===true && fm.tem.bluetooth===true && fm.tem.retroiluminado===true
   fm.teclado==='Português' && fm.so==='Windows' && fm.so_versao==='11' && fm.so_edicao==='Pro' && fm.resolucao==='1920 x 1080',
   'o marcado no cadastro é o que vale: o básico desmarcado é "não tem"; extra não marcado é "não se sabe" (não vai "não", que contradiz o modelo no Mercado Livre): '+JSON.stringify({tem:fm.tem,t:fm.teclado,so:[fm.so,fm.so_versao,fm.so_edicao]}));
 const lk=M.recursosLinhas(mk);
-ok(JSON.stringify(lk)==='{"recursos":["Wi-Fi","Bluetooth","HDMI","Teclado retroiluminado","Teclado ABNT2"],"sistema":"Windows 11 Pro","resolucao":"Full HD"}',
+ok(JSON.stringify(lk)==='{"recursos":["Wi-Fi","Bluetooth","HDMI","Teclado retroiluminado","Teclado ABNT2"],"sistema":"Windows 11 Pro","resolucao":"Full HD","cor":""}',
   'para o anúncio: '+JSON.stringify(lk));
+ok(M.recursosLinhas({...mk,cor:'Prateado'}).cor==='Prateado' && M.mlFicha({...mk,cor:'Cinza-escuro',descricao:'cor preta'}).cor==='Cinza-escuro' &&
+  M.mlFicha({id:'cr1',nome:'x',descricao:'Na cor prata, bem conservado'}).cor==='Prateado' && M.mlFicha({id:'cr2',nome:'x',descricao:'cor grafite'}).cor==='Cinza-escuro',
+  'a cor escolhida no cadastro manda; sem ela, a que a descrição diz ("cor prata" é Prateado; grafite é Cinza-escuro)');
 const velha={id:'rk2',nome:'Lenovo ThinkPad T480 i5 8ª 8GB SSD 256GB',descricao:'Windows 10 Pro, tela Full HD, teclado retroiluminado e USB-C.'};
 ok(JSON.stringify(M.recursosDe(velha))==='["wifi","bluetooth","webcam","microfone","fone","usbc","retroiluminado"]' && M.sistemaDe(velha)==='Windows 10 Pro' && M.resolucaoDe(velha)==='1920 x 1080',
   'máquina antiga, sem marcação: o básico de notebook e o que a descrição diz — '+JSON.stringify(M.recursosDe(velha)));
 ok(JSON.stringify(M.recursosDe({id:'rk3',nome:'Dell OptiPlex 3080 i5 10ª'}))==='[]' && M.sistemaDe({id:'rk4',nome:'x',sistema:'Linux'})==='Linux' &&
   M.mlFicha({id:'rk4',nome:'x',sistema:'Linux'}).so==='Linux' && M.mlFicha({id:'rk5',nome:'x',sistema:'Sem sistema'}).so==='',
   'de mesa não ganha o básico de notebook; Linux e "sem sistema" também valem');
+const tc=(desc,extra)=>M.mlFicha({id:'tc'+desc,nome:'Dell Latitude 5490 i5 8ª 8GB',descricao:desc,...(extra||{})}).tem;
+ok(M.mlFicha({id:'k1',nome:'Dell Latitude 5490',recursos:['wifi','carregador']}).tem.carregador===true && M.mlFicha({id:'k2',nome:'Dell Latitude 5490',recursos:['wifi']}).tem.carregador===false &&
+  tc('Acompanha carregador original.').carregador===true && tc('Vai sem carregador.').carregador===false && tc('Carregador não incluso.').carregador===false &&
+  tc('Bateria boa.').carregador===undefined && M.mlFicha({id:'k3',nome:'Dell OptiPlex 3080 i5',descricao:'acompanha carregador'}).tem.carregador===undefined,
+  'carregador: o marcado vale; sem marcação, só quando a descrição fala dele ("sem carregador" e "não incluso" são não; sem falar, não promete)');
+ok(tc('Tela antirreflexo, fosca.').antirreflexo===true && tc('Bateria boa.').antirreflexo===undefined && M.mlFicha({id:'k4',nome:'x',recursos:['wifi']}).tem.antirreflexo===undefined,
+  'tela antirreflexo: quando a descrição diz ou está marcada; não marcada não vira "não"');
+console.log('\nnúcleos e velocidade do processador (características principais no Mercado Livre)');
+const ci=(nome,extra)=>{ const f=M.mlFicha({id:'ci'+nome,nome,...(extra||{})}); return [f.cpu_nucleos,f.cpu_base,f.cpu_turbo].join('|'); };
+const cis=[['Dell Latitude 5490 i5-8350U 8GB','4|1.7|3.6'],['Lenovo E14 Ryzen 5 5500U 8GB','6|2.1|4.0'],['Dell Latitude E5450 i7-5500U','2|2.4|3.0'],
+  ['Dell Latitude 3420 i5 11ª 8GB','||',{}],['Dell Latitude 3420 i5 11ª 8GB','4|2.4|4.2',{cpu_codigo:'1135g7'}],['Lenovo ThinkPad E14 i5-10210U','4|1.6|4.2'],
+  ['Dell Latitude 3420 i3-1115G4','2|3.0|4.1'],['Dell OptiPlex 7070 i5-9500T','6|2.2|3.7'],['Dell Latitude 5490 i5-9999U','||']];
+const errCi=cis.filter(([n,e,x])=>ci(n,x)!==e);
+ok(!errCi.length, 'pelo código (Intel e AMD com o mesmo número não se confundem); sem código ou código desconhecido, não inventa'+(errCi.length?': '+errCi.map(([n,e,x])=>`${n} → "${ci(n,x)}" (devia "${e}")`).join(' | '):''));
 
 const yt=['https://youtu.be/dQw4w9WgXcQ','https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=3s','youtube.com/shorts/dQw4w9WgXcQ','https://m.youtube.com/watch?feature=share&v=dQw4w9WgXcQ',
   'https://www.youtube.com/embed/dQw4w9WgXcQ','dQw4w9WgXcQ'];

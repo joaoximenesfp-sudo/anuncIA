@@ -48,7 +48,7 @@ const NOTEBOOKS = [
   { id: 'RAM_SLOTS_NUMBER', name: 'Quantidade de slots para a memória RAM', value_type: 'number', tags: {} },
   { id: 'SELLER_SKU', name: 'SKU', value_type: 'string', tags: { hidden: true } },
 ];
-let pedidos = [], cfgDoc = null, gravarFalha = false, tokenSeq = 0, refreshRuim = false, validacoes = [], criados = [], criacoes = [], condicaoCriado = 'used', itemLa = null, putRecusas = [], pkceRuim = false, mlFora = false;
+let pedidos = [], cfgDoc = null, gravarFalha = false, tokenSeq = 0, refreshRuim = false, validacoes = [], criados = [], criacoes = [], condicaoCriado = 'used', itemLa = null, putRecusas = [], descricoes = {}, pkceRuim = false, mlFora = false;
 const resposta = (status, json) => ({ ok: status >= 200 && status < 300, status, json: async () => { if (json === undefined) throw new Error('sem corpo'); return json; } });
 global.fetch = async (url, op = {}) => {
   const h = op.headers || {};
@@ -93,6 +93,11 @@ global.fetch = async (url, op = {}) => {
   if (u.pathname === '/items' && p.metodo === 'POST') { const corpo = JSON.parse(p.corpo); const falha = criacoes.shift();
     if (falha) return resposta(400, { message: 'Validation error', error: 'validation_error', status: 400, cause: falha }); criados.push(corpo); return resposta(201, { id: 'MLB4000000' + criados.length, permalink: 'https://produto.mercadolivre.com.br/MLB-4000000' + criados.length + '-notebook', status: 'active', price: corpo.price, condition: condicaoCriado }); }
   if (/^\/items\/MLB\d+$/.test(u.pathname) && p.metodo === 'GET') return itemLa ? resposta(200, itemLa) : resposta(404, { message: 'item not found' });
+  if (/^\/items\/MLB\d+\/description$/.test(u.pathname)) {
+    const id = u.pathname.split('/')[2];
+    if (p.metodo === 'GET') return descricoes[id] !== undefined ? resposta(200, { plain_text: descricoes[id] }) : resposta(404, { message: 'Description not found' });
+    descricoes[id] = JSON.parse(p.corpo).plain_text; return resposta(p.metodo === 'POST' ? 201 : 200, { plain_text: descricoes[id] });
+  }
   if (/^\/item\/MLB\d+\/performance$/.test(u.pathname)) return resposta(200, { entity_type: 'ITEM', entity_id: u.pathname.split('/')[2], score: 54, level: 'Standard', level_wording: 'Satisfatória', buckets: [
     { key: 'CHARACTERISTICS', status: 'PENDING', title: 'Características', variables: [{ key: 'TECH', status: 'PENDING', title: 'Ficha técnica',
       rules: [{ key: 'WRONG_ATTRIBUTES', status: 'PENDING', wordings: { title: 'Corrija as características para receber menos perguntas e devoluções' } }] }] },
@@ -368,9 +373,36 @@ const ITEM = { titulo: 'Notebook Dell Latitude 5490 i5 8ª 16GB SSD 256GB', prec
   r = await post({ acao: 'qualidade', ids: ['MLB8033909936', 'lixo'] });
   const q1 = (r.json().itens || [])[0] || {};
   ok(r.status === 200 && r.json().itens.length === 1 && q1.score === 54 && q1.nivel === 'Satisfatória' &&
-    JSON.stringify(q1.pendentes) === '["Corrija as características para receber menos perguntas e devoluções","Ofereça parcelamento sem juros"]' &&
+    JSON.stringify(q1.pendentes) === '["Corrija as características para receber menos perguntas e devoluções","Ofereça parcelamento sem juros"]' && T.lerQualidade({ score: 52, buckets: [{ status: 'PENDING', variables: [{ status: 'PENDING', rules: [{ status: 'PENDING', progress: 0.6986842, wordings: { title: 'Preencha as características principais' } }] }] }] }).pendentes[0] === 'Preencha as características principais (70% feito)' &&
     pedidos.some(p => p.url.includes('/item/MLB8033909936/performance')), 'a nota e só o que está pendente (o que já foi alcançado não aparece): ' + JSON.stringify(q1.pendentes));
   ok(T.lerQualidade({}).score === null && JSON.stringify(T.lerQualidade(null).pendentes) === '[]', 'relatório vazio não quebra');
+
+  console.log('\na descrição vai pela rota dela (o "produto de usuário" ignora a do corpo)');
+  validacoes = []; criacoes = []; criados = []; pedidos = []; descricoes = {};
+  r = await post({ acao: 'publicar', item: { ...ITEM, atributos: KL, descricao: 'Notebook revisado.\n- Processador: Intel Core i5' } });
+  const idNovo = r.json().id, posts = pedidos.filter(p => p.url.includes('/items/' + idNovo + '/description'));
+  ok(r.json().ok && descricoes[idNovo] === 'Notebook revisado.\n- Processador: Intel Core i5' && posts.some(p => p.metodo === 'POST') && !(r.json().avisos || []).some(a => /descrição/.test(a)),
+    'depois de criar, a descrição entra pela rota própria');
+  itemLa = { id: 'MLB8033909936', category_id: 'MLB1652', condition: 'used', sold_quantity: 0, video_id: '', attributes: [] };
+  descricoes = { MLB8033909936: 'texto velho' }; pedidos = [];
+  r = await post({ acao: 'completar', id: 'MLB8033909936', ficha: FICHA2, descricao: 'texto novo' });
+  ok(r.json().descricao === 'ok' && descricoes.MLB8033909936 === 'texto novo' && pedidos.some(p => p.metodo === 'PUT' && p.url.includes('/description')), 'o anúncio que já está lá: troca a descrição que mudou');
+  pedidos = [];
+  r = await post({ acao: 'completar', id: 'MLB8033909936', ficha: FICHA2, descricao: 'texto novo' });
+  ok(r.json().descricao === 'ja' && !pedidos.some(p => p.metodo !== 'GET' && p.url.includes('/description')), 'igual: não mexe');
+  itemLa = null;
+
+  console.log('\nmais características principais');
+  const d4 = T.daFicha({ marca: 'Dell', cpu_nucleos: '4', cpu_base: '1.7', cpu_turbo: '3.6', so: 'Windows', cor: 'Cinza-escuro', tem: { webcam: true, carregador: true, hdmi: true, usbc: true, antirreflexo: true } });
+  ok(d4.CORES_NUMBER === '4' && d4.MIN_PROCESSOR_SPEED === '1.7 GHz' && d4.MAX_PROCESSOR_SPEED === '3.6 GHz' && d4.DISPLAY_TYPE === 'LED' && d4.DISPLAY_REFRESH_RATE === '60 Hz' &&
+    d4.SOUND_MODES === 'Estéreo' && d4.COOLING_TYPE === 'Ar' && d4.MANUFACTURER === 'Dell Inc.' && d4.INCLUDES_OS_TRIAL === 'Não' && d4.WEBCAM_VIDEO_RESOLUTION_TYPE === 'HD' &&
+    d4.ACCESSORIES_INCLUDED === 'Carregador' && d4.WITH_ANTIREFLEX_SCREEN === 'Sim' && d4.COLOR === 'Cinza-escuro' && d4.MAIN_COLOR === 'Cinza' && JSON.stringify(d4.CONNECTIVITY) === '["HDMI","USB-C"]',
+    'núcleos e velocidades pelo código, o comum de notebook, carregador, antirreflexo, cor (e a cor principal mais perto) e conectividade');
+  const dMesa = T.daFicha({ marca: 'Dell', mesa: true, dedicada_marca: '' }), dGamer = T.daFicha({ marca: 'Acer', dedicada_marca: 'NVIDIA' });
+  ok(!dMesa.DISPLAY_TYPE && !dMesa.SOUND_MODES && dGamer.DISPLAY_REFRESH_RATE === '' && dGamer.DISPLAY_TYPE === 'LED', 'de mesa não leva o comum de notebook; com placa dedicada, a tela pode ser de 120/144 Hz: não chuta 60');
+  const conn = T.formatar({ id: 'CONNECTIVITY', value_type: 'string', tags: { multivalued: true }, values: [{ id: '1', name: 'HDMI' }, { id: '2', name: 'USB-C' }] }, ['HDMI', 'USB-C']);
+  ok(JSON.stringify(conn) === '{"id":"CONNECTIVITY","values":[{"id":"1","name":"HDMI"},{"id":"2","name":"USB-C"}]}' &&
+    JSON.stringify(T.formatar({ id: 'CONNECTIVITY', value_type: 'string', values: [] }, ['HDMI'])) === '{"id":"CONNECTIVITY","value_name":"HDMI"}', 'conectividade: vários valores vão em lista (um só, como sempre)');
 
   console.log('\nvídeo ao publicar');
   validacoes = []; criacoes = []; criados = []; pedidos = [];
