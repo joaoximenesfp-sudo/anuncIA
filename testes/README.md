@@ -16,6 +16,7 @@ node testes/test-tema.js           # datas comemorativas: o dia certo, a próxim
 node testes/test-desconto.js       # análise de preço: dias no estoque, parecidas vendidas e em estoque, sugestão e piso do custo
 node testes/test-busca.js          # busca do Gerar anúncio: palavras em qualquer ordem, sem acento, "#12" pelo número
 node testes/test-ml.js             # Mercado Livre: autorização (PKCE), tokens cifrados e renovados, foto, atributos, validação, preço/situação e pedidos
+node testes/test-captcha.js        # imagem de confirmação do login: código sem letra que confunde, só desenho, resposta conferida no servidor, validade
 ```
 
 Rode o `checar.js` sempre antes de subir. Tag desbalanceada ou chave de CSS

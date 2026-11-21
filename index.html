@@ -1707,6 +1707,18 @@ nav #btnAdmin{border-color:rgba(251,191,36,.6)!important;color:#fbbf24!important
   -webkit-mask-image:radial-gradient(ellipse 70% 60% at 50% 40%,#000 25%,transparent 75%);
   mask-image:radial-gradient(ellipse 70% 60% at 50% 40%,#000 25%,transparent 75%)}
 .ac{position:relative;border:1px solid rgba(255,255,255,.1);border-radius:26px;box-shadow:0 40px 90px rgba(0,0,0,.45)}
+/* imagem de confirmação (não sou um robô): gerada no servidor a cada tentativa */
+.robo{margin:2px 0 12px}
+.robo-linha{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.robo-img{position:relative;width:200px;height:64px;flex:none;border-radius:12px;overflow:hidden;background:#f4f6f9;border:1px solid var(--b)}
+.robo-img img{display:block;width:200px;height:64px}
+.robo-img span{position:absolute;inset:0;display:grid;place-items:center;padding:6px;text-align:center;font-size:.72rem;color:var(--mu);line-height:1.3}
+.robo-img span[hidden]{display:none}
+.robo-nova{width:42px;height:42px;flex:none;border-radius:999px;border:1px solid var(--b);background:var(--w);color:var(--tx);font-size:1.15rem;cursor:pointer;transition:border-color .15s,transform .3s}
+.robo-nova:hover{border-color:var(--g2)} .robo-nova:active{transform:rotate(-90deg)}
+#capR{text-transform:uppercase;letter-spacing:.22em;font-weight:600}
+#capR::placeholder{text-transform:none;letter-spacing:normal;font-weight:400}
+@media(max-width:380px){ .robo-img,.robo-img img{width:180px;height:58px} }
 .alo{display:flex;flex-direction:column;align-items:center;gap:6px}
 .nmk-g{width:52px;height:52px;border-radius:16px;margin-bottom:8px}
 .nmk-g svg{width:32px;height:32px}
@@ -1776,6 +1788,14 @@ div:has(> .fc2){flex-wrap:wrap;row-gap:6px}
         <button type="button" onclick="esqueciSenha()" style="background:none;border:none;color:var(--mu);font-size:.76rem;cursor:pointer;text-decoration:underline;padding:0">Esqueci minha senha</button>
       </div>
       <div id="AM" style="display:none;font-size:.8rem;background:#f0fdf4;border:1px solid #bbf7d0;color:#15803d;border-radius:8px;padding:9px 11px;margin-bottom:8px;line-height:1.45"></div>
+      <div class="robo" id="capBox">
+        <label class="fl" for="capR">Confirme que você não é um robô</label>
+        <div class="robo-linha">
+          <div class="robo-img"><img id="capImg" alt="Imagem com 5 letras e números tortos, para confirmar que você não é um robô" width="200" height="64"><span id="capAviso">gerando a imagem…</span></div>
+          <button type="button" class="robo-nova" onclick="capNova()" title="Gerar outra imagem" aria-label="Gerar outra imagem">↻</button>
+        </div>
+        <input class="inp" id="capR" placeholder="Os 5 caracteres da imagem" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" maxlength="10" onkeydown="if(event.key==='Enter')capEnter()">
+      </div>
       <button class="bp" onclick="doLogin()">Entrar</button>
       <div style="text-align:center;margin-top:14px;font-size:.72rem;color:var(--li)">🔒 Acesso restrito aos sócios</div>
     </div>
@@ -4070,10 +4090,50 @@ onAuthStateChanged(auth,u=>{
     // que observar.
     try{ ligarPiscaNumeros(); }catch(e){}
   }
-  else{document.getElementById('AS').classList.remove('h');document.getElementById('APP').classList.remove('v');}
+  else{document.getElementById('AS').classList.remove('h');document.getElementById('APP').classList.remove('v');capNova();}
 });
 
-window.swAt=t=>{document.querySelectorAll('.at').forEach((b,i)=>b.classList.toggle('on',(i===0&&t==='login')||(i===1&&t==='reg')));document.getElementById('fLogin').style.display=t==='login'?'block':'none';document.getElementById('fReg').style.display=t==='reg'?'block':'none';document.getElementById('AE').textContent='';};
+window.swAt=t=>{document.querySelectorAll('.at').forEach((b,i)=>b.classList.toggle('on',(i===0&&t==='login')||(i===1&&t==='reg')));document.getElementById('fLogin').style.display=t==='login'?'block':'none';document.getElementById('fReg').style.display=t==='reg'?'block':'none';document.getElementById('AE').textContent='';
+  // a imagem de confirmação vai para o formulário aberto, logo antes do botão
+  const f=document.getElementById(t==='reg'?'fReg':'fLogin'), cap=document.getElementById('capBox');
+  if(f&&cap) f.insertBefore(cap,f.querySelector('.bp'));
+};
+// ── Imagem de confirmação (não sou um robô) ──
+// A imagem e a resposta saem do servidor (api/captcha): a página nunca sabe a
+// resposta, só manda o que a pessoa digitou para o servidor conferir. Cada
+// imagem vale uma tentativa: conferiu (certo ou errado), vem outra.
+let capTok='', capPedido=0;
+window.capNova=async()=>{
+  const img=document.getElementById('capImg'), av=document.getElementById('capAviso'), r=document.getElementById('capR');
+  if(!img) return;
+  const meu=++capPedido; capTok='';
+  if(r) r.value='';
+  img.removeAttribute('src'); av.textContent='gerando a imagem…'; av.hidden=false;
+  try{
+    const res=await fetch('/api/captcha',{cache:'no-store'});
+    const j=await res.json().catch(()=>({}));
+    if(meu!==capPedido) return; // pediram outra no meio do caminho
+    if(!res.ok||!j.ok||!j.img) throw new Error(j.erro||'');
+    capTok=j.token; img.src=j.img; av.hidden=true;
+  }catch(e){
+    if(meu!==capPedido) return;
+    av.textContent='Não consegui gerar a imagem. Toque em ↻ para tentar de novo.';
+  }
+};
+// '' quando o servidor confere; senão, o motivo para mostrar
+async function capConferir(){
+  const campo=document.getElementById('capR'), resp=(campo&&campo.value||'').trim();
+  if(!capTok) return 'A imagem de confirmação ainda não carregou. Toque em ↻ para gerar outra.';
+  if(!resp){ campo.focus(); return 'Digite os caracteres da imagem.'; }
+  const tok=capTok;
+  try{
+    const res=await fetch('/api/captcha',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:tok,resposta:resp})});
+    const j=await res.json().catch(()=>({}));
+    return j.ok?'':(j.erro||'Não consegui conferir a imagem. Tente de novo.');
+  }catch(e){ return 'Não consegui conferir a imagem agora. Confira a internet e tente de novo.'; }
+  finally{ capNova(); }
+}
+window.capEnter=()=>{ if(document.getElementById('fReg').style.display==='block') doReg(); else doLogin(); };
 // Mostrar/ocultar senha
 window.togglePw=(inpId,btnId)=>{
   const i=document.getElementById(inpId), b=document.getElementById(btnId);
@@ -4088,7 +4148,12 @@ window.togglePw=(inpId,btnId)=>{
   const v=i.value; i.value=''; i.value=v;
 };
 
-window.doLogin=async()=>{try{await signInWithEmailAndPassword(auth,g('lE'),g('lP'));}catch(e){document.getElementById('AE').textContent=em(e.code);}};
+window.doLogin=async()=>{
+  const erro=document.getElementById('AE'); erro.textContent='';
+  if(!g('lE')||!g('lP')){ erro.textContent='Digite o e-mail e a senha.'; return; }
+  const falha=await capConferir(); if(falha){ erro.textContent=falha; return; }
+  try{await signInWithEmailAndPassword(auth,g('lE'),g('lP'));}catch(e){erro.textContent=em(e.code);}
+};
 
 // Redefinição de senha — o Firebase envia um link seguro para o e-mail cadastrado.
 window.esqueciSenha=async()=>{
@@ -4101,6 +4166,7 @@ window.esqueciSenha=async()=>{
     document.getElementById('lE').focus();
     return;
   }
+  const falha=await capConferir(); if(falha){ erro.textContent=falha; return; }
   try{
     await sendPasswordResetEmail(auth,email);
     msg.style.display='block';
@@ -4123,6 +4189,7 @@ window.doReg=async()=>{
     return;
   }
   if(senha.length<6){ erro.textContent='A senha precisa ter pelo menos 6 caracteres.'; return; }
+  const falha=await capConferir(); if(falha){ erro.textContent=falha; return; }
   try{
     const cred=await createUserWithEmailAndPassword(auth,email,senha);
     const nome = email===EMAIL_IGOR.toLowerCase() ? 'Igor' : 'João';

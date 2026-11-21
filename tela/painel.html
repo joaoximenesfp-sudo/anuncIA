@@ -109,6 +109,16 @@ b,strong,th,h1,h2,h3,h4,h5,h6{font-weight:600}
   :root[data-theme="dark"] nav button.on{background:#fff;border-color:#fff;color:#0b1221}
   :root[data-theme="dark"] .cartao,:root[data-theme="dark"] .kpi{border-color:var(--linha);box-shadow:none}
   header #quem{color:#a3b1c4;font-size:13px}
+  /* imagem de confirmação (não sou um robô): a mesma do sistema, gerada no servidor */
+  .robo{display:flex;flex-direction:column;gap:6px}
+  .robo-t{font-size:13px;color:var(--fraco);font-weight:600}
+  .robo-linha{display:flex;gap:8px;align-items:center}
+  .robo-img{position:relative;width:200px;height:64px;flex:none;border-radius:12px;overflow:hidden;background:#f4f6f9;border:1px solid var(--linha)}
+  .robo-img img{display:block;width:200px;height:64px}
+  .robo-img span{position:absolute;inset:0;display:grid;place-items:center;padding:6px;text-align:center;font-size:12px;color:#556070}
+  button.robo-nova{width:42px;height:42px;padding:0;font-size:18px;flex:none}
+  #cap-r{text-transform:uppercase;letter-spacing:.22em;font-weight:600}
+  #cap-r::placeholder{text-transform:none;letter-spacing:normal;font-weight:400}
 </style>
 </head>
 <body>
@@ -125,6 +135,14 @@ b,strong,th,h1,h2,h3,h4,h5,h6{font-weight:600}
     <form id="form-entrar">
       <label>E-mail<input id="email" type="email" autocomplete="username" required></label>
       <label>Senha<input id="senha" type="password" autocomplete="current-password" required></label>
+      <div class="robo">
+        <label class="robo-t" for="cap-r">Confirme que você não é um robô</label>
+        <div class="robo-linha">
+          <div class="robo-img"><img id="cap-img" alt="Imagem com 5 letras e números tortos, para confirmar que você não é um robô" width="200" height="64"><span id="cap-aviso">gerando a imagem…</span></div>
+          <button type="button" class="sec robo-nova" id="cap-nova" title="Gerar outra imagem" aria-label="Gerar outra imagem">↻</button>
+        </div>
+        <input id="cap-r" placeholder="Os 5 caracteres da imagem" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" maxlength="10">
+      </div>
       <button class="acao">Entrar</button>
       <span id="erro-entrar" class="erro"></span>
     </form>
@@ -833,6 +851,33 @@ if (DEMO) {
   iniciarFirebase().catch(err => { $('entrar').hidden = false; $('erro-entrar').textContent = 'Sem conexão com o Firebase: ' + err.message; });
 }
 
+// ── Imagem de confirmação (não sou um robô) ──
+// Gerada e conferida no servidor (api/captcha), como no sistema: a página nunca
+// sabe a resposta. Cada imagem vale uma tentativa: conferiu, vem outra.
+let capTok = '', capPedido = 0;
+async function capNova() {
+  const meu = ++capPedido; capTok = ''; $('cap-r').value = '';
+  $('cap-img').removeAttribute('src'); $('cap-aviso').textContent = 'gerando a imagem…'; $('cap-aviso').hidden = false;
+  try {
+    const r = await fetch('/api/captcha', { cache: 'no-store' }); const j = await r.json().catch(() => ({}));
+    if (meu !== capPedido) return;
+    if (!r.ok || !j.ok || !j.img) throw new Error(j.erro || '');
+    capTok = j.token; $('cap-img').src = j.img; $('cap-aviso').hidden = true;
+  } catch (err) { if (meu === capPedido) $('cap-aviso').textContent = 'Não consegui gerar a imagem. Toque em ↻.'; }
+}
+async function capConferir() {
+  const resp = $('cap-r').value.trim();
+  if (!capTok) return 'A imagem de confirmação ainda não carregou. Toque em ↻.';
+  if (!resp) { $('cap-r').focus(); return 'Digite os caracteres da imagem.'; }
+  try {
+    const r = await fetch('/api/captcha', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: capTok, resposta: resp }) });
+    const j = await r.json().catch(() => ({}));
+    return j.ok ? '' : (j.erro || 'Não consegui conferir a imagem. Tente de novo.');
+  } catch (err) { return 'Não consegui conferir a imagem agora. Confira a internet e tente de novo.'; }
+  finally { capNova(); }
+}
+$('cap-nova').onclick = capNova;
+
 async function iniciarFirebase() {
   const V = 'https://www.gstatic.com/firebasejs/11.0.0/';
   const [{ initializeApp }, auth, fs] = await Promise.all([import(V + 'firebase-app.js'), import(V + 'firebase-auth.js'), import(V + 'firebase-firestore.js')]);
@@ -842,6 +887,7 @@ async function iniciarFirebase() {
   fb = { db: fs.getFirestore(app), collection: fs.collection, getDocs: fs.getDocs, doc: fs.doc, setDoc: fs.setDoc, deleteDoc: fs.deleteDoc, query: fs.query, where: fs.where };
   $('form-entrar').onsubmit = async e => {
     e.preventDefault(); $('erro-entrar').textContent = '';
+    const falha = await capConferir(); if (falha) { $('erro-entrar').textContent = falha; return; }
     try { await auth.signInWithEmailAndPassword(a, $('email').value.trim(), $('senha').value); }
     catch (err) { $('erro-entrar').textContent = 'Não entrou: confira e-mail e senha.'; }
   };
@@ -849,7 +895,7 @@ async function iniciarFirebase() {
   auth.onAuthStateChanged(a, u => {
     $('bt-sair').hidden = !u;
     $('quem').textContent = u ? u.email : '';
-    if (!u) { $('app').hidden = true; $('entrar').hidden = false; return; }
+    if (!u) { $('app').hidden = true; $('entrar').hidden = false; capNova(); return; }
     if (!SOCIOS.includes((u.email || '').toLowerCase())) { $('entrar').hidden = true; $('quem').textContent = u.email + ' · sem acesso'; return; }
     abrir().catch(err => alert('Erro ao carregar: ' + err.message));
   });

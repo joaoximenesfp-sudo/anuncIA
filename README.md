@@ -103,3 +103,18 @@ No iPhone e no Mac, a letra é a da Apple; nos outros aparelhos (Windows, Androi
 **Inter**, que fica em `fontes/` (licença OFL, junto). O peso máximo é 600 (seminegrito):
 acima disso a letra fica pesada (no Windows, o 800 virava Segoe UI Black). O arquivo da fonte é
 guardado pelo navegador por um ano (`vercel.json`): para trocar, use outro nome de arquivo.
+
+## Imagem de confirmação no login ("não sou um robô")
+
+Entrar, Cadastrar e Esqueci minha senha (no sistema e no painel dos tablets) só seguem
+depois de digitar os 5 caracteres de uma imagem gerada na hora pelo servidor
+(`api/captcha.js`). As letras são desenhadas tortas, com linhas e pontos por cima (não há
+texto dentro da imagem), e a resposta nunca vai para a página: o servidor confere o que
+foi digitado. Cada imagem vale uma tentativa e 10 minutos; o ↻ gera outra.
+A chave da assinatura sai de `CAPTCHA_SECRET` na Vercel (ou, sem ela, do `ML_SECRET`).
+
+O limite: a imagem protege as telas do site. Quem souber chamar o login do Firebase
+direto pula o site; contra isso valem as travas do próprio Firebase (bloqueio depois de
+muitas tentativas, que já vem ligado) e, no console do Firebase → Authentication →
+Settings: desligar o cadastro público (User actions → "Enable create (sign-up)"), já que
+só os sócios usam, e manter a proteção contra enumeração de e-mail ligada.
