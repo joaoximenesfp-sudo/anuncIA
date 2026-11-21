@@ -22,7 +22,7 @@ const codigo =
   'let prods=[]; const anFichaRapida=p=>fichaDe(p);' +
   trecho('// ── FICHA PARA O MERCADO LIVRE ──', 'function mlTitulo(p){') +
   'return {mlFicha, mlTelaDoModelo, mlCpuCodigo, mlSO, mlRespostasIguais, mlCpuProvaveis, mlCasar, mlSugestao, mlCpusDaLoja, mlCpusComuns,' +
-  ' mlRespostasDaLoja, mlPadrao, mlHwLinhas, mlChave, poe:l=>{prods=l;}};';
+  ' mlRespostasDaLoja, mlPadrao, mlHwLinhas, mlChave, recursosDe, sistemaDe, resolucaoDe, recursosLinhas, poe:l=>{prods=l;}};';
 const window={}, document={getElementById:()=>null};
 const M=new Function('window','document',codigo)(window,document);
 
@@ -121,6 +121,23 @@ ok(!errV.length, 'vídeo: o modelo exato com o código do processador, a famíli
 const opt=M.mlFicha({id:'o1',nome:'Dell OptiPlex 3080 i5 10ª 8GB SSD 256GB'}), yoga=M.mlFicha({id:'y1',nome:'Lenovo Yoga 2 em 1 i5 8ª 8GB',descricao:'tela touch'});
 ok(opt.mesa && opt.tem.wifi===undefined && opt.tem.webcam===undefined && opt.tipo_produto==='' && yoga.tipo_produto==='2 em 1' && yoga.tem.touch===true,
   'de mesa: não chuta Wi-Fi nem webcam; 2 em 1 com touch');
+
+console.log('\nrecursos marcados no cadastro (catálogo, Instagram e Mercado Livre)');
+const mk={id:'rk1',nome:'Dell Latitude 7490 · i5 8ª · SSD 256GB · 16GB RAM',descricao:'Tem webcam e leitor digital.',recursos:['wifi','bluetooth','retroiluminado','abnt2','hdmi'],
+  sistema:'Windows 11 Pro',resolucao:'1920 x 1080'};
+const fm=M.mlFicha(mk);
+ok(fm.tem.wifi===true && fm.tem.bluetooth===true && fm.tem.retroiluminado===true && fm.tem.webcam===false && fm.tem.digital===false && fm.tem.hdmi===true &&
+  fm.teclado==='Português' && fm.so==='Windows' && fm.so_versao==='11' && fm.so_edicao==='Pro' && fm.resolucao==='1920 x 1080',
+  'o marcado no cadastro é o que vale (o que não está marcado ela não tem, mesmo que a descrição diga): '+JSON.stringify({tem:fm.tem,t:fm.teclado,so:[fm.so,fm.so_versao,fm.so_edicao]}));
+const lk=M.recursosLinhas(mk);
+ok(JSON.stringify(lk)==='{"recursos":["Wi-Fi","Bluetooth","HDMI","Teclado retroiluminado","Teclado ABNT2"],"sistema":"Windows 11 Pro","resolucao":"Full HD"}',
+  'para o anúncio: '+JSON.stringify(lk));
+const velha={id:'rk2',nome:'Lenovo ThinkPad T480 i5 8ª 8GB SSD 256GB',descricao:'Windows 10 Pro, tela Full HD, teclado retroiluminado e USB-C.'};
+ok(JSON.stringify(M.recursosDe(velha))==='["wifi","bluetooth","webcam","microfone","fone","usbc","retroiluminado"]' && M.sistemaDe(velha)==='Windows 10 Pro' && M.resolucaoDe(velha)==='1920 x 1080',
+  'máquina antiga, sem marcação: o básico de notebook e o que a descrição diz — '+JSON.stringify(M.recursosDe(velha)));
+ok(JSON.stringify(M.recursosDe({id:'rk3',nome:'Dell OptiPlex 3080 i5 10ª'}))==='[]' && M.sistemaDe({id:'rk4',nome:'x',sistema:'Linux'})==='Linux' &&
+  M.mlFicha({id:'rk4',nome:'x',sistema:'Linux'}).so==='Linux' && M.mlFicha({id:'rk5',nome:'x',sistema:'Sem sistema'}).so==='',
+  'de mesa não ganha o básico de notebook; Linux e "sem sistema" também valem');
 
 console.log('\nhomologação da Anatel (uma vez por modelo)');
 const an1={id:'an1',nome:'Dell Latitude 3420 i5 11ª 16GB',anatel:'05428-20-03153'}, an2={id:'an2',nome:'Dell Latitude 3420 i5 11ª 8GB'}, an3={id:'an3',nome:'Dell Latitude 5490 i5 8ª 8GB'};

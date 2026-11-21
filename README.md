@@ -136,6 +136,28 @@ abre). O access token vale 6 horas e o refresh token é de uso único: o servido
 grava o par novo a cada vez (e as chamadas do sistema saem uma de cada vez, para duas
 renovações não se atropelarem).
 
+## Recursos da máquina (catálogo, Instagram e Mercado Livre)
+
+No cadastro e no Editar (quadro "Revisão da máquina e o que vai no anúncio"), a parte
+**📢 Vai no anúncio** tem:
+
+- **Recursos**: Wi-Fi, Bluetooth, webcam, microfone, saída de fone, HDMI, USB-C, teclado
+  retroiluminado, ABNT2 e numérico, leitor digital, tela touch e leitor de cartão SD.
+  Notebook novo no cadastro já vem com o básico marcado (Wi-Fi, Bluetooth, webcam,
+  microfone e fone); o que estiver marcado é o que ela tem. Máquina antiga, sem marcação,
+  mostra no Editar o que o sistema deduz da descrição (e o básico de notebook), e é isso
+  que vai até alguém corrigir.
+- **Sistema** (Windows 11 Pro, Linux, sem sistema...) e **resolução da tela** (HD, Full HD...).
+- **Código do processador** (8350U): a lista sugere os da linha e geração escolhidas; é o
+  que o Mercado Livre sempre pede.
+- **Homologação Anatel**: uma vez por modelo. No quadro do Mercado Livre, "Homologação
+  Anatel por modelo" lista cada modelo uma vez: digitou, todas as máquinas daquele modelo
+  recebem, e as que já estão no Mercado Livre são atualizadas em seguida.
+
+Onde aparece: no **catálogo** ("O que ela tem" e Sistema/Resolução na ficha, e a busca acha
+por recurso), na **legenda do Instagram** (🪟 sistema e tela; ✨ recursos) e no **Mercado
+Livre** (as características e a descrição). A homologação vai só para o Mercado Livre.
+
 ## Letra do sistema e do site
 
 No iPhone e no Mac, a letra é a da Apple; nos outros aparelhos (Windows, Android), a

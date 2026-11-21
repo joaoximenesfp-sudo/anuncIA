@@ -191,7 +191,7 @@ function daFicha(f) {
     PRODUCT_TYPE: s('tipo_produto'),
     WITH_WI_FI: sn('wifi'), WITH_BLUETOOTH: sn('bluetooth'), WITH_WEBCAM: sn('webcam'), WITH_MICROPHONE: sn('microfone'),
     WITH_HEADPHONES_OUTPUT: sn('fone'), WITH_TOUCH_SCREEN: sn('touch'), WITH_FINGERPRINT_READER: sn('digital'),
-    WITH_BACKLIGHT_KEYBOARD: sn('retroiluminado'), WITH_NUMERIC_PAD: sn('numerico'),
+    WITH_BACKLIGHT_KEYBOARD: sn('retroiluminado'), WITH_NUMERIC_PAD: sn('numerico'), WITH_MEMORY_CARD_READER: sn('sd'),
     WITH_RETINA_DISPLAY: s('marca') && !/apple/i.test(s('marca')) ? 'Não' : '',
     KEYBOARD_LANGUAGE: s('teclado'), COLOR: s('cor'), MAIN_COLOR: s('cor'),
     MAX_BATTERY_LIFE: s('bateria_h') ? s('bateria_h') + ' h' : '',

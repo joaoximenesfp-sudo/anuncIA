@@ -329,6 +329,11 @@ b,strong,th,h1,h2,h3,h4,h5,h6{font-weight:600}
   .fi b{font-size:.88rem;font-weight:600;overflow-wrap:anywhere}
   .fi.boa b{color:var(--g2)} .fi.ruim b{color:var(--al)}
   .dt-desc{font-size:.9rem;line-height:1.65;color:var(--mu);white-space:pre-line;margin:0 0 16px}
+  .rec{margin:0 0 16px}
+  .rec small{display:block;font-size:.62rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--li);margin-bottom:7px}
+  .rec div{display:flex;flex-wrap:wrap;gap:6px}
+  .rec span{background:var(--chip);border-radius:999px;padding:6px 11px;font-size:.8rem;font-weight:500;color:var(--tx)}
+  .rec span::before{content:'✓ ';color:var(--g2);font-weight:600}
   .dt-cheg{background:var(--albg);border:1px solid var(--al);color:var(--al);border-radius:14px;padding:11px 13px;font-size:.82rem;font-weight:600;line-height:1.55;margin-bottom:16px}
   .dt-res{background:var(--rxbg);border:1px solid #C4B5FD;color:#5B21B6;border-radius:14px;padding:11px 13px;font-size:.82rem;font-weight:600;line-height:1.55;margin-bottom:16px}
   :root[data-theme="dark"] .dt-res{border-color:#6D28D9;color:#C4B5FD}
@@ -826,7 +831,8 @@ function filtrados(){
       if(f && !naFaixa(i,f)) return false;
     }
     if(!q) return true;
-    const alvo=norm((i.nome||'')+' '+(i.marca||'')+' '+specsDe(i).join(' ')+' '+condicoes(i).map(c=>c.t).join(' '));
+    const alvo=norm((i.nome||'')+' '+(i.marca||'')+' '+specsDe(i).join(' ')+' '+condicoes(i).map(c=>c.t).join(' ')
+      +' '+(i.recursos||[]).join(' ')+' '+(i.sistema||'')+' '+(i.resolucao||''));
     return q.split(/\s+/).every(t=>alvo.includes(t));
   });
 }
@@ -1067,7 +1073,9 @@ async function abrir(g,k){
     : cheg
     ? `Olá! Vi no catálogo que o *${i.nome}*${qual} está chegando${temPreco?` por ${fmt(i.preco)}`:''}. Dá pra reservar?`
     : `Olá! Tenho interesse no *${i.nome}*${qual} por ${fmt(i.preco)}, que vi no catálogo. Ainda está disponível?`;
-  const ficha=[...p.specs.map(s=>({k:rotuloSpec(s),v:s})), ...condicoes(i).map(c=>({k:c.k,v:c.v,cls:c.cls}))];
+  const ficha=[...p.specs.map(s=>({k:rotuloSpec(s),v:s})), ...(i.sistema?[{k:'Sistema',v:i.sistema}]:[]), ...(i.resolucao?[{k:'Resolução',v:i.resolucao}]:[]),
+    ...condicoes(i).map(c=>({k:c.k,v:c.v,cls:c.cls}))];
+  const recursos=(Array.isArray(i.recursos)?i.recursos:[]).filter(r=>typeof r==='string'&&r.trim());
   $('dt').innerHTML=`
     <button class="dt-x" onclick="fechar()" aria-label="Fechar">✕</button>
     <div class="dt-g">
@@ -1086,6 +1094,7 @@ async function abrir(g,k){
       ${ res ? `<div class="dt-res">🤝 Essa máquina está reservada para outro cliente. Reserva às vezes não se confirma — me chame que eu aviso se liberar, ou te mostro outra parecida.</div>`
              : cheg ? `<div class="dt-cheg">🚚 Essa máquina ainda está chegando. Dá pra reservar agora e garantir antes de entrar à venda.</div>` : '' }
       ${ficha.length?`<div class="ficha">${ficha.map(f=>`<div class="fi ${f.cls||''}"><small>${esc(f.k)}</small><b>${esc(f.v)}</b></div>`).join('')}</div>`:''}
+      ${recursos.length?`<div class="rec"><small>O que ela tem</small><div>${recursos.map(r=>`<span>${esc(r)}</span>`).join('')}</div></div>`:''}
       ${ i.descricao ? `<p class="dt-desc">${esc(i.descricao)}</p>` : '' }
       <div class="gar">
         <div>${IC.escudo}<span><b>90 dias de garantia</b> a partir da entrega.</span></div>
