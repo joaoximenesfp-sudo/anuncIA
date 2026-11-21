@@ -959,6 +959,7 @@ tr.marcada>td:first-child{box-shadow:inset 3px 0 0 var(--gr)}
 .hw-conf b{font-weight:600;color:var(--tx)}
 .hw-conf ul{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:5px 12px}
 .hw-conf li.ok{color:#047857} .hw-conf li.falta{color:#b91c1c} .hw-conf li.opc{color:var(--li)}
+.hw-conf-alerta{margin-top:8px;padding:7px 9px;border-radius:8px;background:#fef3c7;color:#92400e;font-weight:500}
 .hw-chk{grid-column:1/-1;display:flex;align-items:center;gap:7px;font-size:.72rem;color:var(--tx);cursor:pointer}
 .hw-chk input{width:15px;height:15px;accent-color:#16a34a;cursor:pointer}
 .hw-sug-box{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;padding:7px 10px;
@@ -4982,7 +4983,8 @@ window.addProd=async()=>{
   if(!nome){alert('Digite o nome!');return;}
   // o check do anúncio: anunciada com algo faltando, pergunta antes
   if(status==='Anunciado'){ try{ const c=hwConferencia('p');
-    if(c.falta.length&&!confirm('Para o anúncio sair completo (catálogo, Instagram e Mercado Livre), falta:\n\n• '+c.falta.join('\n• ')+'\n\nAdicionar assim mesmo?')) return;
+    const msg=[c.falta.length?'Para o anúncio sair completo (catálogo, Instagram e Mercado Livre), falta:\n\n• '+c.falta.join('\n• '):'',c.alerta?'⚠️ '+c.alerta:''].filter(Boolean).join('\n\n');
+    if(msg&&!confirm(msg+'\n\nAdicionar assim mesmo?')) return;
   }catch(e){} }
   // Máquina sem data de compra some de TODO relatório mensal — comprados do
   // mês, gasto por sócio, receita vs gasto — e some sem dizer nada. Foi assim
@@ -6671,6 +6673,10 @@ window.eRepasseHint=()=>{
 
 window.saveEdit=async()=>{
   if(!editId)return;
+  // desmarcou agora o básico (Wi-Fi, Bluetooth...): pergunta antes, que vai como "não tem"
+  try{ const c=hwConferencia('e'), antes=recursosDe(prods.find(x=>x.id===editId)||{});
+    if(c.alerta&&c.desmarcados.some(k=>antes.includes(k))&&!confirm('⚠️ '+c.alerta+'\n\nSalvar assim mesmo?')) return;
+  }catch(e){}
   const nome=g('eN'),custo=parseFloat(document.getElementById('eC').value)||0,venda=parseFloat(document.getElementById('eV').value)||0,status=document.getElementById('eS').value,dc=document.getElementById('eDC').value,dvInput=document.getElementById('eDV').value,investidor=document.getElementById('eInv').value;
   const dcMes=dc?dc.slice(0,7):'';
   // Fornecedor vinculado (de quem comprou). O cliente NÃO é mexido aqui — só na venda.
@@ -7435,13 +7441,20 @@ function hwConferencia(pre){
     ['Código do processador',!!val('CpuCod')||!!mlCpuCodigo(nome),''],
     ['Homologação Anatel',/^\d{8,14}$/.test(val('Anatel').replace(/\D/g,''))||anatelModelo,anatelModelo&&!val('Anatel')?'a do modelo':''],
   ];
-  return {itens, falta:itens.filter(i=>!i[1]).map(i=>i[0]), video:!!ytId(val('Video'))};
+  // o básico de notebook desmarcado vai como "não tem" no anúncio: clicar no que já vinha
+  // marcado desmarca (aconteceu: Wi-Fi, Bluetooth e webcam saíram como "não")
+  const rec=g('Rec'), desmarcados=rec&&nome&&!ML_RE_MESA.test(nome)
+    ?['wifi','bluetooth','webcam','microfone','fone'].filter(k=>{ const b=rec.querySelector(`.rec-chip[data-r="${k}"]`); return b&&!b.classList.contains('on'); }):[];
+  const alerta=desmarcados.includes('wifi')||desmarcados.length>=3
+    ?desmarcados.map(recRotulo).join(', ')+(desmarcados.length>1?' estão desmarcados: vão':' está desmarcado: vai')+' como "não tem" no anúncio. Confira os recursos.':'';
+  return {itens, falta:itens.filter(i=>!i[1]).map(i=>i[0]), video:!!ytId(val('Video')), alerta, desmarcados};
 }
 window.hwConferir=pre=>{
   const box=document.getElementById(pre+'Conf'); if(!box) return;
   const c=hwConferencia(pre), feitos=c.itens.length-c.falta.length;
   box.innerHTML=`<b>${c.falta.length?'📋':'✅'} Conferência do anúncio</b> · ${feitos} de ${c.itens.length}${c.falta.length?'':' — tudo pronto para sair completo'}
-    <ul>${c.itens.map(([t,ok,x])=>`<li class="${ok?'ok':'falta'}">${ok?'✓':'✗'} ${esc(t)}${x?' ('+esc(x)+')':''}</li>`).join('')}<li class="${c.video?'ok':'opc'}">${c.video?'✓':'○'} Vídeo${c.video?'':' (opcional)'}</li></ul>`;
+    <ul>${c.itens.map(([t,ok,x])=>`<li class="${ok?'ok':'falta'}">${ok?'✓':'✗'} ${esc(t)}${x?' ('+esc(x)+')':''}</li>`).join('')}<li class="${c.video?'ok':'opc'}">${c.video?'✓':'○'} Vídeo${c.video?'':' (opcional)'}</li></ul>
+    ${c.alerta?`<div class="hw-conf-alerta">⚠️ ${esc(c.alerta)}</div>`:''}`;
 };
 // a conferência acompanha o que é digitado, marcado e as fotos
 ['input','change','click'].forEach(ev=>document.addEventListener(ev,e=>{

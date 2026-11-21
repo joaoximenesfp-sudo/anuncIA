@@ -183,7 +183,10 @@ está pronto para o anúncio sair completo e do que falta: 3 fotos ou mais, desc
 sistema, resolução, código do processador e a homologação Anatel (a de outra máquina do
 mesmo modelo vale); o vídeo é opcional. Ela acompanha o que é digitado, marcado e as fotos.
 Ao **Adicionar** uma máquina como Anunciado com algo faltando, o sistema mostra o que falta
-e pergunta se adiciona assim mesmo.
+e pergunta se adiciona assim mesmo. Se um notebook ficar com o Wi-Fi desmarcado (ou três ou
+mais do básico: Bluetooth, webcam, microfone, fone), a conferência alerta, porque vai como
+"não tem" no anúncio; o Adicionar e o Salvar do Editar perguntam antes (clicar no que já
+vinha marcado desmarca).
 
 ## Letra do sistema e do site
 
