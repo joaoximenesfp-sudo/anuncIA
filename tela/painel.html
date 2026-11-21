@@ -59,8 +59,40 @@ b,strong,th,h1,h2,h3,h4,h5,h6{font-weight:600}
   .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
   .kpi{background:var(--cartao);border:1px solid var(--linha);border-radius:14px;padding:12px 14px}
   .kpi b{display:block;font-size:22px;font-variant-numeric:tabular-nums}.kpi span{color:var(--fraco);font-size:13px}
-  #entrar{max-width:380px;margin:40px auto}
-  #entrar form{display:flex;flex-direction:column;gap:10px}
+  /* tela de entrar: o mesmo palco do Business IJX (escuro, com grade e brilho) */
+  #entrar{position:fixed;inset:0;z-index:60;display:flex;padding:24px 16px;overflow:auto;
+    background:radial-gradient(55% 70% at 85% 10%,rgba(28,240,143,.20),transparent 62%),
+               radial-gradient(45% 60% at 0% 100%,rgba(45,212,245,.14),transparent 60%),linear-gradient(160deg,#0b1221,#060a13)}
+  #entrar::before{content:"";position:fixed;inset:0;pointer-events:none;
+    background-image:linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px);
+    background-size:44px 44px;-webkit-mask-image:radial-gradient(ellipse 80% 70% at 50% 40%,#000 20%,transparent 75%);
+    mask-image:radial-gradient(ellipse 80% 70% at 50% 40%,#000 20%,transparent 75%)}
+  .ent-card{position:relative;width:100%;max-width:400px;margin:auto;background:var(--cartao);color:var(--texto);border-radius:26px;
+    padding:34px 30px 24px;border:1px solid rgba(255,255,255,.1);box-shadow:0 40px 90px rgba(0,0,0,.45),0 0 80px rgba(28,240,143,.08)}
+  .ent-marca{text-align:center;margin-bottom:22px}
+  .ent-marca .mk{width:54px;height:54px;border-radius:16px;margin-bottom:12px}
+  .ent-marca .mk svg{width:32px;height:32px}
+  .ent-nome{font-size:26px;font-weight:600;letter-spacing:-.02em}
+  .ent-sub{font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--g2);margin-top:4px}
+  #form-entrar{display:flex;flex-direction:column;gap:12px}
+  #form-entrar input{padding:11px 13px}
+  .pw{position:relative;display:block}
+  .pw input{width:100%;padding-right:48px!important}
+  .pw-olho{position:absolute;right:5px;top:50%;transform:translateY(-50%);width:38px;height:38px;border:0;background:none;border-radius:10px;
+    color:var(--fraco);cursor:pointer;display:grid;place-items:center}
+  .pw-olho:hover{color:var(--texto);background:rgba(127,127,127,.12)}
+  .pw-olho svg{width:20px;height:20px}
+  .pw-olho .olho-fechado,.pw-olho.mostrando .olho-aberto{display:none}
+  .pw-olho.mostrando .olho-fechado{display:block}
+  .ent-links{display:flex;justify-content:space-between;gap:8px;margin-top:-4px}
+  button.link{background:none;border:0;padding:0;color:var(--fraco);font:inherit;font-size:13px;text-decoration:underline;cursor:pointer}
+  button.link:hover{color:var(--texto)}
+  .ent-dica{font-size:13px;background:var(--fundo);border:1px solid var(--linha);border-radius:12px;padding:10px 12px;line-height:1.5}
+  .ent-ok{font-size:13px;background:var(--verde-claro);color:var(--verde);border-radius:12px;padding:9px 12px;line-height:1.45}
+  #form-entrar button.acao{padding:13px;font-size:15px}
+  #entrar .erro{font-size:13px;text-align:center;line-height:1.45}
+  .ent-pe{text-align:center;margin-top:16px;font-size:12px;color:var(--fraco)}
+  @media (max-width:420px){ .ent-card{padding:28px 20px 20px;border-radius:22px} }
   .erro{color:var(--vermelho)}
   .demo{background:var(--amarelo-claro);color:var(--amarelo);padding:8px 12px;border-radius:10px;font-weight:600;margin-bottom:12px}
   #mapa{height:440px;border-radius:12px;border:1px solid var(--linha);overflow:hidden;background:var(--fundo);margin-top:12px;z-index:0}
@@ -129,12 +161,14 @@ b,strong,th,h1,h2,h3,h4,h5,h6{font-weight:600}
   <button class="sec" id="bt-sair" hidden>Sair</button>
 </header>
 <main>
-  <section id="entrar" class="cartao" hidden>
-    <h2>Entrar</h2>
-    <p class="leg">Mesmo login do sistema.</p>
-    <form id="form-entrar">
-      <label>E-mail<input id="email" type="email" autocomplete="username" required></label>
-      <label>Senha<input id="senha" type="password" autocomplete="current-password" required></label>
+  <section id="entrar" hidden>
+    <div class="ent-card">
+    <div class="ent-marca"><span class="mk"><svg viewBox="0 0 800 800" aria-hidden="true"><rect x="232" y="222" width="336" height="232" rx="26" fill="none" stroke="#06231A" stroke-width="46"/><polyline points="300,347 356,403 492,268" fill="none" stroke="#06231A" stroke-width="56" stroke-linecap="round" stroke-linejoin="round"/><rect x="168" y="486" width="464" height="52" rx="26" fill="#06231A"/></svg></span><div class="ent-nome">Painel da Tela</div><div class="ent-sub">Rede de tablets nos carros</div></div>
+    <form id="form-entrar" novalidate>
+      <label>E-mail<input id="email" type="email" autocomplete="username" placeholder="o mesmo do Business IJX"></label>
+      <label>Senha<span class="pw"><input id="senha" type="password" autocomplete="current-password" placeholder="••••••••"><button type="button" class="pw-olho" id="pw-olho" aria-label="Mostrar senha" title="Mostrar senha"><svg class="olho-aberto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><svg class="olho-fechado" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 5.1A10.9 10.9 0 0 1 12 5c6.5 0 10 7 10 7a17.6 17.6 0 0 1-3.2 4.2M6.6 6.6C3.9 8.4 2 12 2 12s3.5 7 10 7c1.6 0 3-.4 4.3-1"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg></button></span></label>
+      <div class="ent-links"><button type="button" class="link" id="bt-esqueci-email">Esqueci o e-mail</button><button type="button" class="link" id="bt-esqueci-senha">Esqueci minha senha</button></div>
+      <div class="ent-dica" id="dica-email" hidden></div>
       <div class="robo">
         <label class="robo-t" for="cap-r">Confirme que você não é um robô</label>
         <div class="robo-linha">
@@ -144,8 +178,11 @@ b,strong,th,h1,h2,h3,h4,h5,h6{font-weight:600}
         <input id="cap-r" placeholder="Os 5 caracteres da imagem" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" maxlength="10">
       </div>
       <button class="acao">Entrar</button>
+      <div class="ent-ok" id="ok-entrar" hidden></div>
       <span id="erro-entrar" class="erro"></span>
     </form>
+    <div class="ent-pe">🔒 Mesmo login do Business IJX · só os sócios</div>
+    </div>
   </section>
 
   <div id="app" hidden>
@@ -877,6 +914,25 @@ async function capConferir() {
   finally { capNova(); }
 }
 $('cap-nova').onclick = capNova;
+// o olho mostra e esconde a senha
+$('pw-olho').onclick = () => {
+  const i = $('senha'), b = $('pw-olho'), mostra = i.type === 'password';
+  i.type = mostra ? 'text' : 'password'; b.classList.toggle('mostrando', mostra);
+  b.title = mostra ? 'Esconder senha' : 'Mostrar senha'; b.setAttribute('aria-label', b.title); i.focus();
+};
+// esqueci o e-mail: quais têm acesso (os mesmos do Business IJX), meio escondidos
+const mascarar = e => { const [u, d] = String(e).split('@'); return (u.length <= 4 ? u[0] + '•••' : u.slice(0, 2) + '•••' + u.slice(-2)) + '@' + d; };
+$('bt-esqueci-email').onclick = () => {
+  const d = $('dica-email'); d.hidden = !d.hidden;
+  d.innerHTML = 'É o mesmo e-mail com que você entra no Business IJX. Têm acesso: ' + SOCIOS.map(e => '<b>' + esc(mascarar(e)) + '</b>').join(' · ') + '.';
+};
+const msgEntrar = err => ({
+  'auth/invalid-credential': 'E-mail ou senha incorretos. Use o e-mail do Business IJX (veja “Esqueci o e-mail”).',
+  'auth/wrong-password': 'Senha incorreta.', 'auth/user-not-found': 'Não existe conta com esse e-mail (veja “Esqueci o e-mail”).',
+  'auth/invalid-email': 'E-mail inválido.', 'auth/missing-email': 'Digite o e-mail.',
+  'auth/too-many-requests': 'Muitas tentativas. Espere alguns minutos e tente de novo.',
+  'auth/network-request-failed': 'Sem internet agora. Confira a conexão.',
+})[err && err.code] || 'Não entrou: ' + ((err && err.message) || 'erro desconhecido');
 
 async function iniciarFirebase() {
   const V = 'https://www.gstatic.com/firebasejs/11.0.0/';
@@ -886,17 +942,35 @@ async function iniciarFirebase() {
   const a = auth.getAuth(app);
   fb = { db: fs.getFirestore(app), collection: fs.collection, getDocs: fs.getDocs, doc: fs.doc, setDoc: fs.setDoc, deleteDoc: fs.deleteDoc, query: fs.query, where: fs.where };
   $('form-entrar').onsubmit = async e => {
-    e.preventDefault(); $('erro-entrar').textContent = '';
+    e.preventDefault(); $('erro-entrar').textContent = ''; $('ok-entrar').hidden = true;
+    if (!$('email').value.trim() || !$('senha').value) { $('erro-entrar').textContent = 'Digite o e-mail e a senha.'; return; }
     const falha = await capConferir(); if (falha) { $('erro-entrar').textContent = falha; return; }
-    try { await auth.signInWithEmailAndPassword(a, $('email').value.trim(), $('senha').value); }
-    catch (err) { $('erro-entrar').textContent = 'Não entrou: confira e-mail e senha.'; }
+    // a imagem passou: daqui em diante, o erro é do e-mail ou da senha (e a tela diz)
+    $('ok-entrar').hidden = false; $('ok-entrar').textContent = '✓ Imagem conferida. Entrando…';
+    try { await auth.signInWithEmailAndPassword(a, $('email').value.trim(), $('senha').value); $('ok-entrar').hidden = true; }
+    catch (err) { $('ok-entrar').textContent = '✓ A imagem estava certa.'; $('erro-entrar').textContent = msgEntrar(err); }
+  };
+  $('bt-esqueci-senha').onclick = async () => {
+    $('erro-entrar').textContent = ''; $('ok-entrar').hidden = true;
+    const email = $('email').value.trim();
+    if (!email) { $('erro-entrar').textContent = 'Digite o e-mail acima para receber o link de nova senha.'; $('email').focus(); return; }
+    const falha = await capConferir(); if (falha) { $('erro-entrar').textContent = falha; return; }
+    try {
+      await auth.sendPasswordResetEmail(a, email);
+      $('ok-entrar').hidden = false;
+      $('ok-entrar').textContent = '📨 Se ' + email + ' tiver conta, o link de nova senha chega em alguns minutos (confira o spam). Se não chegar, esse e-mail não tem conta: veja “Esqueci o e-mail”.';
+    } catch (err) { $('erro-entrar').textContent = msgEntrar(err); }
   };
   $('bt-sair').onclick = () => auth.signOut(a);
   auth.onAuthStateChanged(a, u => {
     $('bt-sair').hidden = !u;
     $('quem').textContent = u ? u.email : '';
     if (!u) { $('app').hidden = true; $('entrar').hidden = false; capNova(); return; }
-    if (!SOCIOS.includes((u.email || '').toLowerCase())) { $('entrar').hidden = true; $('quem').textContent = u.email + ' · sem acesso'; return; }
+    if (!SOCIOS.includes((u.email || '').toLowerCase())) {
+      $('app').hidden = true; $('entrar').hidden = false; $('ok-entrar').hidden = true;
+      $('erro-entrar').textContent = u.email + ' não tem acesso ao painel. Entre com o e-mail de sócio (o do Business IJX).';
+      auth.signOut(a); return;
+    }
     abrir().catch(err => alert('Erro ao carregar: ' + err.message));
   });
 }
