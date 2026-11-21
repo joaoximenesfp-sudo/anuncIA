@@ -96,3 +96,10 @@ Os tokens ficam cifrados em `config/mercadolivre` (só o servidor, com o `ML_SEC
 abre). O access token vale 6 horas e o refresh token é de uso único: o servidor renova e
 grava o par novo a cada vez (e as chamadas do sistema saem uma de cada vez, para duas
 renovações não se atropelarem).
+
+## Letra do sistema e do site
+
+No iPhone e no Mac, a letra é a da Apple; nos outros aparelhos (Windows, Android), a
+**Inter**, que fica em `fontes/` (licença OFL, junto). O peso máximo é 600 (seminegrito):
+acima disso a letra fica pesada (no Windows, o 800 virava Segoe UI Black). O arquivo da fonte é
+guardado pelo navegador por um ano (`vercel.json`): para trocar, use outro nome de arquivo.

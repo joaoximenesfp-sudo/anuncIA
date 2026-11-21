@@ -3,6 +3,9 @@
     { "source": "/q/:anuncio/:carro", "destination": "/api/q?anuncio=:anuncio&carro=:carro" },
     { "source": "/insta/img/:arq", "destination": "/api/insta?img=:arq" }
   ],
+  "headers": [
+    { "source": "/fontes/(.*)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }] }
+  ],
   "functions": {
     "api/insta.js": { "maxDuration": 60 },
     "api/ml.js": { "maxDuration": 60 }
