@@ -684,6 +684,8 @@ input[type=number].inp{padding-left:32px}
 .ml-aviso[hidden]{display:none}
 .ancat-ml{font-size:.68rem;color:var(--li)}
 .ancat-ml.ok{color:#a16207}
+.ancat-ml.erro{color:#b91c1c;font-weight:500;line-height:1.4}
+.ancat-mlf .mlf-erro{color:#b91c1c;font-weight:500}
 .ancat-ml a{color:#a16207;font-weight:600}
 .ancat-mlf{font-size:.7rem;background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:6px 7px;display:flex;flex-direction:column;gap:5px}
 .ancat-mlf label{display:flex;flex-direction:column;gap:2px;font-weight:600;color:var(--mu)}
@@ -12557,7 +12559,7 @@ window.mlEditorPublicar=async id=>{
   try{
     const r=await anCatPublicarCanais(p,['ml'],t=>{ if(st) st.textContent=t; });
     anCatAvisarResultado(p,r);
-    if(st) st.innerHTML=!r.ml?'':r.ml.erro?'⚠️ '+esc(r.ml.erro):r.ml.faltam?'🛒 O Mercado Livre pede mais dados: responda logo acima (uma vez só).'
+    if(st) st.innerHTML=!r.ml?'':r.ml.erro?'⚠️ Não foi para o Mercado Livre: o motivo está logo acima.':r.ml.faltam?'🛒 O Mercado Livre pede mais dados: responda logo acima (uma vez só).'
       :'✅ No Mercado Livre'+(r.ml.link?` · <a href="${encodeURI(r.ml.link)}" target="_blank" rel="noopener">ver o anúncio</a>`:'');
   }finally{ anCatMontar(); mlEditorMontar(); }
 };
@@ -12590,7 +12592,8 @@ window.instaMaquina=async id=>{
 // lucro e fornecedor nunca entram.
 let mlCfg=null, mlConfigurado=null, mlFila=Promise.resolve(), mlPedidos=[], mlPerguntas=null;
 let mlIniciado=false, mlSincTimer=null, mlSincRodando=false;
-const mlFaltam={};      // id da máquina -> { faltam, categoria }: o que o ML pediu e a ficha não sabe
+const mlFaltam={};      // id da máquina -> { faltam, categoria, motivo }: o que o ML pediu e a ficha não sabe
+const mlErros={};       // id da máquina -> o motivo da última recusa (fica no cartão até publicar)
 const mlFotosFeitas={}; // id da máquina -> { ass, ids }: fotos já enviadas nesta sessão
 const ML_DEV='https://developers.mercadolivre.com.br/devcenter';
 const ML_VOLTA='https://anunc-ia.vercel.app/api/ml';
@@ -13021,8 +13024,8 @@ async function mlPublicarMaquina(p,aviso){
   if(aviso) aviso('Mercado Livre: criando o anúncio...');
   const r=await mlApi({acao:'publicar',item:{titulo:mlTitulo(p),preco,descricao:mlDescricao(p,o),fotos:ids,ficha:mlFicha(p),atributos:{...mlRespostasIguais(p),...(p.ml_atributos||{})},
     tipo:o.tipo,retirada:o.retirada,garantia_dias:o.garantia,pacote:o.caixa,sku:p.num?String(p.num):'',categoria:p.ml_categoria||''}});
-  if(!r.ok&&r.faltam){ mlFaltam[p.id]={faltam:r.faltam,categoria:r.categoria||{}}; return {faltam:r.faltam}; }
-  delete mlFaltam[p.id];
+  if(!r.ok&&r.faltam){ mlFaltam[p.id]={faltam:r.faltam,categoria:r.categoria||{},motivo:r.motivo||''}; delete mlErros[p.id]; return {faltam:r.faltam}; }
+  delete mlFaltam[p.id]; delete mlErros[p.id];
   const campos={ml_id:r.id,ml_link:r.link||'',ml_em:new Date().toISOString(),ml_status:r.status||'active',ml_preco:r.preco||preco,ml_tipo:r.tipo||o.tipo,
     ml_categoria:(r.categoria&&r.categoria.id)||'',ml_categoria_nome:(r.categoria&&r.categoria.nome)||'',ml_pausado_pelo_sistema:false};
   Object.assign(p,campos);
@@ -13035,6 +13038,10 @@ async function mlPublicarMaquina(p,aviso){
 }
 function mlStatusHTML(p){
   if(mlFaltam[p.id]) return mlFaltamHTML(p);
+  if(mlErros[p.id]&&!mlNoAr(p)){
+    const e=String(mlErros[p.id]).replace(/[.\s]+$/,''), rec=e.replace(/^O Mercado Livre recusou o anúncio: /,'');
+    return `<div class="ancat-ml erro">⚠️ ${esc(rec!==e?'O Mercado Livre recusou: '+rec:'Não foi para o Mercado Livre: '+e)}. Para tentar de novo: Publicar → Mercado Livre.</div>`;
+  }
   const link=/^https:\/\/([a-z]+\.)?mercadolivre\.com\.br\//.test(p.ml_link||'')?p.ml_link:'';
   const ver=link?` · <a href="${encodeURI(link)}" target="_blank" rel="noopener">ver</a>`:'';
   if(mlNoAr(p)){
@@ -13104,7 +13111,8 @@ function mlFaltamHTML(p){
   const campos=fl.faltam.map(campo).join(''), pronto=!vazios.length;
   const resumo=pronto?'Tudo já veio preenchido com o que a loja sabe: confira e confirme.'
     :'Falta escolher: '+vazios.join(', ')+'.'+(vazios.length<fl.faltam.length?' O resto já veio preenchido.':'');
-  return `<div class="ancat-mlf" data-marca="${escAttr(f.marca)}"><b>🛒 O Mercado Livre pede${fl.categoria&&fl.categoria.nome?' (categoria '+esc(fl.categoria.nome)+')':''}:</b>${campos}
+  return `<div class="ancat-mlf" data-marca="${escAttr(f.marca)}"><b>🛒 O Mercado Livre pede${fl.categoria&&fl.categoria.nome?' (categoria '+esc(fl.categoria.nome)+')':''}:</b>
+    ${fl.motivo?`<small class="mlf-erro">⚠️ Não aceitou o que foi: ${esc(fl.motivo)}</small>`:''}${campos}
     <small class="mlf-resumo">${esc(resumo)}</small>
     <button class="pub${pronto?' pronto':''}" onclick="mlCompletar('${p.id}',this)">${pronto?'✓ Confirmar e publicar no Mercado Livre':'🛒 Salvar e publicar no Mercado Livre'}</button></div>`;
 }
@@ -13146,7 +13154,7 @@ window.mlCompletar=async (id,el)=>{
   const st=noEditor?document.getElementById('mlEditorStatus'):(card&&card.querySelector('.ancat-st'));
   const r=await anCatPublicarCanais(p,['ml'],t=>{ if(st) st.textContent=t; });
   anCatAvisarResultado(p,r);
-  if(noEditor&&st) st.innerHTML=!r.ml?'':r.ml.erro?'⚠️ '+esc(r.ml.erro):r.ml.faltam?'🛒 Ainda falta: responda acima.':'✅ No Mercado Livre'+(r.ml.link?` · <a href="${encodeURI(r.ml.link)}" target="_blank" rel="noopener">ver o anúncio</a>`:'');
+  if(noEditor&&st) st.innerHTML=!r.ml?'':r.ml.erro?'⚠️ Não foi para o Mercado Livre: o motivo está logo acima.':r.ml.faltam?'🛒 Ainda falta: responda acima.':'✅ No Mercado Livre'+(r.ml.link?` · <a href="${encodeURI(r.ml.link)}" target="_blank" rel="noopener">ver o anúncio</a>`:'');
   anCatMontar(); mlEditorMontar();
 };
 // O anúncio acompanha a máquina: vendida aqui encerra; reservada, chegando ou fora do
@@ -13581,7 +13589,11 @@ const anCatNova=p=>(instaConectado()||mlConectado())?anCatFaltam(p).length>0:!an
 async function anCatPublicarCanais(p,canais,aviso){
   const r={};
   if(canais.includes('insta')){ try{ r.insta=await anCatPublicarMaquina(p,aviso); }catch(e){ r.insta={erro:e.message}; } }
-  if(canais.includes('ml')){ try{ r.ml=await mlPublicarMaquina(p,aviso); }catch(e){ r.ml={erro:e.message}; } }
+  if(canais.includes('ml')){
+    try{ r.ml=await mlPublicarMaquina(p,aviso); }
+    // a recusa fica no cartão (o quadro de perguntas sai: o que faltava já foi respondido)
+    catch(e){ r.ml={erro:e.message}; mlErros[p.id]=e.message; delete mlFaltam[p.id]; }
+  }
   return r;
 }
 function anCatAvisarResultado(p,r){

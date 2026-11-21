@@ -89,6 +89,11 @@ Livre (o anúncio). Usa a API oficial (`api/ml.js`):
   com **Outro (digitar)**; a do processador traz os da mesma linha e geração (os que a
   loja já teve e os mais comuns) e diz onde ver o código no Windows. Modelo, processador
   e tela nunca vêm de máquina de outro modelo, e digitar o modelo preenche a tela.
+- **Quando o Mercado Livre recusa**, o motivo fica no cartão da máquina até ela ir (para
+  tentar de novo: Publicar → Mercado Livre; as respostas ficam guardadas). Resposta que
+  ele não aceitou volta como pergunta, com o motivo. Se a validação recusar sem dizer
+  por quê, o sistema tenta criar o anúncio direto: ou ele sai, ou o Mercado Livre diz o
+  motivo. A resposta inteira do Mercado Livre vai para o log da função na Vercel.
 - **Acompanhar**: preço mudou aqui, muda lá; vendeu aqui, o anúncio encerra; reservada,
   chegando ou fora do catálogo, pausa (e volta quando ela volta). A cada 10 minutos com o
   sistema aberto (e ao abrir), confere a situação dos anúncios e os pedidos dos últimos

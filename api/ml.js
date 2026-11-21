@@ -268,16 +268,43 @@ function idsDosErros(erros) {
   }
   return [...ids];
 }
+// As causas que o Mercado Livre mandou (lista, ou uma só).
+const causasDe = j => (Array.isArray(j && j.cause) ? j.cause : j && j.cause && typeof j.cause === 'object' ? [j.cause] : []).filter(c => c && typeof c === 'object');
+// O que foi mandado, para o log: sem descrição e sem nada de cliente (só o anúncio).
+const resumoItem = item => JSON.stringify({ cat: item.category_id, tipo: item.listing_type_id, titulo: item.title || item.family_name, preco: item.price,
+  fotos: (item.pictures || []).length, frete: item.shipping, garantia: (item.sale_terms || []).map(t => t.id + '=' + t.value_name),
+  atributos: (item.attributes || []).map(a => a.id + '=' + (a.value_name || a.value_id)) }).slice(0, 1500);
 async function validar(item, token) {
   const r = await ml('POST', '/items/validate', { token, corpo: item });
-  if (r.ok) return { erros: [], avisos: [] };
-  const causas = (Array.isArray(r.j.cause) ? r.j.cause : []).filter(Boolean);
-  const erros = causas.filter(c => c.type !== 'warning');
+  if (r.ok) return { erros: [], avisos: [], vago: false };
+  // fora do ar, sem permissão, conexão vencida: não é o anúncio, é a chamada
+  if (r.status !== 400 && r.status !== 422) throw erro(502, traduzir(r));
+  // a resposta inteira vai para o log: é por ela que se acha o motivo quando a mensagem é vaga
+  console.log('ml validar', r.status, JSON.stringify(r.j).slice(0, 1500));
+  const causas = causasDe(r.j);
+  let erros = causas.filter(c => c.type !== 'warning');
   const avisos = causas.filter(c => c.type === 'warning').map(c => c.message).filter(Boolean);
-  if (!erros.length) erros.push({ code: r.j.error || 'erro', message: r.j.message || traduzir(r) });
-  return { erros, avisos };
+  // recusou só com advertências: são elas que dizem o motivo
+  if (!erros.length && causas.length) return { erros: causas, avisos: [], vago: false };
+  // recusou sem dizer por quê
+  if (!erros.length) return { erros: [{ code: r.j.error || 'erro', message: r.j.message || traduzir(r) }], avisos: [], vago: true };
+  return { erros, avisos, vago: false };
 }
 const txtErros = es => es.map(e => [e.code, e.message].filter(Boolean).join(': ')).join(' | ');
+// Erro por erro: o atributo que faltou (não foi no anúncio) e o que foi e o Mercado Livre
+// recusou. Mensagem de "obrigatório" cita os que faltam; os que foram, ali, são só contexto.
+function lerErros(erros, item, porId) {
+  const semValor = new Set(), recusou = new Set();
+  for (const e of erros) {
+    const pede = /missing|required|obrigat/i.test(String(e.code || '') + ' ' + String(e.message || ''));
+    for (const id of idsDosErros([e])) {
+      if (!porId.has(id)) continue;
+      const foi = item.attributes.some(a => a.id === id);
+      if (pede && !foi) semValor.add(id); else if (!pede && foi) recusou.add(id);
+    }
+  }
+  return { semValor: [...semValor], recusou: [...recusou] };
+}
 
 // ── AÇÕES ──
 async function conectar(corpo) {
@@ -367,9 +394,10 @@ async function publicar(corpo) {
   };
   if (it.sku) item.seller_custom_field = String(it.sku).slice(0, 60);
   const avisos = [];
+  const motivo = es => es.map(e => e.message || e.code).filter(Boolean).join(' · ');
   let v = await validar(item, s.token);
-  for (let volta = 0; v.erros.length && volta < 4; volta++) {
-    const txt = txtErros(v.erros), ids = idsDosErros(v.erros);
+  for (let volta = 0; v.erros.length && !v.vago && volta < 4; volta++) {
+    const txt = txtErros(v.erros);
     let mudou = false;
     // categorias de "produto de usuário" pedem family_name no lugar do título
     if (/family_name/i.test(txt) && item.title) { item.family_name = item.title; delete item.title; mudou = true; }
@@ -378,26 +406,34 @@ async function publicar(corpo) {
       item.shipping.free_shipping = true; mudou = true;
       avisos.push('Frete grátis é obrigatório para este anúncio: o Mercado Livre desconta parte do frete na venda.');
     }
+    const { semValor, recusou } = lerErros(v.erros, item, porId);
     // atributo que o sistema preencheu sozinho e o Mercado Livre recusou: sai, se não for obrigatório
-    const recusados = ids.filter(id => m.doSistema.has(id) && !obrigatorio(porId.get(id) || {}) && !/missing|required/i.test(txt));
-    if (recusados.length) { item.attributes = item.attributes.filter(a => !recusados.includes(a.id)); mudou = true; }
-    // faltam atributos que ninguém preencheu: pergunta para ele
-    const faltam = ids.filter(id => porId.has(id) && !item.attributes.some(a => a.id === id) && /missing|required|obrigat/i.test(txt));
-    if (faltam.length) {
-      console.log('ml publicar: faltam', faltam.join(','), 'em', cat);
-      return { ok: false, faltam: faltam.map(id => infoAtributo(porId.get(id))), categoria: { id: cat, nome: catNome }, cifraNova: s.cifraNova };
+    const tirar = recusou.filter(id => m.doSistema.has(id) && (manual[id] === undefined || manual[id] === '') && !obrigatorio(porId.get(id) || {}));
+    if (tirar.length) { item.attributes = item.attributes.filter(a => !tirar.includes(a.id)); mudou = true; }
+    // o que falta, e a resposta que o Mercado Livre não aceitou: pergunta para ele (com o motivo)
+    const perguntar = [...semValor, ...recusou.filter(id => !tirar.includes(id))];
+    if (perguntar.length) {
+      console.log('ml publicar: pergunta', perguntar.join(','), 'em', cat, '|', txt.slice(0, 600));
+      return { ok: false, faltam: perguntar.map(id => infoAtributo(porId.get(id))), categoria: { id: cat, nome: catNome },
+        motivo: recusou.length > tirar.length ? motivo(v.erros).slice(0, 500) : '', cifraNova: s.cifraNova };
     }
     if (!mudou) break;
     v = await validar(item, s.token);
   }
-  if (v.erros.length) {
-    console.log('ml publicar: recusado em', cat, txtErros(v.erros).slice(0, 900));
-    throw erro(422, 'O Mercado Livre recusou o anúncio: ' + v.erros.map(e => e.message || e.code).join(' · '));
+  if (v.erros.length && !v.vago) {
+    console.log('ml publicar: recusado em', cat, txtErros(v.erros).slice(0, 900), '|', resumoItem(item));
+    throw erro(422, 'O Mercado Livre recusou o anúncio: ' + motivo(v.erros));
   }
-  avisos.push(...v.avisos);
+  // a validação recusou sem dizer o motivo: tenta criar (ou cria, ou o Mercado Livre diz o que é)
+  if (v.vago) console.log('ml publicar: a validação não disse o motivo em', cat, '; tentando criar |', resumoItem(item));
+  else avisos.push(...v.avisos);
   const r = await ml('POST', '/items', { token: s.token, corpo: item });
   if (!r.ok || !r.j.id) {
-    console.log('ml publicar: POST /items', r.status, JSON.stringify(r.j).slice(0, 900));
+    console.log('ml publicar: POST /items', r.status, JSON.stringify(r.j).slice(0, 1500), '|', resumoItem(item));
+    const es = causasDe(r.j).filter(c => c.type !== 'warning'), todas = causasDe(r.j);
+    if (r.status === 400 || r.status === 422)
+      throw erro(422, 'O Mercado Livre recusou o anúncio: ' + (motivo(es.length ? es : todas) || r.j.message || 'erro ' + r.status)
+        + (es.length || todas.length ? '' : ' (o Mercado Livre não disse o motivo; confira a conta: endereço, Mercado Envios e limite de anúncios)'));
     throw erro(502, traduzir(r));
   }
   console.log(`ml publicou ${r.j.id} (${cat}, ${tipo}) ${r.j.status || ''}`);

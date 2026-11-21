@@ -30,7 +30,7 @@ const ATRIBUTOS = [
   { id: 'ITEM_CONDITION', name: 'Condição do item', value_type: 'list', tags: { read_only: true }, values: [{ id: '2230581', name: 'Usado' }] },
   { id: 'SELLER_PACKAGE_WEIGHT', name: 'Peso da embalagem', value_type: 'number_unit', tags: {}, allowed_units: [{ id: 'g', name: 'g' }, { id: 'kg', name: 'kg' }] },
 ];
-let pedidos = [], cfgDoc = null, gravarFalha = false, tokenSeq = 0, refreshRuim = false, validacoes = [], criados = [], pkceRuim = false, mlFora = false;
+let pedidos = [], cfgDoc = null, gravarFalha = false, tokenSeq = 0, refreshRuim = false, validacoes = [], criados = [], criacoes = [], pkceRuim = false, mlFora = false;
 const resposta = (status, json) => ({ ok: status >= 200 && status < 300, status, json: async () => { if (json === undefined) throw new Error('sem corpo'); return json; } });
 global.fetch = async (url, op = {}) => {
   const h = op.headers || {};
@@ -72,7 +72,8 @@ global.fetch = async (url, op = {}) => {
     if (proxima) return resposta(400, { message: 'Validation error', error: 'validation_error', status: 400, cause: typeof proxima === 'function' ? proxima(corpo) : proxima });
     return resposta(204);
   }
-  if (u.pathname === '/items' && p.metodo === 'POST') { const corpo = JSON.parse(p.corpo); criados.push(corpo); return resposta(201, { id: 'MLB4000000' + criados.length, permalink: 'https://produto.mercadolivre.com.br/MLB-4000000' + criados.length + '-notebook', status: 'active', price: corpo.price }); }
+  if (u.pathname === '/items' && p.metodo === 'POST') { const corpo = JSON.parse(p.corpo); const falha = criacoes.shift();
+    if (falha) return resposta(400, { message: 'Validation error', error: 'validation_error', status: 400, cause: falha }); criados.push(corpo); return resposta(201, { id: 'MLB4000000' + criados.length, permalink: 'https://produto.mercadolivre.com.br/MLB-4000000' + criados.length + '-notebook', status: 'active', price: corpo.price }); }
   if (/^\/items\/MLB\d+$/.test(u.pathname) && p.metodo === 'PUT') {
     const corpo = JSON.parse(p.corpo);
     if (u.pathname.endsWith('MLB999999999')) return resposta(400, { message: 'Item with status closed can not be modified', error: 'item.status.invalid', status: 400, cause: [] });
@@ -238,6 +239,30 @@ const ITEM = { titulo: 'Notebook Dell Latitude 5490 i5 8ª 16GB SSD 256GB', prec
   validacoes = [[{ code: 'item.price.invalid', message: 'O preço não é válido para esta categoria', type: 'error' }]];
   r = await post({ acao: 'publicar', item: { ...ITEM, atributos: { OS_NAME: 'Windows', KEYBOARD_LANGUAGE: 'Português' } } });
   ok(r.status === 422 && /recusou o anúncio: O preço não é válido/.test(r.json().erro), 'erro que não dá para resolver sozinho: mostra a mensagem do ML');
+  console.log('\no Mercado Livre recusa sem dizer por quê');
+  const KL = { OS_NAME: 'Windows', KEYBOARD_LANGUAGE: 'Português' };
+  validacoes = [[]]; criados = []; pedidos = [];
+  r = await post({ acao: 'publicar', item: { ...ITEM, atributos: KL } });
+  ok(r.json().ok && criados.length === 1 && pedidos.filter(p => p.url.includes('/items/validate')).length === 1,
+    'a validação recusou sem causa: tenta criar direto, e o anúncio sai');
+  validacoes = [[]]; criacoes = [[{ code: 'item.listing_type_id.invalid', message: 'Você atingiu o limite de anúncios deste tipo', type: 'error' }]]; criados = [];
+  r = await post({ acao: 'publicar', item: { ...ITEM, atributos: KL } });
+  ok(r.status === 422 && /recusou o anúncio: Você atingiu o limite de anúncios deste tipo$/.test(r.json().erro) && !criados.length,
+    'criar também recusou: mostra o motivo que veio na criação — ' + r.json().erro);
+  validacoes = [[]]; criacoes = [[]];
+  r = await post({ acao: 'publicar', item: { ...ITEM, atributos: KL } });
+  ok(r.status === 422 && /Validation error/.test(r.json().erro) && /confira a conta/.test(r.json().erro), 'nem a criação disse o motivo: diz o que conferir na conta');
+  validacoes = [[{ code: 'item.attributes.missing_conditional_required', message: 'The attributes [KEYBOARD_LANGUAGE] are conditionally required', type: 'warning' }]]; criados = [];
+  r = await post({ acao: 'publicar', item: { ...ITEM, atributos: { OS_NAME: 'Windows' } } });
+  ok(r.json().ok === false && r.json().faltam.map(f => f.id).join() === 'KEYBOARD_LANGUAGE' && !criados.length, 'recusou só com advertência: é ela que diz o que falta (vira pergunta)');
+  validacoes = [[{ code: 'item.attribute.invalid', message: 'Attribute [OS_NAME] has an invalid value', type: 'error' }]];
+  r = await post({ acao: 'publicar', item: { ...ITEM, atributos: KL } });
+  ok(r.json().ok === false && r.json().faltam.map(f => f.id).join() === 'OS_NAME' && /invalid value/.test(r.json().motivo) && !criados.length,
+    'a resposta dele que o ML não aceitou: pergunta de novo, com o motivo');
+  validacoes = [[{ code: 'item.attributes.missing_required', message: 'The attributes [OS_NAME, KEYBOARD_LANGUAGE] are required', type: 'error' }]];
+  r = await post({ acao: 'publicar', item: { ...ITEM, atributos: { KEYBOARD_LANGUAGE: 'Português' } } });
+  ok(r.json().ok === false && r.json().faltam.map(f => f.id).join() === 'OS_NAME' && !r.json().motivo, '"obrigatório" cita os que já foram: pergunta só o que faltou');
+  validacoes = []; criacoes = [];
   r = await post({ acao: 'publicar', item: { ...ITEM, fotos: [] } });
   const r4 = await post({ acao: 'publicar', item: { ...ITEM, preco: 0 } });
   ok(r.status === 400 && /pelo menos uma foto/.test(r.json().erro) && r4.status === 400, 'sem foto ou sem preço: nem tenta');
