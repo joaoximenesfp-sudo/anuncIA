@@ -89,6 +89,19 @@ Livre (o anúncio). Usa a API oficial (`api/ml.js`):
   com **Outro (digitar)**; a do processador traz os da mesma linha e geração (os que a
   loja já teve e os mais comuns) e diz onde ver o código no Windows. Modelo, processador
   e tela nunca vêm de máquina de outro modelo, e digitar o modelo preenche a tela.
+- **Qualidade do anúncio**: vão todas as características que a ficha, a descrição e as
+  abas sabem (na categoria Notebooks a RAM é a "capacidade total do módulo"): processador,
+  RAM e slots, SSD (NVMe vai como M.2/PCIe), tela e resolução, Windows (versão e edição),
+  vídeo integrado (pela geração do processador; com o código, o modelo exato) e dedicado
+  (pela descrição), Wi-Fi, Bluetooth, webcam, microfone e saída de fone (notebook tem, a
+  não ser que a descrição diga que não), leitor digital e teclado retroiluminado (só se a
+  descrição disser), teclado ABNT, tipo de produto e o SKU (número da máquina). O que não
+  se sabe fica de fora; o modelo alfanumérico também (é o código regulatório, não o número).
+  A condição é sempre **usado**: se o Mercado Livre puser como novo, o sistema corrige. O
+  anúncio que saiu com menos características é completado sozinho quando o sistema confere
+  os anúncios (o que ele já tem não muda). Frete grátis é opção em "Como os anúncios saem".
+  O número de homologação da Anatel (na etiqueta embaixo do notebook) o Mercado Livre
+  também pede para a qualidade: esse vai pelo próprio Mercado Livre.
 - **Quando o Mercado Livre recusa**, o motivo fica no cartão da máquina até ela ir (para
   tentar de novo: Publicar → Mercado Livre; as respostas ficam guardadas). Resposta que
   ele não aceitou volta como pergunta, com o motivo. Se a validação recusar sem dizer

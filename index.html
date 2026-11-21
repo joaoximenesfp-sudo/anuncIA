@@ -12597,7 +12597,10 @@ const mlErros={};       // id da máquina -> o motivo da última recusa (fica no
 const mlFotosFeitas={}; // id da máquina -> { ass, ids }: fotos já enviadas nesta sessão
 const ML_DEV='https://developers.mercadolivre.com.br/devcenter';
 const ML_VOLTA='https://anunc-ia.vercel.app/api/ml';
-const ML_OPC={tipo:'gold_special',retirada:true,garantia:90,caixa:{alt:10,larg:30,comp:40,peso:2.5}};
+const ML_OPC={tipo:'gold_special',retirada:true,garantia:90,frete_gratis:false,caixa:{alt:10,larg:30,comp:40,peso:2.5}};
+// Versão do que vai de características: anúncio publicado com uma versão menor ganha as que
+// faltam (ação "completar") na próxima vez que o sistema conferir os anúncios.
+const ML_FICHA_V=2;
 function mlOpcoes(){ const o=(mlCfg&&mlCfg.opcoes)||{}; return {...ML_OPC,...o,caixa:{...ML_OPC.caixa,...(o.caixa||{})}}; }
 const mlTipoNome=t=>t==='gold_pro'?'Premium':'Clássico';
 const mlNoAr=p=>!!(p&&p.ml_id&&p.ml_status!=='closed');
@@ -12645,13 +12648,14 @@ function mlMostrar(){
       conta.textContent=mlCfg.usuario||'conta da loja';
       lig.innerHTML=`<div class="tipo-auto">Conectado${mlCfg.offline===false?' · ⚠️ sem acesso offline: a conexão cai em 6 horas (marque offline_access no app e conecte de novo)':''}.
           <a href="#" onclick="mlConectar();return false">Reconectar</a> · <a href="#" onclick="mlDesconectar();return false">Desconectar</a></div>
-        <details class="insta-guia ml-opc"><summary>Como os anúncios saem: ${mlTipoNome(o.tipo)} · Mercado Envios${o.retirada?' + retirada em Campinas':''} · garantia de ${o.garantia} dias</summary>
+        <details class="insta-guia ml-opc"><summary>Como os anúncios saem: ${mlTipoNome(o.tipo)} · Mercado Envios${o.frete_gratis?' com frete grátis':''}${o.retirada?' + retirada em Campinas':''} · garantia de ${o.garantia} dias</summary>
           <div class="ml-opc-grade">
             <label>Tipo de anúncio<select class="inp" id="mlOpTipo"><option value="gold_special"${o.tipo!=='gold_pro'?' selected':''}>Clássico — tarifa menor</option><option value="gold_pro"${o.tipo==='gold_pro'?' selected':''}>Premium — parcelado sem juros, tarifa maior</option></select></label>
             <label>Garantia (dias)<input class="inp" type="number" id="mlOpGar" min="0" max="365" value="${o.garantia}"></label>
             <label>Caixa em cm (altura × largura × comprimento)<span class="ml-caixa"><input class="inp" type="number" id="mlOpAlt" min="1" value="${o.caixa.alt}"> × <input class="inp" type="number" id="mlOpLarg" min="1" value="${o.caixa.larg}"> × <input class="inp" type="number" id="mlOpComp" min="1" value="${o.caixa.comp}"></span></label>
             <label>Peso com a caixa (kg)<input class="inp" type="number" id="mlOpPeso" min="0.1" step="0.1" value="${o.caixa.peso}"></label>
             <label class="ml-chk"><input type="checkbox" id="mlOpRet"${o.retirada?' checked':''}> Retirada em mãos em Campinas</label>
+            <label class="ml-chk"><input type="checkbox" id="mlOpFrete"${o.frete_gratis?' checked':''}> Frete grátis (o Mercado Livre desconta parte do frete na venda; o anúncio ganha posição)</label>
           </div>
           <button class="bok" onclick="mlSalvarOpcoes()">Salvar</button> <span class="tipo-auto">Vale para os próximos anúncios. A condição é sempre <b>usado</b>.</span>
         </details>`;
@@ -12668,7 +12672,7 @@ function mlMostrar(){
 window.mlSalvarOpcoes=async()=>{
   const g=id=>document.getElementById(id);
   const num=(id,min,max,pad)=>{ const v=parseFloat(String((g(id)||{}).value||'').replace(',','.')); return isFinite(v)?Math.min(max,Math.max(min,v)):pad; };
-  const o={tipo:(g('mlOpTipo')||{}).value==='gold_pro'?'gold_pro':'gold_special', retirada:!!(g('mlOpRet')||{}).checked, garantia:Math.round(num('mlOpGar',0,365,90)),
+  const o={tipo:(g('mlOpTipo')||{}).value==='gold_pro'?'gold_pro':'gold_special', retirada:!!(g('mlOpRet')||{}).checked, frete_gratis:!!(g('mlOpFrete')||{}).checked, garantia:Math.round(num('mlOpGar',0,365,90)),
     caixa:{alt:Math.round(num('mlOpAlt',1,200,10)),larg:Math.round(num('mlOpLarg',1,200,30)),comp:Math.round(num('mlOpComp',1,200,40)),peso:Math.round(num('mlOpPeso',0.1,50,2.5)*10)/10}};
   try{ await setDoc(doc(db,'config','mercadolivre'),{opcoes:o},{merge:true}); mlCfg={...(mlCfg||{}),opcoes:o}; mlMostrar(); mlMsg('✅ Opções salvas: valem para os próximos anúncios.'); }
   catch(e){ mlMsg('⚠️ Não consegui salvar: '+e.message); }
@@ -12781,13 +12785,29 @@ function mlFicha(p){
   // a cor só quando a descrição diz que é a cor ("cor preta"; "tela preta" não é)
   const cor=(x=txt.match(/\bcor\b[^.\n]{0,12}?\b(preto|preta|prata|cinza|grafite|branco|branca|azul|dourado|rosa|vermelho|vermelha)\b/))
     ?({preta:'Preto',branca:'Branco',vermelha:'Vermelho'}[x[1]]||x[1][0].toUpperCase()+x[1].slice(1)):'';
+  const touch=/\btouch\b|sensivel ao toque|\b2 em 1\b|\bx360\b/.test(txt)&&!/\b(nao|sem)\s(e\s)?touch\b/.test(txt), mesa=ML_RE_MESA.test(nome);
+  const cpu_linha=/^i[3579]$/i.test(cpu)?'Core '+cpu.toLowerCase():cpu, cpu_ger=/^ryzen/i.test(cpu)?gerN.slice(0,1):gerN, cpu_modelo=mlCpuCodigo(nome)||mlCpuCodigo(desc);
+  // o que a máquina tem: notebook tem Wi-Fi, Bluetooth, webcam, microfone e saída de fone, a não
+  // ser que a descrição diga que não; leitor digital e teclado retroiluminado ou numérico, só se
+  // ela disser. Não se sabe: fica de fora (não vai "não" chutado).
+  const falha=w=>new RegExp(`\\bsem\\s(?:a\\s|o\\s)?${w}|\\b${w}\\s(?:\\w+\\s){0,2}?(?:nao funciona|com defeito|quebrad|danificad)`).test(txt);
+  const padrao=w=>mesa?undefined:!falha(w), citado=w=>new RegExp(w).test(txt)?!falha(w):undefined;
+  const tem={wifi:padrao('wi-?fi'),bluetooth:padrao('bluetooth'),webcam:padrao('(?:webcam|camera)'),microfone:padrao('microfone'),fone:padrao('fone'),
+    touch:mesa?undefined:touch,digital:citado('(?:leitor (?:de )?digital|impressao digital|biometri|fingerprint)'),
+    retroiluminado:citado('(?:retroilumin|backlight|teclado iluminado)'),numerico:citado('teclado numerico')};
+  const video=mlVideoDaCpu({cpu_linha,cpu_ger,cpu_modelo})||{}, ded=mlVideoDedicado(txt)||{};
   return { marca:f.marca||'', linha:fam, modelo:f.modelo||'', numero,
-    cpu_marca:/^(i[3579]|celeron|pentium)/i.test(cpu)?'Intel':/^ryzen/i.test(cpu)?'AMD':'',
-    cpu_linha:/^i[3579]$/i.test(cpu)?'Core '+cpu.toLowerCase():cpu, cpu_modelo:mlCpuCodigo(nome)||mlCpuCodigo(desc),
-    cpu_ger:/^ryzen/i.test(cpu)?gerN.slice(0,1):gerN,
+    cpu_marca:/^(i[3579]|celeron|pentium)/i.test(cpu)?'Intel':/^ryzen/i.test(cpu)?'AMD':'', cpu_linha, cpu_modelo, cpu_ger,
     ram:qtd(f.ram), ram_tipo:f.ram_tipo||'', ssd:ehHd?'':qtd(disco), hd:ehHd?qtd(disco):'',
-    tela, so:mlSO(nome+' '+desc), gpu, resolucao, bateria_h, ram_max, cor,
-    touch:/\btouch\b|sensivel ao toque/.test(txt)&&!/\b(nao|sem)\s(e\s)?touch\b/.test(txt) };
+    disco_tipo:{nvme:'NVMe',ssd:'SSD',hd:'HD',emmc:'eMMC'}[((disco.match(/^(nvme|ssd|hd|emmc)/i)||[''])[0]).toLowerCase()]||'',
+    tela, so:mlSO(nome+' '+desc), so_versao:(txt.match(/\bwin(?:dows)?\s?(11|10|8\.1|8|7)\b/)||[])[1]||'',
+    so_edicao:{pro:'Pro',professional:'Pro',home:'Home',enterprise:'Enterprise',education:'Education'}[(txt.match(/\bwin(?:dows)?\s?(?:11|10|8\.1|8|7)?\s?(pro|professional|home|enterprise|education)\b/)||[])[1]]||'',
+    gpu, resolucao, bateria_h, ram_max, cor, touch, mesa, tem,
+    video_marca:video.marca||'', video_linha:video.linha||'', video_modelo:video.modelo||'',
+    dedicada_marca:ded.marca||'', dedicada_linha:ded.linha||'', dedicada_modelo:ded.modelo||'',
+    tipo_produto:mesa?'':/\b(2 em 1|2 in 1|x360|flip|yoga|conversivel)\b/.test(txt)?'2 em 1':'Notebook',
+    teclado:/\babnt\s?2?\b|teclado (?:em |no padrao )?(?:portugues|brasileiro)\b/.test(txt)?'Português':/\bteclado (?:americano|ingles|internacional|us)\b/.test(txt)?'Inglês':'',
+    slots_ram:p.slots_ram!=null&&p.slots_ram!==''?String(p.slots_ram):'' };
 }
 // Nos de mesa (OptiPlex, ThinkCentre, EliteDesk...) mudam o título e os processadores.
 const ML_RE_MESA=/\b(optiplex|think\s?centre|elite\s?desk|pro\s?desk|idea\s?centre|desktop|all[\s-]?in[\s-]?one)\b/i;
@@ -12845,13 +12865,30 @@ function mlRespostasDaLoja(id,f){
   }
   return {sugestao:mlMaisComum(t[0])||mlMaisComum(t[1])||mlMaisComum(t[2]), todos:[...new Set(t.flatMap(mlPorFreq))]};
 }
-// O vídeo que vem junto com o processador (integrado), quando a descrição não diz.
-function mlVideoIntegrado(f){
-  const g=parseInt(f.cpu_ger)||0, l=f.cpu_linha||'';
-  if(/ryzen/i.test(l)) return {v:'AMD Radeon Graphics',de:'padrao'};
-  if(/core i[3579]/i.test(l)&&g) return {v:g<=7?'Intel HD Graphics':g>=11&&!/i3/i.test(l)?'Intel Iris Xe Graphics':'Intel UHD Graphics',de:'padrao'};
+// O vídeo que vem no processador (integrado): pela linha e geração; com o código, o modelo
+// exato (8ª U: UHD 620; 6ª U: HD 520). Sem o código, só a família (não chuta o número).
+function mlVideoDaCpu(f){
+  const g=parseInt(f.cpu_ger)||0, l=String(f.cpu_linha||''), cod=String(f.cpu_modelo||'').toUpperCase();
+  if(/ryzen/i.test(l)) return {marca:'AMD',linha:'Radeon',modelo:g&&g<=3?'Radeon Vega':'Radeon Graphics'};
+  if(!/core i[3579]/i.test(l)||!g) return null;
+  const v=(linha,modelo)=>({marca:'Intel',linha,modelo:modelo||linha});
+  if(g>=11) return /i3/i.test(l)?v('UHD Graphics'):v('Iris Xe','Iris Xe Graphics');
+  if(g===10&&/G[47]$/.test(cod)) return v('Iris Plus','Iris Plus Graphics');
+  if(g>=8) return v('UHD Graphics',g===8&&/U$/.test(cod)?'UHD Graphics 620':'');
+  const u=/U$/.test(cod), hd={3:'HD Graphics 4000',4:u?'HD Graphics 4400':'HD Graphics 4600',5:'HD Graphics 5500',6:u?'HD Graphics 520':'HD Graphics 530',7:u?'HD Graphics 620':'HD Graphics 630'}[g];
+  return v('HD Graphics',cod?hd:'');
+}
+// Placa de vídeo dedicada, quando a descrição diz (GeForce MX/GTX/RTX, Quadro, Radeon RX).
+function mlVideoDedicado(txt){
+  let x;
+  if((x=txt.match(/\b(rtx|gtx)\s?(\d{3,4})(\s?ti)?\b/))) return {marca:'NVIDIA',linha:'GeForce',modelo:x[1].toUpperCase()+' '+x[2]+(x[3]?' Ti':'')};
+  if((x=txt.match(/\b(?:geforce\s?)?mx\s?(\d{3})\b/))) return {marca:'NVIDIA',linha:'GeForce',modelo:'MX'+x[1]};
+  if((x=txt.match(/\bquadro\s?([a-z]?\d{3,4})\b/))) return {marca:'NVIDIA',linha:'Quadro',modelo:x[1].toUpperCase()};
+  if((x=txt.match(/\bradeon\s?(?:pro\s?)?(rx\s?\d{3,4}[a-z]?)\b/))) return {marca:'AMD',linha:'Radeon',modelo:x[1].toUpperCase()};
   return null;
 }
+// O vídeo integrado, como resposta (quando o Mercado Livre pergunta).
+function mlVideoIntegrado(f){ const v=mlVideoDaCpu(f); return v?{v:v.marca+' '+v.modelo,de:'padrao'}:null; }
 // O que dá para responder pelo nome do campo, com o que o cadastro e as abas da máquina
 // têm (descrição, estado da tela, bateria, slots). "padrao" é o que quase todo notebook
 // tem: vem marcado "confira".
@@ -13025,11 +13062,11 @@ async function mlPublicarMaquina(p,aviso){
   const o=mlOpcoes();
   if(aviso) aviso('Mercado Livre: criando o anúncio...');
   const r=await mlApi({acao:'publicar',item:{titulo:mlTitulo(p),preco,descricao:mlDescricao(p,o),fotos:ids,ficha:mlFicha(p),atributos:{...mlRespostasIguais(p),...(p.ml_atributos||{})},
-    tipo:o.tipo,retirada:o.retirada,garantia_dias:o.garantia,pacote:o.caixa,sku:p.num?String(p.num):'',categoria:p.ml_categoria||''}});
+    tipo:o.tipo,retirada:o.retirada,frete_gratis:!!o.frete_gratis,garantia_dias:o.garantia,pacote:o.caixa,sku:p.num?String(p.num):'',categoria:p.ml_categoria||''}});
   if(!r.ok&&r.faltam){ mlFaltam[p.id]={faltam:r.faltam,categoria:r.categoria||{},motivo:r.motivo||''}; delete mlErros[p.id]; return {faltam:r.faltam}; }
   delete mlFaltam[p.id]; delete mlErros[p.id];
   const campos={ml_id:r.id,ml_link:r.link||'',ml_em:new Date().toISOString(),ml_status:r.status||'active',ml_preco:r.preco||preco,ml_tipo:r.tipo||o.tipo,
-    ml_categoria:(r.categoria&&r.categoria.id)||'',ml_categoria_nome:(r.categoria&&r.categoria.nome)||'',ml_pausado_pelo_sistema:false};
+    ml_categoria:(r.categoria&&r.categoria.id)||'',ml_categoria_nome:(r.categoria&&r.categoria.nome)||'',ml_pausado_pelo_sistema:false,ml_ficha_v:ML_FICHA_V};
   Object.assign(p,campos);
   // sem marcar na máquina, o próximo "Publicar" criaria um anúncio repetido: insiste
   let marcou=false;
@@ -13210,14 +13247,35 @@ async function mlNovidades(){
         if(it.link&&it.link!==p.ml_link) campos.ml_link=it.link;
         if(it.preco!=null&&Number(it.preco)!==Number(p.ml_preco)) campos.ml_preco=Number(it.preco);
         if((it.vendidos||0)!==(p.ml_vendidos||0)) campos.ml_vendidos=it.vendidos||0;
+        if(it.condicao&&it.condicao!==p.ml_condicao) campos.ml_condicao=it.condicao;
         if(Object.keys(campos).length){ try{ await updateDoc(doc(db,'products',p.id),campos); }catch(e){} Object.assign(p,campos); mudou=true; }
       }
     }
+    if(await mlCompletarAnuncios(comMl)) mudou=true;
     const r=await mlApi({acao:'novidades',desde:new Date(Date.now()-30*864e5).toISOString()});
     mlPedidos=Array.isArray(r.pedidos)?r.pedidos:[]; mlPerguntas=r.perguntas;
   }catch(e){ console.warn('Mercado Livre (novidades):',e.message); }
   mlMostrarVendas(); mlAgendarSinc();
   if(mudou&&pgAtual==='anuncio') anCatMontar();
+}
+// Anúncio que saiu com menos características (versão antiga) ou que o Mercado Livre pôs
+// como novo: ganha o que a ficha sabe e volta para usado. Uma tentativa por sessão.
+const mlCompletarTentou=new Set();
+async function mlCompletarAnuncios(lista){
+  const fila=lista.filter(p=>mlNoAr(p)&&p.status!=='Vendido'&&!mlCompletarTentou.has(p.id)&&((p.ml_ficha_v||0)<ML_FICHA_V||(p.ml_condicao&&p.ml_condicao!=='used')));
+  let n=0, usado=0;
+  for(const p of fila){
+    mlCompletarTentou.add(p.id);
+    try{
+      const r=await mlApi({acao:'completar',id:p.ml_id,ficha:mlFicha(p),atributos:{...mlRespostasIguais(p),...(p.ml_atributos||{})},sku:p.num?String(p.num):'',pacote:mlOpcoes().caixa});
+      const campos={ml_ficha_v:ML_FICHA_V}; if(r.condicao) campos.ml_condicao=r.condicao;
+      if(p.ml_condicao&&p.ml_condicao!=='used'&&r.condicao==='used') usado++;
+      try{ await updateDoc(doc(db,'products',p.id),campos); }catch(e){}
+      Object.assign(p,campos); n+=(r.adicionados||[]).length;
+    }catch(e){ console.warn('Mercado Livre (completar):',p.num,e.message); }
+  }
+  if(n||usado) mlMsg('✅ Anúncios no Mercado Livre melhorados: '+[n?'+'+n+' característica'+(n!==1?'s':''):'',usado?'condição de volta para Usado':''].filter(Boolean).join(' e ')+'.');
+  return fila.length>0;
 }
 function mlVendasPendentes(){
   return mlPedidos.filter(o=>o.status==='paid').map(o=>({o,p:prods.find(p=>p.ml_id&&p.ml_id===o.item)})).filter(x=>x.p&&x.p.status!=='Vendido');

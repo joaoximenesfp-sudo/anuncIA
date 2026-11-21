@@ -30,7 +30,25 @@ const ATRIBUTOS = [
   { id: 'ITEM_CONDITION', name: 'Condição do item', value_type: 'list', tags: { read_only: true }, values: [{ id: '2230581', name: 'Usado' }] },
   { id: 'SELLER_PACKAGE_WEIGHT', name: 'Peso da embalagem', value_type: 'number_unit', tags: {}, allowed_units: [{ id: 'g', name: 'g' }, { id: 'kg', name: 'kg' }] },
 ];
-let pedidos = [], cfgDoc = null, gravarFalha = false, tokenSeq = 0, refreshRuim = false, validacoes = [], criados = [], criacoes = [], pkceRuim = false, mlFora = false;
+// os que a categoria Notebooks tem de verdade (a RAM é "capacidade total do módulo")
+const NOTEBOOKS = [
+  { id: 'RAM_MEMORY_MODULE_TOTAL_CAPACITY', name: 'Capacidade total do módulo de memória RAM', value_type: 'number_unit', tags: {}, allowed_units: [{ id: 'GB', name: 'GB' }] },
+  { id: 'ALPHANUMERIC_MODEL', name: 'Modelo alfanumérico', value_type: 'string', tags: {} },
+  { id: 'M2_DATA_STORAGE_CAPACITY', name: 'Capacidade de armazenamento de dados M2', value_type: 'number_unit', tags: {}, allowed_units: [{ id: 'GB', name: 'GB' }] },
+  { id: 'SSD_INTERFACE', name: 'Interface do SSD', value_type: 'string', tags: { hidden: true } },
+  { id: 'DISPLAY_RESOLUTION', name: 'Resolução da tela', value_type: 'string', tags: {} },
+  { id: 'DISPLAY_RESOLUTION_TYPE', name: 'Tipo de resolução da tela', value_type: 'string', tags: {}, values: [{ id: '1', name: 'Full HD' }, { id: '2', name: 'HD' }] },
+  { id: 'OS_VERSION', name: 'Versão do sistema operacional', value_type: 'string', tags: {} },
+  { id: 'OS_EDITION', name: 'Edição do sistema operacional', value_type: 'string', tags: {}, values: [{ id: '3', name: 'Home' }, { id: '4', name: 'Pro' }] },
+  { id: 'INTEGRATED_GRAPHIC_CARD_MODEL', name: 'Modelo de placa gráfica integrada', value_type: 'string', tags: {} },
+  { id: 'PRODUCT_TYPE', name: 'Tipo de produto', value_type: 'list', tags: {}, values: [{ id: '5', name: 'Notebook' }, { id: '6', name: '2 em 1' }] },
+  { id: 'WITH_WEBCAM', name: 'Com webcam', value_type: 'boolean', tags: {}, values: [{ id: '242085', name: 'Sim' }, { id: '242084', name: 'Não' }] },
+  { id: 'WITH_BACKLIGHT_KEYBOARD', name: 'Com teclado retroiluminado', value_type: 'boolean', tags: {}, values: [{ id: '242085', name: 'Sim' }, { id: '242084', name: 'Não' }] },
+  { id: 'WITH_RETINA_DISPLAY', name: 'Com tela retina', value_type: 'boolean', tags: {}, values: [{ id: '242085', name: 'Sim' }, { id: '242084', name: 'Não' }] },
+  { id: 'RAM_SLOTS_NUMBER', name: 'Quantidade de slots para a memória RAM', value_type: 'number', tags: {} },
+  { id: 'SELLER_SKU', name: 'SKU', value_type: 'string', tags: { hidden: true } },
+];
+let pedidos = [], cfgDoc = null, gravarFalha = false, tokenSeq = 0, refreshRuim = false, validacoes = [], criados = [], criacoes = [], condicaoCriado = 'used', itemLa = null, putRecusas = [], pkceRuim = false, mlFora = false;
 const resposta = (status, json) => ({ ok: status >= 200 && status < 300, status, json: async () => { if (json === undefined) throw new Error('sem corpo'); return json; } });
 global.fetch = async (url, op = {}) => {
   const h = op.headers || {};
@@ -73,11 +91,14 @@ global.fetch = async (url, op = {}) => {
     return resposta(204);
   }
   if (u.pathname === '/items' && p.metodo === 'POST') { const corpo = JSON.parse(p.corpo); const falha = criacoes.shift();
-    if (falha) return resposta(400, { message: 'Validation error', error: 'validation_error', status: 400, cause: falha }); criados.push(corpo); return resposta(201, { id: 'MLB4000000' + criados.length, permalink: 'https://produto.mercadolivre.com.br/MLB-4000000' + criados.length + '-notebook', status: 'active', price: corpo.price }); }
+    if (falha) return resposta(400, { message: 'Validation error', error: 'validation_error', status: 400, cause: falha }); criados.push(corpo); return resposta(201, { id: 'MLB4000000' + criados.length, permalink: 'https://produto.mercadolivre.com.br/MLB-4000000' + criados.length + '-notebook', status: 'active', price: corpo.price, condition: condicaoCriado }); }
+  if (/^\/items\/MLB\d+$/.test(u.pathname) && p.metodo === 'GET') return itemLa ? resposta(200, itemLa) : resposta(404, { message: 'item not found' });
   if (/^\/items\/MLB\d+$/.test(u.pathname) && p.metodo === 'PUT') {
     const corpo = JSON.parse(p.corpo);
     if (u.pathname.endsWith('MLB999999999')) return resposta(400, { message: 'Item with status closed can not be modified', error: 'item.status.invalid', status: 400, cause: [] });
-    return resposta(200, { id: u.pathname.split('/').pop(), status: corpo.status || 'active', price: corpo.price || 2199 });
+    const recusa = corpo.attributes && putRecusas.shift();
+    if (recusa) return resposta(400, { message: 'Validation error', error: 'validation_error', status: 400, cause: recusa });
+    return resposta(200, { id: u.pathname.split('/').pop(), status: corpo.status || 'active', price: corpo.price || 2199, condition: corpo.condition || 'used' });
   }
   if (u.pathname === '/items' && p.metodo === 'GET') {
     return resposta(200, u.searchParams.get('ids').split(',').map(id => id === 'MLB404040404'
@@ -279,6 +300,45 @@ const ITEM = { titulo: 'Notebook Dell Latitude 5490 i5 8ª 16GB SSD 256GB', prec
   r = await post({ acao: 'publicar', item: { ...ITEM, atributos: { KEYBOARD_LANGUAGE: 'Português' } } });
   ok(r.json().ok === false && r.json().faltam.map(f => f.id).join() === 'OS_NAME' && !r.json().motivo, '"obrigatório" cita os que já foram: pergunta só o que faltou');
   validacoes = []; criacoes = [];
+
+  console.log('\nas características da categoria Notebooks (a qualidade do anúncio)');
+  const FICHA2 = { ...FICHA, ram: '16 GB', disco_tipo: 'NVMe', resolucao: '1920 x 1080', so: 'Windows', so_versao: '11', so_edicao: 'Pro', video_marca: 'Intel', video_linha: 'Iris Xe',
+    video_modelo: 'Iris Xe Graphics', tipo_produto: 'Notebook', slots_ram: '2', tem: { wifi: true, webcam: false, retroiluminado: undefined } };
+  const d2 = T.daFicha({ ...FICHA2, sku: '481' });
+  ok(d2.RAM_MEMORY_MODULE_TOTAL_CAPACITY === '16 GB' && d2.M2_DATA_STORAGE_CAPACITY === '256 GB' && d2.SSD_INTERFACE === 'PCIe' && d2.DISPLAY_RESOLUTION === '1920 px x 1080 px' &&
+    d2.DISPLAY_RESOLUTION_TYPE === 'Full HD' && d2.OS_VERSION === '11' && d2.WITH_WI_FI === 'Sim' && d2.WITH_WEBCAM === 'Não' && d2.WITH_BACKLIGHT_KEYBOARD === '' &&
+    d2.WITH_RETINA_DISPLAY === 'Não' && d2.SELLER_SKU === '481' && !d2.ALPHANUMERIC_MODEL, 'a ficha vira as características: RAM no id da categoria, NVMe, resolução, Windows 11, Wi-Fi sim, webcam não (o que não se sabe fica de fora)');
+  ATRIBUTOS.push(...NOTEBOOKS);
+  const m3 = T.montarAtributos(ATRIBUTOS, { ...FICHA2, sku: '481' }, { OS_NAME: 'Windows', KEYBOARD_LANGUAGE: 'Português' }, {});
+  const B = id => m3.atributos.find(a => a.id === id) || {};
+  ok(B('RAM_MEMORY_MODULE_TOTAL_CAPACITY').value_name === '16 GB' && B('OS_EDITION').value_id === '4' && B('PRODUCT_TYPE').value_id === '5' && B('WITH_WEBCAM').value_id === '242084' &&
+    B('RAM_SLOTS_NUMBER').value_name === '2' && B('SELLER_SKU').value_name === '481' && !m3.atributos.some(a => a.id === 'ALPHANUMERIC_MODEL' || a.id === 'WITH_BACKLIGHT_KEYBOARD'),
+    'no anúncio: RAM, edição, tipo, webcam "Não" (pelo id), slots e SKU; sem modelo alfanumérico chutado nem o que não se sabe');
+
+  console.log('\na condição: a loja só vende usado');
+  validacoes = []; criacoes = []; criados = []; pedidos = []; condicaoCriado = 'new';
+  r = await post({ acao: 'publicar', item: { ...ITEM, frete_gratis: true, atributos: KL } });
+  const put1 = pedidos.find(p => p.metodo === 'PUT' && /\/items\/MLB4000000\d+$/.test(p.url));
+  ok(r.json().ok && criados[0].condition === 'used' && put1 && JSON.parse(put1.corpo).condition === 'used' && !(r.json().avisos || []).some(a => /Novo/.test(a)),
+    'o Mercado Livre criou como novo: põe como usado na hora');
+  ok(criados[0].shipping.free_shipping === true, 'frete grátis ligado nas opções: o anúncio sai com frete grátis');
+  condicaoCriado = 'used';
+
+  console.log('\ncompletar o anúncio que já está lá');
+  itemLa = { id: 'MLB8033815524', category_id: 'MLB1652', condition: 'new', sold_quantity: 0, attributes: [{ id: 'BRAND', value_id: '2005', value_name: 'Dell' }, { id: 'MODEL', value_name: '3420' }] };
+  pedidos = []; putRecusas = [[{ type: 'error', code: 'item.attribute.invalid', message: 'Attribute [DISPLAY_RESOLUTION] is not valid' }]];
+  r = await post({ acao: 'completar', id: 'MLB8033815524', ficha: FICHA2, atributos: { OS_NAME: 'Windows' }, sku: '481', pacote: ITEM.pacote });
+  const puts = pedidos.filter(p => p.metodo === 'PUT' && p.url.endsWith('/items/MLB8033815524')).map(p => JSON.parse(p.corpo));
+  const ultimoAttr = [...puts].reverse().find(c => c.attributes) || { attributes: [] }, ids2 = ultimoAttr.attributes.map(a => a.id);
+  ok(r.status === 200 && r.json().ok && ids2.includes('RAM_MEMORY_MODULE_TOTAL_CAPACITY') && ids2.includes('WITH_WEBCAM') && ids2.includes('OS_NAME') && !ids2.includes('BRAND') && !ids2.includes('MODEL') &&
+    !ids2.some(i => /^SELLER_PACKAGE_|^EMPTY_GTIN/.test(i)), 'manda só o que falta lá (a marca e o modelo que já estão não mudam): ' + ids2.join(','));
+  ok(!ids2.includes('DISPLAY_RESOLUTION') && r.json().recusados.includes('DISPLAY_RESOLUTION') && r.json().adicionados.includes('RAM_MEMORY_MODULE_TOTAL_CAPACITY'),
+    'o que o Mercado Livre recusou sai, e o resto vai');
+  ok(puts.some(c => c.condition === 'used') && r.json().condicao === 'used', 'e a condição volta para usado');
+  itemLa = { ...itemLa, condition: 'new', sold_quantity: 1 }; pedidos = [];
+  r = await post({ acao: 'completar', id: 'MLB8033815524', ficha: FICHA2 });
+  ok(!pedidos.some(p => p.metodo === 'PUT' && /"condition"/.test(p.corpo || '')) && r.json().condicao === 'new', 'com venda, a condição não muda (o Mercado Livre não deixa)');
+  itemLa = null;
   r = await post({ acao: 'publicar', item: { ...ITEM, fotos: [] } });
   const r4 = await post({ acao: 'publicar', item: { ...ITEM, preco: 0 } });
   ok(r.status === 400 && /pelo menos uma foto/.test(r.json().erro) && r4.status === 400, 'sem foto ou sem preço: nem tenta');

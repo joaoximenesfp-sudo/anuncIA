@@ -103,6 +103,25 @@ ok(pad('Modelo da placa de vídeo',nb).v==='Intel UHD Graphics' && pad('Modelo d
   'vídeo pela descrição ou o integrado da geração; marca do vídeo; resolução');
 ok(M.mlCasar(['1366 px x 768 px','1920 px x 1080 px'],'1920 x 1080')==='1920 px x 1080 px', 'resolução casa com a opção do Mercado Livre pelos números');
 
+console.log('\nas características que vão para o anúncio (a qualidade lá)');
+const l3420=M.mlFicha({id:'L1',nome:'Dell Latitude 3420 · i5 11ª · NVMe 256GB · 16GB DDR4 RAM',descricao:'Com Windows 11 Pro, teclado ABNT2 e leitor digital. Webcam não funciona.',slots_ram:2});
+ok(l3420.ram==='16 GB' && l3420.disco_tipo==='NVMe' && l3420.so_versao==='11' && l3420.so_edicao==='Pro' && l3420.teclado==='Português' && l3420.slots_ram==='2' &&
+  l3420.tipo_produto==='Notebook' && !l3420.mesa, 'RAM, NVMe, Windows 11 Pro, teclado ABNT2, slots e o tipo: '+JSON.stringify({ram:l3420.ram,d:l3420.disco_tipo,v:l3420.so_versao,e:l3420.so_edicao,t:l3420.teclado}));
+ok(l3420.tem.wifi===true && l3420.tem.bluetooth===true && l3420.tem.microfone===true && l3420.tem.fone===true && l3420.tem.webcam===false && l3420.tem.digital===true &&
+  l3420.tem.touch===false && l3420.tem.retroiluminado===undefined && l3420.tem.numerico===undefined,
+  'notebook tem Wi-Fi, Bluetooth, microfone e fone; a webcam que "não funciona" vai como não; digital porque a descrição diz; o que ela não diz fica de fora: '+JSON.stringify(l3420.tem));
+ok(l3420.video_marca==='Intel' && l3420.video_linha==='Iris Xe' && l3420.video_modelo==='Iris Xe Graphics' && !l3420.dedicada_marca, 'vídeo integrado do i5 de 11ª: Intel Iris Xe');
+const vid=(nome,desc)=>{ const f=M.mlFicha({id:'v'+nome,nome,descricao:desc||''}); return [f.video_modelo,f.dedicada_marca,f.dedicada_linha,f.dedicada_modelo].filter(Boolean).join('|'); };
+const vids=[['Dell Latitude 5490 i5-8350U 8GB','UHD Graphics 620'],['Dell Latitude 5490 i5 8ª 8GB','UHD Graphics'],['Lenovo T460 i5-6300U 8GB','HD Graphics 520'],
+  ['Dell Latitude 7400 i7-1065G7','Iris Plus Graphics'],['Lenovo E485 Ryzen 5 2500U','Radeon Vega'],['Lenovo E14 Ryzen 5 5500U','Radeon Graphics'],
+  ['Dell Inspiron i3 10ª 4GB','UHD Graphics'],['Dell Vostro i5 10ª 8GB','UHD Graphics|NVIDIA|GeForce|MX130','placa de vídeo GeForce MX130 2GB'],
+  ['Acer Nitro 5 i5 10ª 8GB','UHD Graphics|NVIDIA|GeForce|GTX 1650','GTX 1650'],['Dell G15 i7 12ª','Iris Xe Graphics|NVIDIA|GeForce|RTX 3050 Ti','RTX 3050 Ti 4GB']];
+const errV=vids.filter(([n,e,d])=>vid(n,d)!==e);
+ok(!errV.length, 'vídeo: o modelo exato com o código do processador, a família sem ele; dedicado pela descrição'+(errV.length?': '+errV.map(([n,e,d])=>`${n} → "${vid(n,d)}" (devia "${e}")`).join(' | '):''));
+const opt=M.mlFicha({id:'o1',nome:'Dell OptiPlex 3080 i5 10ª 8GB SSD 256GB'}), yoga=M.mlFicha({id:'y1',nome:'Lenovo Yoga 2 em 1 i5 8ª 8GB',descricao:'tela touch'});
+ok(opt.mesa && opt.tem.wifi===undefined && opt.tem.webcam===undefined && opt.tipo_produto==='' && yoga.tipo_produto==='2 em 1' && yoga.tem.touch===true,
+  'de mesa: não chuta Wi-Fi nem webcam; 2 em 1 com touch');
+
 console.log('\no que a loja já teve (anunciadas, vendidas, em estoque)');
 ok(JSON.stringify(M.mlCpusComuns({cpu_linha:'Core i5',cpu_ger:'8'},false))==='["8250U","8350U","8265U","8365U"]' &&
   JSON.stringify(M.mlCpusComuns({cpu_linha:'Core i5',cpu_ger:'8'},true))==='["8500T","8400T","8500"]' &&

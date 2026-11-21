@@ -163,17 +163,39 @@ async function sessao(corpo) {
 }
 
 // ── ATRIBUTOS: o que a ficha do sistema sabe dizer, no formato de cada categoria ──
-// f vem do sistema já separado (marca, linha, número do modelo, processador...).
+// f vem do sistema já separado (marca, linha, número do modelo, processador...). Quanto
+// mais características, melhor a "qualidade do anúncio" lá. O que não se sabe fica vazio
+// (não vai): "Com X" só vai quando a ficha diz (f.tem.x verdadeiro ou falso).
+// O modelo alfanumérico não sai da ficha: é o código regulatório (Dell P144G), não o
+// número do modelo; ir "3420" ali é característica errada.
 function daFicha(f) {
   f = f || {};
   const s = k => String(f[k] == null ? '' : f[k]).trim();
+  const tem = f.tem && typeof f.tem === 'object' ? f.tem : {};
+  const sn = k => tem[k] === true ? 'Sim' : tem[k] === false ? 'Não' : '';
+  const disco = s('disco_tipo'), res = s('resolucao'), m2 = /nvme|m\.?2/i.test(disco);
   return {
-    BRAND: s('marca'), LINE: s('linha'), MODEL: s('numero') && s('linha') ? s('numero') : s('modelo'), ALPHANUMERIC_MODEL: s('numero'),
+    BRAND: s('marca'), LINE: s('linha'), MODEL: s('numero') && s('linha') ? s('numero') : s('modelo'),
     PROCESSOR_BRAND: s('cpu_marca'), PROCESSOR_LINE: s('cpu_linha'), PROCESSOR_MODEL: s('cpu_modelo'),
-    RAM_MEMORY: s('ram'), RAM_MEMORY_TYPE: s('ram_tipo'),
-    SSD_DATA_STORAGE_CAPACITY: s('ssd'), HDD_DATA_STORAGE_CAPACITY: s('hd'),
+    // a RAM tem um id em cada categoria (em Notebooks, "capacidade total do módulo")
+    RAM_MEMORY: s('ram'), RAM_MEMORY_MODULE_TOTAL_CAPACITY: s('ram'), RAM_MEMORY_TYPE: s('ram_tipo'),
+    RAM_SLOTS_NUMBER: s('slots_ram'), MAX_SUPPORTED_RAM_MEMORY_CAPACITY: s('ram_max') ? s('ram_max') + ' GB' : '',
+    SSD_DATA_STORAGE_CAPACITY: s('ssd'), HDD_DATA_STORAGE_CAPACITY: s('hd'), HARD_DRIVE_DATA_STORAGE_CAPACITY: s('hd'),
+    M2_DATA_STORAGE_CAPACITY: m2 ? s('ssd') : '', SSD_INTERFACE: m2 ? 'PCIe' : /^ssd$/i.test(disco) ? 'SATA 3' : '',
     DISPLAY_SIZE: s('tela') ? s('tela') + ' "' : '',
-    OS_NAME: s('so'),
+    DISPLAY_RESOLUTION: /^\d{3,4} x \d{3,4}$/.test(res) ? res.replace(/(\d+) x (\d+)/, '$1 px x $2 px') : '',
+    DISPLAY_RESOLUTION_TYPE: res === '1920 x 1080' ? 'Full HD' : res === '1366 x 768' ? 'HD' : '',
+    OS_NAME: s('so'), OS_VERSION: s('so_versao'), OS_EDITION: s('so_edicao'),
+    INTEGRATED_GRAPHIC_CARD_BRAND: s('video_marca'), INTEGRATED_GRAPHIC_CARD_LINE: s('video_linha'), INTEGRATED_GRAPHIC_CARD_MODEL: s('video_modelo'),
+    DEDICATED_GRAPHIC_CARD_BRAND: s('dedicada_marca'), DEDICATED_GRAPHIC_CARD_LINE: s('dedicada_linha'), DEDICATED_GRAPHIC_CARD_MODEL: s('dedicada_modelo'),
+    PRODUCT_TYPE: s('tipo_produto'),
+    WITH_WI_FI: sn('wifi'), WITH_BLUETOOTH: sn('bluetooth'), WITH_WEBCAM: sn('webcam'), WITH_MICROPHONE: sn('microfone'),
+    WITH_HEADPHONES_OUTPUT: sn('fone'), WITH_TOUCH_SCREEN: sn('touch'), WITH_FINGERPRINT_READER: sn('digital'),
+    WITH_BACKLIGHT_KEYBOARD: sn('retroiluminado'), WITH_NUMERIC_PAD: sn('numerico'),
+    WITH_RETINA_DISPLAY: s('marca') && !/apple/i.test(s('marca')) ? 'Não' : '',
+    KEYBOARD_LANGUAGE: s('teclado'), COLOR: s('cor'), MAIN_COLOR: s('cor'),
+    MAX_BATTERY_LIFE: s('bateria_h') ? s('bateria_h') + ' h' : '',
+    SELLER_SKU: s('sku'),
     ITEM_CONDITION: 'Usado',
   };
 }
@@ -226,6 +248,9 @@ function formatar(a, valor) {
     const v = valores.find(x => norm(x.name) === norm(valor)) || (alvo.length >= 4 ? valores.find(x => so(x.name).endsWith(alvo)) : null);
     if (v) return { id: a.id, value_id: String(v.id), value_name: v.name };
   }
+  // texto livre com sugestões: igual a uma delas, vai a dela (o Mercado Livre reconhece o valor)
+  const igual = tipo === 'string' && valores.find(x => norm(x.name) === norm(valor));
+  if (igual) return { id: a.id, value_id: String(igual.id), value_name: igual.name };
   return { id: a.id, value_name: valor.slice(0, 255) };
 }
 // Monta os atributos do anúncio com o que se sabe: o que ele preencheu à mão (manual)
@@ -385,7 +410,7 @@ async function publicar(corpo) {
   if (!ra.ok || !Array.isArray(ra.j)) throw erro(502, traduzir(ra));
   const lista = ra.j, porId = new Map(lista.map(a => [a.id, a]));
   const manual = it.atributos && typeof it.atributos === 'object' ? it.atributos : {};
-  const m = montarAtributos(lista, it.ficha, manual, { pacote: it.pacote });
+  const m = montarAtributos(lista, { ...(it.ficha || {}), sku: it.sku ? String(it.sku).slice(0, 60) : '' }, manual, { pacote: it.pacote });
   console.log('ml atributos sem valor em', cat, lista.filter(a => a && a.id && !somenteLeitura(a) && !m.atributos.some(x => x.id === a.id))
     .map(a => a.id + (obrigatorio(a) ? '*' : '') + ':' + (a.name || '') + ':' + (a.value_type || '')).join(', ').slice(0, 1800));
   if (m.faltam.length) return { ok: false, faltam: m.faltam, categoria: { id: cat, nome: catNome }, cifraNova: s.cifraNova };
@@ -395,7 +420,7 @@ async function publicar(corpo) {
     condition: 'used', listing_type_id: tipo, pictures: fotos.map(id => ({ id })), attributes: m.atributos,
     sale_terms: garantia ? [{ id: 'WARRANTY_TYPE', value_name: 'Garantia do vendedor' }, { id: 'WARRANTY_TIME', value_name: garantia + ' dias' }]
                          : [{ id: 'WARRANTY_TYPE', value_name: 'Sem garantia' }],
-    shipping: { mode: 'me2', local_pick_up: it.retirada !== false, free_shipping: false },
+    shipping: { mode: 'me2', local_pick_up: it.retirada !== false, free_shipping: it.frete_gratis === true },
     description: { plain_text: String(it.descricao || '').slice(0, 5000) },
   };
   if (it.sku) item.seller_custom_field = String(it.sku).slice(0, 60);
@@ -450,7 +475,13 @@ async function publicar(corpo) {
       + (v.vago ? ' (o Mercado Livre não disse o motivo; confira a conta: endereço, Mercado Envios e limite de anúncios)' : ''));
   }
   const r = feito;
-  console.log(`ml publicou ${r.j.id} (${cat}, ${tipo}) ${r.j.status || ''}`);
+  console.log(`ml publicou ${r.j.id} (${cat}, ${tipo}) ${r.j.status || ''} condição=${r.j.condition || '?'} sub=${JSON.stringify(r.j.sub_status || [])}`,
+    'título:', r.j.title || '', '| avisos:', JSON.stringify(r.j.warnings || []).slice(0, 600));
+  // a loja só vende usado: se o Mercado Livre puser como novo, corrige na hora
+  if (r.j.condition && r.j.condition !== 'used') {
+    const c = await usado(r.j.id, s.token, porId);
+    if (!c) avisos.push('O Mercado Livre pôs o anúncio como Novo e não deixou mudar: troque para Usado no próprio Mercado Livre.');
+  }
   return { ok: true, id: r.j.id, link: r.j.permalink || '', status: r.j.status || 'active', preco: r.j.price || preco, tipo,
     categoria: { id: cat, nome: catNome }, avisos, cifraNova: s.cifraNova };
 }
@@ -481,11 +512,55 @@ async function itens(corpo) {
   const s = await sessao(corpo);
   const ids = [...new Set((Array.isArray(corpo.ids) ? corpo.ids : []).map(String).filter(id => ID_ITEM.test(id)))].slice(0, 20);
   if (!ids.length) return { ok: true, itens: [], cifraNova: s.cifraNova };
-  const r = await ml('GET', '/items', { token: s.token, query: { ids: ids.join(','), attributes: 'id,status,sub_status,price,permalink,sold_quantity' } });
+  const r = await ml('GET', '/items', { token: s.token, query: { ids: ids.join(','), attributes: 'id,status,sub_status,price,permalink,sold_quantity,condition' } });
   if (!r.ok) throw erro(502, traduzir(r));
   const lista = (Array.isArray(r.j) ? r.j : []).filter(x => x && x.code === 200 && x.body).map(x => ({
-    id: x.body.id, status: x.body.status || '', sub: x.body.sub_status || [], preco: x.body.price, link: x.body.permalink || '', vendidos: x.body.sold_quantity || 0 }));
+    id: x.body.id, status: x.body.status || '', sub: x.body.sub_status || [], preco: x.body.price, link: x.body.permalink || '', vendidos: x.body.sold_quantity || 0,
+    condicao: x.body.condition || '' }));
   return { ok: true, itens: lista, cifraNova: s.cifraNova };
+}
+// Põe o anúncio como usado: pelo campo da condição; se não der, pelo atributo "Condição do item".
+async function usado(id, token, porId) {
+  const r = await ml('PUT', `/items/${id}`, { token, corpo: { condition: 'used' } });
+  console.log('ml condição -> usado', id, r.status, r.ok ? (r.j.condition || '') : JSON.stringify(r.j).slice(0, 500));
+  if (r.ok && (!r.j.condition || r.j.condition === 'used')) return true;
+  const a = porId && porId.get('ITEM_CONDITION'), f = a ? formatar(a, 'Usado') : { id: 'ITEM_CONDITION', value_name: 'Usado' };
+  const r2 = await ml('PUT', `/items/${id}`, { token, corpo: { attributes: [f] } });
+  console.log('ml condição (atributo) -> usado', id, r2.status, r2.ok ? (r2.j.condition || '') : JSON.stringify(r2.j).slice(0, 500));
+  return r2.ok && (!r2.j.condition || r2.j.condition === 'used');
+}
+// O anúncio que já está lá ganha as características que a ficha sabe e ele ainda não tem
+// (as que ele tem não mudam), e a condição volta para usado se o Mercado Livre trocou.
+async function completar(corpo) {
+  const s = await sessao(corpo);
+  const id = String(corpo.id || '');
+  if (!ID_ITEM.test(id)) throw erro(400, 'Anúncio do Mercado Livre inválido.');
+  const g = await ml('GET', `/items/${id}`, { token: s.token });
+  if (!g.ok || !g.j.id) throw erro(502, traduzir(g));
+  const cat = String(g.j.category_id || '');
+  const ra = await ml('GET', `/categories/${cat}/attributes`, { token: s.token });
+  if (!ra.ok || !Array.isArray(ra.j)) throw erro(502, traduzir(ra));
+  const lista = ra.j, porId = new Map(lista.map(a => [a.id, a]));
+  const manual = corpo.atributos && typeof corpo.atributos === 'object' ? corpo.atributos : {};
+  const m = montarAtributos(lista, { ...(corpo.ficha || {}), sku: corpo.sku ? String(corpo.sku).slice(0, 60) : '' }, manual, { pacote: corpo.pacote });
+  const ja = new Set((g.j.attributes || []).filter(a => a && (a.value_id || a.value_name)).map(a => a.id));
+  // os da embalagem e o motivo sem código de barras não mudam depois de publicado
+  let novos = m.atributos.filter(a => !ja.has(a.id) && !/^SELLER_PACKAGE_|^EMPTY_GTIN_REASON$|^ITEM_CONDITION$/.test(a.id));
+  const antes = g.j.condition || '';
+  console.log('ml completar', id, cat, 'condição=' + antes, 'tem', ja.size, 'novos:', novos.map(a => a.id).join(','));
+  const recusados = [];
+  for (let volta = 0; novos.length && volta < 4; volta++) {
+    const r = await ml('PUT', `/items/${id}`, { token: s.token, corpo: { attributes: novos } });
+    if (r.ok) break;
+    console.log('ml completar: recusou', id, r.status, JSON.stringify(r.j).slice(0, 900));
+    if (r.status !== 400 && r.status !== 422) throw erro(502, traduzir(r));
+    // tira os que o Mercado Livre apontou; sem apontar nenhum, para (não insiste às cegas)
+    const fora = idsDosErros(causasDe(r.j).length ? causasDe(r.j) : [{ message: r.j.message || '' }]).filter(x => novos.some(a => a.id === x));
+    if (!fora.length) { recusados.push(...novos.map(a => a.id)); novos = []; break; }
+    recusados.push(...fora); novos = novos.filter(a => !fora.includes(a.id));
+  }
+  const condicao = antes && antes !== 'used' && !(g.j.sold_quantity > 0) ? ((await usado(id, s.token, porId)) ? 'used' : antes) : antes;
+  return { ok: true, adicionados: novos.map(a => a.id), recusados, condicao, cifraNova: s.cifraNova };
 }
 async function novidades(corpo) {
   const s = await sessao(corpo);
@@ -535,6 +610,7 @@ module.exports = async (req, res) => {
     if (corpo.acao === 'publicar') return json(res, 200, await publicar(corpo));
     if (corpo.acao === 'atualizar') return json(res, 200, await atualizar(corpo));
     if (corpo.acao === 'itens') return json(res, 200, await itens(corpo));
+    if (corpo.acao === 'completar') return json(res, 200, await completar(corpo));
     if (corpo.acao === 'novidades') return json(res, 200, await novidades(corpo));
     return json(res, 400, { erro: 'Ação desconhecida.' });
   } catch (e) {
