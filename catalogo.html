@@ -143,13 +143,16 @@
     -webkit-appearance:none;appearance:none}
   .bs::placeholder{color:var(--li)}
   .bs:focus{border-color:var(--g2);box-shadow:0 0 0 4px rgba(0,179,104,.15)}
-  /* os três filtros numa fila de pílulas; no celular a fila corre de lado */
-  .fls{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:6px}
+  /* Filtros: no computador, uma linha por grupo, com o rótulo numa coluna à
+     esquerda — tudo começa no mesmo ponto. (Numa fila só que quebra linha, o
+     grupo que caía pra baixo levava o separador junto e ficava torto.) No
+     celular, uma fila só que corre de lado: ali não quebra, então não entorta. */
+  .fls{display:grid;grid-template-columns:max-content 1fr;gap:10px 16px;align-items:center;margin-top:8px}
   .fls[hidden]{display:none}
-  .fgr{display:flex;gap:6px;flex-wrap:wrap}
+  .fgr{display:contents}
   .fgr[hidden]{display:none}
-  .fgr:not([hidden]) ~ .fgr:not([hidden]){padding-left:10px;margin-left:4px;border-left:1px solid var(--b)}
-  .ops{display:contents}
+  .fgr-r{font-size:.68rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--li)}
+  .ops{display:flex;flex-wrap:wrap;gap:6px}
   .op{display:inline-flex;align-items:center;gap:7px;padding:8px 14px;border-radius:999px;border:1px solid var(--b);
     background:var(--card);color:var(--tx);font:600 .82rem/1.1 inherit;font-family:inherit;cursor:pointer;white-space:nowrap;
     transition:border-color .15s,background .15s,color .15s}
@@ -164,9 +167,12 @@
     :root:not([data-theme="light"]) .op.on .n{color:#03140C}
   }
   @media(max-width:760px){
-    .fls{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:12px -16px 0;padding:0 16px 2px}
+    .fls{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:10px -16px 0;padding:0 16px 2px}
     .fls::-webkit-scrollbar{display:none}
-    .fgr{flex-wrap:nowrap}
+    .fgr{display:flex;gap:6px;flex-wrap:nowrap}
+    .fgr-r{display:none}
+    .ops{display:contents}
+    .fgr:not([hidden]) ~ .fgr:not([hidden]){padding-left:10px;margin-left:4px;border-left:1px solid var(--b)}
   }
   .cont{font-size:.8rem;color:var(--li);margin:12px 2px 0}
 
@@ -393,9 +399,9 @@
       </div>
     </div>
     <div class="fls" id="painel" hidden>
-      <div class="fgr" id="grTipo"><div class="ops" id="tipos"></div></div>
-      <div class="fgr" id="grMarca"><div class="ops" id="chips"></div></div>
-      <div class="fgr" id="grFaixa"><div class="ops" id="faixas"></div></div>
+      <div class="fgr" id="grTipo"><span class="fgr-r">Tipo</span><div class="ops" id="tipos"></div></div>
+      <div class="fgr" id="grMarca"><span class="fgr-r">Marca</span><div class="ops" id="chips"></div></div>
+      <div class="fgr" id="grFaixa"><span class="fgr-r">Preço</span><div class="ops" id="faixas"></div></div>
     </div>
     <div class="cont" id="contagem"></div>
     <div class="gr" id="grade"></div>
