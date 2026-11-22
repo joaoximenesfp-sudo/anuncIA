@@ -646,7 +646,7 @@ function paginaLista(d, loja) {
 // A imagem que aparece quando alguém manda o link (WhatsApp, Facebook...): o título do artigo no
 // visual da loja, 1200×630, feita na hora e guardada no cache da Vercel.
 let og = null, fonteOg = null;
-async function capaPng(titulo, rotulo, nome, { story = false, resumo = '' } = {}) {
+async function capaPng(titulo, rotulo, nome, { story = false, post = false, resumo = '' } = {}) {
   if (!og) og = await import('@vercel/og');
   if (!fonteOg) fonteOg = fs.readFileSync(path.join(__dirname, '..', 'fontes', 'inter-latin-600.woff'));
   const h = (type, style, ...filhos) => { filhos = filhos.filter(x => x != null && x !== ''); return { type, props: { style, children: filhos.length > 1 ? filhos : filhos[0] } }; };
@@ -659,8 +659,19 @@ async function capaPng(titulo, rotulo, nome, { story = false, resumo = '' } = {}
   const chip = fonte => h('div', { display: 'flex', alignSelf: 'flex-start', fontSize: fonte, letterSpacing: 1, color: '#1CF08F', backgroundColor: '#0B1221', borderRadius: 999, padding: `${Math.round(fonte * 0.42)}px ${Math.round(fonte * 0.9)}px` }, rotulo.toUpperCase());
   const fundo = { display: 'flex', flexDirection: 'column', width: '100%', height: '100%', color: '#0B1221', backgroundColor: '#F4F6F9', fontFamily: 'Inter',
     backgroundImage: 'radial-gradient(circle at 100% 0%, rgba(28,240,143,0.40) 0%, rgba(28,240,143,0) 58%)' };
+  const site = h('div', { display: 'flex', fontSize: 30, color: '#556070', marginTop: 22 }, SITE.replace(/^https?:\/\//, '') + '/blog');
   // o story deixa livres o alto e o pé (onde o Instagram põe o nome, a barra e as respostas)
-  const el = story
+  const el = post
+    ? h('div', Object.assign({}, fundo, { padding: '96px 84px 100px' }),
+      selo(70, 34),
+      h('div', { display: 'flex', flexDirection: 'column', marginTop: 'auto', marginBottom: 'auto' },
+        chip(28),
+        h('div', { display: 'flex', fontSize: t.length <= 40 ? 88 : t.length <= 72 ? 76 : 64, lineHeight: 1.1, letterSpacing: -2, marginTop: 36 }, t),
+        resumo ? h('div', { display: 'flex', fontSize: 36, lineHeight: 1.35, color: '#556070', marginTop: 32 }, cortar(resumo, 150)) : null),
+      h('div', { display: 'flex', flexDirection: 'column' },
+        h('div', { display: 'flex', alignSelf: 'flex-start', fontSize: 32, color: '#FFFFFF', backgroundColor: '#0B1221', borderRadius: 999, padding: '20px 34px' }, 'Leia o artigo completo no blog'),
+        site))
+    : story
     ? h('div', Object.assign({}, fundo, { padding: '250px 84px 290px' }),
       selo(78, 38),
       h('div', { display: 'flex', flexDirection: 'column', marginTop: 'auto', marginBottom: 'auto' },
@@ -672,14 +683,14 @@ async function capaPng(titulo, rotulo, nome, { story = false, resumo = '' } = {}
       chip(24),
       h('div', { display: 'flex', fontSize: t.length <= 40 ? 78 : t.length <= 72 ? 64 : 54, lineHeight: 1.12, letterSpacing: -1.5 }, t),
       h('div', { display: 'flex', alignItems: 'center', justifyContent: 'space-between' }, selo(62, 30), h('div', { display: 'flex', fontSize: 26, color: '#556070' }, 'Leia no blog →')));
-  const r = new og.ImageResponse(el, { width: story ? 1080 : 1200, height: story ? 1920 : 630, fonts: [{ name: 'Inter', data: fonteOg, weight: 600, style: 'normal' }] });
+  const r = new og.ImageResponse(el, { width: story || post ? 1080 : 1200, height: story ? 1920 : post ? 1350 : 630, fonts: [{ name: 'Inter', data: fonteOg, weight: 600, style: 'normal' }] });
   return Buffer.from(await r.arrayBuffer());
 }
 // muda quando muda o título: o WhatsApp e o Facebook guardam a imagem pelo endereço
 const versao = s => { let x = 5381; for (const c of String(s)) x = ((x * 33) ^ c.codePointAt(0)) >>> 0; return x.toString(36); };
 const urlCapa = a => `${SITE}/blog/capa/${a ? encodeURIComponent(a.slug) + '?v=' + versao(a.titulo + '|' + a.assunto) : 'blog'}`;
 // a do story fica no mesmo site da página (o celular baixa a imagem para mandar ao Instagram)
-const urlStory = a => `/blog/capa/${encodeURIComponent(a.slug)}?formato=story&v=${versao(a.titulo + '|' + a.assunto + '|' + a.resumo)}`;
+const urlStory = (a, formato = 'story') => `/blog/capa/${encodeURIComponent(a.slug)}?formato=${formato}&v=${versao(a.titulo + '|' + a.assunto + '|' + a.resumo)}`;
 // Os pontos do artigo em slides, no topo (os mesmos do carrossel do Instagram): dá para pegar a
 // notícia arrastando para o lado, antes de ler o texto.
 function slidesHtml(a, nome) {
@@ -710,14 +721,14 @@ function noMeio(html, bloco) {
 const ICONE_PARTILHA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 8 5-5 5 5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>';
 const ICONE_IG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/></svg>';
 const ICONE_LINK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>';
-function partilhaHtml(url, titulo, fim, story) {
+function partilhaHtml(url, titulo, fim, story, post) {
   const u = encodeURIComponent(url);
   return `<div class="partilha${fim ? ' fim' : ''}" data-url="${esc(url)}" data-titulo="${esc(titulo)}">` +
     `<span class="pt-rot">${fim ? 'Gostou? Mande para alguém:' : 'Compartilhar:'}</span>` +
     `<button type="button" class="pt pt-nativo" hidden>${ICONE_PARTILHA}Compartilhar</button>` +
     `<a class="pt pt-wa" href="https://wa.me/?text=${encodeURIComponent(titulo + ' ' + url)}" target="_blank" rel="noopener">WhatsApp</a>` +
     `<a class="pt pt-fb" href="https://www.facebook.com/sharer/sharer.php?u=${u}" target="_blank" rel="noopener">Facebook</a>` +
-    `<button type="button" class="pt pt-ig" data-story="${esc(story)}">${ICONE_IG}<span>Instagram</span></button>` +
+    `<button type="button" class="pt pt-ig" data-story="${esc(story)}" data-post="${esc(post)}">${ICONE_IG}<span>Instagram</span></button>` +
     `<button type="button" class="pt pt-copiar">${ICONE_LINK}<span>Copiar link</span></button><p class="pt-aviso" role="status" hidden></p></div>`;
 }
 const SCRIPT_PARTILHA = `<script>
@@ -730,31 +741,43 @@ document.querySelectorAll('.partilha').forEach(function (b) {
   if (navigator.share && celular) { nat.hidden = false; b.querySelector('.pt-fb').hidden = true; cp.hidden = true;
     nat.addEventListener('click', function () { navigator.share({ title: titulo, url: url }).catch(function () {}); }); }
   function avisar(t) { aviso.textContent = t; aviso.hidden = false; }
-  function copiar(ok) {
-    function aMao() { var t = document.createElement('textarea'); t.value = url; t.setAttribute('readonly', ''); t.style.position = 'fixed'; t.style.opacity = '0';
-      document.body.appendChild(t); t.select(); try { if (document.execCommand('copy') && ok) ok(); } catch (e) {} document.body.removeChild(t); }
-    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(function () { if (ok) ok(); }, aMao); else aMao();
+  // já: copia na hora (antes de abrir outra aba, que tira o foco da página e o copiar falharia)
+  function aMao() { var t = document.createElement('textarea'), deu = false; t.value = url; t.setAttribute('readonly', ''); t.style.position = 'fixed'; t.style.opacity = '0';
+    document.body.appendChild(t); t.select(); try { deu = document.execCommand('copy'); } catch (e) {} document.body.removeChild(t); return deu; }
+  function copiar(ok, ja) {
+    if (ja && aMao()) { if (ok) ok(); return; }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(function () { if (ok) ok(); }, function () { if (aMao() && ok) ok(); });
+    else if (aMao() && ok) ok();
   }
   cp.addEventListener('click', function () { copiar(function () { rot.textContent = 'Link copiado'; setTimeout(function () { rot.textContent = 'Copiar link'; }, 2500); }); });
   // O Instagram não abre link de fora como o WhatsApp: vai a imagem do artigo para o story, e o
   // link fica copiado para a figurinha "Link". Sem o compartilhar do celular, a imagem é baixada.
   var arquivo = null, dica = 'No story, toque na figurinha "Link" e cole o link do artigo (já está copiado).';
-  function baixar() { var a = document.createElement('a'); a.href = ig.getAttribute('data-story'); a.download = 'story-tech-campinas.png'; document.body.appendChild(a); a.click(); a.remove();
-    avisar('Imagem salva e link copiado. No celular, poste a imagem no story do Instagram e cole o link na figurinha "Link".'); }
+  // sem o compartilhar do celular (no computador, por exemplo): baixa a imagem e abre o Instagram
+  // numa aba nova, como o WhatsApp; no computador vai no formato de post, que o Instagram aceita lá
+  function baixar() {
+    var a = document.createElement('a'); a.href = ig.getAttribute(celular ? 'data-story' : 'data-post'); a.download = celular ? 'story-tech-campinas.png' : 'post-tech-campinas.png';
+    document.body.appendChild(a); a.click(); a.remove();
+    window.open('https://www.instagram.com/', '_blank', 'noopener');
+    avisar(celular ? 'Imagem salva e link copiado: no Instagram, poste a imagem no story e cole o link na figurinha "Link".'
+      : 'A imagem do post foi baixada e o Instagram abriu em outra aba: clique em Criar (+) e escolha a imagem. O link do artigo está copiado.');
+  }
   function abrir() {
     navigator.share({ files: [arquivo] }).then(function () { igRot.textContent = 'Instagram'; })
       .catch(function (e) { igRot.textContent = e && e.name === 'NotAllowedError' ? 'Abrir no Instagram' : 'Instagram'; });
   }
+  // o abrir uma aba nova só vale logo no toque: se a imagem não der para mandar, pede outro toque
+  var modo = '';
   ig.addEventListener('click', function () {
-    copiar();
-    if (arquivo) { abrir(); return; }
-    if (!(celular && navigator.canShare)) { baixar(); return; }
+    copiar(null, !celular);
+    if (modo === 'arquivo') { abrir(); return; }
+    if (modo === 'baixar' || !(celular && navigator.canShare)) { baixar(); return; }
     igRot.textContent = 'Preparando…';
     fetch(ig.getAttribute('data-story')).then(function (r) { if (!r.ok) throw new Error(r.status); return r.blob(); }).then(function (bl) {
       var f = new File([bl], 'story-tech-campinas.png', { type: 'image/png' });
-      if (!navigator.canShare({ files: [f] })) { igRot.textContent = 'Instagram'; baixar(); return; }
-      arquivo = f; avisar(dica); abrir();
-    }).catch(function () { igRot.textContent = 'Instagram'; baixar(); });
+      if (!navigator.canShare({ files: [f] })) throw new Error('sem arquivo');
+      arquivo = f; modo = 'arquivo'; avisar(dica); abrir();
+    }).catch(function () { modo = 'baixar'; igRot.textContent = 'Abrir no Instagram'; avisar('Toque de novo para salvar a imagem e abrir o Instagram.'); });
   });
 });
 </script>`;
@@ -781,11 +804,11 @@ async function paginaArtigo(d, a, loja) {
   <h1>${esc(a.titulo)}</h1>
   <p class="lead">${esc(a.resumo)}</p>
   <p class="meta">${esc(dataLonga(a.publicado_em))}</p>
-  ${partilhaHtml(url, a.titulo, false, urlStory(a))}
+  ${partilhaHtml(url, a.titulo, false, urlStory(a), urlStory(a, 'post'))}
   ${slidesHtml(a, nome)}
   <div class="corpo">${noMeio(mdHtml(a.corpo, a.fontes), noMeioMaqs)}</div>
   ${fonte}
-  ${partilhaHtml(url, a.titulo, true, urlStory(a))}
+  ${partilhaHtml(url, a.titulo, true, urlStory(a), urlStory(a, 'post'))}
 </article>
 <section class="bloco"><h3>Procurando um notebook?</h3>
   <p style="margin:0;color:var(--mu)">Notebooks e desktops revisados um a um, com 90 dias de garantia.</p>
@@ -847,7 +870,7 @@ module.exports = async (req, res) => {
     if (q.capa !== undefined) {
       const a = noAr(d).find(x => x.slug === String(q.capa));
       const png = await capaPng(a ? a.titulo : 'Notícias de tecnologia explicadas para quem usa notebook', a ? 'Blog · ' + (a.assunto || 'Notícia') : 'Blog', (loja && loja.nome) || 'Tech Campinas',
-        { story: q.formato === 'story', resumo: a ? a.resumo : 'As notícias de tecnologia que mexem com o seu notebook, explicadas sem complicação.' });
+        { story: q.formato === 'story', post: q.formato === 'post', resumo: a ? a.resumo : 'As notícias de tecnologia que mexem com o seu notebook, explicadas sem complicação.' });
       return enviar(res, 200, 'image/png', png, 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=604800');
     }
     if (q.sitemap) return enviar(res, 200, 'application/xml; charset=utf-8', sitemap(d), CACHE_PAGINA);
