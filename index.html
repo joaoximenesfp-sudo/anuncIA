@@ -648,6 +648,17 @@ input[type=number].inp{padding-left:32px}
 .insta-guia li{margin-bottom:3px}
 .insta-guia code{background:#fff;border:1px solid var(--b);border-radius:4px;padding:0 4px;font-size:.7rem;word-break:break-all}
 .ancat-topo{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin:12px 0 4px}
+.an-abas{display:flex;gap:6px;margin:0 0 14px;border-bottom:1px solid var(--b);padding-bottom:0}
+.an-aba{border:0;background:none;font:inherit;font-weight:600;font-size:.92rem;color:var(--li);padding:10px 14px;border-bottom:3px solid transparent;margin-bottom:-1px;cursor:pointer}
+.an-aba[aria-selected="true"]{color:var(--tx);border-bottom-color:var(--gr,#00B368)}
+.ancat-ver{display:inline-flex;align-items:center;gap:4px;font-size:.78rem;color:var(--li)}
+.ancat-ver button{border:1px solid var(--b);background:var(--w);color:var(--tx);border-radius:999px;padding:5px 10px;font:inherit;font-size:.78rem;cursor:pointer}
+.ancat-ver button.on{background:var(--tx);color:var(--w);border-color:var(--tx)}
+.ancat-pag{display:flex;align-items:center;justify-content:center;gap:10px;margin:10px 0 2px;font-size:.84rem;color:var(--li)}
+.ancat-pag button{border:1px solid var(--b);background:var(--w);color:var(--tx);border-radius:999px;padding:8px 14px;font:inherit;font-size:.84rem;font-weight:600;cursor:pointer}
+.ancat-pag button:disabled{opacity:.4;cursor:default}
+#anCatGrade .pag-fora{display:none!important}
+.ancat-grade.um{grid-template-columns:minmax(0,520px);justify-content:center}
 .ancat-grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
 .ancat-it{border:1px solid var(--b);border-radius:10px;padding:8px;display:flex;flex-direction:column;gap:5px;background:var(--w)}
 .ancat-imgs{display:flex;gap:6px;align-items:flex-start}
@@ -3200,7 +3211,11 @@ div:has(> .fc2){flex-wrap:wrap;row-gap:6px}
   <div class="pg" id="pg-anuncio">
   <div class="wr">
     <div class="ph"><div><div class="pht">🎨 Gerar anúncio</div><div class="phs">Post, story e anúncio de cada máquina — Instagram e Mercado Livre</div></div></div>
-    <div class="cd" id="anCatCard">
+    <div class="an-abas" role="tablist" aria-label="Gerar anúncio">
+      <button type="button" role="tab" class="an-aba" id="anAbaAnuncios" data-aba="anuncios" aria-selected="true" onclick="anAba('anuncios')">⚡ Anúncios</button>
+      <button type="button" role="tab" class="an-aba" id="anAbaBlog" data-aba="blog" aria-selected="false" onclick="anAba('blog')">📰 Blog</button>
+    </div>
+    <div class="cd" id="anCatCard" data-aba="anuncios">
       <div class="cdh"><span class="cdht">⚡ Anúncios do catálogo</span>
         <span style="font-size:.74rem;color:var(--li)">post e story de cada notebook anunciado, prontos — saem das fotos e da descrição do cadastro</span></div>
       <div class="cdb">
@@ -3218,6 +3233,7 @@ div:has(> .fc2){flex-wrap:wrap;row-gap:6px}
           </div>
         </div>
         <div class="ancat-topo"><span class="tipo-auto" id="anCatResumo"></span>
+          <span class="ancat-ver" role="group" aria-label="Quantas máquinas por vez">Ver <button type="button" data-n="1" onclick="anCatVerPor(1)">1 por vez</button><button type="button" data-n="3" onclick="anCatVerPor(3)">3 por vez</button></span>
           <button class="bok" id="anCatNovasBt" style="display:none" aria-haspopup="menu" aria-expanded="false" onclick="anCatMenuNovas(this)">📤 Publicar as novas ▾</button></div>
         <div class="ancat-busca" id="anCatBuscaBox">
           <span class="ancat-busca-ic" aria-hidden="true">🔍</span>
@@ -3261,7 +3277,7 @@ div:has(> .fc2){flex-wrap:wrap;row-gap:6px}
       .blog-prev{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-bottom:12px}
       .blog-prev img{width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:10px;border:1px solid var(--b);background:var(--bg)}
     </style>
-    <div class="cd" id="blogCard">
+    <div class="cd" id="blogCard" data-aba="blog" hidden>
       <div class="cdh"><span class="cdht">📰 Blog da loja · pasta de notícias</span>
         <span style="font-size:.74rem;color:var(--li)">todo dia sai um artigo sozinho, e cada um vira um anúncio pronto para o Instagram: a notícia, uma máquina do estoque ligada ao assunto e a legenda com o link</span></div>
       <div class="cdb">
@@ -3291,7 +3307,7 @@ div:has(> .fc2){flex-wrap:wrap;row-gap:6px}
         <div class="blog-dlg-bts"><button type="button" class="bsm" id="blogPostarBt" onclick="blogPostar()">📸 Postar no Instagram</button><button type="button" class="bsm blog-sec" onclick="blogFechar('blogPrevDlg')">Cancelar</button><span class="tipo-auto" id="blogPrevMsg" style="margin:0"></span></div>
       </div></dialog>
     </div>
-    <div class="cd">
+    <div class="cd" id="anGeradorCard" data-aba="anuncios">
       <div class="cdh"><span class="cdht">🎨 Gerar anúncio</span>
         <span style="font-size:.74rem;color:var(--li)">imagem pronta pro Instagram, story ou capa do WhatsApp</span></div>
       <div class="cdb">
@@ -9067,7 +9083,7 @@ window.sp2=p=>{
   if(p==='painel'){ try{ buildPainel(); }catch(e){ console.error('buildPainel:',e); } buildPainelCharts(); }
   if(p==='financas'){renderFinLabel();checkNotificacoes();}
   if(p==='admin'){carregarAvisos();}
-  if(p==='anuncio'){ try{ anMontarSelect(); anTrocouModo(); anGradeFotos(); anLigarEditor(); }catch(e){ console.error('anuncio:',e); } try{ instaCarregar(); }catch(e){} try{ mlCarregar().then(()=>anCatMontar()).catch(()=>{}); }catch(e){} try{ anCatMontar(); }catch(e){} try{ blogCarregar(); }catch(e){} }
+  if(p==='anuncio'){ try{ anAba(anAbaAtual); }catch(e){} try{ anMontarSelect(); anTrocouModo(); anGradeFotos(); anLigarEditor(); }catch(e){ console.error('anuncio:',e); } try{ instaCarregar(); }catch(e){} try{ mlCarregar().then(()=>anCatMontar()).catch(()=>{}); }catch(e){} try{ anCatMontar(); }catch(e){} try{ blogCarregar(); }catch(e){} }
   if(p==='clientes'){ if(cliAba==='fornecedores')renderFornecedores(); else renderClientes(); }
   else{const bar=document.getElementById('notifBar');if(bar){bar.innerHTML='';bar.classList.remove('on');adjustPageTop();}}
 };
@@ -12850,7 +12866,7 @@ async function instaVoltaDoLogin(){
   const h=new URLSearchParams(location.hash.slice(1));
   if(!h.has('insta')&&!h.has('insta_erro')) return;
   history.replaceState(null,'',location.pathname+location.search);
-  sp2('anuncio');
+  sp2('anuncio'); anAba('anuncios');
   if(h.has('insta_erro')){ instaMsg('⚠️ Instagram: '+h.get('insta_erro')); return; }
   const usuario=(h.get('insta_user')||'').replace(/[^\w.]/g,''), exp=+h.get('insta_exp')||(Date.now()+60*864e5);
   try{
@@ -13084,11 +13100,20 @@ function blogSlide(a,txt,i,n){
 }
 function blogFim(){
   const {c,ctx}=blogTela('#0B1221',0.30), m=BLOG_M;
-  blogBloco(ctx,'Leia o artigo completo',m,330,BLOG_W-2*m,260,600,100,60,'#FFFFFF',1.08);
-  ctx.font=blogFonte(600,54); ctx.fillStyle='#1CF08F'; ctx.fillText('no nosso blog: link na bio',m,690);
-  blogBloco(ctx,'Notebooks e desktops revisados um a um, com 90 dias de garantia.',m,760,BLOG_W-2*m,200,500,40,30,'rgba(255,255,255,.75)',1.3);
+  blogBloco(ctx,'Leia o artigo completo no nosso blog',m,300,BLOG_W-2*m,330,600,100,60,'#FFFFFF',1.08);
+  // o "link na bio" como um botão verde, no mesmo tipo de letra do resto
+  ctx.font=blogFonte(600,44); const lk='Link na bio ↑', lw=ctx.measureText(lk).width+80;
+  ctx.fillStyle='#1CF08F'; blogRet(ctx,m,680,lw,96,48); ctx.fill();
+  ctx.fillStyle='#06231A'; ctx.fillText(lk,m+40,743);
+  blogBloco(ctx,'Notebooks e desktops revisados um a um, com 90 dias de garantia.',m,840,BLOG_W-2*m,200,500,40,30,'rgba(255,255,255,.75)',1.3);
   blogRodape(ctx,true,'');
   return c;
+}
+// A fonte da loja carregada antes de desenhar: sem isso, o celular pode desenhar uma linha com a
+// fonte reserva (a diferença que aparecia no último slide).
+async function blogFontes(){
+  try{ await Promise.all(['500 40px','600 44px','600 100px','700 88px'].map(f=>document.fonts.load(f+' "Inter Variable"','Leia o artigo'))); }catch(e){}
+  try{ await document.fonts.ready; }catch(e){}
 }
 // ── o anúncio do artigo: a notícia nos slides + uma máquina do estoque ligada ao assunto ──
 // A máquina: a que mais casa com os termos do artigo (marca, linha, processador); empate, a que
@@ -13130,7 +13155,7 @@ const blogLinhaMaq=p=>{ const pr=precoVigente(p);
 function blogComMaq(leg,linha){ if(!linha) return leg; const i=leg.indexOf('\n\n📖'); return i>=0?leg.slice(0,i)+'\n\n'+linha+leg.slice(i):(leg?leg+'\n\n':'')+linha; }
 let blogMaqDe={}, blogLinhaAtual='';
 async function blogMontarPrevia(a,id){
-  try{ await document.fonts.ready; }catch(e){}
+  await blogFontes();
   const p=id?prods.find(x=>x.id===id):null;
   let img=null; if(p){ try{ img=(await anCarregarFoto(p.id))[0]||null; }catch(e){} }
   const pts=(a.pontos||[]).filter(Boolean).slice(0,7);
@@ -13372,7 +13397,7 @@ function instaBtn(p){
   return `<button class="binsta${pub?' feito':''}" onclick="instaMaquina('${p.id}')" title="${pub?'Já está no Instagram':'Publicar no Instagram'}${quando}">${pub?'📸✓':'📸'}</button>`;
 }
 window.instaMaquina=async id=>{
-  sp2('anuncio');
+  sp2('anuncio'); anAba('anuncios');
   const modo=document.getElementById('anModo'); if(modo) modo.value='uma';
   anEscolhidas=[]; anTrocouModo();
   await anAlternar(id);
@@ -13558,7 +13583,7 @@ async function mlVoltaDoLogin(){
   const h=new URLSearchParams(location.hash.slice(1));
   if(!h.has('ml')&&!h.has('ml_erro')) return;
   history.replaceState(null,'',location.pathname+location.search);
-  sp2('anuncio');
+  sp2('anuncio'); anAba('anuncios');
   if(h.has('ml_erro')){ mlMsg('⚠️ Mercado Livre: '+h.get('ml_erro')); return; }
   const usuario=(h.get('ml_user')||'').replace(/[^\w.\- ]/g,'').slice(0,60);
   try{
@@ -14348,6 +14373,50 @@ function anCatMontar(){
   anCatBotaoNovas();
 }
 window.anCatMontar=anCatMontar; // console / testes
+// ── AS ABAS (Anúncios | Blog) e UMA MÁQUINA POR VEZ (ou 3) ──
+// A aba fica lembrada; quem abre o editor de uma máquina (o 📸 do estoque, a volta do login do
+// Instagram) vai para a de Anúncios.
+let anAbaAtual='anuncios';
+try{ if(localStorage.getItem('anAba')==='blog') anAbaAtual='blog'; }catch(e){}
+window.anAba=qual=>{
+  anAbaAtual=qual==='blog'?'blog':'anuncios';
+  try{ localStorage.setItem('anAba',anAbaAtual); }catch(e){}
+  document.querySelectorAll('#pg-anuncio [data-aba]').forEach(el=>{
+    if(el.classList.contains('an-aba')) el.setAttribute('aria-selected',String(el.dataset.aba===anAbaAtual));
+    else el.hidden=el.dataset.aba!==anAbaAtual;
+  });
+};
+let anCatPorPag=1, anCatPag={};
+try{ if(Number(localStorage.getItem('anCatPorPag'))===3) anCatPorPag=3; }catch(e){}
+// Em cada parte (para publicar, já publicados, vendidos), só a página atual aparece; a busca
+// escolhe quais entram na conta.
+function anCatPaginar(){
+  const grade=document.getElementById('anCatGrade'); if(!grade) return;
+  document.querySelectorAll('.ancat-ver button').forEach(b=>b.classList.toggle('on',Number(b.dataset.n)===anCatPorPag));
+  grade.querySelectorAll('.ancat-grade').forEach(g=>g.classList.toggle('um',anCatPorPag===1));
+  grade.querySelectorAll('.ancat-sec').forEach(sec=>{
+    const its=[...sec.querySelectorAll('.ancat-it,.ancat-vend')].filter(el=>!el.hidden);
+    const paginas=Math.max(1,Math.ceil(its.length/anCatPorPag)), pg=Math.max(0,Math.min(anCatPag[sec.id]||0,paginas-1));
+    anCatPag[sec.id]=pg;
+    its.forEach((el,i)=>el.classList.toggle('pag-fora',Math.floor(i/anCatPorPag)!==pg));
+    let nav=sec.querySelector(':scope > .ancat-pag');
+    if(its.length<=anCatPorPag){ if(nav) nav.remove(); return; }
+    if(!nav){ nav=document.createElement('div'); nav.className='ancat-pag'; sec.appendChild(nav); }
+    const de=pg*anCatPorPag+1, ate=Math.min(its.length,(pg+1)*anCatPorPag);
+    nav.innerHTML=`<button type="button" onclick="anCatPagina('${sec.id}',-1)"${pg===0?' disabled':''}>‹ Anterior</button>`+
+      `<span>${de===ate?de:de+'–'+ate} de ${its.length}</span>`+
+      `<button type="button" onclick="anCatPagina('${sec.id}',1)"${pg>=paginas-1?' disabled':''}>Próximo ›</button>`;
+  });
+}
+window.anCatPagina=(id,d)=>{
+  anCatPag[id]=(anCatPag[id]||0)+d; anCatPaginar();
+  const sec=document.getElementById(id); if(sec&&sec.getBoundingClientRect().top<60) sec.scrollIntoView({block:'start'});
+};
+window.anCatVerPor=n=>{
+  anCatPorPag=Math.max(1,Math.round(n)||1); anCatPag={};
+  try{ if(n===1||n===3) localStorage.setItem('anCatPorPag',String(n)); }catch(e){}
+  anCatPaginar();
+};
 // ── BUSCA DO CATÁLOGO ──────────────────────────────────────────────────
 // Cada palavra digitada precisa aparecer, em qualquer ordem, no número, no
 // nome, na ficha ou na descrição — sem acento e sem diferença de maiúscula.
@@ -14383,6 +14452,7 @@ window.anCatFiltrar=digitando=>{
   if(!inp||!grade) return;
   const q=inp.value.trim(), termos=anBuscaTermos(q), busca=termos.length>0;
   const x=document.getElementById('anCatBuscaX'); if(x) x.hidden=!inp.value;
+  if(digitando) anCatPag={};
   const porId=new Map(prods.map(p=>[p.id,p]));
   let achou=0;
   grade.querySelectorAll('.ancat-sec').forEach(sec=>{
@@ -14413,6 +14483,7 @@ window.anCatFiltrar=digitando=>{
             +`<button onclick="openEdit('${p.id}')" title="Abrir o cadastro">✎</button>`).join(' · ')+(fora.length>5?` · e mais ${fora.length-5}`:'')+'</div>':'');
     }
   }
+  anCatPaginar();
   // digitando com a página rolada lá embaixo: a lista encolhe e sumiria da tela
   if(digitando){
     const box=document.getElementById('anCatBuscaBox'), topo=56+(box?box.offsetHeight:0)+4;
