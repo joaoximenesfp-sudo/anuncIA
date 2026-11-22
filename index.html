@@ -11696,8 +11696,9 @@ const anTrava=(v,min,max)=>Math.max(min,Math.min(max,v));
 // que o preco de tabela — promocao mais cara que o normal seria mentira, e
 // promocao igual nao e promocao.
 // ── PROMOÇÃO DA MÁQUINA: preço "de/por" com data para acabar, guardado nela (promo_preco,
-// promo_ate). Vale igual no Instagram, no catálogo e no Mercado Livre: o preço anunciado obriga
-// a loja (Código de Defesa do Consumidor), então nenhum canal pode mostrar outro. ──
+// promo_ate). Vale igual no Instagram e no catálogo, que são o mesmo público: o preço anunciado
+// obriga a loja (Código de Defesa do Consumidor). O Mercado Livre fica de fora: lá o público e o
+// preço são outros (as tarifas e a propaganda de lá entram no preço). ──
 const hojeISO=()=>{ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); };
 function promoValida(p){
   const por=parseFloat(p&&p.promo_preco)||0, de=parseFloat(p&&p.venda)||0;
@@ -11887,7 +11888,7 @@ function anPromoAviso(){
   if(ate&&!ate.value) ate.value=anPromoAteSugerido();
   const box=document.getElementById('anPromoAteBox'); if(box) box.hidden=!comPromo.length;
   h.textContent = !ruins.length
-    ? (comPromo.length?'A promoção vale igual no Instagram, no catálogo e no Mercado Livre, até a data ao lado; depois volta sozinha o preço normal.':'Deixe o campo de promoção vazio pra sair só o preço normal.')
+    ? (comPromo.length?'A promoção vale igual no Instagram e no catálogo, até a data ao lado; depois volta sozinho o preço normal. O Mercado Livre não muda.':'Deixe o campo de promoção vazio pra sair só o preço normal.')
     : '⚠️ '+(ruins.length===1
         ? 'A promoção da #'+(ruins[0].num||'?')+' não é menor que o preço de tabela'
         : ruins.length+' promoções não são menores que o preço de tabela')
@@ -13831,7 +13832,7 @@ function mlJpegDe(img){
 // categoria pedir algo que a ficha não sabe, volta { faltam } e o cartão pergunta.
 async function mlPublicarMaquina(p,aviso){
   if(mlNoAr(p)) return {jaEstava:true,link:p.ml_link||''};
-  const preco=Math.round(precoVigente(p).por||0); // com promoção valendo, sai pelo preço dela
+  const preco=Math.round(parseFloat(p.venda)||0); // o preço de tabela; depois, o de lá é seu (o sistema não mexe)
   if(!(preco>0)) throw new Error('sem preço de venda');
   await anCarregarFoto(p.id);
   const imgs=anFotosDe(p.id).slice(0,10);
@@ -14001,17 +14002,17 @@ async function mlSincronizar(){
   let mudou=false;
   try{
     for(const p of prods.filter(mlNoAr)){
-      const quer=mlQuer(p), preco=Math.round(precoVigente(p).por||0), mud={};
+      // Só a situação acompanha a máquina (reservou, vendeu, voltou). O preço não: no Mercado
+      // Livre ele é outro de propósito (tarifas e propaganda de lá), e quem muda é você, lá.
+      const quer=mlQuer(p), mud={};
       if(quer==='closed') mud.status='closed';
       else if(quer==='paused'&&p.ml_status==='active') mud.status='paused';
       else if(quer==='active'&&p.ml_status==='paused'&&p.ml_pausado_pelo_sistema) mud.status='active';
-      if(quer==='active'&&preco>0&&['active','paused'].includes(p.ml_status)&&preco!==Number(p.ml_preco)) mud.preco=preco;
       if(!Object.keys(mud).length) continue;
       try{
         const r=await mlApi({acao:'atualizar',id:p.ml_id,...mud});
         const campos={ml_sinc_em:new Date().toISOString()};
         if(mud.status){ campos.ml_status=r.status||mud.status; campos.ml_pausado_pelo_sistema=mud.status==='paused'; }
-        if(mud.preco) campos.ml_preco=r.preco||mud.preco;
         try{ await updateDoc(doc(db,'products',p.id),campos); }catch(e){}
         Object.assign(p,campos); mudou=true;
       }catch(e){
@@ -14407,10 +14408,10 @@ function anCatAnaliseHTML(p,a){
 window.anCatUsarSugestao=(id,valor)=>{
   const p=prods.find(x=>x.id===id); if(!p) return;
   anPromo[id]=valor; // o anúncio sai "de/por"; o preço de tabela do cadastro não muda
-  anPromoGravar(id); // e a promoção vale no catálogo e no Mercado Livre também
+  anPromoGravar(id); // e a promoção vale no catálogo também (o Mercado Livre não muda)
   if(anEscolhidas.some(x=>x.id===id)){ anChips(); anDesenhar(); }
   anCatMontar();
-  instaMsg(`💡 ${p.nome}: sai "de ${fmt(parseFloat(p.venda)||0)} por ${fmt(valor)}" no Instagram, no catálogo e no Mercado Livre, até ${anPromoAte().split('-').reverse().join('/')}. O preço de tabela continua o mesmo.`);
+  instaMsg(`💡 ${p.nome}: sai "de ${fmt(parseFloat(p.venda)||0)} por ${fmt(valor)}" no Instagram e no catálogo, até ${anPromoAte().split('-').reverse().join('/')}. O preço de tabela e o do Mercado Livre continuam os mesmos.`);
 };
 function anCatVendidaHTML(p){
   const link=/^https:\/\/(www\.)?instagram\.com\//.test(p.insta_link||'')?p.insta_link:'';
