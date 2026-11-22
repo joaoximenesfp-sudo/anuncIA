@@ -1,1 +1,56 @@
-[]
+[
+  {
+    "titulo": "Semana de apagões, golpes de Black Friday e a pegadinha da placa de vídeo",
+    "resumo": "Por que tanta coisa saiu do ar na mesma semana, o golpe que mais aparece na Black Friday, a letra miúda dos notebooks gamer, a IA do Google com histórico e um gadget hacker.",
+    "corpo": "Teve semana em que a Microsoft, os voos dos Estados Unidos e grandes bancos saíram do ar quase ao mesmo tempo, e a Black Friday chega na sexta-feira, dia 27. O fio de hoje é a confiança: no sistema que se atualiza sozinho, no anúncio que parece bom demais e no adesivo colado no notebook.\n\n## Por que tanta coisa caiu ao mesmo tempo\n\nEm menos de uma semana, a Microsoft teve uma pane em massa, todos os voos dos Estados Unidos ficaram parados por horas e grandes bancos americanos tiveram falhas. Parece ataque combinado, mas não há evidência de ligação entre os casos.\n\nBoa parte começou numa atualização que deu errado: na Microsoft, uma mudança na rede sobrecarregou os servidores; no controle de tráfego aéreo, a troca de cabos de cobre antigos por fibra óptica. Especialistas lembram ainda que a inteligência artificial está acelerando a descoberta de falhas dos dois lados, de quem ataca e de quem defende, e isso aumenta o volume de correções a instalar.\n\n**Por que importa:** Atualizar continua sendo o certo, mas é na atualização que as coisas quebram: faça backup antes e deixe as grandes para quando não precisar do notebook com pressa.\n\n[[fonte:0]]\n\n## Na Black Friday, o golpe mora no anúncio falso\n\nUm levantamento da Clavis Segurança da Informação sobre a semana da Black Friday do ano passado achou um padrão: anúncios e perfis falsos foram 91,8% das ameaças. Pelos dados da Serasa Experian, foram 604 anúncios e 625 perfis falsos entre 23 e 29 de novembro de 2025.\n\nOs truques são conhecidos: páginas que imitam lojas famosas, ofertas que não existem e cobranças falsas por Pix e boleto. A diferença é que, com inteligência artificial, algumas fraudes ganham imagens e mensagens mais convincentes.\n\n**Por que importa:** Antes de pagar, confira se o endereço do site é mesmo o da loja e, na dúvida, procure a oferta direto nos canais oficiais; preço bom demais pede desconfiança em dobro.\n\n[[fonte:1]]\n\n## Duas RTX iguais, desempenhos bem diferentes\n\nDois notebooks gamer com a mesma placa de vídeo podem render muito diferente. O segredo está no TGP (Total Graphics Power), a potência máxima, em watts, que o fabricante do notebook deixa a placa consumir. O mesmo chip pode trabalhar com 35 W ou com até 140 W, conforme a refrigeração do aparelho.\n\nAntes, a Nvidia marcava as versões econômicas com o nome Max-Q. Hoje, um notebook fino e um parrudo exibem o mesmo adesivo de RTX 4070, e em jogos pesados a diferença de velocidade entre eles pode chegar a 40%.\n\n**Por que importa:** Na hora de comparar preço, o nome da placa não basta: procure o TGP na ficha do fabricante ou num anúncio completo.\n\n[[fonte:2]]\n\n## O Google agora lembra das suas conversas com a IA\n\nA página inicial do Google no computador ganhou uma barra lateral com as conversas recentes feitas no Modo IA, a parte do buscador para perguntas mais complexas. Dá para retomar uma pesquisa de onde parou, procurar conversas antigas e começar um assunto novo, e a barra pode ser recolhida. A liberação começou nesta semana, pela versão para computadores; o Google não disse quando chega a todo mundo.\n\nEla não junta todo o histórico de buscas, só as conversas com a IA. E, para quem não quer guardar uma pergunta, o Google já tinha anunciado as conversas temporárias, que não ficam salvas.\n\n**Por que importa:** Quem pesquisa no notebook para a escola ou o trabalho volta ao assunto mais rápido; se mais gente usa o computador com a mesma conta, as conversas aparecem ali para quem abrir o Google.\n\n[[fonte:3]]\n\n## O canivete suíço hacker que não vem para o Brasil\n\nO Flipper One, irmão do polêmico Flipper Zero, entrou em financiamento coletivo no Kickstarter e já arrecadou cerca de US$ 14 milhões, com preço a partir de US$ 399 (uns R$ 2.360 na conversão direta). É um computador de bolso com Linux, focado em redes: tem duas entradas de cabo de rede, Wi-Fi 6E e saída HDMI para monitor.\n\nPode servir para monitorar redes ou virar um servidor de VPN portátil, mas também pode ser mal usado. O Flipper Zero chegou a ser proibido no Brasil, e as entregas do One, previstas para julho de 2027, por enquanto não incluem o país.\n\n**Por que importa:** Mostra como a segurança da rede virou assunto do dia a dia: em casa, senha forte no Wi-Fi e computador atualizado seguem sendo a melhor defesa.\n\n[[fonte:4]]\n\n## Para ficar de olho\n\nNa sexta-feira, dia 27, é Black Friday. Se for trocar de notebook, compare a ficha inteira, não só o nome no adesivo, e compre de quem você consegue conferir; um usado revisado e com garantia também é uma boa saída. E você, já viu algum anúncio bom demais para ser verdade?",
+    "pontos": [
+      "Microsoft, voos e bancos fora do ar na mesma semana: boa parte começou numa atualização que deu errado.",
+      "Na Black Friday de 2025, 91,8% das ameaças eram anúncios e perfis falsos. Confira o site antes de pagar.",
+      "Duas RTX 4070 podem render até 40% diferente: quem manda é o TGP, a potência que o notebook libera.",
+      "O Google no computador agora guarda as conversas com a IA numa barra lateral, para retomar depois.",
+      "O Flipper One, o “canivete suíço hacker” com Linux, arrecadou cerca de US$ 14 milhões. Por ora, sem entrega no Brasil."
+    ],
+    "legenda": "Semana de apagões e véspera de Black Friday: o resumo do que importa para quem usa computador.\n\n🌐 Por que Microsoft, voos e bancos caíram quase juntos\n🛡️ O golpe que mais aparece na Black Friday\n🎮 A pegadinha das placas de vídeo iguais\n🔎 O Google agora guarda as conversas com a IA\n🧰 O gadget hacker que não vem para o Brasil\n\nLeia tudo no blog: link na bio.\n\n#tecnologia #blackfriday #segurancadigital #notebook #inteligenciaartificial #campinas",
+    "assunto": "Giro do dia",
+    "termos": [
+      "i7",
+      "16GB"
+    ],
+    "fontes": [
+      {
+        "nome": "Olhar Digital",
+        "url": "https://olhardigital.com.br/2026/11/22/carros-e-tecnologia/falhas-em-atualizacoes-e-brechas-de-seguranca-o-que-esta-por-tras-dos-apagoes-tecnologicos/",
+        "titulo": "Falhas em atualizações e brechas de segurança: o que está por trás dos apagões tecnológicos"
+      },
+      {
+        "nome": "TecMundo",
+        "url": "https://www.estadao.com.br/tecmundo/produto-e-review/perfis-e-anuncios-falsos-dominaram-ameacas-na-black-friday-2026-saiba-como-se-proteger/",
+        "titulo": "Perfis e anúncios falsos dominaram ameaças na Black Friday 2026; saiba como se proteger"
+      },
+      {
+        "nome": "Canaltech",
+        "url": "https://canaltech.com.br/notebook/tgp-em-notebooks-gamer-diferencas-em-placas-de-video/",
+        "titulo": "TGP em notebooks gamer: por que duas RTX iguais podem ter desempenhos opostos?"
+      },
+      {
+        "nome": "Tecnoblog",
+        "url": "https://tecnoblog.net/noticias/google-leva-historico-de-ia-a-pagina-inicial/",
+        "titulo": "Google leva histórico de IA à página inicial"
+      },
+      {
+        "nome": "Tecnoblog",
+        "url": "https://tecnoblog.net/noticias/flipper-one-chega-como-um-canivete-suico-hacker-que-roda-linux/",
+        "titulo": "Flipper One chega como um “canivete suíço hacker” que roda Linux"
+      }
+    ],
+    "slug": "semana-de-apagoes-golpes-de-black-friday-e-a-pegadinha-da-placa-de-video",
+    "tipo": "giro",
+    "fonte": null,
+    "publicado_em": "2026-11-22T15:08:22.914Z",
+    "atualizado_em": "2026-11-22T15:08:22.914Z",
+    "status": "publicado",
+    "origem": "ia",
+    "editado": false,
+    "insta": null
+  }
+]

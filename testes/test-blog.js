@@ -12,6 +12,7 @@ delete process.env.AI_GATEWAY_API_KEY;
 const Anthropic = require('@anthropic-ai/sdk');
 const blog = require(path.join(__dirname, '..', 'api', 'blog.js'));
 const T = blog._teste;
+T.usarSementes([]); // a publicação escrita à mão (api/_blog-semente.json) tem o teste dela, mais abaixo
 
 // ── o mundo de mentira ──
 const BLOB_URL = 'https://lojateste123.public.blob.vercel-storage.com/blog/artigos.json';
@@ -111,6 +112,8 @@ const post = body => chamar({ method: 'POST', body: Object.assign({ idToken: 'so
   const tF = T.textoDoHtml(fora);
   ok(/Corpo fora do article um/.test(tF) && /quatro/.test(tF) && !/Cabeçalho do site/.test(tF) && !/Rodapé do site/.test(tF) && !/código/.test(tF),
     'no <article> só o subtítulo: os parágrafos da página toda, sem cabeçalho, rodapé e script');
+
+  ok(T.semTags('<p class="[&>a]:cursor-pointer [&>a]:no-underline">Por Fulano • 22/11/2026</p>') === 'Por Fulano • 22/11/2026', 'tag com ">" dentro das aspas (classes do Tailwind): sai inteira, sem sobrar código');
 
   console.log('\no que a IA devolve, limpo');
   const L = T.limparArtigo(ARTIGO_IA);
@@ -280,6 +283,10 @@ const post = body => chamar({ method: 'POST', body: Object.assign({ idToken: 'so
   r = await chamar({ query: { slug: 'primeira-edicao-do-giro' } });
   const r2 = await post({ acao: 'lista' });
   ok(r.status === 404 && r2.json().artigos.filter(x => x.slug === 'primeira-edicao-do-giro').length === 1, 'ocultada, não volta sozinha (e não duplica)');
+  const REAIS = JSON.parse(require('fs').readFileSync(path.join(__dirname, '..', 'api', '_blog-semente.json'), 'utf8'));
+  ok(Array.isArray(REAIS) && REAIS.every(x => x.slug === T.slugDe(x.titulo) && x.titulo.length <= 110 && x.resumo.length <= 220 && x.corpo.length >= 600 && x.pontos.length >= 3 && x.pontos.length <= 5 &&
+    x.status === 'publicado' && /^\d{4}-\d\d-\d\dT/.test(x.publicado_em) && (x.fontes || []).every(f => /^https:\/\//.test(f.url)) && [...x.corpo.matchAll(/\[\[fonte:(\d+)\]\]/g)].every(m => x.fontes[+m[1]])),
+    'as do repositório estão no formato (slug, tamanhos, slides, data e fontes com link)');
   T.usarSementes([]); T.limparMemoria();
 
   console.log('\nfontes');

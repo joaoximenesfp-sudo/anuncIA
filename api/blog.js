@@ -129,7 +129,7 @@ function entidades(s) {
 function semTags(html) {
   // o conteúdo pode vir escapado (&lt;p&gt;): desfaz o CDATA e as entidades, tira as tags, desfaz de novo
   const t = entidades(String(html || '').replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1'))
-    .replace(/<(script|style|noscript|figure|figcaption)[\s\S]*?<\/\1>/gi, ' ').replace(/<[^>]+>/g, ' ');
+    .replace(/<(script|style|noscript|figure|figcaption)[\s\S]*?<\/\1>/gi, ' ').replace(/<(?:[^>"']|"[^"]*"|'[^']*')+>/g, ' '); // ">" dentro de aspas não fecha a tag
   return entidades(t).replace(/\s+/g, ' ').trim();
 }
 function lerFeed(xml, fonte) {
@@ -752,13 +752,6 @@ module.exports = async (req, res) => {
     if (q.acao === 'gerar') return json(res, 200, await gerar(req, { manual: false }));
     if (q.acao === 'fontes') {
       const itens = await buscarNoticias();
-      // TEMPORÁRIO: leitura das matérias para escrever a primeira edição à mão (só com a chave)
-      if (q.ler && require('crypto').createHash('sha256').update(String(q.ler)).digest('hex') === '59a67affc771ade85a6f0cef194359ed100bcef6f5e7469ebfe6a44ceffd3f61') {
-        const cands = escolherCandidatos(itens, []);
-        const pega = s => /^\d+$/.test(s) ? cands[+s] : cands.find(c => c.url.includes(s));
-        const sel = String(q.n || '').split(',').filter(Boolean).map(pega).filter(Boolean).slice(0, 8);
-        return json(res, 200, { ok: true, materias: await Promise.all(sel.map(async c => ({ ...c, quando: c.quando ? new Date(c.quando).toISOString() : '', texto: await textoDaMateria(c.url, 9000) }))) });
-      }
       return json(res, 200, { ok: true, lidas: itens.length, porFonte: FONTES.map(f => ({ fonte: f.nome, itens: itens.filter(i => i.fonte === f.nome).length })),
         candidatas: escolherCandidatos(itens, (await lerBlog()).usadas).map(c => ({ fonte: c.fonte, titulo: c.titulo, url: c.url, pontos: c.pontos })) });
     }
