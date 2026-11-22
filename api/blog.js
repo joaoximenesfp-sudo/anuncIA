@@ -23,7 +23,10 @@ const N = require('../tela/nucleo.js');
 
 const SITE = N.SITE;
 const ARQ = 'blog/artigos.json';
-const MODELO = 'anthropic/claude-opus-5.5'; // Claude Opus 5.5, no nome do AI Gateway
+// Claude Haiku 5.5, o mais barato da Claude (no nome do AI Gateway): US$ 0,10 por milhão de tokens
+// lidos e US$ 0,50 por milhão escritos, uns 40 vezes menos que o Opus. Um artigo curto por dia
+// sai por menos de US$ 0,01 (menos de R$ 1 no mês). Para trocar: o id do modelo no AI Gateway.
+const MODELO = 'anthropic/claude-haiku-5.5';
 const GATEWAY = 'https://ai-gateway.vercel.sh';
 const MAX_ARTIGOS = 400;
 const FONTES = [

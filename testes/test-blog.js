@@ -142,8 +142,8 @@ const post = body => chamar({ method: 'POST', body: Object.assign({ idToken: 'so
     'escolhe a notícia, escreve e publica: ' + JSON.stringify(r.json()).slice(0, 120));
   ok(a1.fonte && a1.fonte.nome === 'Tecnoblog' && a1.fonte.url === 'https://tecnoblog.net/noticias/windows-10-suporte/' && d1.usadas.includes(a1.fonte.url), 'guarda a fonte (vai com link na página) e marca a notícia como usada');
   const [pEsc, pArt] = chamadasIA;
-  ok(pEsc.model === 'anthropic/claude-opus-5.5' && pArt.model === 'anthropic/claude-opus-5.5' && pEsc.output_config.format.type === 'json_schema' && pArt.output_config.format.schema === T.ESQUEMA_ARTIGO,
-    'Claude Opus 5.5 pelo AI Gateway, resposta em JSON com esquema');
+  ok(pEsc.model === 'anthropic/claude-haiku-5.5' && pArt.model === 'anthropic/claude-haiku-5.5' && pEsc.output_config.format.type === 'json_schema' && pArt.output_config.format.schema === T.ESQUEMA_ARTIGO,
+    'Claude Haiku 5.5 (o mais barato) pelo AI Gateway, resposta em JSON com esquema');
   ok(pEsc.output_config.effort === 'low' && pArt.output_config.effort === 'medium' && !('temperature' in pArt) && !('thinking' in pArt) && pArt.max_tokens === 16000,
     'esforço baixo para escolher e médio para escrever; sem temperatura; o pensamento fica no padrão do modelo');
   const pedido = pArt.messages[0].content;
