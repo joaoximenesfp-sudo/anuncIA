@@ -109,11 +109,19 @@ async function ml(metodo, caminho, { token, corpo, form, query } = {}) {
   catch (e) { throw erro(502, 'Não consegui falar com o Mercado Livre agora. Tente de novo.'); }
   let j = null;
   try { j = await r.json(); } catch (e) { /* 204 ou sem JSON */ }
-  return { status: r.status, ok: r.ok, j: j || {} };
+  const rota = metodo + ' ' + url.pathname;
+  // recusa que não é do conteúdo (400/422 cada ação lê e registra; 404 é "não tem"): vai para
+  // o log com a rota, que é por ela que se acha o que o Mercado Livre mudou
+  if (!r.ok && ![400, 404, 422].includes(r.status)) console.log('ml http', rota, r.status, JSON.stringify(j || {}).slice(0, 300));
+  return { status: r.status, ok: r.ok, j: j || {}, rota };
 }
+// O Mercado Livre tirou a rota do ar para o app (ResourceDeprecated): não é a conta nem o anúncio.
+const desativada = r => /ResourceDeprecated|resource deprecated/i.test(JSON.stringify((r && r.j) || {}));
 // Os erros mais comuns em português; o resto vai com a mensagem do próprio Mercado Livre.
 function traduzir(r) {
   const j = r.j || {}, txt = [j.message, j.error, ...(Array.isArray(j.cause) ? j.cause.map(c => c && (c.message || c.code)) : [])].filter(Boolean).join(' · ');
+  if (desativada(r))
+    return `O Mercado Livre desativou uma rota que o sistema usa${r.rota ? ` (${r.rota})` : ''}: não é a conta nem o anúncio, é o sistema que precisa trocar de rota.`;
   if (r.status === 401 || /invalid[_ ]token|invalid access token|expired/i.test(txt))
     return 'A conexão com o Mercado Livre venceu ou foi desfeita. Toque em Conectar Mercado Livre de novo.';
   if (r.status === 429) return 'O Mercado Livre pediu um tempo (muitas chamadas seguidas). Tente de novo daqui a 1 minuto.';
@@ -390,17 +398,28 @@ async function voltaDoLogin(q, res) {
     return falhou(e.message);
   }
 }
+// A foto vai pela rota documentada; se o Mercado Livre a desativar para o app, pela outra
+// que recebe o arquivo do mesmo jeito (multipart, campo "file") e devolve o mesmo id.
+const ROTAS_FOTO = ['/pictures/items/upload', '/pictures'];
 async function foto(corpo) {
   const s = await sessao(corpo);
   const b64 = String(corpo.jpg || '');
   if (!b64 || b64.length > 6e6) throw erro(400, 'Foto inválida (grande demais ou vazia).');
   const buf = Buffer.from(b64, 'base64');
   if (buf.length < 1000 || buf[0] !== 0xFF || buf[1] !== 0xD8) throw erro(400, 'A foto precisa ser JPEG.');
-  const fd = new FormData();
-  fd.append('file', new Blob([buf], { type: 'image/jpeg' }), 'foto.jpg');
-  const r = await ml('POST', '/pictures/items/upload', { token: s.token, form: fd });
-  if (!r.ok || !r.j.id) throw erro(502, traduzir(r));
-  return { ok: true, id: String(r.j.id), cifraNova: s.cifraNova };
+  let r;
+  for (const rota of ROTAS_FOTO) {
+    const fd = new FormData();
+    fd.append('file', new Blob([buf], { type: 'image/jpeg' }), 'foto.jpg');
+    r = await ml('POST', rota, { token: s.token, form: fd });
+    if (r.ok && r.j.id) {
+      if (rota !== ROTAS_FOTO[0]) console.log('ml foto: subiu por', rota, '(a rota de sempre foi desativada)');
+      return { ok: true, id: String(r.j.id), cifraNova: s.cifraNova };
+    }
+    if (!desativada(r)) break;
+  }
+  console.log('ml foto: recusou', r.rota, r.status, JSON.stringify(r.j).slice(0, 400));
+  throw erro(502, traduzir(r));
 }
 function limparTitulo(t) {
   let s = String(t || '').replace(/[^\p{L}\p{N}\s.,+\-\/"()ªº°]/gu, ' ').replace(/\s+/g, ' ').trim();

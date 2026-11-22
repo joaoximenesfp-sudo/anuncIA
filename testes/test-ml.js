@@ -49,6 +49,7 @@ const NOTEBOOKS = [
   { id: 'SELLER_SKU', name: 'SKU', value_type: 'string', tags: { hidden: true } },
 ];
 let pedidos = [], cfgDoc = null, gravarFalha = false, tokenSeq = 0, refreshRuim = false, validacoes = [], criados = [], criacoes = [], condicaoCriado = 'used', itemLa = null, putRecusas = [], descricoes = {}, pkceRuim = false, mlFora = false;
+const desativadas = new Set(); // rotas que o Mercado Livre tirou do ar para o app
 const resposta = (status, json) => ({ ok: status >= 200 && status < 300, status, json: async () => { if (json === undefined) throw new Error('sem corpo'); return json; } });
 global.fetch = async (url, op = {}) => {
   const h = op.headers || {};
@@ -82,7 +83,9 @@ global.fetch = async (url, op = {}) => {
   }
   if (!/^APP_USR-acesso-\d+$/.test(tok)) return resposta(401, { message: 'invalid access token', error: 'not_found', status: 401 });
   if (u.pathname === '/users/me') return resposta(200, { id: 777, nickname: 'TECHCAMPINAS' });
+  if (desativadas.has(u.pathname)) return resposta(403, { message: 'Resource deprecated - client no longer allowed to consume this resource', error: 'ResourceDeprecated', status: 403, cause: [] });
   if (u.pathname === '/pictures/items/upload') return resposta(201, { id: 'PIC' + pedidos.length, max_size: '1200x900' });
+  if (u.pathname === '/pictures' && p.metodo === 'POST') return resposta(201, { id: 'PICV' + pedidos.length, max_size: '1200x900' });
   if (u.pathname === '/sites/MLB/domain_discovery/search') return resposta(200, [{ domain_id: 'MLB-NOTEBOOKS', domain_name: 'Notebooks', category_id: 'MLB1652', category_name: 'Notebooks' }]);
   if (u.pathname === '/categories/MLB1652/attributes') return resposta(200, ATRIBUTOS);
   if (u.pathname === '/items/validate') {
@@ -226,6 +229,17 @@ const ITEM = { titulo: 'Notebook Dell Latitude 5490 i5 8ª 16GB SSD 256GB', prec
   const up = pedidos.find(p => p.url.endsWith('/pictures/items/upload'));
   ok(r.status === 200 && /^PIC\d+$/.test(r.json().id) && up && up.corpo instanceof FormData && up.corpo.get('file') && up.corpo.get('file').size === Buffer.from(JPG, 'base64').length,
     'sobe a foto (multipart) e devolve o id do Mercado Livre');
+  ok(!pedidos.some(p => /\/pictures$/.test(new URL(p.url).pathname)), 'com a rota de sempre no ar: não toca na outra');
+  desativadas.add('/pictures/items/upload');
+  pedidos = []; r = await post({ acao: 'foto', jpg: JPG });
+  const alt = pedidos.find(p => new URL(p.url).pathname === '/pictures');
+  ok(r.status === 200 && /^PICV\d+$/.test(r.json().id) && alt && alt.metodo === 'POST' && alt.corpo instanceof FormData &&
+    alt.corpo.get('file').size === Buffer.from(JPG, 'base64').length, 'rota de sempre desativada (ResourceDeprecated): sobe pela outra, com a mesma foto');
+  desativadas.add('/pictures');
+  r = await post({ acao: 'foto', jpg: JPG });
+  ok(r.status === 502 && /desativou uma rota/.test(r.json().erro) && /POST \/pictures/.test(r.json().erro) && !/Confira se a conta/.test(r.json().erro),
+    'as duas desativadas: diz qual rota caiu, sem mandar conferir a conta');
+  desativadas.clear();
 
   console.log('\nanúncio: atributos da categoria');
   const m = T.montarAtributos(ATRIBUTOS, FICHA, {}, { pacote: ITEM.pacote });
