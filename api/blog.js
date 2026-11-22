@@ -587,6 +587,11 @@ a{color:inherit}
 .pt-nativo{background:linear-gradient(150deg,var(--g1),var(--g2));border-color:transparent;color:#04210F}
 .pt-ig{background:linear-gradient(45deg,#F58529,#DD2A7B 55%,#8134AF);border-color:transparent;color:#fff}
 .pt-aviso{flex-basis:100%;margin:2px 0 0;font-size:.82rem;color:var(--mu)}
+.pt-leg{flex-basis:100%;display:flex;flex-direction:column;gap:8px;background:var(--card);border:1px solid var(--b);border-radius:14px;padding:12px}
+.pt-leg[hidden]{display:none}
+.pt-leg label{display:flex;flex-direction:column;gap:6px;font-size:.8rem;color:var(--mu)}
+.pt-leg textarea{font:inherit;font-size:.86rem;line-height:1.45;color:var(--tx);background:var(--bg);border:1px solid var(--b);border-radius:10px;padding:10px;resize:vertical;width:100%}
+.pt-leg .pt{align-self:flex-start}
 .rodape{padding:34px 0 46px;color:var(--li);font-size:.85rem;text-align:center}
 .rodape a{color:var(--mu)}
 `;
@@ -734,7 +739,9 @@ function partilhaHtml(url, titulo, fim, post, legenda) {
     `<a class="pt pt-wa" href="https://wa.me/?text=${encodeURIComponent(titulo + ' ' + url)}" target="_blank" rel="noopener">WhatsApp</a>` +
     `<a class="pt pt-fb" href="https://www.facebook.com/sharer/sharer.php?u=${u}" target="_blank" rel="noopener">Facebook</a>` +
     `<button type="button" class="pt pt-ig" data-post="${esc(post)}" data-legenda="${esc(legenda)}">${ICONE_IG}<span>Instagram</span></button>` +
-    `<button type="button" class="pt pt-copiar">${ICONE_LINK}<span>Copiar link</span></button><p class="pt-aviso" role="status" hidden></p></div>`;
+    `<button type="button" class="pt pt-copiar">${ICONE_LINK}<span>Copiar link</span></button><p class="pt-aviso" role="status" hidden></p>` +
+    `<div class="pt-leg" hidden><label>A legenda do post, com a introdução e o link (no Instagram, cole no campo da legenda):<textarea readonly rows="7">${esc(legenda)}</textarea></label>` +
+    `<button type="button" class="pt pt-copiar-leg">${ICONE_LINK}<span>Copiar a legenda</span></button></div></div>`;
 }
 const SCRIPT_PARTILHA = `<script>
 document.querySelectorAll('.partilha').forEach(function (b) {
@@ -747,8 +754,12 @@ document.querySelectorAll('.partilha').forEach(function (b) {
     nat.addEventListener('click', function () { navigator.share({ title: titulo, url: url }).catch(function () {}); }); }
   function avisar(t) { aviso.textContent = t; aviso.hidden = false; }
   // já: copia na hora (antes de abrir outra aba, que tira o foco da página e o copiar falharia)
-  function aMao(texto) { var t = document.createElement('textarea'), deu = false; t.value = texto; t.setAttribute('readonly', ''); t.style.position = 'fixed'; t.style.opacity = '0';
-    document.body.appendChild(t); t.select(); try { deu = document.execCommand('copy'); } catch (e) {} document.body.removeChild(t); return deu; }
+  function aMao(texto) {
+    var t = document.createElement('textarea'), deu = false; t.value = texto; t.setAttribute('readonly', ''); t.style.position = 'fixed'; t.style.top = '0'; t.style.opacity = '0';
+    document.body.appendChild(t); t.select();
+    try { var r = document.createRange(); r.selectNodeContents(t); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); t.setSelectionRange(0, texto.length); } catch (e) {}
+    try { deu = document.execCommand('copy'); } catch (e) {} document.body.removeChild(t); return deu;
+  }
   function copiar(texto, ok, ja) {
     if (ja && aMao(texto)) { if (ok) ok(); return; }
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(texto).then(function () { if (ok) ok(); }, function () { if (aMao(texto) && ok) ok(); });
@@ -760,7 +771,13 @@ document.querySelectorAll('.partilha').forEach(function (b) {
   // No celular, o compartilhar do aparelho leva a imagem ao Instagram; sem ele (no computador, por
   // exemplo), a imagem é baixada e o Instagram abre numa aba nova, como o WhatsApp.
   var arquivo = null, legenda = ig.getAttribute('data-legenda') || url, imagem = ig.getAttribute('data-post');
-  var dica = 'A legenda (introdução + link do artigo) já está copiada: no Instagram, escolha Feed e cole na legenda.';
+  var caixa = b.querySelector('.pt-leg'), cl = b.querySelector('.pt-copiar-leg'), clRot = cl.querySelector('span');
+  function mostrarLegenda() { caixa.hidden = false; }
+  cl.addEventListener('click', function () {
+    var ta = caixa.querySelector('textarea'); ta.focus(); ta.select();
+    copiar(legenda, function () { clRot.textContent = 'Legenda copiada'; setTimeout(function () { clRot.textContent = 'Copiar a legenda'; }, 2500); }, true);
+  });
+  var dica = 'No Instagram, escolha Feed e, na legenda, toque e segure para colar (a legenda com a introdução e o link já está copiada; ela também está aqui embaixo).';
   function baixar() {
     var a = document.createElement('a'); a.href = imagem; a.download = 'post-tech-campinas.png';
     document.body.appendChild(a); a.click(); a.remove();
@@ -769,19 +786,19 @@ document.querySelectorAll('.partilha').forEach(function (b) {
       : 'A imagem do post foi baixada e o Instagram abriu em outra aba: clique em Criar (+), escolha a imagem e cole a legenda (já copiada, com a introdução e o link).');
   }
   function abrir() {
-    navigator.share({ files: [arquivo] }).then(function () { igRot.textContent = 'Instagram'; })
+    navigator.share({ files: [arquivo], text: legenda }).then(function () { igRot.textContent = 'Instagram'; })
       .catch(function (e) { igRot.textContent = e && e.name === 'NotAllowedError' ? 'Abrir no Instagram' : 'Instagram'; });
   }
   // o abrir uma aba nova só vale logo no toque: se a imagem não der para mandar, pede outro toque
   var modo = '';
   ig.addEventListener('click', function () {
-    copiar(legenda, null, !celular);
+    copiar(legenda, null, !celular); mostrarLegenda();
     if (modo === 'arquivo') { abrir(); return; }
     if (modo === 'baixar' || !(celular && navigator.canShare)) { baixar(); return; }
     igRot.textContent = 'Preparando…';
     fetch(imagem).then(function (r) { if (!r.ok) throw new Error(r.status); return r.blob(); }).then(function (bl) {
       var f = new File([bl], 'post-tech-campinas.png', { type: 'image/png' });
-      if (!navigator.canShare({ files: [f] })) throw new Error('sem arquivo');
+      if (!navigator.canShare({ files: [f], text: legenda })) throw new Error('sem arquivo');
       arquivo = f; modo = 'arquivo'; avisar(dica); abrir();
     }).catch(function () { modo = 'baixar'; igRot.textContent = 'Abrir no Instagram'; avisar('Toque de novo para salvar a imagem e abrir o Instagram.'); });
   });
