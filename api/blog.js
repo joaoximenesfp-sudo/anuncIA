@@ -706,15 +706,16 @@ const urlCapa = a => `${SITE}/blog/capa/${a ? encodeURIComponent(a.slug) + '?v='
 // a do post fica no mesmo site da página (o celular baixa a imagem para mandar ao Instagram)
 const urlPost = a => `/blog/capa/${encodeURIComponent(a.slug)}?formato=post&v=${versao(a.titulo + '|' + a.assunto + '|' + a.resumo)}`;
 // A legenda do post no Instagram, organizada: a introdução do assunto (a legenda que a IA
-// escreveu, sem o "link na bio"), o link do artigo e as hashtags. O Instagram não deixa um site
-// preencher a legenda: o botão copia, e é só colar. No post da loja, o link também fica na bio.
+// escreveu, sem o "link na bio" dela), a chamada para o artigo e as hashtags. No post da loja, a
+// chamada é só "link na bio" (o blog está na bio; link na legenda não abre, só atrapalha). Para
+// quem compartilha pelo site, vai o link do artigo escrito (não é a bio dele).
 const SO_TAGS = /^(#[\p{L}\p{N}_]+[\s,]*)+$/u;
 function legendaInsta(a, url, { daLoja = false } = {}) {
   const partes = String(a.legenda || '').replace(/\r/g, '').split(/\n\s*\n/).map(p => p.trim()).filter(Boolean);
   const tags = partes.filter(p => SO_TAGS.test(p)).join(' ');
   let intro = partes.filter(p => !SO_TAGS.test(p) && !/link na bio|artigo completo|leia (tudo|o artigo|mais)/i.test(p));
   if (!intro.length) intro = [a.titulo, a.resumo].filter(Boolean);
-  const chamada = `📖 Leia o artigo completo${daLoja ? ' (link na bio)' : ''}:\n${url}`;
+  const chamada = daLoja ? '📖 Leia o artigo completo no blog: link na bio 👆' : `📖 Leia o artigo completo:\n${url}`;
   return [...intro, chamada, tags].filter(Boolean).join('\n\n').slice(0, 2200);
 }
 // Os pontos do artigo em slides, no topo (os mesmos do carrossel do Instagram): dá para pegar a

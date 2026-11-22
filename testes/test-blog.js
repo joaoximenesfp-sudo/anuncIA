@@ -194,8 +194,9 @@ const post = body => chamar({ method: 'POST', body: Object.assign({ idToken: 'so
   const LEG = { titulo: 'T', resumo: 'R', legenda: 'Mesma placa, desempenho diferente. 🎮\n\nDois notebooks com a mesma RTX rendem diferente.\n\nLeia o artigo completo no blog: link na bio.\n\n#notebook #rtx' };
   const lv = T.legendaInsta(LEG, 'https://x.com/blog/a'), ll = T.legendaInsta(LEG, 'https://x.com/blog/a', { daLoja: true });
   ok(lv === 'Mesma placa, desempenho diferente. 🎮\n\nDois notebooks com a mesma RTX rendem diferente.\n\n📖 Leia o artigo completo:\nhttps://x.com/blog/a\n\n#notebook #rtx' &&
-    ll.includes('📖 Leia o artigo completo (link na bio):\nhttps://x.com/blog/a') && T.legendaInsta({ titulo: 'Título', resumo: 'Resumo.' }, 'https://x.com/b').startsWith('Título\n\nResumo.\n\n📖'),
-    'a legenda organizada: a introdução, o link do artigo (no post da loja, também na bio) e as hashtags no fim');
+    ll === 'Mesma placa, desempenho diferente. 🎮\n\nDois notebooks com a mesma RTX rendem diferente.\n\n📖 Leia o artigo completo no blog: link na bio 👆\n\n#notebook #rtx' &&
+    T.legendaInsta({ titulo: 'Título', resumo: 'Resumo.' }, 'https://x.com/b').startsWith('Título\n\nResumo.\n\n📖'),
+    'a legenda organizada: a introdução, a chamada e as hashtags; no post da loja, só "link na bio" (sem o link escrito, que não abre)');
   const meio = T.noMeio('<p>a</p><h2>Um</h2><p>' + 'b'.repeat(300) + '</p><h2>Dois</h2><p>' + 'c'.repeat(300) + '</p>', '[Q]');
   ok(meio.indexOf('[Q]') === meio.indexOf('<h2>Dois</h2>') - 3 && T.noMeio('<p>só um</p>', '[Q]').endsWith('[Q]') && T.noMeio('<p>x</p>', '') === '<p>x</p>',
     'o quadro entra antes do subtítulo do meio; texto curto demais: no fim');
@@ -211,7 +212,7 @@ const post = body => chamar({ method: 'POST', body: Object.assign({ idToken: 'so
   r = await post({ acao: 'lista', idToken: 'intruso' });
   ok(r.status === 403 && /sócios/.test(r.json().erro), 'quem não é sócio: 403');
   r = await post({ acao: 'lista' });
-  ok(r.status === 200 && r.json().artigos.length === 1 && /📖 Leia o artigo completo \(link na bio\):\nhttps:\/\/anunc-ia\.vercel\.app\/blog\//.test(r.json().artigos[0].legenda_insta),
+  ok(r.status === 200 && r.json().artigos.length === 1 && /📖 Leia o artigo completo no blog: link na bio 👆/.test(r.json().artigos[0].legenda_insta) && !/https?:\/\//.test(r.json().artigos[0].legenda_insta),
     'sócio vê a lista (inclusive os fora do ar), com a legenda do Instagram já organizada');
   r = await post({ acao: 'salvar', slug: a1.slug, campos: { titulo: 'Windows 10 acabou: e agora, o que fazer?', pontos: ['um', 'dois', 'três'] } });
   ok(r.status === 200 && r.json().artigo.titulo === 'Windows 10 acabou: e agora, o que fazer?' && r.json().artigo.editado === true && r.json().artigo.slug === a1.slug,
