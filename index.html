@@ -3251,7 +3251,7 @@ div:has(> .fc2){flex-wrap:wrap;row-gap:6px}
     </style>
     <div class="cd" id="blogCard">
       <div class="cdh"><span class="cdht">📰 Blog da loja</span>
-        <span style="font-size:.74rem;color:var(--li)">um artigo por dia, escrito sozinho a partir das notícias de tecnologia; você só edita se quiser</span></div>
+        <span style="font-size:.74rem;color:var(--li)">todo dia o Giro do dia sai sozinho: de 3 a 5 notícias de tecnologia, ligadas e explicadas; você só edita se quiser</span></div>
       <div class="cdb">
         <div class="blog-topo">
           <a class="bsm" href="/blog" target="_blank" rel="noopener" style="text-decoration:none">Abrir o blog</a>
@@ -3265,7 +3265,7 @@ div:has(> .fc2){flex-wrap:wrap;row-gap:6px}
         <div class="fi"><label class="fl" for="blogEdTit">Título</label><input class="inp" id="blogEdTit" maxlength="110"></div>
         <div class="fi"><label class="fl" for="blogEdRes">Resumo (aparece no Google)</label><textarea class="inp" id="blogEdRes" rows="2" maxlength="220"></textarea></div>
         <div class="fi"><label class="fl" for="blogEdCorpo">Texto</label><textarea class="inp" id="blogEdCorpo" rows="14"></textarea>
-          <div class="tipo-auto">"## " no começo da linha vira subtítulo, "- " vira lista e **assim** fica em negrito.</div></div>
+          <div class="tipo-auto">"## " no começo da linha vira subtítulo, "- " vira lista e **assim** fica em negrito. No Giro do dia, a linha [[fonte:1]] vira o link da notícia daquele trecho.</div></div>
         <div class="fi"><label class="fl" for="blogEdPontos">Slides do carrossel (um por linha)</label><textarea class="inp" id="blogEdPontos" rows="5"></textarea></div>
         <div class="fi"><label class="fl" for="blogEdLeg">Legenda do Instagram</label><textarea class="inp" id="blogEdLeg" rows="6"></textarea></div>
         <div class="blog-dlg-bts"><button type="button" class="bsm" onclick="blogSalvar()">Salvar</button><button type="button" class="bsm blog-sec" onclick="blogFechar('blogEd')">Cancelar</button><span class="tipo-auto" id="blogEdMsg" style="margin:0"></span></div>
@@ -12864,7 +12864,8 @@ function blogRender(){
   el.innerHTML=blogArtigos.slice(0,20).map(a=>{
     const fora=a.status==='oculto', s=encodeURIComponent(a.slug);
     const quando=a.publicado_em?new Date(a.publicado_em).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}):'';
-    const info=[quando,esc(a.assunto||''),a.fonte?'📰 '+esc(a.fonte.nome||''):'📘 guia',a.editado?'editado':'',fora?'<b>fora do ar</b>':'',a.insta?'📸 no Instagram':''].filter(Boolean).join(' · ');
+    const origem=(a.fontes&&a.fontes.length)?'📰 '+a.fontes.length+' notícias ('+esc([...new Set(a.fontes.map(f=>f.nome))].join(', '))+')':a.fonte?'📰 '+esc(a.fonte.nome||''):'📘 guia';
+    const info=[quando,esc(a.assunto||''),origem,a.editado?'editado':'',fora?'<b>fora do ar</b>':'',a.insta?'📸 no Instagram':''].filter(Boolean).join(' · ');
     return `<div class="blog-item${fora?' fora':''}"><div class="blog-item-txt"><a class="blog-tit" href="/blog/${s}" target="_blank" rel="noopener">${esc(a.titulo)}</a><div class="tipo-auto" style="margin:2px 0 0">${info}</div></div>
       <div class="blog-item-bts"><button type="button" class="bsm blog-sec" onclick="blogEditar('${s}')">Editar</button><button type="button" class="bsm blog-sec" onclick="blogAlternar('${s}')">${fora?'Voltar ao ar':'Tirar do ar'}</button><button type="button" class="bsm" onclick="blogPrevia('${s}')">📸 Instagram</button></div></div>`;
   }).join('');

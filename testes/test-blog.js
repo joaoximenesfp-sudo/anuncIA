@@ -116,7 +116,8 @@ const post = body => chamar({ method: 'POST', body: Object.assign({ idToken: 'so
   ok(h.includes('<h2>Subtítulo</h2>') && h.includes('<ul><li>item &lt;b&gt;um&lt;/b&gt;</li><li>item dois</li></ul>') && h.includes('<h2>Título solto</h2>'), 'subtítulos e listas');
 
   console.log('\no artigo do dia (cron)');
-  roteiro = [respostaIA({ escolha: 0, motivo: 'Afeta quem tem notebook antigo.' }), respostaIA(ARTIGO_IA)];
+  // só uma notícia boa no dia: sai o artigo dela (com 3 ou mais boas, sai o Giro do dia; mais abaixo)
+  roteiro = [respostaIA({ escolhas: [0], fio: '', motivo: 'Só essa afeta quem tem notebook antigo.' }), respostaIA(ARTIGO_IA)];
   let r = await chamar({ query: { acao: 'gerar' } });
   const d1 = guardado && JSON.parse(guardado.conteudo);
   const a1 = d1 && d1.artigos[0];
@@ -179,15 +180,49 @@ const post = body => chamar({ method: 'POST', body: Object.assign({ idToken: 'so
   r = await post({ acao: 'insta', slug: a1.slug, post: '18130493537478641' });
   ok(r.json().artigo.insta && r.json().artigo.insta.id === '18130493537478641', 'marca que foi para o Instagram');
 
+  console.log('\no Giro do dia (de 3 a 5 notícias, no jeito de newsletter)');
+  guardado = null; T.limparMemoria(); chamadasIA = [];
+  const GIRO_IA = { titulo: 'Falso técnico, Ryzen mais barato e Windows 10 sem suporte', resumo: 'Três notícias que mexem com quem usa computador.',
+    abertura: 'Hoje o assunto é cuidado: com golpe, com o bolso e com o sistema.',
+    itens: [
+      { titulo: 'O falso técnico que liga', texto: 'Criminosos ligam fingindo ser da Microsoft e pedem acesso ao computador. '.repeat(3), importa: 'Ninguém da Microsoft liga para você.', noticia: 1 },
+      { titulo: 'Ryzen chega aos notebooks baratos', texto: 'A AMD leva processadores Ryzen para notebooks de entrada. '.repeat(3), importa: 'Notebook bom pode ficar mais barato.', noticia: 2 },
+      { titulo: 'Windows 10 sem suporte', texto: 'O Windows 10 parou de receber atualizações, veja em https://golpe.example.com/x. '.repeat(3), importa: 'Sem atualização, o risco sobe.', noticia: 0 },
+      { titulo: 'Item de mentira', texto: 'aponta para notícia que não existe', importa: '', noticia: 9 } ],
+    fechamento: 'E você, já recebeu a ligação do falso técnico?',
+    pontos: ['Golpista finge ser da Microsoft e pede acesso ao seu PC.', 'Ryzen chega aos notebooks de entrada.', 'Windows 10 ficou sem atualização de segurança.'],
+    legenda: 'Giro do dia 💻\n\n🔒 golpe\n💰 Ryzen\n🪟 Windows\n\nLeia tudo no blog (link na bio)\n\n#tecnologia #notebook', termos_catalogo: ['Ryzen'] };
+  roteiro = [respostaIA({ escolhas: [0, 1, 2, 2, 7], fio: 'cuidado com golpe, bolso e sistema', motivo: 'atuais e diferentes' }), respostaIA(GIRO_IA)];
+  r = await post({ acao: 'gerar' });
+  let d = JSON.parse(guardado.conteudo);
+  const g1 = d.artigos[0];
+  ok(r.status === 200 && g1 && g1.tipo === 'giro' && g1.assunto === 'Giro do dia' && g1.fontes.length === 3 && g1.fonte === null && d.usadas.length === 3,
+    'junta 3 notícias num giro (repetida e número fora da lista não contam), com as 3 fontes, e marca as 3 como usadas');
+  ok(chamadasIA[0].output_config.format.schema === T.ESQUEMA_GIRO_ESCOLHA && chamadasIA[1].output_config.format.schema === T.ESQUEMA_GIRO && chamadasIA[1].output_config.effort === 'medium',
+    'escolhe as notícias e escreve o giro com os esquemas próprios');
+  const pg = chamadasIA[1].messages[0].content;
+  ok(/<materia n="0">[\s\S]*Windows 10[\s\S]*<\/materia>/.test(pg) && /cuidado com golpe, bolso e sistema/.test(pg) && (pg.match(/<materia n=/g) || []).length >= 2,
+    'manda o texto de cada matéria marcado com o número dela, e o fio que o editor viu');
+  ok(/^Hoje o assunto é cuidado/.test(g1.corpo) && (g1.corpo.match(/^## /gm) || []).length === 4 && /\*\*Por que importa:\*\* Ninguém da Microsoft/.test(g1.corpo) &&
+    g1.corpo.includes('[[fonte:0]]') && g1.corpo.includes('[[fonte:2]]') && !/Item de mentira/.test(g1.corpo) && !/https?:|golpe\.example/.test(g1.corpo),
+    'abertura, um subtítulo por notícia com o "por que importa" e a fonte, o fecho; sem link no texto e sem item inventado');
+  T.limparMemoria();
+  r = await chamar({ query: { slug: g1.slug } });
+  const fontesNaPagina = (r.body.match(/<p class="fonte-item">Fonte: <a href="https:\/\//g) || []).length;
+  ok(r.status === 200 && fontesNaPagina === 3 && r.body.includes('<h2>Para ficar de olho</h2>') && r.body.includes('<strong>Por que importa:</strong>') && /Com informações de <a[^>]+>[^<]+<\/a>(, <a[^>]+>[^<]+<\/a>)* e <a/.test(r.body),
+    'na página: o link da fonte embaixo de cada notícia e todas no fim ("Com informações de A, B e C")');
+  ok(T.mdHtml('[[fonte:5]]\n\ntexto', [{ nome: 'X', url: 'https://x.com' }]) === '<p>texto</p>' && T.mdHtml('[[fonte:0]]', [{ nome: 'X', url: 'javascript:alert(1)' }]) === '',
+    'marca de fonte que não existe ou sem https: some');
+
   console.log('\nsem notícia boa, recusa e limites');
   roteiro = [respostaIA({ escolha: -1, motivo: 'nada de computador' }), respostaIA(Object.assign({}, ARTIGO_IA, { titulo: 'Como escolher um notebook usado sem cair em cilada', assunto: 'Guia' }))];
   chamadasIA = [];
   r = await post({ acao: 'gerar' });
-  let d = JSON.parse(guardado.conteudo);
+  d = JSON.parse(guardado.conteudo);
   ok(r.status === 200 && d.artigos[0].tipo === 'guia' && d.artigos[0].fonte === null && d.artigos[0].guia === 'Como escolher um notebook usado sem cair em cilada' && /guia sobre/.test(chamadasIA[1].messages[0].content),
     'nenhuma notícia serve: sai um guia (o primeiro da lista que ainda não saiu)');
   feedTecno = RSS; materiaStatus = 200;
-  roteiro = [respostaIA({ escolha: 1, motivo: 'golpe' }), { stop_reason: 'refusal', content: [] }, respostaIA(Object.assign({}, ARTIGO_IA, { titulo: 'SSD ou HD: por que o SSD muda tudo', assunto: 'Guia' }))];
+  roteiro = [respostaIA({ escolha: 0, motivo: 'golpe' }), { stop_reason: 'refusal', content: [] }, respostaIA(Object.assign({}, ARTIGO_IA, { titulo: 'SSD ou HD: por que o SSD muda tudo', assunto: 'Guia' }))];
   chamadasIA = [];
   r = await post({ acao: 'gerar' });
   d = JSON.parse(guardado.conteudo);
