@@ -237,6 +237,8 @@ const post = body => chamar({ method: 'POST', body: Object.assign({ idToken: 'so
   guardado = guardadoAntes; T.limparMemoria();
   r = await post({ acao: 'insta', slug: a1.slug, post: '18130493537478641' });
   ok(r.json().artigo.insta && r.json().artigo.insta.id === '18130493537478641', 'marca que foi para o Instagram');
+  r = await post({ acao: 'insta', slug: a1.slug, post: '18130493537478642', story: '17900000000000001' });
+  ok(r.json().artigo.insta.story === '17900000000000001', 'e o story, quando foi junto');
 
   console.log('\num assunto só, com as matérias do mesmo assunto de outros sites');
   guardado = null; T.limparMemoria(); chamadasIA = [];

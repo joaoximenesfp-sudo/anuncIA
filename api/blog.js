@@ -446,7 +446,7 @@ async function acaoDoSistema(req, corpo) {
   const a = d.artigos.find(x => x.slug === String(corpo.slug || ''));
   if (!a) throw erro(404, 'Esse artigo não existe mais.');
   if (corpo.acao === 'ocultar' || corpo.acao === 'mostrar') a.status = corpo.acao === 'ocultar' ? 'oculto' : 'publicado';
-  else if (corpo.acao === 'insta') a.insta = { em: new Date().toISOString(), id: String(corpo.post || '').slice(0, 60) };
+  else if (corpo.acao === 'insta') a.insta = { em: new Date().toISOString(), id: String(corpo.post || '').slice(0, 60), ...(corpo.story ? { story: String(corpo.story).slice(0, 60) } : {}) };
   else if (corpo.acao === 'salvar') {
     const c = corpo.campos || {};
     if (c.titulo !== undefined) { const t = cortar(c.titulo, 110); if (t.length < 10) throw erro(400, 'Título curto demais.'); a.titulo = t; }

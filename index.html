@@ -3254,6 +3254,9 @@ div:has(> .fc2){flex-wrap:wrap;row-gap:6px}
       .blog-pronto-tit{font-weight:600;font-size:.88rem;color:var(--tx)}
       .blog-pronto-it{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:.86rem;color:var(--tx)}
       .blog-pronto-it small{color:var(--li)}
+      .blog-story{display:flex;align-items:center;gap:12px;margin:0 0 12px;padding:10px;border:1px solid var(--b);border-radius:12px}
+      .blog-story img{width:72px;aspect-ratio:9/16;object-fit:cover;border-radius:8px;border:1px solid var(--b);background:var(--bg);flex:none}
+      .blog-story small{color:var(--li);font-weight:400}
       .blog-pasta-top{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:6px 0 2px}
       .blog-filtro{border:1px solid var(--b);background:var(--w);color:var(--tx);border-radius:999px;padding:6px 12px;font:inherit;font-size:.8rem;cursor:pointer}
       .blog-filtro.on{background:var(--tx);color:var(--w);border-color:var(--tx)}
@@ -3303,6 +3306,8 @@ div:has(> .fc2){flex-wrap:wrap;row-gap:6px}
         <div class="blog-dlg-top"><b>Anúncio do blog para o Instagram</b><button type="button" class="mcl" onclick="blogFechar('blogPrevDlg')" aria-label="Fechar">✕</button></div>
         <div class="fi"><label class="fl" for="blogPrevMaq">Máquina do estoque no anúncio (a mais ligada ao assunto já vem escolhida)</label><select class="inp" id="blogPrevMaq" onchange="blogTrocarMaq()"></select></div>
         <div class="blog-prev" id="blogPrev"></div>
+        <div class="blog-story"><img id="blogStoryImg" alt="Story do artigo">
+          <label class="ml-chk"><input type="checkbox" id="blogStoryOk" checked onchange="blogStoryLembrar()"> <span><b>Postar também no story</b><br><small>a arte em pé com o título, o resumo e "Leia no blog: link na bio"</small></span></label></div>
         <div class="fi"><label class="fl" for="blogPrevLeg">Legenda</label><textarea class="inp" id="blogPrevLeg" rows="6"></textarea></div>
         <div class="blog-dlg-bts"><button type="button" class="bsm" id="blogPostarBt" onclick="blogPostar()">📸 Postar no Instagram</button><button type="button" class="bsm blog-sec" onclick="blogFechar('blogPrevDlg')">Cancelar</button><span class="tipo-auto" id="blogPrevMsg" style="margin:0"></span></div>
       </div></dialog>
@@ -12958,7 +12963,7 @@ function blogItemHtml(a){
   const fora=a.status==='oculto', s=encodeURIComponent(a.slug);
   const quando=a.publicado_em?new Date(a.publicado_em).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}):'';
   const origem=(a.fontes&&a.fontes.length)?'📰 '+a.fontes.length+' notícias ('+esc([...new Set(a.fontes.map(f=>f.nome))].join(', '))+')':a.fonte?'📰 '+esc(a.fonte.nome||''):'📘 guia';
-  const postado=a.insta&&a.insta.em?'📸 postado em '+new Date(a.insta.em).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}):a.insta?'📸 no Instagram':'';
+  const postado=a.insta&&a.insta.em?'📸 '+(a.insta.story?'post + story':'postado')+' em '+new Date(a.insta.em).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}):a.insta?'📸 no Instagram':'';
   const info=[quando,esc(a.assunto||''),origem,a.editado?'editado':'',fora?'<b>fora do ar</b>':'',postado].filter(Boolean).join(' · ');
   return `<div class="blog-item${fora?' fora':''}"><div class="blog-item-txt"><a class="blog-tit" href="/blog/${s}" target="_blank" rel="noopener">${esc(a.titulo)}</a><div class="tipo-auto" style="margin:2px 0 0">${info}</div></div>
       <div class="blog-item-bts"><button type="button" class="bsm blog-sec" onclick="blogEditar('${s}')">Editar</button><button type="button" class="bsm blog-sec" onclick="blogAlternar('${s}')">${fora?'Voltar ao ar':'Tirar do ar'}</button><button type="button" class="bsm blog-sec" onclick="blogCompartilhar('${s}',this)">🔗 Compartilhar</button><button type="button" class="bsm" onclick="blogPrevia('${s}')">📸 Instagram</button></div></div>`;
@@ -12993,7 +12998,7 @@ window.blogFechar=id=>{ const d=document.getElementById(id); if(d.close) d.close
 window.blogGerar=async()=>{
   const bt=document.getElementById('blogGerarBt'); if(bt) bt.disabled=true;
   blogMsg('✍️ Lendo as notícias e escrevendo… (leva uns 2 minutos)');
-  try{ const r=await blogApi({acao:'gerar'}); blogMsg(r.titulo?'✅ Publicado: '+r.titulo:(r.pulou||'Pronto.')); await blogCarregar(); }
+  try{ const r=await blogApi({acao:'gerar'}); await blogCarregar(); blogMsg(r.titulo?'✅ Publicado: '+r.titulo:(r.pulou||'Pronto.')); }
   catch(e){ blogMsg('⚠️ '+e.message); }
   finally{ if(bt) bt.disabled=false; }
 };
@@ -13064,6 +13069,7 @@ function blogBloco(ctx,txt,x,y,larg,alt,peso,maxPx,minPx,cor,entre,centro){
   const lh=px*entre, y0=centro?y+Math.max(0,(alt-linhas.length*lh)/2):y;
   ctx.fillStyle=cor;
   linhas.forEach((l,i)=>ctx.fillText(l,x,y0+px+i*lh));
+  return y0+linhas.length*lh; // onde o texto terminou
 }
 function blogTela(fundo,brilho){
   const c=document.createElement('canvas'); c.width=BLOG_W; c.height=BLOG_H;
@@ -13109,6 +13115,42 @@ function blogFim(){
   blogRodape(ctx,true,'');
   return c;
 }
+// O story do artigo (1080×1920): a marca, o assunto, o título, o resumo e o "link na bio". O alto
+// e o pé ficam livres: é onde o Instagram põe o nome da conta, a barra e o campo de resposta.
+const BLOG_SH=1920;
+function blogStory(a){
+  const c=document.createElement('canvas'); c.width=BLOG_W; c.height=BLOG_SH;
+  const ctx=c.getContext('2d'), m=BLOG_M, larg=BLOG_W-2*m;
+  ctx.fillStyle='#F6F4EE'; ctx.fillRect(0,0,BLOG_W,BLOG_SH);
+  const g=ctx.createRadialGradient(BLOG_W*0.92,0,0,BLOG_W*0.92,0,BLOG_W*1.15);
+  g.addColorStop(0,'rgba(28,240,143,.30)'); g.addColorStop(1,'rgba(28,240,143,0)');
+  ctx.fillStyle=g; ctx.fillRect(0,0,BLOG_W,BLOG_SH);
+  ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+  blogMarca(ctx,m,250,72); ctx.font=blogFonte(600,38); ctx.fillStyle='#0B1221'; ctx.fillText('Tech Campinas',m+96,298);
+  // o assunto, o título, o resumo e o botão, um logo depois do outro, no meio da área livre
+  // (entre a marca e o campo de resposta do Instagram): mede numa folha de rascunho e desenha
+  const bloco=(cx,y0)=>{
+    cx.font=blogFonte(600,30);
+    const et=('Blog · '+(a.assunto||'Notícia')).toUpperCase(), w=cx.measureText(et).width+52;
+    cx.fillStyle='#0B1221'; blogRet(cx,m,y0,w,64,32); cx.fill();
+    cx.fillStyle='#1CF08F'; cx.fillText(et,m+26,y0+43);
+    let y=blogBloco(cx,a.titulo,m,y0+100,larg,470,600,108,60,'#0B1221',1.08)+44;
+    if(a.resumo) y=blogBloco(cx,a.resumo,m,y,larg,300,500,46,32,'#556070',1.3);
+    y+=80;
+    cx.font=blogFonte(600,46);
+    const lk='Leia no blog: link na bio ↑', lw=Math.min(larg,cx.measureText(lk).width+84);
+    cx.fillStyle='#1CF08F'; blogRet(cx,m,y,lw,104,52); cx.fill();
+    cx.fillStyle='#06231A'; cx.fillText(lk,m+42,y+68);
+    cx.font=blogFonte(500,32); cx.fillStyle='#556070'; cx.fillText(location.host+'/blog',m,y+170);
+    return y+180;
+  };
+  const rascunho=document.createElement('canvas'); rascunho.width=BLOG_W; rascunho.height=BLOG_SH;
+  const alto=bloco(rascunho.getContext('2d'),0), livre=[380,1640];
+  bloco(ctx,Math.max(livre[0],livre[0]+((livre[1]-livre[0])-alto)/2));
+  return c;
+}
+let blogStoryTela=null;
+window.blogStoryLembrar=()=>{ try{ localStorage.setItem('blogStory',document.getElementById('blogStoryOk').checked?'1':'0'); }catch(e){} };
 // A fonte da loja carregada antes de desenhar: sem isso, o celular pode desenhar uma linha com a
 // fonte reserva (a diferença que aparecia no último slide).
 async function blogFontes(){
@@ -13161,6 +13203,7 @@ async function blogMontarPrevia(a,id){
   const pts=(a.pontos||[]).filter(Boolean).slice(0,7);
   blogTelas=[blogCapa(a),...pts.map((t,i)=>blogSlide(a,t,i+1,pts.length)),...(p?[blogSlideMaq(p,img)]:[]),blogFim()];
   document.getElementById('blogPrev').innerHTML=blogTelas.map((c,i)=>`<img alt="Slide ${i+1}" src="${c.toDataURL('image/jpeg',0.7)}">`).join('');
+  blogStoryTela=blogStory(a); document.getElementById('blogStoryImg').src=blogStoryTela.toDataURL('image/jpeg',0.7);
   // troca só a linha da máquina na legenda: o resto do que ele editou fica
   const ta=document.getElementById('blogPrevLeg'), nova=p?blogLinhaMaq(p):'';
   if(blogLinhaAtual&&ta.value.includes(blogLinhaAtual)) ta.value=nova?ta.value.replace(blogLinhaAtual,nova):ta.value.replace('\n\n'+blogLinhaAtual,'').replace(blogLinhaAtual,'');
@@ -13170,6 +13213,7 @@ async function blogMontarPrevia(a,id){
 window.blogPrevia=async s=>{
   const a=blogAchar(s); if(!a) return;
   blogPostando=a.slug;
+  try{ document.getElementById('blogStoryOk').checked=localStorage.getItem('blogStory')!=='0'; }catch(e){}
   const maqs=anCatMaquinas(), id=a.slug in blogMaqDe?blogMaqDe[a.slug]:((blogMaquinaPara(a)||{}).id||'');
   document.getElementById('blogPrevMaq').innerHTML='<option value="">Sem máquina (só a notícia)</option>'+
     maqs.map(p=>`<option value="${escAttr(p.id)}"${p.id===id?' selected':''}>#${esc(String(p.num||'?'))} · ${esc(p.nome||'Notebook')} · ${fmt(precoVigente(p).por)}</option>`).join('');
@@ -13192,13 +13236,20 @@ window.blogPostar=async()=>{
   bt.disabled=true;
   try{
     const r=await instaEnviar('carrossel',blogTelas,document.getElementById('blogPrevLeg').value.trim(),t=>{ m.textContent=t; });
-    try{ Object.assign(a,(await blogApi({acao:'insta',slug:a.slug,post:r.id||''})).artigo); }catch(e){}
+    // o story vai logo depois; se ele falhar, o post já está no ar (avisa o motivo)
+    let story='', erroStory='';
+    if(document.getElementById('blogStoryOk').checked&&blogStoryTela){
+      try{ const rs=await instaEnviar('story',[blogStoryTela],'',t=>{ m.textContent='Story: '+t.charAt(0).toLowerCase()+t.slice(1); }); story=String(rs.id||'sim'); }
+      catch(e){ erroStory=e.message; }
+    }
+    try{ Object.assign(a,(await blogApi({acao:'insta',slug:a.slug,post:r.id||'',story})).artigo); }catch(e){}
     // link em legenda de post nunca fica clicável no Instagram: o clicável é o da bio e a figurinha
     // "Link" do story; o link do artigo fica copiado para isso
     const url=location.origin+'/blog/'+encodeURIComponent(a.slug);
     try{ await navigator.clipboard.writeText(url); }catch(e){}
     blogRender(); blogFechar('blogPrevDlg');
-    blogMsg('✅ No Instagram'+(r.link?': '+r.link:'.')+' Para o link ficar clicável: no app, compartilhe o post no story e use a figurinha "Link" com '+url+' (já copiado).');
+    blogMsg('✅ No Instagram'+(story?' (post e story)':'')+(r.link?': '+r.link:'.')+(erroStory?' ⚠️ O story não foi: '+erroStory+'.':'')+
+      ' Para um link clicável no story: no app, poste um story com a figurinha "Link" e cole '+url+' (já copiado).');
   }catch(e){ m.textContent='⚠️ '+e.message; bt.disabled=false; }
 };
 // Marca na máquina o que foi publicado (e o 📸 da lista mostra na hora).
