@@ -1,5 +1,5 @@
 {
- "versao": "2026-11-22.1",
+ "versao": "2026-11-22.2",
  "app": "2026-11-20.7",
  "regioes": {
   "centro": {"nome": "Centro de Campinas", "lat": -22.9056, "lon": -47.0608, "km": 1.5},
@@ -40,7 +40,16 @@
    "arquivo": "midia/v01.webp",
    "tipo": "imagem",
    "bytes": 37514,
-   "hash": "7533226844f3"
+   "hash": "7533226844f3",
+   "qr": [
+    {
+     "anuncio": "tech",
+     "x": 1603,
+     "y": 843,
+     "lado": 163,
+     "segue": true
+    }
+   ]
   },
   "tech": {
    "arquivo": "midia/tech.mp4",
@@ -118,7 +127,16 @@
    "arquivo": "midia/c01.webp",
    "tipo": "imagem",
    "bytes": 50068,
-   "hash": "aa4cc6f887c7"
+   "hash": "aa4cc6f887c7",
+   "qr": [
+    {
+     "anuncio": "vender",
+     "x": 1603,
+     "y": 843,
+     "lado": 163,
+     "segue": true
+    }
+   ]
   },
   "p04": {
    "arquivo": "midia/p04.webp",
@@ -138,13 +156,31 @@
    "arquivo": "midia/q01a.webp",
    "tipo": "imagem",
    "bytes": 36640,
-   "hash": "eff985fe8c94"
+   "hash": "eff985fe8c94",
+   "qr": [
+    {
+     "anuncio": "gio",
+     "x": 1603,
+     "y": 843,
+     "lado": 163,
+     "segue": true
+    }
+   ]
   },
   "q01b": {
    "arquivo": "midia/q01b.webp",
    "tipo": "imagem",
    "bytes": 35392,
-   "hash": "92bf62034bc1"
+   "hash": "92bf62034bc1",
+   "qr": [
+    {
+     "anuncio": "gio",
+     "x": 1603,
+     "y": 843,
+     "lado": 163,
+     "segue": true
+    }
+   ]
   },
   "t02": {
    "arquivo": "midia/t02.webp",
@@ -164,7 +200,16 @@
    "arquivo": "midia/c03.webp",
    "tipo": "imagem",
    "bytes": 46876,
-   "hash": "189605b2301d"
+   "hash": "189605b2301d",
+   "qr": [
+    {
+     "anuncio": "tech",
+     "x": 1603,
+     "y": 843,
+     "lado": 163,
+     "segue": true
+    }
+   ]
   },
   "compro": {
    "arquivo": "midia/compro.webp",
@@ -259,7 +304,16 @@
    "arquivo": "midia/c06.webp",
    "tipo": "imagem",
    "bytes": 39388,
-   "hash": "f6adaa4cfa6e"
+   "hash": "f6adaa4cfa6e",
+   "qr": [
+    {
+     "anuncio": "vender",
+     "x": 1603,
+     "y": 843,
+     "lado": 163,
+     "segue": true
+    }
+   ]
   },
   "p06": {
    "arquivo": "midia/p06.webp",
@@ -311,7 +365,16 @@
    "arquivo": "midia/v02.webp",
    "tipo": "imagem",
    "bytes": 38536,
-   "hash": "254e9181a017"
+   "hash": "254e9181a017",
+   "qr": [
+    {
+     "anuncio": "gio",
+     "x": 1603,
+     "y": 843,
+     "lado": 163,
+     "segue": true
+    }
+   ]
   },
   "t05": {
    "arquivo": "midia/t05.webp",
@@ -331,13 +394,31 @@
    "arquivo": "midia/q03a.webp",
    "tipo": "imagem",
    "bytes": 47958,
-   "hash": "61973cf1b771"
+   "hash": "61973cf1b771",
+   "qr": [
+    {
+     "anuncio": "tech",
+     "x": 1603,
+     "y": 843,
+     "lado": 163,
+     "segue": true
+    }
+   ]
   },
   "q03b": {
    "arquivo": "midia/q03b.webp",
    "tipo": "imagem",
    "bytes": 42336,
-   "hash": "a3ac69d4aa2c"
+   "hash": "a3ac69d4aa2c",
+   "qr": [
+    {
+     "anuncio": "tech",
+     "x": 1603,
+     "y": 843,
+     "lado": 163,
+     "segue": true
+    }
+   ]
   },
   "p02": {
    "arquivo": "midia/p02.webp",
@@ -357,7 +438,16 @@
    "arquivo": "midia/c02.webp",
    "tipo": "imagem",
    "bytes": 59702,
-   "hash": "48f40bb2e80d"
+   "hash": "48f40bb2e80d",
+   "qr": [
+    {
+     "anuncio": "gio",
+     "x": 1603,
+     "y": 843,
+     "lado": 163,
+     "segue": true
+    }
+   ]
   },
   "t06": {
    "arquivo": "midia/t06.webp",
@@ -431,7 +521,16 @@
    "arquivo": "midia/c04.webp",
    "tipo": "imagem",
    "bytes": 35812,
-   "hash": "97c122cb17c0"
+   "hash": "97c122cb17c0",
+   "qr": [
+    {
+     "anuncio": "manut",
+     "x": 1603,
+     "y": 843,
+     "lado": 163,
+     "segue": true
+    }
+   ]
   },
   "t09": {
    "arquivo": "midia/t09.webp",
@@ -494,7 +593,16 @@
    "arquivo": "midia/c07.webp",
    "tipo": "imagem",
    "bytes": 52574,
-   "hash": "769375eb0387"
+   "hash": "769375eb0387",
+   "qr": [
+    {
+     "anuncio": "tech",
+     "x": 1603,
+     "y": 843,
+     "lado": 163,
+     "segue": true
+    }
+   ]
   },
   "p09": {
    "arquivo": "midia/p09.webp",
@@ -528,7 +636,16 @@
    "arquivo": "midia/v03.webp",
    "tipo": "imagem",
    "bytes": 34534,
-   "hash": "694853b40eea"
+   "hash": "694853b40eea",
+   "qr": [
+    {
+     "anuncio": "tech",
+     "x": 1603,
+     "y": 843,
+     "lado": 163,
+     "segue": true
+    }
+   ]
   }
  },
  "loop": [

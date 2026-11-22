@@ -87,6 +87,11 @@ paga a exibição) e `qr`: lista de `{anuncio, x, y, lado}` em pixels da arte
 1920×1080 (em vídeo, também `de`/`ate` em segundos). A arte do anunciante precisa
 ter um quadrado branco onde o QR vai.
 
+**QR em todo slide**: o slide sem QR próprio (curiosidade, quiz, "Boa viagem") leva um QR
+pequeno no canto (`x` 1603, `y` 843, `lado` 163) com `"segue": true`: o da última empresa que
+passou antes dele no loop, até aparecer outra. Mexeu na ordem do loop? O `node testes/test-tela.js`
+diz qual slide precisa trocar de QR.
+
 **Anunciante**: entrada em `anuncios` com `nome` e `destino` (WhatsApp, cardápio…).
 
 **Cota por horário e cidade**: no `loop`, no lugar de uma mídia fixa:

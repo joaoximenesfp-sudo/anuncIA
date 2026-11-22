@@ -224,6 +224,22 @@ const qrs = Object.values(pacote.midias).flatMap(m => m.qr || []);
 ok(qrs.every(q => pacote.anuncios[q.anuncio]), 'todo QR aponta para um anúncio com destino');
 ok(Object.values(pacote.anuncios).every(a => /^https:\/\//.test(a.destino)), 'destinos em https');
 ok(regioesUsadas(pacote).every(r => pacote.regioes && pacote.regioes[r]), 'toda região usada no loop existe no pacote');
+// QR pequeno em todo slide: o que não tem QR próprio leva ("segue") o da última empresa antes dele
+const fixos = pacote.loop.filter(e => !e.cota);
+const semQR = fixos.filter(e => !(pacote.midias[e.midia].qr || []).length).map(e => e.midia);
+ok(!semQR.length, 'todo slide do loop tem QR' + (semQR.length ? ': falta em ' + semQR.join(', ') : ''));
+const qrErrado = [];
+fixos.forEach((e, i) => {
+  const seg = (pacote.midias[e.midia].qr || []).filter(q => q.segue);
+  if (!seg.length) return;
+  let antes = null;
+  for (let k = 1; k <= fixos.length && !antes; k++) {
+    const qs = (pacote.midias[fixos[(i - k + fixos.length) % fixos.length].midia].qr || []).filter(q => !q.segue);
+    if (qs.length) antes = qs.reduce((a, b) => ((b.ate || 0) > (a.ate || 0) ? b : a)).anuncio;
+  }
+  if (seg.some(q => q.anuncio !== antes)) qrErrado.push(e.midia + ' (devia ser ' + antes + ')');
+});
+ok(!qrErrado.length, 'o QR pequeno de cada slide é o da última empresa que passou antes dele' + (qrErrado.length ? ': ' + qrErrado.join(', ') : ''));
 const pontoOk = (la, lo) => Math.abs(la) <= 90 && Math.abs(lo) <= 180 && !(la === 0 && lo === 0);
 const regiaoOk = z => !!z.nome && (z.setor ? (z.pontos || []).length > 0 && z.pontos.every(q => pontoOk(q[0], q[1])) && (z.km || 4) > 0
   : z.areas ? z.areas.length > 0 && z.areas.every(a => pontoOk(a.lat, a.lon) && (a.km || z.km || 1) > 0)
