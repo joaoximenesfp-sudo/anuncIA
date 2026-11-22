@@ -1095,6 +1095,28 @@ body.arrastando-foto{user-select:none;-webkit-user-select:none;cursor:grabbing}
 .foto-pos{flex:1;text-align:center;color:#fff;font-size:.58rem;font-weight:600;letter-spacing:.03em}
 .foto-pos.capa{color:#67e8f9}
 .foto-item img{cursor:zoom-in}
+/* selecionar várias fotos para excluir de uma vez (no Editar) */
+.fotos-acoes{display:flex;align-items:center;gap:6px}
+.fotos-sel-bt{background:var(--w);color:#0e7490;border:1px solid #0e7490;border-radius:7px;font-size:.72rem;font-weight:600;
+  padding:4px 10px;cursor:pointer;white-space:nowrap}
+.fotos-sel-barra{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:-2px 0 8px;padding:7px 9px;border-radius:9px;
+  background:#ecfeff;border:1px solid #a5f3fc;font-size:.72rem;color:var(--tx)}
+.fotos-sel-barra span{flex:1;min-width:130px}
+.fotos-sel-barra button{border:1px solid var(--b2);background:var(--w);color:var(--tx);border-radius:7px;padding:4px 9px;
+  font-size:.7rem;font-weight:600;cursor:pointer;white-space:nowrap}
+.fotos-sel-barra button.perigo{background:#b91c1c;border-color:#b91c1c;color:#fff}
+.fotos-sel-barra button:disabled{opacity:.45;cursor:default}
+.fotos-grid.selecionando .foto-item{cursor:pointer;touch-action:manipulation}
+.fotos-grid.selecionando .foto-item img{cursor:pointer}
+.fotos-grid.selecionando .foto-del,.fotos-grid.selecionando .foto-mv{display:none}
+.foto-check{display:none;position:absolute;top:4px;left:4px;width:20px;height:20px;border-radius:50%;border:2px solid #fff;
+  background:rgba(15,23,42,.35);box-shadow:0 1px 3px rgba(0,0,0,.45);color:transparent;font-size:.72rem;font-weight:700;
+  line-height:16px;text-align:center}
+.fotos-grid.selecionando .foto-check{display:block}
+.foto-item.sel{outline:3px solid #0e7490;outline-offset:-3px}
+.foto-item.sel img{opacity:.78}
+.foto-item.sel .foto-check{background:#0e7490;border-color:#0e7490;color:#fff}
+.fotos-grid.selecionando .foto-item:focus-visible{outline:3px solid #22d3ee;outline-offset:-3px}
 
 /* ── FOTO AMPLIADA ──
    Acima de tudo (z-index 200): abre a partir do modal de edição, que é 100. */
@@ -3758,11 +3780,15 @@ div:has(> .fc2){flex-wrap:wrap;row-gap:6px}
         <div class="fotos-box">
           <div class="fotos-head">
             <span class="fl" style="margin:0">📷 Fotos <span style="font-weight:400;color:var(--li);text-transform:none">— ficam prontas pro anúncio e vão no aviso do Telegram</span></span>
-            <label class="fotos-add">+ Foto
-              <input type="file" id="foInput" accept="image/*" multiple onchange="foSubir(this)" style="display:none">
-            </label>
+            <div class="fotos-acoes">
+              <button type="button" class="fotos-sel-bt" id="foSelBt" onclick="foSelecionar()" hidden>☑ Selecionar</button>
+              <label class="fotos-add">+ Foto
+                <input type="file" id="foInput" accept="image/*" multiple onchange="foSubir(this)" style="display:none">
+              </label>
+            </div>
           </div>
           <div id="foDica" class="fotos-dica"></div>
+          <div id="foSelBarra" class="fotos-sel-barra" hidden></div>
           <div id="foLista" class="fotos-grid"></div>
           <div id="foStatus" class="fotos-status"></div>
         </div>
@@ -7050,7 +7076,7 @@ function comprimirFoto(file, maxLado=1100, q=0.72){
 }
 
 async function foCarregar(prodId){
-  fotosDoProduto=[];
+  fotosDoProduto=[]; foSel=null;
   foRender('Carregando fotos...');
   if(!prodId || idLocal(prodId)){ foRender(); return; }
   try{
@@ -7065,9 +7091,12 @@ function foRender(msg){
   if(!lista) return;
   if(msg){ lista.innerHTML=`<div class="fotos-vazio">${esc(msg)}</div>`; if(st) st.textContent=''; return; }
   const ult=fotosDoProduto.length-1;
+  if(foSel) for(const id of [...foSel]) if(!fotosDoProduto.some(f=>f.id===id)) foSel.delete(id);
+  lista.classList.toggle('selecionando',!!foSel);
   lista.innerHTML = fotosDoProduto.length
-    ? fotosDoProduto.map((f,i)=>`<div class="foto-item" data-id="${esc(f.id)}">
-        <img src="${f.dataUrl}" alt="Foto ${i+1}" draggable="false" title="Toque para ampliar · segure para arrastar">
+    ? fotosDoProduto.map((f,i)=>`<div class="foto-item${foSel&&foSel.has(f.id)?' sel':''}" data-id="${esc(f.id)}"${foSel?` tabindex="0" role="checkbox" aria-checked="${foSel.has(f.id)}" aria-label="Foto ${i+1}${i===0?' (capa)':''}"`:''}>
+        <img src="${f.dataUrl}" alt="Foto ${i+1}" draggable="false" title="${foSel?'Toque para marcar ou desmarcar':'Toque para ampliar · segure para arrastar'}">
+        <span class="foto-check" aria-hidden="true">✓</span>
         <button type="button" class="foto-del" onclick="foApagar('${f.id}')" title="Remover">✕</button>
         <div class="foto-barra">
           <button type="button" class="foto-mv" onclick="foMover(${i},-1)" ${i===0?'disabled':''} title="Mover para trás">◀</button>
@@ -7077,9 +7106,10 @@ function foRender(msg){
       </div>`).join('')
     : '<div class="fotos-vazio">Nenhuma foto ainda. A primeira vira a capa do anúncio.</div>';
   const dica=document.getElementById('foDica');
-  if(dica) dica.textContent = fotosDoProduto.length>1
+  if(dica) dica.textContent = foSel ? '' : fotosDoProduto.length>1
     ? '✋ Segure uma foto e arraste para trocar de lugar. A primeira é a capa.' : '';
-  if(!lista._arrOn){ lista._arrOn=true; lista.addEventListener('pointerdown',foArrDown); }
+  if(!lista._arrOn){ lista._arrOn=true; lista.addEventListener('pointerdown',foArrDown); lista.addEventListener('click',foSelClique); lista.addEventListener('keydown',foSelTecla); }
+  foSelBarra();
   try{ hwConferir('e'); }catch(e){}
   if(st){
     const kb=Math.round(fotosDoProduto.reduce((s,f)=>s+((f.dataUrl||'').length),0)/1024);
@@ -7160,6 +7190,7 @@ const FO_SEGURAR=200;   // ms até virar arrasto
 const FO_FOLGA=10;      // px de tremida que ainda contam como toque parado
 
 function foArrDown(e){
+  if(foSel) return; // selecionando: tocar marca a foto (não arrasta nem amplia)
   if(e.pointerType==='mouse' && e.button!==0) return;
   const alvo=e.target.closest ? e.target.closest('.foto-item') : null;
   if(!alvo || (e.target.closest && e.target.closest('.foto-del, .foto-mv'))) return;
@@ -7275,6 +7306,63 @@ function foArrLimpar(){
   document.body.classList.remove('arrastando-foto');
   foArr=null; foArrDesligar();
 }
+
+// ── SELECIONAR VÁRIAS FOTOS PARA EXCLUIR ──
+// "☑ Selecionar": tocar marca ou desmarca; a barra diz quantas, marca todas e exclui.
+// Selecionando, não arrasta nem amplia (e as setas e o ✕ somem, para não confundir).
+let foSel=null; // ids marcados; null = fora do modo de seleção
+function foSelBarra(){
+  const b=document.getElementById('foSelBarra'), bt=document.getElementById('foSelBt');
+  if(bt) bt.hidden=!fotosDoProduto.length||!!foSel;
+  if(!b) return;
+  if(!foSel){ b.hidden=true; b.innerHTML=''; return; }
+  const n=foSel.size, todas=n>0&&n===fotosDoProduto.length;
+  b.hidden=false;
+  b.innerHTML=`<span>${n?`<b>${n}</b> foto${n!==1?'s':''} marcada${n!==1?'s':''}`:'Toque nas fotos que quer excluir'}</span>
+    <button type="button" onclick="foSelTodas()">${todas?'Desmarcar todas':'Marcar todas'}</button>
+    <button type="button" class="perigo" onclick="foExcluirSelecionadas()"${n?'':' disabled'}>🗑 Excluir${n?' '+n:''}</button>
+    <button type="button" onclick="foSelecionar(false)">Cancelar</button>`;
+}
+window.foSelecionar=(ligar=true)=>{ foSel=ligar&&fotosDoProduto.length?new Set():null; foRender(); };
+window.foSelTodas=()=>{
+  if(!foSel) return;
+  if(foSel.size===fotosDoProduto.length) foSel.clear(); else fotosDoProduto.forEach(f=>foSel.add(f.id));
+  foRender();
+};
+function foSelTrocar(it){
+  const id=it&&it.dataset.id; if(!foSel||!id) return;
+  if(foSel.has(id)) foSel.delete(id); else foSel.add(id);
+  it.classList.toggle('sel',foSel.has(id)); it.setAttribute('aria-checked',String(foSel.has(id)));
+  foSelBarra();
+}
+function foSelClique(e){
+  if(!foSel) return;
+  const it=e.target.closest&&e.target.closest('.foto-item'); if(!it) return;
+  e.preventDefault(); foSelTrocar(it);
+}
+function foSelTecla(e){
+  if(!foSel||(e.key!==' '&&e.key!=='Enter')) return;
+  const it=e.target.closest&&e.target.closest('.foto-item'); if(!it) return;
+  e.preventDefault(); foSelTrocar(it);
+}
+window.foExcluirSelecionadas=async()=>{
+  if(!foSel||!foSel.size) return;
+  const ids=fotosDoProduto.filter(f=>foSel.has(f.id)).map(f=>f.id), n=ids.length, resta=fotosDoProduto.length-n;
+  const capa=fotosDoProduto[0]&&foSel.has(fotosDoProduto[0].id);
+  if(!confirm(`Excluir ${n} foto${n!==1?'s':''}?`+(!resta?'\n\nNão vai sobrar nenhuma foto nesta máquina.':capa?'\n\nA capa está entre elas: a primeira que sobrar vira a capa.':''))) return;
+  const st=document.getElementById('foStatus'), bar=document.getElementById('foSelBarra');
+  if(bar) bar.querySelectorAll('button').forEach(b=>b.disabled=true);
+  let feitas=0, falhas=0;
+  for(const id of ids){
+    if(st) st.textContent=`Excluindo ${feitas+falhas+1} de ${n}...`;
+    try{ if(!idLocal(id)) await deleteDoc(doc(db,'fotos',id)); fotosDoProduto=fotosDoProduto.filter(f=>f.id!==id); feitas++; }
+    catch(e){ falhas++; console.warn('Excluir foto:',e.message); }
+  }
+  foSel=null;
+  await foGravarOrdem(); // a ordem nova, sem buraco (a capa é a primeira que sobrou)
+  await foAtualizarContagem(editId);
+  if(st) st.textContent=`${feitas} foto${feitas!==1?'s':''} excluída${feitas!==1?'s':''}.`+(falhas?` ${falhas} não saiu (sem internet?): tente de novo.`:'')+(st.textContent?' '+st.textContent:'');
+};
 
 window.foApagar=async(fotoId)=>{
   if(!confirm('Remover esta foto?')) return;
