@@ -185,14 +185,17 @@ const post = body => chamar({ method: 'POST', body: Object.assign({ idToken: 'so
   ok(capa.status === 200 && capa.headers['content-type'] === 'image/png' && Buffer.isBuffer(capa.raw) && capa.raw.slice(1, 4).toString() === 'PNG' &&
     capa.raw.readUInt32BE(16) === 1200 && capa.raw.readUInt32BE(20) === 630 && /s-maxage=604800/.test(capa.headers['cache-control']), 'a imagem do link: PNG 1200×630 com o título, guardada no cache');
   ok(T.urlCapa(a1) !== T.urlCapa(Object.assign({}, a1, { titulo: 'Outro título para o mesmo artigo' })), 'mudou o título: muda o endereço da imagem (o WhatsApp não fica com a velha)');
-  const igs = r.body.match(/<button type="button" class="pt pt-ig" data-story="\/blog\/capa\/[^"]+\?formato=story&amp;v=[a-z0-9]+" data-post="\/blog\/capa\/[^"]+\?formato=post&amp;v=[a-z0-9]+">/g) || [];
-  ok(igs.length === 2 && /navigator\.canShare/.test(r.body) && /files: \[arquivo\]/.test(r.body) && /figurinha &quot;Link&quot;|figurinha "Link"/.test(r.body),
-    'Instagram no topo e no fim: a imagem do artigo vai para o story e o link fica copiado para a figurinha "Link"');
-  const story = await chamar({ query: { capa: a1.slug, formato: 'story' } });
-  ok(story.status === 200 && story.headers['content-type'] === 'image/png' && story.raw.readUInt32BE(16) === 1080 && story.raw.readUInt32BE(20) === 1920, 'a imagem do story: PNG 1080×1920');
+  const igs = r.body.match(/<button type="button" class="pt pt-ig" data-post="\/blog\/capa\/[^"]+\?formato=post&amp;v=[a-z0-9]+" data-legenda="[^"]+">/g) || [];
+  ok(igs.length === 2 && /navigator\.canShare/.test(r.body) && /files: \[arquivo\]/.test(r.body) && r.body.includes('data-legenda="') && r.body.includes(':\n' + url1 + '\n\n#windows #notebook'),
+    'Instagram no topo e no fim: a imagem no formato de post e a legenda pronta (introdução + link + hashtags) para colar');
   const imgPost = await chamar({ query: { capa: a1.slug, formato: 'post' } });
-  ok(imgPost.status === 200 && imgPost.raw.readUInt32BE(16) === 1080 && imgPost.raw.readUInt32BE(20) === 1350 && /window\.open\('https:\/\/www\.instagram\.com\/'/.test(r.body),
-    'no computador: a imagem no formato de post (1080×1350) e o Instagram abre numa aba nova');
+  ok(imgPost.status === 200 && imgPost.headers['content-type'] === 'image/png' && imgPost.raw.readUInt32BE(16) === 1080 && imgPost.raw.readUInt32BE(20) === 1350 &&
+    /window\.open\('https:\/\/www\.instagram\.com\/'/.test(r.body), 'a imagem do post: PNG 1080×1350; sem o compartilhar do celular, o Instagram abre numa aba nova');
+  const LEG = { titulo: 'T', resumo: 'R', legenda: 'Mesma placa, desempenho diferente. 🎮\n\nDois notebooks com a mesma RTX rendem diferente.\n\nLeia o artigo completo no blog: link na bio.\n\n#notebook #rtx' };
+  const lv = T.legendaInsta(LEG, 'https://x.com/blog/a'), ll = T.legendaInsta(LEG, 'https://x.com/blog/a', { daLoja: true });
+  ok(lv === 'Mesma placa, desempenho diferente. 🎮\n\nDois notebooks com a mesma RTX rendem diferente.\n\n📖 Leia o artigo completo:\nhttps://x.com/blog/a\n\n#notebook #rtx' &&
+    ll.includes('📖 Leia o artigo completo (link na bio):\nhttps://x.com/blog/a') && T.legendaInsta({ titulo: 'Título', resumo: 'Resumo.' }, 'https://x.com/b').startsWith('Título\n\nResumo.\n\n📖'),
+    'a legenda organizada: a introdução, o link do artigo (no post da loja, também na bio) e as hashtags no fim');
   const meio = T.noMeio('<p>a</p><h2>Um</h2><p>' + 'b'.repeat(300) + '</p><h2>Dois</h2><p>' + 'c'.repeat(300) + '</p>', '[Q]');
   ok(meio.indexOf('[Q]') === meio.indexOf('<h2>Dois</h2>') - 3 && T.noMeio('<p>só um</p>', '[Q]').endsWith('[Q]') && T.noMeio('<p>x</p>', '') === '<p>x</p>',
     'o quadro entra antes do subtítulo do meio; texto curto demais: no fim');
@@ -208,7 +211,8 @@ const post = body => chamar({ method: 'POST', body: Object.assign({ idToken: 'so
   r = await post({ acao: 'lista', idToken: 'intruso' });
   ok(r.status === 403 && /sócios/.test(r.json().erro), 'quem não é sócio: 403');
   r = await post({ acao: 'lista' });
-  ok(r.status === 200 && r.json().artigos.length === 1, 'sócio vê a lista (inclusive os fora do ar)');
+  ok(r.status === 200 && r.json().artigos.length === 1 && /📖 Leia o artigo completo \(link na bio\):\nhttps:\/\/anunc-ia\.vercel\.app\/blog\//.test(r.json().artigos[0].legenda_insta),
+    'sócio vê a lista (inclusive os fora do ar), com a legenda do Instagram já organizada');
   r = await post({ acao: 'salvar', slug: a1.slug, campos: { titulo: 'Windows 10 acabou: e agora, o que fazer?', pontos: ['um', 'dois', 'três'] } });
   ok(r.status === 200 && r.json().artigo.titulo === 'Windows 10 acabou: e agora, o que fazer?' && r.json().artigo.editado === true && r.json().artigo.slug === a1.slug,
     'editar o título não muda o endereço (quem já tem o link continua chegando)');

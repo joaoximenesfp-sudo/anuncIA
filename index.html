@@ -13049,7 +13049,8 @@ window.blogPrevia=async s=>{
   const pts=(a.pontos||[]).filter(Boolean).slice(0,7);
   blogTelas=[blogCapa(a),...pts.map((p,i)=>blogSlide(a,p,i+1,pts.length)),blogFim()];
   document.getElementById('blogPrev').innerHTML=blogTelas.map((c,i)=>`<img alt="Slide ${i+1}" src="${c.toDataURL('image/jpeg',0.7)}">`).join('');
-  document.getElementById('blogPrevLeg').value=a.legenda||a.resumo||'';
+  // a legenda organizada pelo servidor: a introdução, o link do artigo (e na bio) e as hashtags
+  document.getElementById('blogPrevLeg').value=a.legenda_insta||a.legenda||a.resumo||'';
   document.getElementById('blogPrevMsg').textContent=a.insta?'Esse artigo já foi para o Instagram uma vez.':'';
   const bt=document.getElementById('blogPostarBt'); bt.disabled=false;
   blogAbrir('blogPrevDlg');
