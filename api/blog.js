@@ -74,22 +74,36 @@ function slugDe(t) {
 const blobToken = () => String(process.env.BLOB_READ_WRITE_TOKEN || '').trim();
 const blobLoja = () => blobToken().split('_')[3] || ''; // vercel_blob_rw_<loja>_<segredo>
 const urlDados = () => `https://${blobLoja().toLowerCase()}.public.blob.vercel-storage.com/${ARQ}`;
-const vazio = () => ({ artigos: [], usadas: [], geracoes: {}, tentativas: {}, atualizado_em: '' });
+const vazio = () => ({ artigos: [], usadas: [], geracoes: {}, tentativas: {}, semeados: [], atualizado_em: '' });
 let memoria = null; // a função quente não relê o arquivo a cada página
 function arrumar(d) {
   const v = vazio();
   if (!d || typeof d !== 'object') return v;
   return { artigos: Array.isArray(d.artigos) ? d.artigos.filter(a => a && a.slug && a.titulo) : [], usadas: Array.isArray(d.usadas) ? d.usadas : [],
     geracoes: d.geracoes && typeof d.geracoes === 'object' ? d.geracoes : {}, tentativas: d.tentativas && typeof d.tentativas === 'object' ? d.tentativas : {},
-    atualizado_em: d.atualizado_em || '' };
+    semeados: Array.isArray(d.semeados) ? d.semeados : [], atualizado_em: d.atualizado_em || '' };
+}
+// Publicações escritas à mão, aqui no repositório: entram no blog uma vez só (mesmo sem a IA) e,
+// dali em diante, ficam no arquivo como as outras: dá para editar, ocultar e postar no Instagram.
+let SEMENTES = [];
+try { SEMENTES = require('./_blog-semente.json'); } catch (e) { SEMENTES = []; }
+function semear(d) {
+  const ja = new Set([...d.artigos.map(a => a.slug), ...d.semeados]);
+  const novos = (Array.isArray(SEMENTES) ? SEMENTES : []).filter(a => a && a.slug && a.titulo && a.corpo && !ja.has(a.slug));
+  if (!novos.length) return d;
+  d.artigos = d.artigos.concat(novos.map(a => JSON.parse(JSON.stringify(a))))
+    .sort((a, b) => String(b.publicado_em || '').localeCompare(String(a.publicado_em || '')));
+  d.semeados = d.semeados.concat(novos.map(a => a.slug));
+  d.usadas = d.usadas.concat(...novos.map(a => (a.fontes || []).map(f => f && f.url).filter(Boolean)));
+  return d;
 }
 async function lerBlog(fresco) {
   if (!fresco && memoria && Date.now() - memoria.t < 30000) return memoria.d;
-  if (!blobLoja()) return vazio();
+  if (!blobLoja()) return semear(vazio());
   const r = await fetch(urlDados() + (fresco ? '?v=' + Date.now() : ''), { cache: 'no-store' });
-  if (r.status === 404) return vazio();
+  if (r.status === 404) return semear(vazio());
   if (!r.ok) throw erro(502, 'Não consegui ler o blog agora.');
-  const d = arrumar(await r.json());
+  const d = semear(arrumar(await r.json()));
   memoria = { t: Date.now(), d };
   return d;
 }
@@ -181,15 +195,36 @@ async function buscarNoticias() {
   }));
   return res.flat();
 }
-// O texto da matéria: os parágrafos do <article> (ou da página). Sem ele, a IA fica no resumo do site.
+// O texto da matéria: os parágrafos do <article> que tem mais texto. A página pode ter vários (o
+// principal e os cartões de "leia também", às vezes um dentro do outro: o de dentro sai); se no
+// escolhido vier pouco (só o subtítulo), os parágrafos da página toda, sem cabeçalho e rodapé.
+// Sem texto nenhum, a IA fica no resumo do site.
+const paragrafos = html => (String(html || '').match(/<p[\s>][\s\S]*?<\/p>/gi) || []).map(semTags).filter(p => p.length > 40);
+const tamanho = ps => ps.reduce((n, p) => n + p.length, 0);
+function blocosArticle(html) {
+  const re = /<(\/?)article\b[^>]*>/gi, blocos = [];
+  let m, prof = 0, ini = -1;
+  while ((m = re.exec(html))) {
+    if (!m[1]) { if (prof === 0) ini = m.index; prof++; }
+    else if (prof > 0 && --prof === 0) blocos.push(html.slice(ini, re.lastIndex));
+  }
+  return blocos;
+}
+function textoDoHtml(html) {
+  html = String(html || '').replace(/<(script|style|noscript)\b[\s\S]*?<\/\1>/gi, ' ');
+  const porBloco = blocosArticle(html).map(b => paragrafos(b.replace(/^<article\b[^>]*>/i, '').replace(/<\/article>$/i, '').replace(/<article\b[\s\S]*?<\/article>/gi, ' ')));
+  let ps = porBloco.sort((x, y) => tamanho(y) - tamanho(x))[0] || [];
+  if (tamanho(ps) < 600) {
+    const todos = paragrafos(html.replace(/<(header|footer|nav|aside)\b[\s\S]*?<\/\1>/gi, ' '));
+    if (tamanho(todos) > tamanho(ps)) ps = todos;
+  }
+  return ps.join('\n\n');
+}
 async function textoDaMateria(url, limite = 24000) {
   try {
     const r = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; leitor-de-noticias/1.0)', Accept: 'text/html' }, redirect: 'follow', signal: AbortSignal.timeout(15000) });
     if (!r.ok) { console.log('blog matéria', r.status, url); return ''; }
-    const html = (await r.text()).slice(0, 2e6);
-    const art = (html.match(/<article[\s\S]*?<\/article>/i) || [html])[0];
-    const ps = (art.match(/<p[\s>][\s\S]*?<\/p>/gi) || []).map(semTags).filter(p => p.length > 40);
-    const texto = ps.join('\n\n');
+    const texto = textoDoHtml((await r.text()).slice(0, 2e6));
     if (texto.length > limite) console.log('blog matéria longa:', texto.length, 'caracteres; vão os primeiros', limite);
     return texto.slice(0, limite);
   } catch (e) { console.log('blog matéria falhou:', e.message); return ''; }
@@ -742,6 +777,6 @@ module.exports = async (req, res) => {
   }
 };
 module.exports._teste = {
-  lerFeed, semTags, pontuar, escolherCandidatos, limparArtigo, montarGiro, mdHtml, ESQUEMA_GIRO, ESQUEMA_GIRO_ESCOLHA, slugDe, slugUnico, sitemap, feedRss, paginaLista, paginaArtigo, diaBR, semLinks,
-  usarIA: f => { fabricaIA = f; }, usarGravador: f => { guardar = f; }, limparMemoria: () => { memoria = null; memoriaLoja = null; memoriaCatalogo = null; }, ESQUEMA_ARTIGO, MODELO,
+  lerFeed, semTags, textoDoHtml, pontuar, escolherCandidatos, limparArtigo, montarGiro, mdHtml, ESQUEMA_GIRO, ESQUEMA_GIRO_ESCOLHA, slugDe, slugUnico, sitemap, feedRss, paginaLista, paginaArtigo, diaBR, semLinks,
+  usarIA: f => { fabricaIA = f; }, usarGravador: f => { guardar = f; }, usarSementes: l => { SEMENTES = l; }, limparMemoria: () => { memoria = null; memoriaLoja = null; memoriaCatalogo = null; }, ESQUEMA_ARTIGO, MODELO,
 };

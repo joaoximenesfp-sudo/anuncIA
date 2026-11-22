@@ -98,6 +98,20 @@ const post = body => chamar({ method: 'POST', body: Object.assign({ idToken: 'so
   ok(cands[0].pontos >= cands[cands.length - 1].pontos, 'as que mais interessam vêm primeiro');
   ok(T.escolherCandidatos(itens.concat(itens), [], agora).length === T.escolherCandidatos(itens, [], agora).length, 'a mesma notícia em dois sites: entra uma vez');
 
+  console.log('\no texto da matéria (o <article> certo)');
+  const P = s => `<p>${s} ${'com texto suficiente para contar como parágrafo da matéria. '.repeat(3)}</p>`;
+  const aninhado = `<html><body><nav>${P('menu')}</nav><article class="post">${P('Subtítulo da matéria')}<article class="leia-tambem">${P('Cartão de outra notícia')}</article>${P('Primeiro parágrafo do corpo')}${P('Segundo parágrafo do corpo')}</article></body></html>`;
+  const tA = T.textoDoHtml(aninhado);
+  ok(/Subtítulo da matéria/.test(tA) && /Primeiro parágrafo do corpo/.test(tA) && /Segundo parágrafo do corpo/.test(tA) && !/Cartão de outra notícia/.test(tA) && !/menu/.test(tA),
+    'um <article> dentro do outro (cartão de "leia também"): o corpo inteiro vem, o cartão não');
+  const varios = `<article>${P('Cartão curto')}</article><article>${P('Corpo um')}${P('Corpo dois')}${P('Corpo três')}${P('Corpo quatro')}${P('Corpo cinco')}</article><article>${P('Outro cartão')}</article>`;
+  const tV = T.textoDoHtml(varios);
+  ok(/Corpo um/.test(tV) && /Corpo três/.test(tV) && !/Cartão curto/.test(tV) && !/Outro cartão/.test(tV), 'vários <article>: o que tem mais texto');
+  const fora = `<header>${P('Cabeçalho do site')}</header><article>${P('Só o subtítulo')}</article><div class="conteudo">${P('Corpo fora do article um')}${P('Corpo fora do article dois')}${P('Corpo fora do article três')}${P('Corpo fora do article quatro')}</div><footer>${P('Rodapé do site')}</footer><script>var x = "<p>${'código '.repeat(20)}</p>";</script>`;
+  const tF = T.textoDoHtml(fora);
+  ok(/Corpo fora do article um/.test(tF) && /quatro/.test(tF) && !/Cabeçalho do site/.test(tF) && !/Rodapé do site/.test(tF) && !/código/.test(tF),
+    'no <article> só o subtítulo: os parágrafos da página toda, sem cabeçalho, rodapé e script');
+
   console.log('\no que a IA devolve, limpo');
   const L = T.limparArtigo(ARTIGO_IA);
   ok(!/https?:|golpe\.example|99999-1234/.test(L.corpo) && /Faça backup/.test(L.corpo), 'tira link e telefone do texto (o site põe os links que valem)');
@@ -246,6 +260,27 @@ const post = body => chamar({ method: 'POST', body: Object.assign({ idToken: 'so
   roteiro = [respostaIA({ escolha: 0, motivo: 'ok' }), respostaIA(ARTIGO_IA)];
   r = await chamar({ query: { acao: 'gerar' } });
   ok(r.status === 200 && r.json().ok, 'falhou duas vezes no dia: o cron tenta a terceira');
+
+  console.log('\na edição escrita à mão (entra uma vez só, sem a IA)');
+  const SEM = { slug: 'primeira-edicao-do-giro', titulo: 'Primeira edição do giro de tecnologia', resumo: 'Os destaques da semana.', corpo: CORPO, pontos: ARTIGO_IA.pontos,
+    legenda: 'legenda', assunto: 'Giro do dia', termos: ['ThinkPad'], tipo: 'giro', fonte: null, fontes: [{ nome: 'g1', url: 'https://g1.globo.com/tecnologia/x.ghtml', titulo: 'X' }],
+    publicado_em: new Date(agora + 60e3).toISOString(), atualizado_em: new Date(agora + 60e3).toISOString(), status: 'publicado', origem: 'ia', editado: false, insta: null };
+  T.usarSementes([SEM]); T.limparMemoria();
+  const antes = JSON.parse(guardado.conteudo), qtd = antes.artigos.length;
+  r = await chamar();
+  ok(r.status === 200 && r.body.includes('Primeira edição do giro de tecnologia') && r.body.indexOf('Primeira edição do giro') < r.body.indexOf(antes.artigos[0].titulo),
+    'aparece no blog na hora, a mais nova no alto, sem precisar da IA');
+  r = await chamar({ query: { slug: 'primeira-edicao-do-giro' } });
+  ok(r.status === 200 && /g1\.globo\.com\/tecnologia\/x\.ghtml/.test(r.body), 'tem a página dela, com o link da fonte');
+  r = await post({ acao: 'ocultar', slug: 'primeira-edicao-do-giro' });
+  let dS = JSON.parse(guardado.conteudo);
+  ok(r.status === 200 && dS.semeados.includes('primeira-edicao-do-giro') && dS.artigos.length === qtd + 1 && dS.artigos.find(x => x.slug === 'primeira-edicao-do-giro').status === 'oculto' &&
+    dS.usadas.includes('https://g1.globo.com/tecnologia/x.ghtml'), 'na primeira gravação vai para o arquivo do blog, e as fontes contam como usadas');
+  T.limparMemoria();
+  r = await chamar({ query: { slug: 'primeira-edicao-do-giro' } });
+  const r2 = await post({ acao: 'lista' });
+  ok(r.status === 404 && r2.json().artigos.filter(x => x.slug === 'primeira-edicao-do-giro').length === 1, 'ocultada, não volta sozinha (e não duplica)');
+  T.usarSementes([]); T.limparMemoria();
 
   console.log('\nfontes');
   r = await chamar({ query: { acao: 'fontes' } });
