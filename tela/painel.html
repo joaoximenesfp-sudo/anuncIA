@@ -927,7 +927,7 @@ $('bt-esqueci-email').onclick = () => {
   d.innerHTML = 'É o mesmo e-mail com que você entra no Business IJX. Têm acesso: ' + SOCIOS.map(e => '<b>' + esc(mascarar(e)) + '</b>').join(' · ') + '.';
 };
 const msgEntrar = err => ({
-  'auth/invalid-credential': 'E-mail ou senha incorretos. Use o e-mail do Business IJX (veja “Esqueci o e-mail”).',
+  'auth/invalid-credential': 'E-mail ou senha incorretos. Use o mesmo e-mail do Business IJX (lá, toque no seu nome no topo para ver qual é). Se o e-mail estiver certo, toque em “Esqueci minha senha”.',
   'auth/wrong-password': 'Senha incorreta.', 'auth/user-not-found': 'Não existe conta com esse e-mail (veja “Esqueci o e-mail”).',
   'auth/invalid-email': 'E-mail inválido.', 'auth/missing-email': 'Digite o e-mail.',
   'auth/too-many-requests': 'Muitas tentativas. Espere alguns minutos e tente de novo.',

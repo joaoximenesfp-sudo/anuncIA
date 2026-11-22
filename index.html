@@ -4175,6 +4175,9 @@ onAuthStateChanged(auth,u=>{
     if(nuEl) nuEl.innerHTML = nomeExib + (perfilAtual==='igor'
       ? ' <span style="font-size:.62rem;background:#fdf4ff;color:#7c3aed;border:1px solid #e9d5ff;padding:1px 6px;border-radius:8px;font-weight:600">Sócio</span>'
       : ' <span style="font-size:.62rem;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;padding:1px 6px;border-radius:8px;font-weight:600">Dono</span>');
+    // com qual e-mail entrou (é o mesmo que entra no Painel da Tela): no nome do topo
+    if(nuEl){ nuEl.title='Você entrou como '+u.email+' (toque para ver)'; nuEl.style.cursor='pointer';
+      nuEl.onclick=()=>alert('Você está no Business IJX com o e-mail:\n\n'+u.email+'\n\nNo Painel da Tela, entre com esse mesmo e-mail e a mesma senha.'); }
     // Mostrar botão admin só para o dono
     const btnAdm = document.getElementById('btnAdmin');
     if(btnAdm) btnAdm.style.display = perfilAtual==='joao' ? '' : 'none';
