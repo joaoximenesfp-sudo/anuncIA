@@ -1,5 +1,5 @@
 {
- "versao": "2026-11-18.1",
+ "versao": "2026-11-22.1",
  "app": "2026-11-20.7",
  "regioes": {
   "centro": {"nome": "Centro de Campinas", "lat": -22.9056, "lon": -47.0608, "km": 1.5},
@@ -544,6 +544,10 @@
    "segundos": 14
   },
   {
+   "midia": "compro",
+   "segundos": 14
+  },
+  {
    "midia": "c01",
    "segundos": 13
   },
@@ -568,7 +572,7 @@
    "segundos": 13
   },
   {
-   "midia": "compro",
+   "midia": "manut",
    "segundos": 12
   },
   {
@@ -580,23 +584,15 @@
    "segundos": 14
   },
   {
-   "midia": "q02a",
-   "segundos": 8
-  },
-  {
-   "midia": "q02b",
-   "segundos": 7
-  },
-  {
-   "midia": "c05",
-   "segundos": 13
-  },
-  {
    "midia": "p05",
    "segundos": 14
   },
   {
    "midia": "t04",
+   "segundos": 14
+  },
+  {
+   "midia": "compro",
    "segundos": 14
   },
   {
@@ -639,24 +635,16 @@
    "segundos": 13
   },
   {
+   "midia": "compro",
+   "segundos": 14
+  },
+  {
    "midia": "t06",
    "segundos": 14
   },
   {
    "midia": "p07",
    "segundos": 14
-  },
-  {
-   "midia": "compro",
-   "segundos": 12
-  },
-  {
-   "midia": "q04a",
-   "segundos": 8
-  },
-  {
-   "midia": "q04b",
-   "segundos": 7
   },
   {
    "midia": "t08",
@@ -667,16 +655,16 @@
    "segundos": 14
   },
   {
+   "midia": "manut",
+   "segundos": 12
+  },
+  {
    "midia": "c04",
    "segundos": 13
   },
   {
    "midia": "t09",
    "segundos": 14
-  },
-  {
-   "midia": "manut",
-   "segundos": 12
   },
   {
    "midia": "p08",
@@ -689,6 +677,10 @@
   {
    "midia": "c07",
    "segundos": 13
+  },
+  {
+   "midia": "compro",
+   "segundos": 14
   },
   {
    "midia": "p09",
