@@ -570,7 +570,15 @@ a{color:inherit}
 .bt-sec{background:var(--chip);color:var(--tx)}
 .mais{list-style:none;padding:0;margin:0;display:grid;gap:10px}
 .mais a{text-decoration:none;font-weight:600}.mais span{display:block;font-size:.8rem;color:var(--li);font-weight:400}
-.slides{margin:0 0 26px}
+.slides{margin:0 0 26px;position:relative}
+.sl-seta{position:absolute;top:calc(50% - 32px);width:44px;height:44px;border-radius:50%;border:1px solid var(--b);background:var(--card);color:var(--tx);
+  box-shadow:var(--sh);font-family:inherit;font-size:1.7rem;font-weight:600;line-height:1;padding:0 0 4px;display:grid;place-items:center;cursor:pointer;z-index:2;transition:opacity .15s}
+.sl-ant{left:-14px}.sl-prox{right:-14px}
+.sl-seta:disabled{opacity:0;pointer-events:none}
+@media (hover:none){.sl-seta{display:none}}
+@media (hover:hover){.sl-trilho{cursor:grab}}
+.sl-trilho.arrastando{cursor:grabbing;scroll-snap-type:none;user-select:none;-webkit-user-select:none}
+@media(max-width:600px){.sl-ant{left:-6px}.sl-prox{right:-6px}}
 .sl-trilho{list-style:none;margin:0 -20px;padding:4px 20px 12px;display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding:0 20px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
 .sl-trilho::-webkit-scrollbar{display:none}
 @media(max-width:600px){.sl-trilho{margin:0 -16px;padding:4px 16px 12px;scroll-padding:0 16px}}
@@ -715,6 +723,7 @@ function slidesHtml(a, nome) {
   const dois = n => String(n).padStart(2, '0');
   return `<section class="slides" aria-label="A notícia em ${ps.length} slides"><ol class="sl-trilho" tabindex="0">${ps.map((p, i) =>
     `<li class="sl"><span class="sl-n">${dois(i + 1)} / ${dois(ps.length)}</span><p>${esc(p)}</p><span class="sl-pe"><span class="mk mk-p">${MARCA}</span>${esc(nome)}</span></li>`).join('')}</ol>` +
+    `<button type="button" class="sl-seta sl-ant" aria-label="Slide anterior">‹</button><button type="button" class="sl-seta sl-prox" aria-label="Próximo slide">›</button>` +
     `<p class="sl-dica">Arraste para o lado →</p></section>`;
 }
 // O quadro das máquinas vai no meio do texto, onde mais gente ainda está lendo (no celular, muita
@@ -750,6 +759,30 @@ function partilhaHtml(url, titulo, fim, post, legenda) {
     `<button type="button" class="pt pt-copiar-leg">${ICONE_LINK}<span>Copiar a legenda</span></button></div></div>`;
 }
 const SCRIPT_PARTILHA = `<script>
+// Os slides: no celular o dedo arrasta; no computador, as setas e o arrastar com o mouse.
+document.querySelectorAll('.slides').forEach(function (s) {
+  var t = s.querySelector('.sl-trilho'), ant = s.querySelector('.sl-ant'), prox = s.querySelector('.sl-prox'), dica = s.querySelector('.sl-dica');
+  if (!t || !ant || !prox) return;
+  if (window.matchMedia && matchMedia('(hover: hover)').matches && dica) dica.textContent = 'Use as setas ou arraste com o mouse →';
+  function passo() { var c = t.querySelector('.sl'); return c ? c.getBoundingClientRect().width + 12 : 300; }
+  function setas() { ant.disabled = t.scrollLeft <= 2; prox.disabled = t.scrollLeft + t.clientWidth >= t.scrollWidth - 2; }
+  ant.addEventListener('click', function () { t.scrollBy({ left: -passo(), behavior: 'smooth' }); });
+  prox.addEventListener('click', function () { t.scrollBy({ left: passo(), behavior: 'smooth' }); });
+  t.addEventListener('scroll', setas, { passive: true }); window.addEventListener('resize', setas); setas();
+  var x0 = 0, s0 = 0, segurando = false;
+  t.addEventListener('pointerdown', function (e) {
+    if (e.pointerType !== 'mouse' || e.button !== 0) return;
+    segurando = true; x0 = e.clientX; s0 = t.scrollLeft; t.classList.add('arrastando');
+    try { t.setPointerCapture(e.pointerId); } catch (er) {}
+  });
+  t.addEventListener('pointermove', function (e) { if (segurando) { t.scrollLeft = s0 - (e.clientX - x0); e.preventDefault(); } });
+  function soltar() {
+    if (!segurando) return; segurando = false; t.classList.remove('arrastando');
+    var w = passo(); t.scrollTo({ left: Math.round(t.scrollLeft / w) * w, behavior: 'smooth' }); // para no slide mais perto
+  }
+  t.addEventListener('pointerup', soltar); t.addEventListener('pointercancel', soltar); t.addEventListener('lostpointercapture', soltar);
+  t.addEventListener('dragstart', function (e) { e.preventDefault(); });
+});
 document.querySelectorAll('.partilha').forEach(function (b) {
   var url = b.getAttribute('data-url'), titulo = b.getAttribute('data-titulo');
   var nat = b.querySelector('.pt-nativo'), cp = b.querySelector('.pt-copiar'), rot = cp.querySelector('span');
