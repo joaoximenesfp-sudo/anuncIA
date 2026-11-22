@@ -185,6 +185,11 @@ const post = body => chamar({ method: 'POST', body: Object.assign({ idToken: 'so
   ok(capa.status === 200 && capa.headers['content-type'] === 'image/png' && Buffer.isBuffer(capa.raw) && capa.raw.slice(1, 4).toString() === 'PNG' &&
     capa.raw.readUInt32BE(16) === 1200 && capa.raw.readUInt32BE(20) === 630 && /s-maxage=604800/.test(capa.headers['cache-control']), 'a imagem do link: PNG 1200×630 com o título, guardada no cache');
   ok(T.urlCapa(a1) !== T.urlCapa(Object.assign({}, a1, { titulo: 'Outro título para o mesmo artigo' })), 'mudou o título: muda o endereço da imagem (o WhatsApp não fica com a velha)');
+  const igs = r.body.match(/<button type="button" class="pt pt-ig" data-story="\/blog\/capa\/[^"]+\?formato=story&amp;v=[a-z0-9]+">/g) || [];
+  ok(igs.length === 2 && /navigator\.canShare/.test(r.body) && /files: \[arquivo\]/.test(r.body) && /figurinha &quot;Link&quot;|figurinha "Link"/.test(r.body),
+    'Instagram no topo e no fim: a imagem do artigo vai para o story e o link fica copiado para a figurinha "Link"');
+  const story = await chamar({ query: { capa: a1.slug, formato: 'story' } });
+  ok(story.status === 200 && story.headers['content-type'] === 'image/png' && story.raw.readUInt32BE(16) === 1080 && story.raw.readUInt32BE(20) === 1920, 'a imagem do story: PNG 1080×1920');
   const meio = T.noMeio('<p>a</p><h2>Um</h2><p>' + 'b'.repeat(300) + '</p><h2>Dois</h2><p>' + 'c'.repeat(300) + '</p>', '[Q]');
   ok(meio.indexOf('[Q]') === meio.indexOf('<h2>Dois</h2>') - 3 && T.noMeio('<p>só um</p>', '[Q]').endsWith('[Q]') && T.noMeio('<p>x</p>', '') === '<p>x</p>',
     'o quadro entra antes do subtítulo do meio; texto curto demais: no fim');

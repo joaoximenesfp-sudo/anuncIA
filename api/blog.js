@@ -583,6 +583,8 @@ a{color:inherit}
 .pt svg{width:15px;height:15px;flex:none}
 .pt-wa{background:var(--wa);border-color:transparent;color:#04210F}
 .pt-nativo{background:linear-gradient(150deg,var(--g1),var(--g2));border-color:transparent;color:#04210F}
+.pt-ig{background:linear-gradient(45deg,#F58529,#DD2A7B 55%,#8134AF);border-color:transparent;color:#fff}
+.pt-aviso{flex-basis:100%;margin:2px 0 0;font-size:.82rem;color:var(--mu)}
 .rodape{padding:34px 0 46px;color:var(--li);font-size:.85rem;text-align:center}
 .rodape a{color:var(--mu)}
 `;
@@ -644,28 +646,40 @@ function paginaLista(d, loja) {
 // A imagem que aparece quando alguém manda o link (WhatsApp, Facebook...): o título do artigo no
 // visual da loja, 1200×630, feita na hora e guardada no cache da Vercel.
 let og = null, fonteOg = null;
-async function capaPng(titulo, rotulo, nome) {
+async function capaPng(titulo, rotulo, nome, { story = false, resumo = '' } = {}) {
   if (!og) og = await import('@vercel/og');
   if (!fonteOg) fonteOg = fs.readFileSync(path.join(__dirname, '..', 'fontes', 'inter-latin-600.woff'));
-  const h = (type, style, ...filhos) => ({ type, props: { style, children: filhos.length > 1 ? filhos : filhos[0] } });
-  const t = cortar(titulo, 110), tam = t.length <= 40 ? 78 : t.length <= 72 ? 64 : 54;
+  const h = (type, style, ...filhos) => { filhos = filhos.filter(x => x != null && x !== ''); return { type, props: { style, children: filhos.length > 1 ? filhos : filhos[0] } }; };
+  const t = cortar(titulo, 110);
   const marca = 'data:image/svg+xml;base64,' + Buffer.from(MARCA.replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" ')).toString('base64');
-  const el = h('div', { width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '64px 72px', color: '#0B1221',
-      backgroundColor: '#F4F6F9', backgroundImage: 'radial-gradient(circle at 100% 0%, rgba(28,240,143,0.40) 0%, rgba(28,240,143,0) 58%)', fontFamily: 'Inter' },
-    h('div', { display: 'flex', alignSelf: 'flex-start', fontSize: 24, letterSpacing: 1, color: '#1CF08F', backgroundColor: '#0B1221', borderRadius: 999, padding: '10px 22px' }, rotulo.toUpperCase()),
-    h('div', { display: 'flex', fontSize: tam, lineHeight: 1.12, letterSpacing: -1.5 }, t),
-    h('div', { display: 'flex', alignItems: 'center', justifyContent: 'space-between' },
-      h('div', { display: 'flex', alignItems: 'center', fontSize: 30 },
-        h('div', { display: 'flex', width: 62, height: 62, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundImage: 'linear-gradient(150deg, #1CF08F, #00B368)' },
-          { type: 'img', props: { src: marca, width: 42, height: 42 } }),
-        h('div', { display: 'flex', marginLeft: 18 }, nome)),
-      h('div', { display: 'flex', fontSize: 26, color: '#556070' }, 'Leia no blog →')));
-  const r = new og.ImageResponse(el, { width: 1200, height: 630, fonts: [{ name: 'Inter', data: fonteOg, weight: 600, style: 'normal' }] });
+  const selo = (lado, fonte) => h('div', { display: 'flex', alignItems: 'center', fontSize: fonte },
+    h('div', { display: 'flex', width: lado, height: lado, borderRadius: Math.round(lado * 0.27), alignItems: 'center', justifyContent: 'center', backgroundImage: 'linear-gradient(150deg, #1CF08F, #00B368)' },
+      { type: 'img', props: { src: marca, width: Math.round(lado * 0.68), height: Math.round(lado * 0.68) } }),
+    h('div', { display: 'flex', marginLeft: Math.round(lado * 0.3) }, nome));
+  const chip = fonte => h('div', { display: 'flex', alignSelf: 'flex-start', fontSize: fonte, letterSpacing: 1, color: '#1CF08F', backgroundColor: '#0B1221', borderRadius: 999, padding: `${Math.round(fonte * 0.42)}px ${Math.round(fonte * 0.9)}px` }, rotulo.toUpperCase());
+  const fundo = { display: 'flex', flexDirection: 'column', width: '100%', height: '100%', color: '#0B1221', backgroundColor: '#F4F6F9', fontFamily: 'Inter',
+    backgroundImage: 'radial-gradient(circle at 100% 0%, rgba(28,240,143,0.40) 0%, rgba(28,240,143,0) 58%)' };
+  // o story deixa livres o alto e o pé (onde o Instagram põe o nome, a barra e as respostas)
+  const el = story
+    ? h('div', Object.assign({}, fundo, { padding: '250px 84px 290px' }),
+      selo(78, 38),
+      h('div', { display: 'flex', flexDirection: 'column', marginTop: 'auto', marginBottom: 'auto' },
+        chip(30),
+        h('div', { display: 'flex', fontSize: t.length <= 40 ? 98 : t.length <= 72 ? 84 : 72, lineHeight: 1.1, letterSpacing: -2, marginTop: 44 }, t),
+        resumo ? h('div', { display: 'flex', fontSize: 40, lineHeight: 1.35, color: '#556070', marginTop: 40 }, cortar(resumo, 170)) : null),
+      h('div', { display: 'flex', alignSelf: 'flex-start', fontSize: 36, color: '#FFFFFF', backgroundColor: '#0B1221', borderRadius: 999, padding: '22px 38px' }, 'Leia o artigo completo no blog →'))
+    : h('div', Object.assign({}, fundo, { justifyContent: 'space-between', padding: '64px 72px' }),
+      chip(24),
+      h('div', { display: 'flex', fontSize: t.length <= 40 ? 78 : t.length <= 72 ? 64 : 54, lineHeight: 1.12, letterSpacing: -1.5 }, t),
+      h('div', { display: 'flex', alignItems: 'center', justifyContent: 'space-between' }, selo(62, 30), h('div', { display: 'flex', fontSize: 26, color: '#556070' }, 'Leia no blog →')));
+  const r = new og.ImageResponse(el, { width: story ? 1080 : 1200, height: story ? 1920 : 630, fonts: [{ name: 'Inter', data: fonteOg, weight: 600, style: 'normal' }] });
   return Buffer.from(await r.arrayBuffer());
 }
 // muda quando muda o título: o WhatsApp e o Facebook guardam a imagem pelo endereço
 const versao = s => { let x = 5381; for (const c of String(s)) x = ((x * 33) ^ c.codePointAt(0)) >>> 0; return x.toString(36); };
 const urlCapa = a => `${SITE}/blog/capa/${a ? encodeURIComponent(a.slug) + '?v=' + versao(a.titulo + '|' + a.assunto) : 'blog'}`;
+// a do story fica no mesmo site da página (o celular baixa a imagem para mandar ao Instagram)
+const urlStory = a => `/blog/capa/${encodeURIComponent(a.slug)}?formato=story&v=${versao(a.titulo + '|' + a.assunto + '|' + a.resumo)}`;
 // Os pontos do artigo em slides, no topo (os mesmos do carrossel do Instagram): dá para pegar a
 // notícia arrastando para o lado, antes de ler o texto.
 function slidesHtml(a, nome) {
@@ -694,27 +708,54 @@ function noMeio(html, bloco) {
 }
 // Compartilhar: o do próprio celular (aparece só onde existe), WhatsApp, Facebook e copiar o link.
 const ICONE_PARTILHA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 8 5-5 5 5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>';
+const ICONE_IG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/></svg>';
 const ICONE_LINK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>';
-function partilhaHtml(url, titulo, fim) {
+function partilhaHtml(url, titulo, fim, story) {
   const u = encodeURIComponent(url);
   return `<div class="partilha${fim ? ' fim' : ''}" data-url="${esc(url)}" data-titulo="${esc(titulo)}">` +
     `<span class="pt-rot">${fim ? 'Gostou? Mande para alguém:' : 'Compartilhar:'}</span>` +
     `<button type="button" class="pt pt-nativo" hidden>${ICONE_PARTILHA}Compartilhar</button>` +
     `<a class="pt pt-wa" href="https://wa.me/?text=${encodeURIComponent(titulo + ' ' + url)}" target="_blank" rel="noopener">WhatsApp</a>` +
     `<a class="pt pt-fb" href="https://www.facebook.com/sharer/sharer.php?u=${u}" target="_blank" rel="noopener">Facebook</a>` +
-    `<button type="button" class="pt pt-copiar">${ICONE_LINK}<span>Copiar link</span></button></div>`;
+    `<button type="button" class="pt pt-ig" data-story="${esc(story)}">${ICONE_IG}<span>Instagram</span></button>` +
+    `<button type="button" class="pt pt-copiar">${ICONE_LINK}<span>Copiar link</span></button><p class="pt-aviso" role="status" hidden></p></div>`;
 }
 const SCRIPT_PARTILHA = `<script>
 document.querySelectorAll('.partilha').forEach(function (b) {
   var url = b.getAttribute('data-url'), titulo = b.getAttribute('data-titulo');
   var nat = b.querySelector('.pt-nativo'), cp = b.querySelector('.pt-copiar'), rot = cp.querySelector('span');
-  // no celular, o compartilhar do aparelho já tem Facebook, copiar link e o resto: ficam ele e o WhatsApp
-  if (navigator.share) { nat.hidden = false; b.querySelector('.pt-fb').hidden = true; cp.hidden = true;
+  var ig = b.querySelector('.pt-ig'), igRot = ig.querySelector('span'), aviso = b.querySelector('.pt-aviso');
+  var celular = !!(window.matchMedia && matchMedia('(pointer: coarse)').matches);
+  // no celular, o compartilhar do aparelho já tem Facebook, copiar link e o resto
+  if (navigator.share && celular) { nat.hidden = false; b.querySelector('.pt-fb').hidden = true; cp.hidden = true;
     nat.addEventListener('click', function () { navigator.share({ title: titulo, url: url }).catch(function () {}); }); }
-  function feito() { rot.textContent = 'Link copiado'; setTimeout(function () { rot.textContent = 'Copiar link'; }, 2500); }
-  function aMao() { var t = document.createElement('textarea'); t.value = url; t.setAttribute('readonly', ''); t.style.position = 'fixed'; t.style.opacity = '0';
-    document.body.appendChild(t); t.select(); try { if (document.execCommand('copy')) feito(); } catch (e) {} document.body.removeChild(t); }
-  cp.addEventListener('click', function () { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(feito, aMao); else aMao(); });
+  function avisar(t) { aviso.textContent = t; aviso.hidden = false; }
+  function copiar(ok) {
+    function aMao() { var t = document.createElement('textarea'); t.value = url; t.setAttribute('readonly', ''); t.style.position = 'fixed'; t.style.opacity = '0';
+      document.body.appendChild(t); t.select(); try { if (document.execCommand('copy') && ok) ok(); } catch (e) {} document.body.removeChild(t); }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(function () { if (ok) ok(); }, aMao); else aMao();
+  }
+  cp.addEventListener('click', function () { copiar(function () { rot.textContent = 'Link copiado'; setTimeout(function () { rot.textContent = 'Copiar link'; }, 2500); }); });
+  // O Instagram não abre link de fora como o WhatsApp: vai a imagem do artigo para o story, e o
+  // link fica copiado para a figurinha "Link". Sem o compartilhar do celular, a imagem é baixada.
+  var arquivo = null, dica = 'No story, toque na figurinha "Link" e cole o link do artigo (já está copiado).';
+  function baixar() { var a = document.createElement('a'); a.href = ig.getAttribute('data-story'); a.download = 'story-tech-campinas.png'; document.body.appendChild(a); a.click(); a.remove();
+    avisar('Imagem salva e link copiado. No celular, poste a imagem no story do Instagram e cole o link na figurinha "Link".'); }
+  function abrir() {
+    navigator.share({ files: [arquivo] }).then(function () { igRot.textContent = 'Instagram'; })
+      .catch(function (e) { igRot.textContent = e && e.name === 'NotAllowedError' ? 'Abrir no Instagram' : 'Instagram'; });
+  }
+  ig.addEventListener('click', function () {
+    copiar();
+    if (arquivo) { abrir(); return; }
+    if (!(celular && navigator.canShare)) { baixar(); return; }
+    igRot.textContent = 'Preparando…';
+    fetch(ig.getAttribute('data-story')).then(function (r) { if (!r.ok) throw new Error(r.status); return r.blob(); }).then(function (bl) {
+      var f = new File([bl], 'story-tech-campinas.png', { type: 'image/png' });
+      if (!navigator.canShare({ files: [f] })) { igRot.textContent = 'Instagram'; baixar(); return; }
+      arquivo = f; avisar(dica); abrir();
+    }).catch(function () { igRot.textContent = 'Instagram'; baixar(); });
+  });
 });
 </script>`;
 async function paginaArtigo(d, a, loja) {
@@ -740,11 +781,11 @@ async function paginaArtigo(d, a, loja) {
   <h1>${esc(a.titulo)}</h1>
   <p class="lead">${esc(a.resumo)}</p>
   <p class="meta">${esc(dataLonga(a.publicado_em))}</p>
-  ${partilhaHtml(url, a.titulo)}
+  ${partilhaHtml(url, a.titulo, false, urlStory(a))}
   ${slidesHtml(a, nome)}
   <div class="corpo">${noMeio(mdHtml(a.corpo, a.fontes), noMeioMaqs)}</div>
   ${fonte}
-  ${partilhaHtml(url, a.titulo, true)}
+  ${partilhaHtml(url, a.titulo, true, urlStory(a))}
 </article>
 <section class="bloco"><h3>Procurando um notebook?</h3>
   <p style="margin:0;color:var(--mu)">Notebooks e desktops revisados um a um, com 90 dias de garantia.</p>
@@ -805,7 +846,8 @@ module.exports = async (req, res) => {
     const [d, loja] = await Promise.all([lerBlog(), dadosLoja()]);
     if (q.capa !== undefined) {
       const a = noAr(d).find(x => x.slug === String(q.capa));
-      const png = await capaPng(a ? a.titulo : 'Notícias de tecnologia explicadas para quem usa notebook', a ? 'Blog · ' + (a.assunto || 'Notícia') : 'Blog', (loja && loja.nome) || 'Tech Campinas');
+      const png = await capaPng(a ? a.titulo : 'Notícias de tecnologia explicadas para quem usa notebook', a ? 'Blog · ' + (a.assunto || 'Notícia') : 'Blog', (loja && loja.nome) || 'Tech Campinas',
+        { story: q.formato === 'story', resumo: a ? a.resumo : 'As notícias de tecnologia que mexem com o seu notebook, explicadas sem complicação.' });
       return enviar(res, 200, 'image/png', png, 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=604800');
     }
     if (q.sitemap) return enviar(res, 200, 'application/xml; charset=utf-8', sitemap(d), CACHE_PAGINA);
@@ -822,6 +864,6 @@ module.exports = async (req, res) => {
   }
 };
 module.exports._teste = {
-  lerFeed, semTags, textoDoHtml, capaPng, urlCapa, pontuar, escolherCandidatos, limparArtigo, mdHtml, noMeio, slidesHtml, ESQUEMA_ESCOLHA, slugDe, slugUnico, sitemap, feedRss, paginaLista, paginaArtigo, diaBR, semLinks,
+  lerFeed, semTags, textoDoHtml, capaPng, urlCapa, urlStory, pontuar, escolherCandidatos, limparArtigo, mdHtml, noMeio, slidesHtml, ESQUEMA_ESCOLHA, slugDe, slugUnico, sitemap, feedRss, paginaLista, paginaArtigo, diaBR, semLinks,
   usarIA: f => { fabricaIA = f; }, usarGravador: f => { guardar = f; }, usarSementes: l => { SEMENTES = l; }, limparMemoria: () => { memoria = null; memoriaLoja = null; memoriaCatalogo = null; }, ESQUEMA_ARTIGO, MODELO,
 };
