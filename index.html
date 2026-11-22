@@ -12115,6 +12115,14 @@ function anQuebrar(ctx,txt,larg,max){
   return {linhas:lin.slice(0,max), sobrou:Math.max(0,lin.length-max)};
 }
 const anDesc=()=>(document.getElementById('anDesc')?.value||'').trim();
+// A arte tem lugar para 240 letras: corta na última palavra inteira (com "…"), nunca no
+// meio dela. A legenda do Instagram não tem esse limite: leva a descrição inteira.
+function cortarPalavra(t,n){
+  t=String(t||'').trim(); if(t.length<=n) return t;
+  const c=t.slice(0,n-1), i=Math.max(c.lastIndexOf(' '),c.lastIndexOf('\n'));
+  return (i>n*0.6?c.slice(0,i):c).replace(/[\s,;:.\-–—]+$/,'')+'…';
+}
+const descArte=p=>cortarPalavra((p&&p.descricao)||'',240);
 
 // Cabem 3 linhas no anúncio de uma máquina e 2 no de várias. O resto é cortado
 // — mas cortar calado é o pior dos mundos: ele veria a frase pela metade só
@@ -12152,7 +12160,7 @@ let anDescAuto='';
 function anPuxarDesc(p){
   const el=document.getElementById('anDesc');
   if(!el || anModo()!=='uma') return false;
-  const nova=String((p&&p.descricao)||'').slice(0,240);
+  const nova=descArte(p);
   const atual=el.value.trim();
   // Campo vazio, ou ainda com o texto que o próprio sistema pôs: pode trocar.
   // Inclusive pra vazio — máquina sem descrição não herda a da anterior.
@@ -12180,7 +12188,7 @@ function anDescTrocaAviso(p,trocou){
 window.anUsarDescDaMaquina=()=>{
   const p=anEscolhidas[0], el=document.getElementById('anDesc');
   if(!p||!el) return;
-  el.value=String(p.descricao||'').slice(0,240);
+  el.value=descArte(p);
   anDescAuto=el.value;
   anDescTrocaAviso(p,true);
   anDesenhar();
@@ -12573,9 +12581,17 @@ function instaOpcoes(desc,tema){
       return [so.length?'🪟 '+so.join(' · '):'',r.recursos.length?'✨ '+r.recursos.join(' · '):''].filter(Boolean); }catch(e){ return []; } },
     cidade:(catCfg&&catCfg.cidade)||'Campinas', zap:instaZap(catCfg&&catCfg.whatsapp), loja:(catCfg&&catCfg.nome)||'Tech Campinas' };
 }
-function instaLegendaDaTela(){ return instaLegenda(anEscolhidas,instaOpcoes(anEscolhidas.length===1?anDesc():'')); }
+// A descrição da legenda: o que ele escreveu no campo da arte; se o campo ainda tem o texto
+// que o sistema pôs (o da máquina, encurtado para caber na arte), vai a descrição inteira.
+function instaDescLegenda(){
+  if(anEscolhidas.length!==1) return '';
+  const d=anDesc(), p=anEscolhidas[0];
+  return d&&d===anDescAuto.trim()&&p&&String(p.descricao||'').trim()?String(p.descricao).trim():d;
+}
+function instaLegendaDaTela(){ return instaLegenda(anEscolhidas,instaOpcoes(instaDescLegenda())); }
 // A do catálogo segue o tema da data (chamada e selo dela), não o que ele digitou no editor.
-function instaLegendaDe(p){ return instaLegenda([p],instaOpcoes(String(p.descricao||'').slice(0,240),anTemaPadrao())); }
+// Leva a descrição inteira da máquina (o post não tem o limite da arte).
+function instaLegendaDe(p){ return instaLegenda([p],instaOpcoes(String(p.descricao||'').trim(),anTemaPadrao())); }
 function instaContar(){
   const t=document.getElementById('instaLegenda'), c=document.getElementById('instaConta2'); if(!t||!c) return;
   const tags=(t.value.match(/#[\p{L}\p{N}_]+/gu)||[]).length;
@@ -13850,7 +13866,7 @@ function anArtesDe(p,formatos){
   const tema=anTemaPadrao();
   anLote=true;
   try{
-    anEscolhidas=[p]; mo.value='uma'; de.value=String(p.descricao||'').slice(0,240);
+    anEscolhidas=[p]; mo.value='uma'; de.value=descArte(p);
     fr.value=tema.frase; se.value=tema.selo; anSel=''; anExportando=true;
     return formatos.map(f=>{ fm.value=f; anDesenhar(); return instaCopiaCanvas(); });
   }finally{
