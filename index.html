@@ -3285,7 +3285,7 @@ div:has(> .fc2){flex-wrap:wrap;row-gap:6px}
           <div class="an-lado">
             <div class="fc"><span class="fla">Formato</span>
               <select class="inp" id="anFmt" onchange="anDesenhar()">
-                <option value="feed">📷 Post do Instagram — 1080×1080</option>
+                <option value="feed">📷 Post do Instagram — 1080×1350</option>
                 <option value="story">📱 Story — 1080×1920</option>
                 <option value="capa">💬 Capa do WhatsApp — 1440×448</option>
               </select>
@@ -11658,12 +11658,12 @@ function statusSelectHTML(p){
 // tema.js ja sabe as datas do ano. Servico externo so acrescentaria conta
 // nova, mensalidade e um lugar a mais pra subir as mesmas fotos.
 const AN_FMT={
-  feed:  {w:1080, h:1080, nome:'post'},
+  feed:  {w:1080, h:1350, nome:'post'}, // 4:5: a grade do perfil (3:4) quase não corta; no quadrado cortava as laterais
   story: {w:1080, h:1920, nome:'story'},
   capa:  {w:1440, h:448,  nome:'capa'},
 };
 // Quantas fotos cabem BEM em cada formato, no modo de uma máquina. Não é
-// limite técnico: é que num quadrado de 1080, com marca, chamada, nome, preço
+// limite técnico: é que num post de 1080×1350, com marca, chamada, nome, preço
 // e rodapé, quatro fotos deixam cada célula em 2:1 — e notebook não aparece
 // numa tira. O que passa disso vai pro carrossel, e o painel avisa.
 const AN_CAP={feed:2, story:4, capa:2};
@@ -14446,32 +14446,32 @@ window.anCatBaixar=async(id,f)=>{
     document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },1500);
   },'image/png');
 };
-// Uma foto do cadastro num quadro 1080×1080: o Instagram corta todo o carrossel no
-// formato da 1ª imagem (a arte, quadrada), então a foto vai INTEIRA, sobre ela mesma
-// desfocada, com o nome e o preço no rodapé.
+// Uma foto do cadastro num quadro 1080×1350 (4:5, como a arte): o Instagram corta todo o
+// carrossel no formato da 1ª imagem, então a foto vai INTEIRA, sobre ela mesma desfocada,
+// com o nome e o preço no rodapé.
 function anSlideFoto(img,p){
-  const L=1080, c=document.createElement('canvas'); c.width=L; c.height=L;
+  const W=1080, H=1350, c=document.createElement('canvas'); c.width=W; c.height=H;
   const ctx=c.getContext('2d'), rod=78;
-  ctx.fillStyle='#0b1220'; ctx.fillRect(0,0,L,L);
-  const cobre=Math.max(L/img.width,L/img.height);
+  ctx.fillStyle='#0b1220'; ctx.fillRect(0,0,W,H);
+  const cobre=Math.max(W/img.width,H/img.height);
   try{ ctx.filter='blur(26px)'; }catch(e){}
-  ctx.drawImage(img,(L-img.width*cobre)/2,(L-img.height*cobre)/2,img.width*cobre,img.height*cobre);
+  ctx.drawImage(img,(W-img.width*cobre)/2,(H-img.height*cobre)/2,img.width*cobre,img.height*cobre);
   try{ ctx.filter='none'; }catch(e){}
-  ctx.fillStyle='rgba(8,12,22,.55)'; ctx.fillRect(0,0,L,L);
-  const m=36, cabe=Math.min((L-2*m)/img.width,(L-rod-2*m)/img.height);
+  ctx.fillStyle='rgba(8,12,22,.55)'; ctx.fillRect(0,0,W,H);
+  const m=36, cabe=Math.min((W-2*m)/img.width,(H-rod-2*m)/img.height);
   const w=img.width*cabe, h=img.height*cabe;
-  ctx.drawImage(img,(L-w)/2,(L-rod-h)/2,w,h);
-  ctx.fillStyle='rgba(0,0,0,.6)'; ctx.fillRect(0,L-rod,L,rod);
+  ctx.drawImage(img,(W-w)/2,(H-rod-h)/2,w,h);
+  ctx.fillStyle='rgba(0,0,0,.6)'; ctx.fillRect(0,H-rod,W,rod);
   ctx.textBaseline='middle';
   const preco=fmt(anPreco(p).por);
   ctx.textAlign='right'; ctx.fillStyle='#1cf08f'; ctx.font='800 32px system-ui,sans-serif';
-  ctx.fillText(preco,L-32,L-rod/2);
-  const espaco=L-64-ctx.measureText(preco).width-28;
+  ctx.fillText(preco,W-48,H-rod/2);
+  const espaco=W-96-ctx.measureText(preco).width-28;
   ctx.textAlign='left'; ctx.fillStyle='#fff'; ctx.font='600 27px system-ui,sans-serif';
   let nome=`#${p.num||'?'} · ${String(p.nome||'Notebook').trim()}`;
   while(nome.length>8&&ctx.measureText(nome).width>espaco) nome=nome.slice(0,-2);
   if(nome!==`#${p.num||'?'} · ${String(p.nome||'Notebook').trim()}`) nome=nome.trim()+'…';
-  ctx.fillText(nome,32,L-rod/2);
+  ctx.fillText(nome,48,H-rod/2);
   return c;
 }
 // As fotos das máquinas, prontas pro carrossel: todas da máquina (até o limite) ou,
