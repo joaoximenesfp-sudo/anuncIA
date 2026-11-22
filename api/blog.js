@@ -606,6 +606,8 @@ a{color:inherit}
 .pt-leg label{display:flex;flex-direction:column;gap:6px;font-size:.8rem;color:var(--mu)}
 .pt-leg textarea{font:inherit;font-size:.86rem;line-height:1.45;color:var(--tx);background:var(--bg);border:1px solid var(--b);border-radius:10px;padding:10px;resize:vertical;width:100%}
 .pt-leg .pt{align-self:flex-start}
+.pt-img{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:.8rem;color:var(--mu);text-align:center}
+.pt-img img{width:100%;max-width:300px;aspect-ratio:4/5;object-fit:cover;border-radius:12px;border:1px solid var(--b);background:var(--bg);-webkit-touch-callout:default}
 .rodape{padding:34px 0 46px;color:var(--li);font-size:.85rem;text-align:center}
 .rodape a{color:var(--mu)}
 `;
@@ -817,19 +819,34 @@ document.querySelectorAll('.partilha').forEach(function (b) {
     copiar(legenda, function () { clRot.textContent = 'Legenda copiada'; setTimeout(function () { clRot.textContent = 'Copiar a legenda'; }, 2500); }, true);
   });
   var dica = 'No Instagram, escolha Feed e, na legenda, toque e segure para colar (a legenda com a introdução e o link já está copiada; ela também está aqui embaixo).';
+  // Sem o compartilhar de imagem. No computador: baixa a imagem e abre o Instagram numa aba nova.
+  // No celular (o navegador de dentro do Instagram ou do Facebook, por exemplo, não manda imagem
+  // nem baixa arquivo: abriria a imagem como página): a imagem aparece aqui para salvar.
   function baixar() {
-    var a = document.createElement('a'); a.href = imagem; a.download = 'post-tech-campinas.png';
-    document.body.appendChild(a); a.click(); a.remove();
-    window.open('https://www.instagram.com/', '_blank', 'noopener');
-    avisar(celular ? 'Imagem salva e legenda copiada: no Instagram, crie o post com a imagem e cole a legenda (introdução + link).'
-      : 'A imagem do post foi baixada e o Instagram abriu em outra aba: clique em Criar (+), escolha a imagem e cole a legenda (já copiada, com a introdução e o link).');
+    if (!celular) {
+      var a = document.createElement('a'); a.href = imagem; a.download = 'post-tech-campinas.png';
+      document.body.appendChild(a); a.click(); a.remove();
+      window.open('https://www.instagram.com/', '_blank', 'noopener');
+      avisar('A imagem do post foi baixada e o Instagram abriu em outra aba: clique em Criar (+), escolha a imagem e cole a legenda (já copiada, com a introdução e o link).');
+      return;
+    }
+    if (!caixa.querySelector('.pt-img')) {
+      var fig = document.createElement('div'); fig.className = 'pt-img';
+      fig.innerHTML = '<img alt="A imagem do post para o Instagram"><span>Toque e segure na imagem e escolha <b>Salvar</b>.</span>';
+      fig.querySelector('img').src = imagem; caixa.insertBefore(fig, caixa.firstChild);
+    }
+    mostrarLegenda(); igRot.textContent = 'Instagram';
+    avisar(/Instagram|FBAN|FBAV|FB_IAB/.test(navigator.userAgent)
+      ? 'Aqui dentro do Instagram não dá para mandar a imagem direto: salve a imagem abaixo, crie o post e cole a legenda (já copiada). Ou abra esta página no navegador (menu ⋯) e toque em Instagram de novo.'
+      : 'Salve a imagem abaixo (toque e segure), abra o Instagram, crie o post com ela e cole a legenda (já copiada, com a introdução e o link).');
+    caixa.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }
   function abrir() {
-    navigator.share({ files: [arquivo], text: legenda }).then(function () { igRot.textContent = 'Instagram'; })
+    navigator.share(comTexto ? { files: [arquivo], text: legenda } : { files: [arquivo] }).then(function () { igRot.textContent = 'Instagram'; })
       .catch(function (e) { igRot.textContent = e && e.name === 'NotAllowedError' ? 'Abrir no Instagram' : 'Instagram'; });
   }
   // o abrir uma aba nova só vale logo no toque: se a imagem não der para mandar, pede outro toque
-  var modo = '';
+  var modo = '', comTexto = false;
   ig.addEventListener('click', function () {
     copiar(legenda, null, !celular); mostrarLegenda();
     if (modo === 'arquivo') { abrir(); return; }
@@ -837,9 +854,10 @@ document.querySelectorAll('.partilha').forEach(function (b) {
     igRot.textContent = 'Preparando…';
     fetch(imagem).then(function (r) { if (!r.ok) throw new Error(r.status); return r.blob(); }).then(function (bl) {
       var f = new File([bl], 'post-tech-campinas.png', { type: 'image/png' });
-      if (!navigator.canShare({ files: [f], text: legenda })) throw new Error('sem arquivo');
+      if (navigator.canShare({ files: [f], text: legenda })) comTexto = true;
+      else if (!navigator.canShare({ files: [f] })) throw new Error('sem arquivo');
       arquivo = f; modo = 'arquivo'; avisar(dica); abrir();
-    }).catch(function () { modo = 'baixar'; igRot.textContent = 'Abrir no Instagram'; avisar('Toque de novo para salvar a imagem e abrir o Instagram.'); });
+    }).catch(function () { modo = 'baixar'; baixar(); });
   });
 });
 </script>`;
