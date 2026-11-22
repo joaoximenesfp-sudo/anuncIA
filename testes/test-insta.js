@@ -312,8 +312,9 @@ const ID1 = 'a'.repeat(32), ID2 = 'b'.repeat(32);
   console.log('\nlegenda do post (index.html)');
   const { extrair } = require('./extrair.js');
   const fmt = v => 'R$ ' + Math.round(v || 0).toLocaleString('pt-BR');
-  const fns = new Function('fmt', [extrair('function instaZap('), 'const instaTag=' + extrair('const instaTag=').slice('const instaTag='.length),
-    extrair('function instaLegenda('), 'return { instaZap, instaTag, instaLegenda };'].join('\n'))(fmt);
+  const fns = new Function('fmt', [extrair('function cliNorm(s)'), extrair('function instaZap('), 'const instaTag=' + extrair('const instaTag=').slice('const instaTag='.length),
+    extrair('function instaDescSemRepetir('),
+    extrair('function instaLegenda('), 'return { instaZap, instaTag, instaLegenda, instaDescSemRepetir };'].join('\n'))(fmt);
   const maq = { id: 'p1', nome: 'Dell Latitude 5490 i5 8ª 16GB SSD 256GB', venda: 2199, custo: 1234, lucro: 965, fornecedor_nome: 'Fulano Peças', investidor: 'Beltrano' };
   const leg = fns.instaLegenda([maq], { selo: 'oferta da semana', frase: 'Notebooks revisados, com 90 dias de garantia.', desc: 'Bateria segura 4h, tela sem risco.',
     preco: () => ({ de: 2199, por: 1899, pct: 14 }), specs: () => ['🧠 2 slots RAM · 1 livre', '🔋 Bateria boa'], marca: () => 'Dell',
@@ -331,6 +332,19 @@ const ID1 = 'a'.repeat(32), ID2 = 'b'.repeat(32);
   ok(leg.length <= 2200 && (leg.match(/#/g) || []).length <= 30 && !/\n{3}/.test(leg), 'cabe no Instagram (2.200 letras, 30 hashtags) e sem buraco');
   ok(fns.instaZap('19993956265') === '(19) 99395-6265' && fns.instaZap('1932345678') === '(19) 3234-5678' && fns.instaZap('') === '', 'WhatsApp formatado');
   ok(fns.instaTag('São José') === 'saojose' && fns.instaTag('HP') === 'hp', 'hashtag sem acento nem espaço');
+  // a descrição escrita que repete a ficha (o post da T14 Ger 2 saiu com tudo duas vezes)
+  const t14 = { id: 't14', nome: 'Lenovo T14 Ger 2 · i7 11ª · NVMe 512GB · 16GB DDR4 RAM', venda: 3700 };
+  const descT14 = 'Marca: Lenovo\nModelo: Thinkpad T14 Gen 2\nProcessador: i7 de 11ª Geração\nMemória RAM: 16GB DDR4\nSSD NVMe: 512GB + 1 Slot livre para Upgrade\n' +
+    'Formatado no Windows 11\nPacote office incluso\nBattery report: Excelente\nTeclado retroiluminado\nTela de 14" Full HD\n\nMáquina de linha corporativa, muito conservada.';
+  const legT14 = fns.instaLegenda([t14], { desc: descT14, specs: () => ['🧠 1/1 RAM · cheio', '💾 1/2 M.2 · 1 livre', '🖥️ Perfeita', '🔋 Excelente'],
+    recursos: () => ['🪟 Windows 11 Pro · tela Full HD · 🎨 Preto', '✨ Wi-Fi · Bluetooth · Webcam · Microfone · Saída de fone · HDMI · USB-C · Teclado retroiluminado · Leitor digital · Acompanha carregador'],
+    marca: () => 'Lenovo', zap: '(19) 99395-6265' });
+  ok(!/Marca: Lenovo|Processador: i7|Memória RAM: 16GB|Formatado no Windows 11|Battery report|^Teclado retroiluminado$/m.test(legT14),
+    'tira da descrição as linhas que só repetem a ficha (marca, processador, memória, Windows, bateria, teclado)');
+  ok(/Pacote office incluso/.test(legT14) && /1 Slot livre para Upgrade/.test(legT14) && /Modelo: Thinkpad T14 Gen 2/.test(legT14) && /Tela de 14" Full HD/.test(legT14) &&
+    /Máquina de linha corporativa, muito conservada\./.test(legT14), 'e mantém o que só ela diz (Office, slot livre, ThinkPad, 14", o texto corrido):\n' + legT14.split('\n').slice(0, 22).join('\n'));
+  ok(fns.instaDescSemRepetir('Bateria segura 4h, tela sem risco.', '💻 Dell Latitude 5490') === 'Bateria segura 4h, tela sem risco.' && fns.instaDescSemRepetir('', 'x') === '',
+    'descrição que não repete a ficha vai inteira');
 
   console.log('\n' + (falhas ? falhas + ' FALHA(S)' : 'tudo verde'));
   process.exit(falhas ? 1 : 0);

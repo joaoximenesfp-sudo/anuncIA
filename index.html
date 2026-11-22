@@ -12541,6 +12541,24 @@ function instaZap(d){
   return d;
 }
 const instaTag=t=>String(t||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/g,'');
+// A descrição escrita costuma repetir a ficha ("Marca: Lenovo", "Processador: i7 de 11ª",
+// "Formatado no Windows 11", "Teclado retroiluminado"), que a legenda já traz nas linhas do
+// sistema: a linha que só repete sai; a que diz algo a mais ("Pacote office incluso") fica.
+// Repete = 3/4 ou mais das palavras dela (tirando rótulos como "Marca:", "Memória RAM:")
+// já estão nas linhas do sistema.
+function instaDescSemRepetir(desc,ja){
+  const ROT=instaDescSemRepetir.rot||(instaDescSemRepetir.rot=new Set(('marca modelo processador cpu memoria ram ssd hd hdd armazenamento disco '
+    +'tela display video placa grafica gpu sistema operacional so formatado instalado original geracao ger gen bateria battery report saude '
+    +'estado polegadas pol de da do das dos e em no na nos nas para com a o the of').split(' ')));
+  const tk=t=>cliNorm(t).replace(/ª/g,'a').replace(/º/g,'o').split(/[^a-z0-9]+/).filter(Boolean);
+  const base=new Set(tk(ja));
+  return String(desc||'').split('\n').filter(l=>{
+    if(!l.trim()) return true;
+    const t=tk(l).filter(w=>!ROT.has(w));
+    if(!t.length) return false; // só rótulo ("Marca:")
+    return t.filter(w=>base.has(w)).length/t.length<0.75;
+  }).join('\n').replace(/\n{3,}/g,'\n\n').trim();
+}
 // Legenda do post. maqs = as máquinas do anúncio; o = preço, ficha, marca e os
 // dados da loja (vem de fora pra dar pra testar sem o app).
 function instaLegenda(maqs,o){
@@ -12555,11 +12573,10 @@ function instaLegenda(maqs,o){
   if(o.frase&&String(o.frase).trim()&&!/garantia/i.test(o.frase)) L.push(String(o.frase).trim());
   if(L.length) L.push('');
   if(maqs.length===1){
-    const p=maqs[0];
-    L.push('💻 '+nome(p));
-    (o.specs?o.specs(p):[]).forEach(x=>L.push(x));
-    (o.recursos?o.recursos(p):[]).forEach(x=>L.push(x));
-    if(o.desc&&String(o.desc).trim()) L.push('',String(o.desc).trim());
+    const p=maqs[0], sis=['💻 '+nome(p),...(o.specs?o.specs(p):[]),...(o.recursos?o.recursos(p):[])];
+    L.push(...sis);
+    const desc=instaDescSemRepetir(o.desc,sis.join('\n'));
+    if(desc) L.push('',desc);
     L.push('','💰 '+preco(p));
   }else{
     maqs.forEach(p=>L.push(`💻 ${nome(p)} · ${preco(p)}`));
