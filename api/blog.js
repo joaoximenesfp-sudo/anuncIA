@@ -216,6 +216,8 @@ async function pedirIA(req, params) {
       }
       if (e instanceof Anthropic.AuthenticationError || e instanceof Anthropic.PermissionDeniedError) {
         console.log('blog ia acesso', e.status, String(e.message).slice(0, 300));
+        if (/credit card|customer_verification/i.test(String(e.message)))
+          throw erro(502, 'Falta cadastrar um cartão na Vercel para liberar a IA (vercel.com, na parte de AI Gateway; vem com crédito grátis). Depois é só tocar em Escrever um agora.');
         throw erro(502, 'O AI Gateway da Vercel recusou o acesso: confira se ele está ativo no projeto.');
       }
       if (e instanceof Anthropic.RateLimitError) throw erro(429, 'A IA pediu um tempo. Tente de novo daqui a pouco.');

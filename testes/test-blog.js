@@ -240,9 +240,12 @@ const post = body => chamar({ method: 'POST', body: Object.assign({ idToken: 'so
   roteiro = [() => { throw new Anthropic.APIError(402, { error: { message: 'Insufficient credits' } }, 'Insufficient credits', new Headers()); }];
   r = await chamar({ query: { acao: 'gerar' } });
   ok(r.status === 502 && /créditos de IA/.test(r.json().erro), 'acabaram os créditos do AI Gateway: diz isso');
+  roteiro = [() => { throw new Anthropic.PermissionDeniedError(403, { error: { message: 'AI Gateway requires a valid credit card on file to service requests.', type: 'customer_verification_required' } }, 'AI Gateway requires a valid credit card on file to service requests.', new Headers()); }];
+  r = await chamar({ query: { acao: 'gerar' } });
+  ok(r.status === 502 && /cadastrar um cartão na Vercel/.test(r.json().erro), 'a Vercel pede cartão para liberar a IA: diz exatamente isso');
   roteiro = [respostaIA({ escolha: 0, motivo: 'ok' }), respostaIA(ARTIGO_IA)];
   r = await chamar({ query: { acao: 'gerar' } });
-  ok(r.status === 200 && r.json().ok, 'falhou uma vez no dia: o cron tenta de novo');
+  ok(r.status === 200 && r.json().ok, 'falhou duas vezes no dia: o cron tenta a terceira');
 
   console.log('\nfontes');
   r = await chamar({ query: { acao: 'fontes' } });

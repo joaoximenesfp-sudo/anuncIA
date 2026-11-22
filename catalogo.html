@@ -257,6 +257,10 @@ b,strong,th,h1,h2,h3,h4,h5,h6{font-weight:600}
   .cn.ruim{color:var(--al);border-color:var(--al);background:var(--albg)}
   .cd-ft{display:flex;align-items:flex-end;justify-content:space-between;gap:8px;margin-top:auto;padding-top:6px}
   .cd-pr{font-size:1.4rem;font-weight:600;letter-spacing:-.02em;line-height:1}
+  .pr-de{display:block;font-size:.58em;font-weight:500;color:var(--li);text-decoration:line-through;letter-spacing:0;margin-bottom:4px}
+  .pr-pct{display:inline-block;vertical-align:middle;font-size:.5em;font-weight:600;letter-spacing:0;color:#fff;background:#E5484D;border-radius:999px;padding:3px 8px;margin-left:4px}
+  .dest-pr .pr-de{color:rgba(255,255,255,.7)}
+  .dt-promo{font-size:.85rem;font-weight:600;color:#B42318;margin:-10px 0 16px}
   .cd-pr.breve{font-size:.95rem;color:var(--al);letter-spacing:0}
   .cd-vm{display:inline-flex;align-items:center;gap:3px;font-size:.8rem;font-weight:600;color:var(--g2);white-space:nowrap}
   .cd-vm svg{width:14px;height:14px}
@@ -499,6 +503,10 @@ let itens=[], grupos=[], cfg={}, tipoSel='', marcaSel='', faixaSel='', busca='';
 // comissão dele dentro e o contato dele no topo. Sem o parâmetro, é a loja.
 const REV_ID=new URLSearchParams(location.search).get('r')||'';
 let rev=null;
+// Promoção: o preço de tabela riscado em cima e o desconto ao lado (o mesmo do Instagram).
+const emPromo=i=>(Number(i.preco_de)||0)>(Number(i.preco)||0)&&(Number(i.preco)||0)>0;
+const deHTML=i=>emPromo(i)?`<span class="pr-de">${fmt(i.preco_de)}</span>`:'';
+const pctHTML=i=>emPromo(i)?` <span class="pr-pct">-${Math.round((1-Number(i.preco)/Number(i.preco_de))*100)}%</span>`:'';
 function revPreco(base){
   const b=Number(base)||0;
   if(!b||!rev) return b;
@@ -551,9 +559,13 @@ async function carregar(){
       return;
     }
     itens=snapI.docs.map(d=>({id:d.id,...d.data()}));
+    // Promoção que já acabou: volta o preço de tabela aqui mesmo, sem esperar publicar de novo.
+    const hoje=new Date().toLocaleDateString('sv-SE');
+    itens=itens.map(i=>{ const de=Number(i.preco_de)||0;
+      return de>(Number(i.preco)||0)&&i.promo_ate&&hoje>i.promo_ate ? {...i,preco:de,preco_de:0,promo_ate:''} : i; });
     if(rev){
       // Sem preço base não há o que somar comissão, então não entra.
-      itens=itens.filter(i=>(Number(i.preco)||0)>0).map(i=>({...i,preco:revPreco(i.preco)}));
+      itens=itens.filter(i=>(Number(i.preco)||0)>0).map(i=>({...i,preco:revPreco(i.preco),preco_de:(Number(i.preco_de)||0)>0?revPreco(i.preco_de):0}));
       cfg={nome:rev.nome, whatsapp:rev.whatsapp, cidade:cfg.cidade||'',
            instagram:'', publicado_em:rev.publicado_em||cfg.publicado_em};
     }
@@ -968,7 +980,7 @@ function cartao(g,k){
   const cheg = i.estado==='chegando';
   const res  = i.estado==='reservado';
   const preco = (Number(i.preco)||0)>0
-    ? `<div class="cd-pr">${fmt(i.preco)}</div>`
+    ? `<div class="cd-pr">${deHTML(i)}${fmt(i.preco)}${pctHTML(i)}</div>`
     : `<div class="cd-pr breve">Preço em breve</div>`;
   const conds=condicoes(i).filter(c=>c.t).slice(0,2);
   const bds=[res?'<span class="bd bd-rs">Reservado</span>':'', cheg?'<span class="bd bd-ch">Chegando</span>':'',
@@ -1017,7 +1029,7 @@ function destaque(){
         <div class="vit-sl" aria-hidden="${k?'true':'false'}">
           <img src="${i.capa}" alt="${esc(rot(g))}" decoding="async">
           <div class="dest-tag"><div style="min-width:0"><div class="dest-k">Destaque${p.marca?' · '+esc(p.marca):''}</div>
-            <div class="dest-nm">${esc(p.modelo)}</div></div><div class="dest-pr">${fmt(i.preco)}</div></div>
+            <div class="dest-nm">${esc(p.modelo)}</div></div><div class="dest-pr">${deHTML(i)}${fmt(i.preco)}</div></div>
         </div>`; }).join('')}
       </div>
     </div>${n>1?seta('ant','Modelo anterior','M15 18l-6-6 6-6')+seta('prox','Próximo modelo','M9 18l6-6-6-6'):''}
@@ -1120,7 +1132,8 @@ async function abrir(g,k){
     <div class="dt-bd">
       ${n>1?`<div class="un">${g.itens.map((u,j)=>`<button class="op${j===k?' on':''}" data-u="${j}" type="button">Unidade ${j+1}</button>`).join('')}</div>`:''}
       <div class="dt-nm">${esc(p.titulo)}</div>
-      <div class="dt-pr${temPreco?'':' breve'}">${temPreco?fmt(i.preco):'Preço em breve'}</div>
+      <div class="dt-pr${temPreco?'':' breve'}">${temPreco?deHTML(i)+fmt(i.preco)+pctHTML(i):'Preço em breve'}</div>
+      ${temPreco&&emPromo(i)&&i.promo_ate?`<div class="dt-promo">🏷️ Preço de promoção até ${esc(i.promo_ate.split('-').reverse().slice(0,2).join('/'))}</div>`:''}
       ${ res ? `<div class="dt-res">🤝 Essa máquina está reservada para outro cliente. Reserva às vezes não se confirma — me chame que eu aviso se liberar, ou te mostro outra parecida.</div>`
              : cheg ? `<div class="dt-cheg">🚚 Essa máquina ainda está chegando. Dá pra reservar agora e garantir antes de entrar à venda.</div>` : '' }
       ${ficha.length?`<div class="ficha">${ficha.map(f=>`<div class="fi ${f.cls||''}"><small>${esc(f.k)}</small><b>${esc(f.v)}</b></div>`).join('')}</div>`:''}

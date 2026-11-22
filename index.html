@@ -3317,6 +3317,8 @@ div:has(> .fc2){flex-wrap:wrap;row-gap:6px}
               <div class="copia-lista" id="anLista"></div>
               <div id="anEscolhidas" class="an-chips"></div>
               <div class="tipo-auto" id="anPromoHint">Deixe o campo de promoção vazio pra sair só o preço normal.</div>
+              <label class="tipo-auto" id="anPromoAteBox" hidden style="display:flex;align-items:center;gap:6px;margin-top:4px">Promoção até
+                <input type="date" class="inp" id="anPromoAte" style="width:auto;padding:4px 8px" onchange="anPromoAteMudou()"></label>
               <div class="an-fotos" id="anFotoGrade"></div>
             </div>
             <button class="bok" style="width:100%" onclick="anBaixar()" id="anBaixarBt">⬇️ Baixar imagem</button>
@@ -5217,7 +5219,7 @@ window.updStatus=(id,newVal)=>{
     sellId=id;
     document.getElementById('smSucesso').classList.remove('on');
     document.getElementById('smProdNome').textContent=p.nome||'Produto';
-    document.getElementById('smPreco').value=p.venda||'';
+    document.getElementById('smPreco').value=precoVigente(p).por||p.venda||''; // com promoção valendo, o preço dela
     smSetPgto('vista');   // padrão à vista a cada abertura
     document.getElementById('smPlat').value=p.plataforma||'';
     document.getElementById('smData').value=new Date().toISOString().split('T')[0];
@@ -11693,11 +11695,56 @@ const anTrava=(v,min,max)=>Math.max(min,Math.min(max,v));
 // Preco que vai pra arte. So vira "de/por" quando a promocao existe e e menor
 // que o preco de tabela — promocao mais cara que o normal seria mentira, e
 // promocao igual nao e promocao.
+// ── PROMOÇÃO DA MÁQUINA: preço "de/por" com data para acabar, guardado nela (promo_preco,
+// promo_ate). Vale igual no Instagram, no catálogo e no Mercado Livre: o preço anunciado obriga
+// a loja (Código de Defesa do Consumidor), então nenhum canal pode mostrar outro. ──
+const hojeISO=()=>{ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); };
+function promoValida(p){
+  const por=parseFloat(p&&p.promo_preco)||0, de=parseFloat(p&&p.venda)||0;
+  return por>0 && por<de && (!p.promo_ate || hojeISO()<=p.promo_ate);
+}
+// O preço de hoje: o da promoção enquanto ela vale, senão o de tabela.
+function precoVigente(p){
+  const de=parseFloat(p&&p.venda)||0;
+  if(promoValida(p)){ const por=parseFloat(p.promo_preco); return {de, por, pct:Math.round((1-por/de)*100), ate:p.promo_ate||''}; }
+  return {de:0, por:de, pct:0, ate:''};
+}
+// No editor, o que ele está digitando agora; sem nada digitado, a promoção guardada.
+const anPromoDe=p=>(p.id in anPromo)?(parseFloat(anPromo[p.id])||0):(promoValida(p)?parseFloat(p.promo_preco):0);
 function anPreco(p){
   const de=parseFloat(p.venda)||0;
-  const por=parseFloat(anPromo[p.id])||0;
+  const por=anPromoDe(p);
   if(por>0 && por<de) return {de, por, pct:Math.round((1-por/de)*100)};
   return {de:0, por:de, pct:0};
+}
+// Até quando: o fim da data comemorativa escolhida (Black Friday...), ou uma semana.
+function anPromoAteSugerido(){
+  const d=anDatas().find(x=>x.id===(document.getElementById('anData')||{}).value);
+  const fim=d&&(d.periodo?d.periodo[1]:d.fim);
+  const ok=fim instanceof Date&&!isNaN(fim)&&fim>=new Date(new Date().toDateString());
+  const x=ok?fim:new Date(Date.now()+7*864e5);
+  return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');
+}
+function anPromoAte(){ const el=document.getElementById('anPromoAte'); return (el&&el.value)||anPromoAteSugerido(); }
+// Grava na máquina (e no catálogo, se ela já está lá) um pouco depois de parar de digitar.
+const anPromoTimers={};
+function anPromoGravar(id){
+  clearTimeout(anPromoTimers[id]);
+  anPromoTimers[id]=setTimeout(async()=>{
+    const p=prods.find(x=>x.id===id); if(!p) return;
+    const v=anPromoDe(p), de=parseFloat(p.venda)||0;
+    const campos=(v>0&&v<de)?{promo_preco:v,promo_ate:anPromoAte()}:{promo_preco:0,promo_ate:''};
+    if((Number(p.promo_preco)||0)===campos.promo_preco&&(p.promo_ate||'')===campos.promo_ate) return;
+    try{
+      await updateDoc(doc(db,'products',id),campos); Object.assign(p,campos);
+      await catPromoNoCatalogo(p); anPromoAviso();
+    }catch(e){ const h=document.getElementById('anPromoHint'); if(h) h.textContent='⚠️ Não consegui guardar a promoção: '+e.message; }
+  },900);
+}
+// A máquina que já está no catálogo público passa a mostrar o preço de hoje na hora.
+async function catPromoNoCatalogo(p){
+  const pr=precoVigente(p);
+  try{ await updateDoc(doc(db,'catalogo',p.id),{preco:pr.por,preco_de:pr.de,promo_ate:pr.ate}); }catch(e){ /* ainda não publicada: o Publicar catálogo leva */ }
 }
 function anTemPromo(){ return anEscolhidas.some(p=>anPreco(p).de>0); }
 
@@ -11819,7 +11866,7 @@ function anChips(){
       <span class="nb">#${p.num||'?'}</span>
       <span class="cn">${esc(p.nome||'sem nome')}</span>
       <span class="de ${pr.de?'':'off'}">${fmt(p.venda||0)}</span>
-      <input type="number" min="0" step="10" placeholder="promo" value="${anPromo[p.id]||''}"
+      <input type="number" min="0" step="10" placeholder="promo" value="${anPromoDe(p)||''}"
              oninput="anPromoMudou('${p.id}',this.value)">
       <span class="x" onclick="anAlternar('${p.id}')" title="Tirar do anúncio">✕</span>
     </div>`;
@@ -11835,8 +11882,12 @@ function anPromoAviso(){
     const por=parseFloat(anPromo[p.id])||0;
     return por>0 && por>=(parseFloat(p.venda)||0);
   });
+  const comPromo=anEscolhidas.filter(p=>anPreco(p).de>0);
+  const ate=document.getElementById('anPromoAte');
+  if(ate&&!ate.value) ate.value=anPromoAteSugerido();
+  const box=document.getElementById('anPromoAteBox'); if(box) box.hidden=!comPromo.length;
   h.textContent = !ruins.length
-    ? 'Deixe o campo de promoção vazio pra sair só o preço normal.'
+    ? (comPromo.length?'A promoção vale igual no Instagram, no catálogo e no Mercado Livre, até a data ao lado; depois volta sozinha o preço normal.':'Deixe o campo de promoção vazio pra sair só o preço normal.')
     : '⚠️ '+(ruins.length===1
         ? 'A promoção da #'+(ruins[0].num||'?')+' não é menor que o preço de tabela'
         : ruins.length+' promoções não são menores que o preço de tabela')
@@ -11844,7 +11895,8 @@ function anPromoAviso(){
 }
 window.anPromoMudou=(id,v)=>{
   const n=parseFloat(v);
-  if(n>0) anPromo[id]=n; else delete anPromo[id];
+  anPromo[id]=n>0?n:0; // vazio também é escolha: tira a promoção guardada
+  anPromoGravar(id);
   const p=prods.find(x=>x.id===id);
   const box=document.getElementById('anEscolhidas');
   // Só repinta o "de" riscado da linha mexida: refazer a lista inteira tiraria
@@ -11857,6 +11909,7 @@ window.anPromoMudou=(id,v)=>{
   anPromoAviso();
   anDesenhar();
 };
+window.anPromoAteMudou=()=>{ anEscolhidas.filter(p=>anPromoDe(p)>0).forEach(p=>anPromoGravar(p.id)); };
 window.anTrocouModo=()=>{
   const uma=anModo()==='uma';
   // No modo de uma máquina só, tudo que passa da primeira vira ruído.
@@ -13778,7 +13831,7 @@ function mlJpegDe(img){
 // categoria pedir algo que a ficha não sabe, volta { faltam } e o cartão pergunta.
 async function mlPublicarMaquina(p,aviso){
   if(mlNoAr(p)) return {jaEstava:true,link:p.ml_link||''};
-  const preco=Math.round(parseFloat(p.venda)||0);
+  const preco=Math.round(precoVigente(p).por||0); // com promoção valendo, sai pelo preço dela
   if(!(preco>0)) throw new Error('sem preço de venda');
   await anCarregarFoto(p.id);
   const imgs=anFotosDe(p.id).slice(0,10);
@@ -13948,7 +14001,7 @@ async function mlSincronizar(){
   let mudou=false;
   try{
     for(const p of prods.filter(mlNoAr)){
-      const quer=mlQuer(p), preco=Math.round(parseFloat(p.venda)||0), mud={};
+      const quer=mlQuer(p), preco=Math.round(precoVigente(p).por||0), mud={};
       if(quer==='closed') mud.status='closed';
       else if(quer==='paused'&&p.ml_status==='active') mud.status='paused';
       else if(quer==='active'&&p.ml_status==='paused'&&p.ml_pausado_pelo_sistema) mud.status='active';
@@ -14115,7 +14168,7 @@ function anMini(c,larg){
 // O que muda a arte: se nada disso mudou, a miniatura de antes vale.
 function anCatAssinatura(p){
   const v=id=>(document.getElementById(id)||{}).value||'';
-  return [p.nome,p.venda,p.descricao,p.num,anPromo[p.id]||'',(anFotoSel[p.id]||[]).join(','),anFotosDe(p.id).length,
+  return [p.nome,p.venda,p.descricao,p.num,anPromoDe(p)||'',(anFotoSel[p.id]||[]).join(','),anFotosDe(p.id).length,
           v('anData'),catCfg.whatsapp||'',catCfg.instagram||''].join('|');
 }
 function anCatCartao(p,a){
@@ -14342,7 +14395,7 @@ function anCatAnaliseHTML(p,a){
                   +(a.ref.dias!=null?`, em ~${Math.round(a.ref.dias)} dias`:''):'';
   if(a.sugerido){
     h+=`<div class="ancat-sug"><div class="ancat-sug-l"><b>💡 ${fmt(a.sugerido)} (−${a.pct}%)</b>`
-      +(anPromo[p.id]===a.sugerido?'<span class="em-uso">✓ no anúncio</span>':`<button onclick="anCatUsarSugestao('${p.id}',${a.sugerido})">Usar no anúncio</button>`)+'</div>'
+      +(anPromoDe(p)===a.sugerido?'<span class="em-uso">✓ no anúncio</span>':`<button onclick="anCatUsarSugestao('${p.id}',${a.sugerido})">Usar no anúncio</button>`)+'</div>'
       +`<details><summary>por quê?</summary><span>${a.motivos.map(esc).join(' · ')}${ref?'. '+ref:''}${a.noPiso?'. No limite do custo + 10%':''}${a.margem!=null?` · margem fica em ${a.margem}%`:''}</span></details></div>`;
   }else if(a.semEspaco){
     h+=`<div class="ancat-sug neutro">⏳ ${a.motivos.map(esc).join(' · ')} — mas o preço já está perto do custo: sem espaço pra desconto</div>`;
@@ -14353,10 +14406,11 @@ function anCatAnaliseHTML(p,a){
 }
 window.anCatUsarSugestao=(id,valor)=>{
   const p=prods.find(x=>x.id===id); if(!p) return;
-  anPromo[id]=valor; // o anúncio sai "de/por"; o preço do cadastro não muda
+  anPromo[id]=valor; // o anúncio sai "de/por"; o preço de tabela do cadastro não muda
+  anPromoGravar(id); // e a promoção vale no catálogo e no Mercado Livre também
   if(anEscolhidas.some(x=>x.id===id)){ anChips(); anDesenhar(); }
   anCatMontar();
-  instaMsg(`💡 ${p.nome}: o anúncio sai "de ${fmt(parseFloat(p.venda)||0)} por ${fmt(valor)}". O preço do cadastro continua o mesmo; se a venda fechar mais barato, é só mudar na venda.`);
+  instaMsg(`💡 ${p.nome}: sai "de ${fmt(parseFloat(p.venda)||0)} por ${fmt(valor)}" no Instagram, no catálogo e no Mercado Livre, até ${anPromoAte().split('-').reverse().join('/')}. O preço de tabela continua o mesmo.`);
 };
 function anCatVendidaHTML(p){
   const link=/^https:\/\/(www\.)?instagram\.com\//.test(p.insta_link||'')?p.insta_link:'';
@@ -15464,7 +15518,8 @@ window.publicarCatalogo=async()=>{
 
       const doc0={
         nome:String(p.nome||'Notebook'),
-        preco:parseFloat(p.venda)||0,
+        // o preço de hoje (a promoção, se vale) e o de tabela riscado, até a data
+        ...(()=>{ const pr=precoVigente(p); return {preco:pr.por, preco_de:pr.de, promo_ate:pr.ate}; })(),
         marca:brand(p.nome),
         specs:hwResumo(p,true),
         ...(()=>{ try{ const r=recursosLinhas(p); return {recursos:r.recursos, sistema:r.sistema&&r.sistema!=='Sem sistema'?r.sistema:'', resolucao:r.resolucao, cor:r.cor}; }catch(e){ return {}; } })(),
