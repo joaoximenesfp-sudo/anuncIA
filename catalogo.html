@@ -249,8 +249,7 @@ b,strong,th,h1,h2,h3,h4,h5,h6{font-weight:600}
   .cd-nf svg{width:12px;height:12px}
   .cd-bd{padding:16px 16px 18px;display:flex;flex-direction:column;gap:8px;flex:1}
   .cd-mc{font-size:.68rem;font-weight:600;letter-spacing:.13em;text-transform:uppercase;color:var(--g2)}
-  .cd-nm{font-size:1.04rem;font-weight:600;line-height:1.28;letter-spacing:-.015em;
-    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .cd-nm{font-size:1.04rem;font-weight:600;line-height:1.28;letter-spacing:-.015em;overflow-wrap:anywhere}
   .tags{display:flex;flex-wrap:wrap;gap:5px}
   .sp{font-size:.7rem;font-weight:600;color:var(--mu);background:var(--chip);padding:4px 9px;border-radius:999px;white-space:nowrap}
   .cn{font-size:.7rem;font-weight:600;padding:3px 9px;border-radius:999px;border:1px solid var(--b);color:var(--mu);white-space:nowrap}
@@ -906,14 +905,17 @@ function specsDe(i){
 }
 
 // O nome montado pelo sistema já traz a ficha: "Dell Latitude 7440 · i5 13ª ·
-// NVMe 512GB · 16GB DDR5 RAM". O primeiro pedaço é o modelo; o resto vira etiqueta.
+// NVMe 512GB · 16GB DDR5 RAM". O primeiro pedaço é o título; o resto vira etiqueta.
+// "titulo": o título inteiro, com a marca ("T14 Ger 2" de Lenovo vira "Lenovo T14 Ger 2";
+// o que já traz a marca, como "Mini Dell Optiplex", fica como está). "modelo": sem a marca.
 function partesNome(i){
   const pz=String(i.nome||'Notebook').split(/\s+·\s+/).map(s=>s.trim()).filter(Boolean);
-  let modelo=pz[0]||'Notebook';
+  const primeiro=pz[0]||'Notebook';
+  let modelo=primeiro;
   const marca=i.marca&&i.marca!=='Outros'?i.marca:'';
-  // a marca já aparece em cima, pequena: o título fica só com o modelo
+  const temMarca=!!marca&&` ${norm(primeiro).replace(/[^a-z0-9]+/g,' ')} `.includes(` ${norm(marca).replace(/[^a-z0-9]+/g,' ').trim()} `);
   if(marca && norm(modelo).startsWith(norm(marca)+' ')) modelo=modelo.slice(marca.length).trim();
-  return { marca, modelo, specs:pz.slice(1) };
+  return { marca, modelo, titulo:marca&&!temMarca?marca+' '+primeiro:primeiro, specs:pz.slice(1) };
 }
 // Rótulo de cada pedaço da ficha, para a tabela do detalhe.
 function rotuloSpec(s){
@@ -959,7 +961,7 @@ function condicoes(i){
 function cartao(g,k){
   const i=g.itens[0], n=g.itens.length, p=partesNome(i);
   const capa = i.capa
-    ? `<img src="${i.capa}" alt="${esc(p.marca+' '+p.modelo)}" loading="lazy">`
+    ? `<img src="${i.capa}" alt="${esc(p.titulo)}" loading="lazy">`
     : `<div class="sem">${IC.note}<span>Foto em breve</span></div>`;
   const nf = Number(i.n_fotos)||0;
   const cheg = i.estado==='chegando';
@@ -970,15 +972,14 @@ function cartao(g,k){
   const conds=condicoes(i).filter(c=>c.t).slice(0,2);
   const bds=[res?'<span class="bd bd-rs">Reservado</span>':'', cheg?'<span class="bd bd-ch">Chegando</span>':'',
              n>1?`<span class="bd bd-un">${n} unidades</span>`:''].filter(Boolean).join('');
-  return `<div class="cd${cheg?' cheg':''}${res?' res':''}" data-g="${k}" style="--i:${Math.min(k,12)}" tabindex="0" role="button" aria-label="${esc(p.marca+' '+p.modelo)}">
+  return `<div class="cd${cheg?' cheg':''}${res?' res':''}" data-g="${k}" style="--i:${Math.min(k,12)}" tabindex="0" role="button" aria-label="${esc(p.titulo)}">
     <div class="cd-im">${capa}
       ${bds?`<div class="bdg">${bds}</div>`:''}
       ${nf>1?`<span class="cd-nf">${IC.foto}${nf}</span>`:''}
       ${vidOk(i)?`<span class="cd-vd">▶ vídeo</span>`:''}
     </div>
     <div class="cd-bd">
-      ${p.marca?`<div class="cd-mc">${esc(p.marca)}</div>`:''}
-      <div class="cd-nm">${esc(p.modelo)}</div>
+      <div class="cd-nm">${esc(p.titulo)}</div>
       ${p.specs.length?`<div class="tags">${p.specs.slice(0,3).map((s,j)=>`<span class="sp${j>1?' x2':''}">${esc(s)}</span>`).join('')}</div>`:''}
       ${conds.length?`<div class="tags">${conds.map((c,j)=>`<span class="cn ${c.cls||''}${j>0?' x2':''}">${esc(c.t)}</span>`).join('')}</div>`:''}
       <div class="cd-ft">${preco}<span class="cd-vm">Ver detalhes${IC.seta}</span></div>
@@ -1005,7 +1006,7 @@ function destaque(){
   if(vitLimpa){ vitLimpa(); vitLimpa=null; }
   const gs=vitrineModelos();
   if(!gs.length){ $('destaque').innerHTML=''; $('heroG').classList.add('so'); return; }
-  const rot=g=>{ const p=partesNome(g.itens[0]); return (p.marca?p.marca+' ':'')+p.modelo; };
+  const rot=g=>partesNome(g.itens[0]).titulo;
   const n=gs.length;
   const seta=(cls,rotulo,d)=>`<button type="button" class="vit-seta ${cls}" aria-label="${rotulo}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg></button>`;
   $('destaque').innerHTML=`<div class="vit" id="vit" role="region" aria-roledescription="carrossel" aria-label="Máquinas em destaque" style="--vit-t:${VIT_SEG}s">
@@ -1109,7 +1110,7 @@ async function abrir(g,k){
     <button class="dt-x" onclick="fechar()" aria-label="Fechar">✕</button>
     <div class="dt-g">
       <div class="car" id="car">${ i.capa
-          ? `<img src="${i.capa}" alt="${esc(p.marca+' '+p.modelo)}">`
+          ? `<img src="${i.capa}" alt="${esc(p.titulo)}">`
           : `<div class="carregando">Foto em breve</div>` }</div>
       <button class="car-nav prev" id="carPrev" aria-label="Foto anterior" hidden>‹</button>
       <button class="car-nav next" id="carNext" aria-label="Próxima foto" hidden>›</button>
@@ -1117,14 +1118,13 @@ async function abrir(g,k){
     </div>
     <div class="dt-bd">
       ${n>1?`<div class="un">${g.itens.map((u,j)=>`<button class="op${j===k?' on':''}" data-u="${j}" type="button">Unidade ${j+1}</button>`).join('')}</div>`:''}
-      ${p.marca?`<div class="dt-mc">${esc(p.marca)}</div>`:''}
-      <div class="dt-nm">${esc(p.modelo)}</div>
+      <div class="dt-nm">${esc(p.titulo)}</div>
       <div class="dt-pr${temPreco?'':' breve'}">${temPreco?fmt(i.preco):'Preço em breve'}</div>
       ${ res ? `<div class="dt-res">🤝 Essa máquina está reservada para outro cliente. Reserva às vezes não se confirma — me chame que eu aviso se liberar, ou te mostro outra parecida.</div>`
              : cheg ? `<div class="dt-cheg">🚚 Essa máquina ainda está chegando. Dá pra reservar agora e garantir antes de entrar à venda.</div>` : '' }
       ${ficha.length?`<div class="ficha">${ficha.map(f=>`<div class="fi ${f.cls||''}"><small>${esc(f.k)}</small><b>${esc(f.v)}</b></div>`).join('')}</div>`:''}
       ${recursos.length?`<div class="rec"><small>O que ela tem</small><div>${recursos.map(r=>`<span>${esc(r)}</span>`).join('')}</div></div>`:''}
-      ${vidOk(i)?`<div class="vid"><small>Vídeo da máquina</small><div class="vid-box"><iframe src="https://www.youtube-nocookie.com/embed/${i.video}?rel=0&amp;modestbranding=1&amp;playsinline=1" title="Vídeo: ${esc(p.marca+' '+p.modelo)}" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div></div>`:''}
+      ${vidOk(i)?`<div class="vid"><small>Vídeo da máquina</small><div class="vid-box"><iframe src="https://www.youtube-nocookie.com/embed/${i.video}?rel=0&amp;modestbranding=1&amp;playsinline=1" title="Vídeo: ${esc(p.titulo)}" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div></div>`:''}
       ${ i.descricao ? `<p class="dt-desc">${esc(i.descricao)}</p>` : '' }
       <div class="gar">
         <div>${IC.escudo}<span><b>90 dias de garantia</b> a partir da entrega.</span></div>
@@ -1143,7 +1143,7 @@ async function abrir(g,k){
     const fotos=await fotosDe(i.id);
     if($('ov').classList.contains('on') && document.getElementById('car')===car){
       if(fotos.length){
-        car.innerHTML=fotos.map(u=>`<img src="${u}" alt="${esc(p.marca+' '+p.modelo)}">`).join('');
+        car.innerHTML=fotos.map(u=>`<img src="${u}" alt="${esc(p.titulo)}">`).join('');
         pontos(car,fotos.length);
       } else {
         const l=document.getElementById('carLoad'); if(l) l.remove();
