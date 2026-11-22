@@ -14,10 +14,11 @@ const { cifrar, decifrar, estadoValido, novoEstado } = insta._teste;
 
 // ── fetch simulado ──
 let pedidos = [], cfgDoc = null, imagens = {}, contador = 0, statusSeq = [], erroMeta = null, trocaPlana = false, tokenRuim = false;
+let blobs = [], blobApagados = [], videoSt = {};
 const resposta = (status, json) => ({ ok: status >= 200 && status < 300, status, json: async () => json });
 const param = (p, k) => p.metodo === 'GET' ? new URL(p.url).searchParams.get(k) : new URLSearchParams(p.corpo).get(k);
 global.fetch = async (url, op = {}) => {
-  const p = { url: String(url), metodo: op.method || 'GET', corpo: op.body ? String(op.body) : '', auth: (op.headers || {}).Authorization || '' };
+  const p = { url: String(url), metodo: op.method || 'GET', corpo: op.body ? String(op.body) : '', auth: (op.headers || {}).Authorization || '', headers: op.headers || {} };
   pedidos.push(p);
   const u = new URL(p.url);
   // Firestore: config/instagram só para sócio
@@ -34,8 +35,17 @@ global.fetch = async (url, op = {}) => {
     const d = { access_token: 'curto', user_id: '111', permissions: 'instagram_business_basic,instagram_business_content_publish' };
     return resposta(200, trocaPlana ? d : { data: [d] });
   }
+  // Vercel Blob (os vídeos)
+  if (p.url.startsWith('https://vercel.com/api/blob')) {
+    if (p.headers.authorization !== 'Bearer ' + process.env.BLOB_READ_WRITE_TOKEN) return resposta(403, { error: { code: 'forbidden', message: 'token' } });
+    if (u.pathname === '/api/blob/delete' && p.metodo === 'POST') { blobApagados.push(...JSON.parse(p.corpo).urls); return resposta(200, {}); }
+    if (u.pathname === '/api/blob' && p.metodo === 'GET') return resposta(200, { blobs: blobs.filter(b => b.pathname.startsWith(u.searchParams.get('prefix') || '')), hasMore: false });
+  }
   if (u.host === 'graph.facebook.com') { // modo token (usuário do sistema)
     if (tokenRuim) return resposta(400, { error: { message: 'Invalid OAuth access token - Cannot parse access token', code: 190, type: 'OAuthException' } });
+    if (p.metodo === 'POST' && /\/v23\.0\/\d+\/media$/.test(u.pathname) && /video_url/.test(p.corpo)) return resposta(200, { id: String(17900000000000 + (++contador)) });
+    if (/^\/v23\.0\/179\d+$/.test(u.pathname) && u.searchParams.get('fields') === 'status_code,status')
+      return resposta(200, videoSt[u.pathname.split('/').pop()] || { status_code: 'FINISHED', status: 'Finished: Media has been uploaded and it is ready to be published.' });
     if (/^\/v23\.0\/\d+$/.test(u.pathname) && u.searchParams.get('fields') === 'id,username') return resposta(200, { id: u.pathname.split('/').pop(), username: 'tech.campinas' });
     if (/\/v23\.0\/\d+\/media$/.test(u.pathname)) return resposta(200, { id: 'c' + (++contador) });
     if (/\/v23\.0\/\d+\/media_publish$/.test(u.pathname)) return resposta(200, { id: 'm' + contador });
@@ -223,6 +233,76 @@ const ID1 = 'a'.repeat(32), ID2 = 'b'.repeat(32);
   r = await chamar({ query: { img: '../config' } });
   const r3 = await chamar({ query: { img: 'c'.repeat(32) } });
   ok(r.status === 404 && r3.status === 404, 'id estranho ou que não existe: 404');
+
+  console.log('\nvídeo: Reels e story (o arquivo vai direto para o Vercel Blob)');
+  const crypto = require('crypto');
+  process.env.IG_TOKEN = 'EAAtokenDeTesteDoSistema'; insta._teste.limparCache(); cfgDoc = null;
+  const RW = 'vercel_blob_rw_LojaTeste123_segredoDoBlobDeTeste';
+  const envio = (pathname, idToken) => chamar({ method: 'POST', body: { type: 'blob.generate-client-token', payload: { pathname, clientPayload: idToken === undefined ? null : JSON.stringify({ idToken }), multipart: true } } });
+  delete process.env.BLOB_READ_WRITE_TOKEN;
+  r = await chamar({ method: 'POST', body: { acao: 'video_checar', idToken: 'socio' } });
+  const semBlob = await envio('insta-video/maquina-12.mp4', 'socio');
+  ok(r.status === 503 && /BLOB_READ_WRITE_TOKEN/.test(r.json().erro) && semBlob.status === 503, 'sem o armazenamento ligado na Vercel: avisa antes de mandar o vídeo');
+  process.env.BLOB_READ_WRITE_TOKEN = RW;
+  r = await chamar({ method: 'POST', body: { acao: 'video_checar', idToken: 'socio' } });
+  ok(r.status === 200 && r.json().usuario === 'tech.campinas', 'tudo ligado: pode mandar');
+  const semLogin = await envio('insta-video/maquina-12.mp4'), intruso = await envio('insta-video/maquina-12.mp4', 'intruso');
+  ok(semLogin.status === 401 && intruso.status === 403, 'token de envio: sem login, 401; quem não é sócio, 403 (ninguém de fora sobe arquivo)');
+  let ruins = 0;
+  for (const nome of ['../x.mp4', 'outra/x.mp4', 'insta-video/x.exe', 'insta-video/a/b.mp4', 'insta-video/' + 'x'.repeat(120) + '.mp4']) if ((await envio(nome, 'socio')).status === 400) ruins++;
+  ok(ruins === 5, 'só na pasta dos vídeos e só .mp4/.mov');
+  blobs = [{ pathname: 'insta-video/velho.mp4', url: 'https://lojateste123.public.blob.vercel-storage.com/insta-video/velho.mp4', uploadedAt: new Date(Date.now() - 4 * 3600000).toISOString() },
+    { pathname: 'insta-video/novo.mp4', url: 'https://lojateste123.public.blob.vercel-storage.com/insta-video/novo.mp4', uploadedAt: new Date(Date.now() - 600000).toISOString() }];
+  blobApagados = [];
+  r = await envio('insta-video/maquina-12-1795300000000.mov', 'socio');
+  const ct = String(r.json().clientToken || '');
+  const [, , , loja, cod] = ct.split('_'), [assin, dadosB64] = Buffer.from(cod || '', 'base64').toString().split('.');
+  const dadosTk = JSON.parse(Buffer.from(dadosB64 || '', 'base64').toString() || '{}');
+  ok(r.status === 200 && r.json().type === 'blob.generate-client-token' && ct.startsWith('vercel_blob_client_LojaTeste123_') && loja === 'LojaTeste123' &&
+    assin === crypto.createHmac('sha256', RW).update(dadosB64).digest('hex'), 'sócio: recebe o token do envio, assinado com a chave da loja (o formato do @vercel/blob)');
+  ok(dadosTk.pathname === 'insta-video/maquina-12-1795300000000.mov' && JSON.stringify(dadosTk.allowedContentTypes) === '["video/mp4","video/quicktime"]' &&
+    dadosTk.maximumSizeInBytes === 300 * 1024 * 1024 && dadosTk.addRandomSuffix === true && Math.abs(dadosTk.validUntil - Date.now() - 3600000) < 5000 && !ct.includes('segredo'),
+    'o token só vale para vídeo, até 300 MB, nesse nome, por 1 hora (e não leva a chave)');
+  ok(JSON.stringify(blobApagados) === '["https://lojateste123.public.blob.vercel-storage.com/insta-video/velho.mp4"]', 'e apaga o que sobrou de envio antigo (mais de 3 horas)');
+  const T = insta._teste, VURL = 'https://lojateste123.public.blob.vercel-storage.com/insta-video/maquina-12-1795300000000-AbC123xyz.mov';
+  ok(T.urlDoVideo(VURL) === VURL && !T.urlDoVideo('https://outra.public.blob.vercel-storage.com/insta-video/x.mp4') && !T.urlDoVideo(VURL.replace('/insta-video/', '/outra/')) &&
+    !T.urlDoVideo(VURL + '?x=1') && !T.urlDoVideo(VURL.replace('https:', 'http:')) && !T.urlDoVideo(VURL.replace('.public.', '.private.')) && !T.urlDoVideo('https://evil.com/insta-video/x.mp4'),
+    'o vídeo que a Meta baixa só pode ser da nossa loja, na pasta dos vídeos');
+  pedidos = []; contador = 0;
+  r = await chamar({ method: 'POST', body: { acao: 'video', idToken: 'socio', url: VURL, legenda: 'Notebook Dell\nR$ 1.899', reels: true, story: true, capa: ID1 } });
+  const cria = pedidos.filter(p => p.metodo === 'POST' && p.url.endsWith('/media'));
+  ok(r.status === 200 && r.json().ids.reels === '17900000000001' && r.json().ids.story === '17900000000002', 'cria o Reels e o story');
+  ok(cria[0].url === 'https://graph.facebook.com/v23.0/17841430007598170/media' && param(cria[0], 'media_type') === 'REELS' && param(cria[0], 'video_url') === VURL &&
+    param(cria[0], 'caption') === 'Notebook Dell\nR$ 1.899' && param(cria[0], 'share_to_feed') === 'true' && param(cria[0], 'cover_url') === `https://anunc-ia.vercel.app/insta/img/${ID1}.jpg` &&
+    param(cria[0], 'access_token') === 'EAAtokenDeTesteDoSistema', 'Reels: o vídeo da loja, a legenda, aparece no feed e a capa é a arte da máquina');
+  ok(param(cria[1], 'media_type') === 'STORIES' && param(cria[1], 'video_url') === VURL && !param(cria[1], 'caption'), 'story: o mesmo vídeo, sem legenda');
+  let errados = 0;
+  for (const b of [{ url: 'https://evil.com/insta-video/x.mp4' }, { url: VURL, reels: false, story: false }]) if ((await chamar({ method: 'POST', body: { acao: 'video', idToken: 'socio', legenda: 'x', ...b } })).status === 400) errados++;
+  r = await chamar({ method: 'POST', body: { acao: 'video', idToken: 'intruso', url: VURL, legenda: 'x' } });
+  ok(errados === 2 && r.status === 403, 'vídeo de fora ou sem Reels nem story: 400; quem não é sócio: 403');
+  videoSt = { 17900000000001: { status_code: 'IN_PROGRESS', status: 'In Progress' }, 17900000000002: { status_code: 'ERROR', status: 'Error: Media upload has failed with error code 2207026' } };
+  r = await chamar({ method: 'POST', body: { acao: 'video_status', idToken: 'socio', ids: ['17900000000001', '17900000000002', '../x'] } });
+  const sit = r.json().situacao || {};
+  ok(r.status === 200 && sit['17900000000001'].status === 'IN_PROGRESS' && !sit['17900000000001'].erro && sit['17900000000002'].status === 'ERROR' &&
+    /formato do vídeo: ele pede H\.264 ou HEVC/.test(sit['17900000000002'].erro) && Object.keys(sit).length === 2, 'acompanha o preparo; o erro da Meta (2207026) vira o motivo em português');
+  ok(/expirou/.test(T.erroDoVideo('', 'EXPIRED')) && /baixar o vídeo/.test(T.erroDoVideo('Error: code 2207003', 'ERROR')) && /restrita/.test(T.erroDoVideo('error code 2207050', 'ERROR')) &&
+    /preparar o vídeo: algo novo/.test(T.erroDoVideo('Error: algo novo', 'ERROR')), 'os outros erros comuns também (e o desconhecido vai com a mensagem da Meta)');
+  pedidos = [];
+  r = await chamar({ method: 'POST', body: { acao: 'video_publicar', idToken: 'socio', id: '17900000000001' } });
+  const pubV = pedidos.find(p => p.url.endsWith('/media_publish'));
+  ok(r.status === 200 && r.json().link === 'https://www.instagram.com/p/FB123/' && param(pubV, 'creation_id') === '17900000000001', 'publica quando fica pronto, com o link');
+  r = await chamar({ method: 'POST', body: { acao: 'video_publicar', idToken: 'socio', id: 'c1' } });
+  ok(r.status === 400, 'id que não é de contêiner: 400');
+  blobApagados = []; pedidos = [];
+  r = await chamar({ method: 'POST', body: { acao: 'video_apagar', idToken: 'socio', url: VURL } });
+  const del = pedidos.find(p => p.url === 'https://vercel.com/api/blob/delete');
+  ok(r.status === 200 && JSON.stringify(blobApagados) === JSON.stringify([VURL]) && del.headers['x-api-version'] === '13' && del.headers['x-vercel-blob-store-id'] === 'LojaTeste123',
+    'no fim, apaga o vídeo do armazenamento');
+  blobApagados = [];
+  await chamar({ method: 'POST', body: { acao: 'video_apagar', idToken: 'socio', url: 'https://lojateste123.public.blob.vercel-storage.com/outra/coisa.png' } });
+  r = await chamar({ method: 'POST', body: { acao: 'video_apagar', idToken: 'intruso', url: VURL } });
+  ok(!blobApagados.length && r.status === 403, 'não apaga nada fora da pasta dos vídeos, nem a pedido de quem não é sócio');
+  delete process.env.IG_TOKEN; delete process.env.BLOB_READ_WRITE_TOKEN; insta._teste.limparCache(); videoSt = {};
 
   console.log('\nvercel.json');
   const vj = require(path.join(__dirname, '..', 'vercel.json'));

@@ -634,6 +634,15 @@ input[type=number].inp{padding-left:32px}
 .ml-ed-it .bok{width:100%}
 .insta-conta{font-size:.72rem;color:#a21caf;font-weight:600}
 .insta-box a{color:#a21caf;font-weight:600}
+/* vídeo do celular no Instagram */
+.iv-escolher{position:relative;display:flex;align-items:center;justify-content:center;gap:8px;border:1.5px dashed #e879f9;border-radius:10px;padding:11px;cursor:pointer;font-size:.8rem;font-weight:600;color:#a21caf;background:#fff}
+.iv-escolher input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+.iv-info{font-size:.74rem;color:var(--mu);line-height:1.45;overflow-wrap:anywhere}
+.iv-info b{color:var(--tx);font-weight:600}
+.iv-info .iv-av,.iv-info .iv-blq{border-radius:8px;padding:6px 8px;margin-top:6px}
+.iv-info .iv-av{color:#92400e;background:#fef3c7} .iv-info .iv-blq{color:#991b1b;background:#fee2e2}
+.iv-barra{height:8px;border-radius:99px;background:#f5d0fe;overflow:hidden}
+.iv-barra>div{height:100%;width:0;background:linear-gradient(90deg,#c026d3,#f97316);transition:width .3s}
 .insta-guia summary{cursor:pointer;font-weight:600;font-size:.78rem}
 .insta-guia ol{margin:6px 0 4px 18px;padding:0;font-size:.74rem;line-height:1.55}
 .insta-guia li{margin-bottom:3px}
@@ -3259,7 +3268,15 @@ div:has(> .fc2){flex-wrap:wrap;row-gap:6px}
                     <option value="feed">📷 Post — só a arte</option>
                     <option value="carrossel">🗂️ Carrossel — a arte em 2 partes</option>
                     <option value="story">📱 Story — a arte em pé</option>
+                    <option value="video">🎬 Reels — vídeo do celular</option>
                   </select>
+                </div>
+                <div class="fc" id="instaVideoBox" hidden><span class="fla">Vídeo <span style="font-size:.62rem;color:var(--li)">vai como saiu da câmera: o sistema não recomprime</span></span>
+                  <label class="iv-escolher"><input type="file" id="instaVideoArq" accept="video/mp4,video/quicktime,video/*" onchange="instaVideoEscolheu(this)"><span id="instaVideoBtTxt">🎬 Escolher o vídeo</span></label>
+                  <div class="iv-info" id="instaVideoInfo"></div>
+                  <label class="hw-chk"><input type="checkbox" id="instaVideoStory" checked><span id="instaVideoStoryTxt">Também no story</span></label>
+                  <label class="hw-chk"><input type="checkbox" id="instaVideoCapa" checked><span>Capa do Reels: a arte da máquina, em pé (a da prévia)</span></label>
+                  <div class="iv-barra" id="instaVideoBarra" hidden><div></div></div>
                 </div>
                 <div class="fc"><span class="fla">Legenda <span style="font-size:.62rem;color:var(--li)">sai dos dados públicos da máquina — dá pra editar</span></span>
                   <textarea class="inp" id="instaLegenda" maxlength="2200" rows="9" oninput="instaContar()"></textarea>
@@ -4106,6 +4123,7 @@ div:has(> .fc2){flex-wrap:wrap;row-gap:6px}
 </div>
 
 <script src="tema.js"></script>
+<script src="video.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
 import { getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,onAuthStateChanged,updateProfile,sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
@@ -12597,7 +12615,10 @@ async function instaVoltaDoLogin(){
 }
 window.instaTrocouTipo=()=>{
   const t=document.getElementById('instaTipo').value, f=document.getElementById('anFmt');
-  if(f) f.value = t==='story'?'story':'feed';
+  // o vídeo usa a arte em pé como capa do Reels: a prévia mostra ela
+  if(f) f.value = t==='story'||t==='video'?'story':'feed';
+  const vb=document.getElementById('instaVideoBox'); if(vb) vb.hidden=t!=='video';
+  const bt=document.getElementById('instaPubBt'); if(bt&&!bt.disabled) bt.textContent=t==='video'?'🎬 Publicar o vídeo no Instagram':'📤 Publicar no Instagram';
   anDesenhar();
 };
 function instaNovoId(){
@@ -12644,7 +12665,10 @@ async function instaEnviar(tipo,telas,legenda,aviso){
 // Marca na máquina o que foi publicado (e o 📸 da lista mostra na hora).
 async function instaMarcar(p,tipo,link){
   const em=new Date().toISOString();
-  const campos=tipo==='story'?{insta_story_em:em}:{insta_em:em,insta_link:link||'',insta_feed_em:em};
+  // o Reels vai para o feed também: se a máquina ainda não tinha post, conta como publicada
+  const campos=tipo==='story'?{insta_story_em:em}
+    :tipo==='reels'?{insta_reel_em:em,insta_reel_link:link||'',...(p.insta_feed_em?{}:{insta_em:em,insta_link:link||'',insta_feed_em:em})}
+    :{insta_em:em,insta_link:link||'',insta_feed_em:em};
   try{ await updateDoc(doc(db,'products',p.id),campos); Object.assign(p,campos); }catch(e){}
   document.querySelectorAll('button.binsta').forEach(b=>{
     if(b.getAttribute('onclick')===`instaMaquina('${p.id}')`) b.title='Publicar no Instagram (publicada em '+new Date(em).toLocaleDateString('pt-BR')+')';
@@ -12653,6 +12677,7 @@ async function instaMarcar(p,tipo,link){
 window.instaPublicar=async()=>{
   const st=document.getElementById('instaStatus'), bt=document.getElementById('instaPubBt');
   const tipo=document.getElementById('instaTipo').value;
+  if(tipo==='video') return instaPublicarVideo();
   if(!anEscolhidas.length){ alert('Escolha a máquina primeiro (no campo Máquina, mais acima).'); return; }
   instaSincronizarLegenda();
   const legenda=(document.getElementById('instaLegenda').value||'').trim();
@@ -12684,6 +12709,111 @@ window.instaPublicar=async()=>{
     if(bt){ bt.disabled=false; bt.textContent='📤 Publicar no Instagram'; }
   }
 };
+// ── VÍDEO NO INSTAGRAM (Reels e story) ──
+// O vídeo vai como saiu da câmera: o sistema não recomprime. Antes, o video.js lê o arquivo
+// (resolução, quadros, duração, codecs) e confere as regras do Instagram; se o índice do vídeo
+// estiver no fim (o normal no celular), põe no começo sem mexer na imagem nem no som. O arquivo
+// vai do navegador direto para o Vercel Blob (as funções da Vercel recebem no máximo 4,5 MB),
+// a Meta baixa de lá, e ele é apagado no fim.
+let instaVideo=null; // { arq, info, c }
+const instaMb=n=>n<1e6?Math.max(1,Math.round(n/1e3))+' KB':(n/1e6>=100?Math.round(n/1e6):Math.round(n/1e5)/10).toLocaleString('pt-BR')+' MB';
+window.instaVideoEscolheu=async inp=>{
+  const arq=inp&&inp.files&&inp.files[0], box=document.getElementById('instaVideoInfo');
+  const sto=document.getElementById('instaVideoStory'), stoTxt=document.getElementById('instaVideoStoryTxt');
+  instaVideo=null; if(!box) return;
+  const btTxt=document.getElementById('instaVideoBtTxt'); if(btTxt) btTxt.textContent=arq?'🎬 Trocar o vídeo':'🎬 Escolher o vídeo';
+  if(!arq){ box.innerHTML=''; return; }
+  box.textContent='Lendo o vídeo...';
+  try{
+    if(!window.VideoMp4) throw new Error('o leitor de vídeo não carregou (recarregue a página)');
+    const info=await VideoMp4.analisar(arq), c=VideoMp4.conferir(info);
+    instaVideo={arq,info,c};
+    box.innerHTML=`🎬 <b>${esc(arq.name||'vídeo')}</b><br>${esc(c.resumo)}${c.bloqueio.length?'':' · <b>vai como saiu da câmera</b>'}`
+      +c.bloqueio.map(x=>`<div class="iv-blq">⛔ ${esc(x)}</div>`).join('')+c.avisos.map(x=>`<div class="iv-av">⚠️ ${esc(x)}</div>`).join('');
+    if(sto){ sto.disabled=!c.story; sto.checked=c.story; }
+    if(stoTxt) stoTxt.textContent=c.story?'Também no story':'Story: não dá ('+c.motivoStory+')';
+  }catch(e){ box.innerHTML=`<div class="iv-blq">⛔ Não consegui ler este vídeo: ${esc(e.message)}. Escolha um MP4 ou MOV gravado pela câmera do celular.</div>`; }
+};
+async function instaPublicarVideo(){
+  const st=document.getElementById('instaStatus'), bt=document.getElementById('instaPubBt'), barra=document.getElementById('instaVideoBarra');
+  const msg=t=>{ if(st) st.textContent=t; }, v=instaVideo;
+  if(!anEscolhidas.length){ alert('Escolha a máquina primeiro (no campo Máquina, mais acima).'); return; }
+  if(!v){ alert('Escolha o vídeo primeiro (🎬 Escolher o vídeo).'); return; }
+  if(v.c.bloqueio.length){ alert('O Instagram não aceita este vídeo:\n\n• '+v.c.bloqueio.join('\n• ')); return; }
+  instaSincronizarLegenda();
+  const legenda=(document.getElementById('instaLegenda').value||'').trim();
+  if(!legenda){ alert('Escreva a legenda do Reels.'); return; }
+  if(/\b(custo|lucro|margem|fornecedor)\b/i.test(legenda)&&!confirm('A legenda fala em custo, lucro, margem ou fornecedor. Publicar assim mesmo?')) return;
+  const story=!!(document.getElementById('instaVideoStory')||{}).checked&&v.c.story;
+  const comCapa=!!(document.getElementById('instaVideoCapa')||{}).checked;
+  if(v.c.avisos.length&&!confirm('Sobre este vídeo:\n\n• '+v.c.avisos.join('\n• ')+'\n\nEnviar assim mesmo?')) return;
+  if(!confirm(`Publicar o Reels${story?' e o story':''} agora no Instagram${instaCfg&&instaCfg.usuario?' @'+instaCfg.usuario:''}? O vídeo vai como saiu da câmera (${instaMb(v.info.tamanho)}).`)) return;
+  const ocupado=on=>{
+    if(bt){ bt.disabled=on; bt.textContent=on?'Publicando o vídeo...':'🎬 Publicar o vídeo no Instagram'; }
+    const a=document.getElementById('instaVideoArq'); if(a) a.disabled=on;
+  };
+  const progresso=p=>{ if(!barra) return; barra.hidden=p==null; const d=barra.firstElementChild; if(d) d.style.width=Math.max(0,Math.min(100,p||0))+'%'; };
+  ocupado(true);
+  let url='', capaId='';
+  try{
+    msg('Conferindo o Instagram e o armazenamento...');
+    await instaApi({acao:'video_checar'});
+    const ext=/\.mov$/i.test(v.arq.name||'')||v.arq.type==='video/quicktime'?'mov':'mp4', tipoArq=ext==='mov'?'video/quicktime':'video/mp4';
+    const pronto=VideoMp4.indiceNoComeco(v.arq,v.info,tipoArq);
+    const {upload}=await import('/vendor/vercel-blob-upload.js');
+    const u=auth.currentUser; if(!u) throw new Error('Entre no sistema primeiro.');
+    const idToken=await u.getIdToken();
+    const num=String((anEscolhidas[0]||{}).num||'x').replace(/\W/g,'');
+    progresso(0); msg('Enviando o vídeo: 0%');
+    const b=await upload(`insta-video/maquina-${num}-${Date.now()}.${ext}`,pronto,{access:'public',handleUploadUrl:'/api/insta',
+      clientPayload:JSON.stringify({idToken}),multipart:pronto.size>8*1024*1024,contentType:tipoArq,
+      onUploadProgress:e=>{ progresso(e.percentage); msg(`Enviando o vídeo: ${Math.round(e.percentage)}% (${instaMb(e.loaded)} de ${instaMb(e.total||pronto.size)})`); }});
+    url=b.url; progresso(100);
+    if(comCapa){
+      msg('Preparando a capa...');
+      const f=document.getElementById('anFmt'), antes=f?f.value:'';
+      if(f) f.value='story';
+      anExportando=true; anDesenhar(); const tela=instaCopiaCanvas(); anExportando=false;
+      if(f) f.value=antes; anDesenhar();
+      const jpg=await instaJpegDe(tela), id=instaNovoId();
+      await setDoc(doc(db,'catalogo_fotos','insta_'+id),{insta:true,jpg:Bytes.fromUint8Array(jpg),em:Date.now()});
+      capaId=id;
+    }
+    msg('Entregando ao Instagram...');
+    const r=await instaApi({acao:'video',url,legenda,reels:true,story,capa:capaId});
+    const pend={...(r.ids||{})}, feito={}, t0=Date.now();
+    while(Object.keys(pend).length){
+      if(Date.now()-t0>20*60000) throw new Error('O Instagram está demorando demais para preparar o vídeo. Confira no app daqui a pouco.');
+      await new Promise(ok=>setTimeout(ok,instaVideoEspera));
+      const s=await instaApi({acao:'video_status',ids:Object.values(pend)});
+      for(const [tipo,id] of Object.entries(pend)){
+        const x=(s.situacao||{})[id]||{};
+        if(x.status==='FINISHED'){ msg(`Publicando o ${tipo==='story'?'story':'Reels'}...`); feito[tipo]=await instaApi({acao:'video_publicar',id}); delete pend[tipo]; }
+        else if(x.erro||x.status==='ERROR'||x.status==='EXPIRED'){ feito[tipo]={erro:x.erro||'o Instagram não aceitou o vídeo'}; delete pend[tipo]; }
+      }
+      if(Object.keys(pend).length) msg(`O Instagram está preparando o vídeo... (${Math.round((Date.now()-t0)/1000)} s)`);
+    }
+    const rr=feito.reels||{}, rs=feito.story, link=/^https:\/\/(www\.)?instagram\.com\//.test(rr.link||'')?rr.link:'';
+    for(const p of anEscolhidas){ if(rr.ok) await instaMarcar(p,'reels',link); if(rs&&rs.ok) await instaMarcar(p,'story'); }
+    anCatMontar();
+    const linhas=[];
+    if(rr.ok) linhas.push('✅ Reels publicado'+(rr.usuario?' em @'+esc(rr.usuario):'')+(link?` · <a href="${encodeURI(link)}" target="_blank" rel="noopener">ver no Instagram</a>`:''));
+    else if(rr.erro) linhas.push('⚠️ Reels: '+esc(rr.erro));
+    if(rs&&rs.ok) linhas.push('✅ Story publicado');
+    else if(rs&&rs.erro) linhas.push('⚠️ Story: '+esc(rs.erro));
+    if(st) st.innerHTML=linhas.join('<br>');
+  }catch(e){
+    const m=String(e&&e.message||e);
+    msg('⚠️ '+(/^Vercel Blob/i.test(m)?'O envio do vídeo falhou ('+m.replace(/^Vercel Blob:\s*/i,'')+'). Confira a internet e tente de novo.':m));
+  }finally{
+    progresso(null);
+    if(url) instaApi({acao:'video_apagar',url}).catch(()=>{});
+    if(capaId){ try{ await deleteDoc(doc(db,'catalogo_fotos','insta_'+capaId)); }catch(e){} }
+    ocupado(false);
+  }
+}
+let instaVideoEspera=4000; // de quanto em quanto tempo pergunta se o Instagram terminou de preparar
+window.__instaVideoEspera=ms=>{ instaVideoEspera=ms; }; // (os testes encurtam)
 // ── O lado Mercado Livre do Publicar do editor ──
 // O anúncio do Mercado Livre é da máquina (fotos e descrição do cadastro): o Mercado
 // Livre não aceita foto com preço ou texto, então a arte fica para o Instagram.
@@ -12735,6 +12865,8 @@ window.instaMaquina=async id=>{
   const f=document.getElementById('anFmt'), tp=document.getElementById('instaTipo');
   if(f&&f.value==='capa') f.value='feed';
   if(tp) tp.value=(f&&f.value==='story')?'story':'fotos';
+  const vb=document.getElementById('instaVideoBox'); if(vb) vb.hidden=true;
+  const pb=document.getElementById('instaPubBt'); if(pb&&!pb.disabled) pb.textContent='📤 Publicar no Instagram';
   instaSincronizarLegenda(true); anDesenhar();
   const box=document.getElementById('instaBox'); if(box) box.scrollIntoView({behavior:'smooth',block:'center'});
 };

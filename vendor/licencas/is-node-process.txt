@@ -1,0 +1,2 @@
+is-node-process 1.2.0 — licença MIT (o pacote publicado no npm não traz o arquivo da licença).
+Código e licença: https://github.com/mswjs/is-node-process

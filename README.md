@@ -55,6 +55,37 @@ só o servidor, com o `IG_APP_SECRET`, consegue abrir. A arte vai para
 `catalogo_fotos/insta_<id>` só até a Meta baixar e é apagada logo depois (sem
 `produto_id`, o catálogo público nem vê). Limite da Meta: 100 publicações por dia.
 
+### Vídeo do celular (Reels e story)
+
+No editor (📸 da máquina ou ✏️), em **Publicar como → 🎬 Reels — vídeo do celular**, é só
+escolher o vídeo gravado pela câmera. Ele vai **como saiu da câmera**: o sistema não
+recomprime nada.
+
+- Antes de enviar, o sistema lê o arquivo (`video.js`: resolução, quadros por segundo,
+  duração e codecs, sem decodificar a imagem) e confere as regras do Instagram. Não vai:
+  vídeo que não é H.264 nem HEVC (ProRes, por exemplo), menos de 3 s, mais de 15 min ou
+  mais de 300 MB. Avisa e deixa tentar: acima de 1080p (4K: o Instagram mostra no
+  máximo 1080p e pela API pode recusar; o aviso diz como gravar em 1080p), câmera lenta,
+  mais de 25 Mbps ou som que não é AAC. Abaixo de Full HD, avisa que o celular pode ter
+  comprimido ao escolher (no iPhone: "Salvar em Arquivos" e escolher por "Escolher Arquivo").
+- O índice do vídeo (a caixa `moov`), que no celular fica no fim do arquivo, vai para o
+  começo, como o Instagram pede. Só muda a ordem das caixas e os endereços do índice:
+  nenhum bit da imagem ou do som (o teste compara pacote a pacote com o ffmpeg).
+- O arquivo vai do navegador **direto para o Vercel Blob** (a loja `anuncia-videos`, em
+  São Paulo: as funções da Vercel recebem no máximo 4,5 MB), em partes e com a barra de
+  progresso, usando o `upload()` do `@vercel/blob` (em `vendor/`). O token do envio é
+  assinado pelo servidor só para sócio, só vídeo MP4/MOV, até 300 MB, na pasta
+  `insta-video/`, por 1 hora. A Meta baixa de lá; no fim o arquivo é apagado (e o que
+  sobrar de envio interrompido some depois de 3 horas).
+- Vai como **Reels** (aparece também no feed) e, se couber (até 60 s e 100 MB), também
+  no **story**. A capa do Reels pode ser a arte da máquina, em pé (a da prévia).
+- O sistema acompanha o Instagram preparando o vídeo e publica quando fica pronto; o erro
+  da Meta vem em português (formato, download, limite do dia...). A máquina fica marcada
+  com o Reels (e o link) e o story.
+- Na Vercel: `BLOB_READ_WRITE_TOKEN` (criado sozinho ao ligar a loja de arquivos ao
+  projeto). O plano grátis tem uma cota mensal de armazenamento e de tráfego do Blob;
+  como cada vídeo só fica lá até publicar, ela é mais que suficiente para a loja.
+
 ## Mercado Livre da loja (publicar e acompanhar)
 
 Com o Mercado Livre ligado, o **📤 Publicar** de cada máquina (e o "Publicar as novas")
