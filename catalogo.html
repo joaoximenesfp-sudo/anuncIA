@@ -131,6 +131,19 @@ b,strong,th,h1,h2,h3,h4,h5,h6{font-weight:600}
   .vit-sl .dest-tag{left:12px;right:12px;bottom:12px;opacity:0;transform:translateY(10px);
     transition:opacity .5s ease .25s,transform .6s cubic-bezier(.2,.7,.2,1) .25s}
   .vit-sl.on .dest-tag{opacity:1;transform:none}
+  /* setas nas laterais da moldura (no celular, por dentro: nada de rolagem de lado) */
+  .vit-quadro{position:relative}
+  .vit-seta{position:absolute;top:50%;z-index:3;width:44px;height:44px;margin-top:-22px;padding:0;display:grid;place-items:center;
+    border-radius:999px;border:1px solid rgba(255,255,255,.2);background:rgba(10,14,22,.6);color:#fff;cursor:pointer;
+    -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 8px 24px rgba(0,0,0,.35);
+    transition:background .2s,border-color .2s,transform .2s}
+  .vit-seta svg{width:20px;height:20px}
+  .vit-seta.ant{left:-18px} .vit-seta.prox{right:-18px}
+  .vit-seta:hover{background:rgba(10,14,22,.85);border-color:rgba(255,255,255,.38);transform:scale(1.07)}
+  .vit-seta:active{transform:scale(.95)}
+  .vit-seta:focus-visible{outline:2px solid var(--g1);outline-offset:2px}
+  @media(max-width:600px){ .vit-seta{width:38px;height:38px;margin-top:-19px} .vit-seta svg{width:18px;height:18px}
+    .vit-seta.ant{left:10px} .vit-seta.prox{right:10px} }
   .vit-dots{display:flex;justify-content:center;gap:2px;margin-top:12px}
   .vit-d{border:0;background:none;padding:8px 4px;cursor:pointer;line-height:0}
   .vit-d span{display:block;position:relative;overflow:hidden;width:8px;height:8px;border-radius:999px;
@@ -994,7 +1007,9 @@ function destaque(){
   if(!gs.length){ $('destaque').innerHTML=''; $('heroG').classList.add('so'); return; }
   const rot=g=>{ const p=partesNome(g.itens[0]); return (p.marca?p.marca+' ':'')+p.modelo; };
   const n=gs.length;
+  const seta=(cls,rotulo,d)=>`<button type="button" class="vit-seta ${cls}" aria-label="${rotulo}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg></button>`;
   $('destaque').innerHTML=`<div class="vit" id="vit" role="region" aria-roledescription="carrossel" aria-label="Máquinas em destaque" style="--vit-t:${VIT_SEG}s">
+    <div class="vit-quadro">
     <div class="dest" id="destCard" tabindex="0" role="button" aria-label="Ver ${esc(rot(gs[0]))}">
       <div class="vit-pal">${gs.map((g,k)=>{ const i=g.itens[0], p=partesNome(i); return `
         <div class="vit-sl" aria-hidden="${k?'true':'false'}">
@@ -1003,6 +1018,7 @@ function destaque(){
             <div class="dest-nm">${esc(p.modelo)}</div></div><div class="dest-pr">${fmt(i.preco)}</div></div>
         </div>`; }).join('')}
       </div>
+    </div>${n>1?seta('ant','Modelo anterior','M15 18l-6-6 6-6')+seta('prox','Próximo modelo','M9 18l6-6-6-6'):''}
     </div>${n>1?`
     <div class="vit-dots">${gs.map((g,k)=>`<button type="button" class="vit-d" aria-label="Mostrar ${esc(rot(g))} (${k+1} de ${n})"><span></span></button>`).join('')}</div>`:''}
   </div>`;
@@ -1025,6 +1041,10 @@ function destaque(){
     if(barra) barra.addEventListener('animationend',()=>ir(atual+1),{once:true});
   };
   ds.forEach((d,k)=>{ d.onclick=()=>ir(k); });
+  // as setas dos lados: anterior e próximo (do último volta ao primeiro)
+  const setaAnt=vit.querySelector('.vit-seta.ant'), setaProx=vit.querySelector('.vit-seta.prox');
+  if(setaAnt) setaAnt.onclick=()=>ir(atual-1);
+  if(setaProx) setaProx.onclick=()=>ir(atual+1);
   card.onclick=()=>{ if(mexeu){ mexeu=false; return; } abrir(gs[atual],0); };
   card.onkeydown=e=>{
     if(e.key==='Enter'||e.key===' '){ e.preventDefault(); abrir(gs[atual],0); }
