@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /blog
+Allow: /catalogo.html
+Disallow: /$
+Disallow: /index.html
+Disallow: /api/
+Disallow: /tela/
+
+Sitemap: https://anunc-ia.vercel.app/sitemap.xml

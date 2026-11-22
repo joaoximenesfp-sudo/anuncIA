@@ -418,7 +418,7 @@ b,strong,th,h1,h2,h3,h4,h5,h6{font-weight:600}
   <div class="wrap">
     <div class="mk" id="marcaTopo"></div>
     <div class="nav-nm" id="lojaNome">Catálogo</div>
-    <div class="nav-lk"><a href="#maquinas">Máquinas</a><a href="#garantia">Garantia</a><a href="#como">Como comprar</a></div>
+    <div class="nav-lk"><a href="#maquinas">Máquinas</a><a href="#garantia">Garantia</a><a href="#como">Como comprar</a><a href="/blog">Blog</a></div>
     <div class="nav-ac" id="hdBar"></div>
   </div>
 </nav>
@@ -741,6 +741,7 @@ function rodape(){
           <div class="rp-nm">${esc(cfg.nome||'Catálogo')}</div></div>
         <p>Notebooks e desktops seminovos, testados antes da venda.</p>
         <p><strong style="color:#E8EEF6">90 dias de garantia</strong> em todas as máquinas.</p>
+        <p><a href="/blog" style="color:#E8EEF6">📰 Blog: notícias e dicas de notebook</a></p>
       </div>
       <div>
         <h4>Contato</h4>
@@ -1183,6 +1184,11 @@ function pontos(car,n){
 }
 
 $('busca').oninput=e=>{ busca=e.target.value; render(); };
+// Vindo do blog (catalogo.html?q=<máquina>): já abre filtrado, na grade.
+(()=>{ const q=new URLSearchParams(location.search).get('q'); if(!q) return;
+  busca=q.slice(0,120); $('busca').value=busca;
+  const ir=()=>{ const m=document.getElementById('maquinas'); if(m) m.scrollIntoView(); };
+  setTimeout(ir,900); })();
 document.addEventListener('keydown',e=>{ if(e.key==='Escape') fechar(); });
 
 carregar();

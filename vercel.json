@@ -1,13 +1,22 @@
 {
   "rewrites": [
     { "source": "/q/:anuncio/:carro", "destination": "/api/q?anuncio=:anuncio&carro=:carro" },
-    { "source": "/insta/img/:arq", "destination": "/api/insta?img=:arq" }
+    { "source": "/insta/img/:arq", "destination": "/api/insta?img=:arq" },
+    { "source": "/blog", "destination": "/api/blog" },
+    { "source": "/blog/", "destination": "/api/blog" },
+    { "source": "/blog/feed.xml", "destination": "/api/blog?feed=1" },
+    { "source": "/blog/:slug", "destination": "/api/blog?slug=:slug" },
+    { "source": "/sitemap.xml", "destination": "/api/blog?sitemap=1" }
   ],
   "headers": [
     { "source": "/fontes/(.*)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }] }
   ],
+  "crons": [
+    { "path": "/api/blog?acao=gerar", "schedule": "0 11 * * *" }
+  ],
   "functions": {
     "api/insta.js": { "maxDuration": 60 },
-    "api/ml.js": { "maxDuration": 60 }
+    "api/ml.js": { "maxDuration": 60 },
+    "api/blog.js": { "maxDuration": 300 }
   }
 }
