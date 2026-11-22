@@ -3234,6 +3234,18 @@ div:has(> .fc2){flex-wrap:wrap;row-gap:6px}
       .blog-topo{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:12px}
       .blog-sec{background:var(--bg)!important;color:var(--tx)!important;border:1px solid var(--b)!important}
       .blog-lista{display:flex;flex-direction:column;gap:8px}
+      .blog-pronto{border:1px solid rgba(0,179,104,.35);background:linear-gradient(135deg,rgba(28,240,143,.12),rgba(28,240,143,.02));border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px}
+      .blog-pronto-tit{font-weight:600;font-size:.88rem;color:var(--tx)}
+      .blog-pronto-it{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:.86rem;color:var(--tx)}
+      .blog-pronto-it small{color:var(--li)}
+      .blog-pasta-top{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:6px 0 2px}
+      .blog-filtro{border:1px solid var(--b);background:var(--w);color:var(--tx);border-radius:999px;padding:6px 12px;font:inherit;font-size:.8rem;cursor:pointer}
+      .blog-filtro.on{background:var(--tx);color:var(--w);border-color:var(--tx)}
+      .blog-mes{border:1px solid var(--b);border-radius:14px;padding:4px 10px 8px}
+      .blog-mes>summary{cursor:pointer;font-weight:600;font-size:.86rem;padding:6px 2px;color:var(--tx)}
+      .blog-mes>summary small{color:var(--li);font-weight:400}
+      .blog-mes .blog-item{margin-top:8px}
+      #blogBusca{max-width:240px;flex:1 1 160px;padding:8px 12px}
       .blog-item{display:flex;align-items:center;gap:12px;justify-content:space-between;flex-wrap:wrap;border:1px solid var(--b);border-radius:14px;padding:10px 12px}
       .blog-item.fora{opacity:.6}
       .blog-item-txt{min-width:0;flex:1 1 260px}
@@ -3250,12 +3262,13 @@ div:has(> .fc2){flex-wrap:wrap;row-gap:6px}
       .blog-prev img{width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:10px;border:1px solid var(--b);background:var(--bg)}
     </style>
     <div class="cd" id="blogCard">
-      <div class="cdh"><span class="cdht">📰 Blog da loja</span>
-        <span style="font-size:.74rem;color:var(--li)">todo dia sai um artigo sozinho: um assunto por vez, curto e com slides; você só edita se quiser</span></div>
+      <div class="cdh"><span class="cdht">📰 Blog da loja · pasta de notícias</span>
+        <span style="font-size:.74rem;color:var(--li)">todo dia sai um artigo sozinho, e cada um vira um anúncio pronto para o Instagram: a notícia, uma máquina do estoque ligada ao assunto e a legenda com o link</span></div>
       <div class="cdb">
         <div class="blog-topo">
           <a class="bsm" href="/blog" target="_blank" rel="noopener" style="text-decoration:none">Abrir o blog</a>
           <button type="button" class="bsm blog-sec" id="blogGerarBt" onclick="blogGerar()">✍️ Escrever um agora</button>
+          <input class="inp" id="blogBusca" type="search" placeholder="🔎 Procurar na pasta" oninput="blogBuscar()" aria-label="Procurar na pasta de notícias">
           <span class="tipo-auto" id="blogMsg" style="margin:0"></span>
         </div>
         <div class="blog-lista" id="blogLista"><div class="tipo-auto">Abrindo…</div></div>
@@ -3271,7 +3284,8 @@ div:has(> .fc2){flex-wrap:wrap;row-gap:6px}
         <div class="blog-dlg-bts"><button type="button" class="bsm" onclick="blogSalvar()">Salvar</button><button type="button" class="bsm blog-sec" onclick="blogFechar('blogEd')">Cancelar</button><span class="tipo-auto" id="blogEdMsg" style="margin:0"></span></div>
       </div></dialog>
       <dialog class="blog-dlg" id="blogPrevDlg"><div class="blog-dlg-in">
-        <div class="blog-dlg-top"><b>Carrossel para o Instagram</b><button type="button" class="mcl" onclick="blogFechar('blogPrevDlg')" aria-label="Fechar">✕</button></div>
+        <div class="blog-dlg-top"><b>Anúncio do blog para o Instagram</b><button type="button" class="mcl" onclick="blogFechar('blogPrevDlg')" aria-label="Fechar">✕</button></div>
+        <div class="fi"><label class="fl" for="blogPrevMaq">Máquina do estoque no anúncio (a mais ligada ao assunto já vem escolhida)</label><select class="inp" id="blogPrevMaq" onchange="blogTrocarMaq()"></select></div>
         <div class="blog-prev" id="blogPrev"></div>
         <div class="fi"><label class="fl" for="blogPrevLeg">Legenda</label><textarea class="inp" id="blogPrevLeg" rows="6"></textarea></div>
         <div class="blog-dlg-bts"><button type="button" class="bsm" id="blogPostarBt" onclick="blogPostar()">📸 Postar no Instagram</button><button type="button" class="bsm blog-sec" onclick="blogFechar('blogPrevDlg')">Cancelar</button><span class="tipo-auto" id="blogPrevMsg" style="margin:0"></span></div>
@@ -12912,17 +12926,50 @@ async function blogCarregar(){
   try{ blogArtigos=(await blogApi({acao:'lista'})).artigos||[]; blogRender(); }
   catch(e){ el.innerHTML='<div class="tipo-auto">Não consegui abrir o blog: '+esc(e.message)+'</div>'; }
 }
+// ── a pasta de notícias: todos os artigos do blog, por mês, cada um um anúncio pronto ──
+let blogFiltro='todas';
+// O que postar hoje (sempre tem algo): o mais novo que ainda não foi para o Instagram; com tudo
+// postado, o que foi postado há mais tempo (14 dias ou mais), para repostar.
+function blogSugestao(){
+  const noAr=blogArtigos.filter(a=>a.status!=='oculto');
+  const novo=noAr.find(a=>!a.insta);
+  if(novo) return {a:novo,motivo:'novo: ainda não foi para o Instagram'};
+  const velho=noAr.filter(a=>a.insta&&a.insta.em).sort((x,y)=>String(x.insta.em).localeCompare(String(y.insta.em)))[0];
+  const dias=velho?Math.floor((Date.now()-new Date(velho.insta.em))/864e5):0;
+  return velho&&dias>=14?{a:velho,motivo:`postado há ${dias} dias: dá para repostar`}:null;
+}
+function blogItemHtml(a){
+  const fora=a.status==='oculto', s=encodeURIComponent(a.slug);
+  const quando=a.publicado_em?new Date(a.publicado_em).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}):'';
+  const origem=(a.fontes&&a.fontes.length)?'📰 '+a.fontes.length+' notícias ('+esc([...new Set(a.fontes.map(f=>f.nome))].join(', '))+')':a.fonte?'📰 '+esc(a.fonte.nome||''):'📘 guia';
+  const postado=a.insta&&a.insta.em?'📸 postado em '+new Date(a.insta.em).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}):a.insta?'📸 no Instagram':'';
+  const info=[quando,esc(a.assunto||''),origem,a.editado?'editado':'',fora?'<b>fora do ar</b>':'',postado].filter(Boolean).join(' · ');
+  return `<div class="blog-item${fora?' fora':''}"><div class="blog-item-txt"><a class="blog-tit" href="/blog/${s}" target="_blank" rel="noopener">${esc(a.titulo)}</a><div class="tipo-auto" style="margin:2px 0 0">${info}</div></div>
+      <div class="blog-item-bts"><button type="button" class="bsm blog-sec" onclick="blogEditar('${s}')">Editar</button><button type="button" class="bsm blog-sec" onclick="blogAlternar('${s}')">${fora?'Voltar ao ar':'Tirar do ar'}</button><button type="button" class="bsm blog-sec" onclick="blogCompartilhar('${s}',this)">🔗 Compartilhar</button><button type="button" class="bsm" onclick="blogPrevia('${s}')">📸 Instagram</button></div></div>`;
+}
+window.blogFiltrar=f=>{ blogFiltro=f; blogRender(); };
+window.blogBuscar=()=>blogRender();
 function blogRender(){
   const el=document.getElementById('blogLista'); if(!el) return;
   if(!blogArtigos.length){ el.innerHTML='<div class="tipo-auto">Ainda sem artigos. O primeiro sai sozinho amanhã cedo, ou toque em "Escrever um agora".</div>'; return; }
-  el.innerHTML=blogArtigos.slice(0,20).map(a=>{
-    const fora=a.status==='oculto', s=encodeURIComponent(a.slug);
-    const quando=a.publicado_em?new Date(a.publicado_em).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}):'';
-    const origem=(a.fontes&&a.fontes.length)?'📰 '+a.fontes.length+' notícias ('+esc([...new Set(a.fontes.map(f=>f.nome))].join(', '))+')':a.fonte?'📰 '+esc(a.fonte.nome||''):'📘 guia';
-    const info=[quando,esc(a.assunto||''),origem,a.editado?'editado':'',fora?'<b>fora do ar</b>':'',a.insta?'📸 no Instagram':''].filter(Boolean).join(' · ');
-    return `<div class="blog-item${fora?' fora':''}"><div class="blog-item-txt"><a class="blog-tit" href="/blog/${s}" target="_blank" rel="noopener">${esc(a.titulo)}</a><div class="tipo-auto" style="margin:2px 0 0">${info}</div></div>
-      <div class="blog-item-bts"><button type="button" class="bsm blog-sec" onclick="blogEditar('${s}')">Editar</button><button type="button" class="bsm blog-sec" onclick="blogAlternar('${s}')">${fora?'Voltar ao ar':'Tirar do ar'}</button><button type="button" class="bsm blog-sec" onclick="blogCompartilhar('${s}',this)">🔗 Compartilhar</button><button type="button" class="bsm" onclick="blogPrevia('${s}')">📸 Instagram</button></div></div>`;
-  }).join('');
+  const sug=blogSugestao(), prontos=blogArtigos.filter(a=>a.status!=='oculto'&&!a.insta);
+  const topo=sug?`<div class="blog-pronto"><div class="blog-pronto-tit">📸 Para postar hoje</div>`+
+      `<div class="blog-pronto-it"><span>${esc(sug.a.titulo)}<br><small>${esc(sug.motivo)}</small></span><button type="button" class="bsm" onclick="blogPrevia('${encodeURIComponent(sug.a.slug)}')">Ver e postar</button></div>`+
+      (prontos.length>1?`<div class="tipo-auto" style="margin:0">Mais ${prontos.length-1} pronto${prontos.length-1>1?'s':''} na pasta: toque em "Para postar".</div>`:'')+
+      `<div class="tipo-auto" style="margin:0">O anúncio leva os slides da notícia, uma máquina do estoque ligada ao assunto (foto e preço de agora) e a legenda com a introdução e o link.</div></div>`
+    :`<div class="blog-pronto"><div class="blog-pronto-tit">✅ Tudo em dia no Instagram</div><div class="tipo-auto" style="margin:0">Amanhã cedo sai um artigo novo, e ele aparece aqui pronto para postar.</div></div>`;
+  const conta={postar:prontos.length,todas:blogArtigos.length,postadas:blogArtigos.filter(a=>a.insta).length};
+  const chip=(f,rot)=>`<button type="button" class="blog-filtro${blogFiltro===f?' on':''}" onclick="blogFiltrar('${f}')">${rot} (${conta[f]})</button>`;
+  const busca=cliNorm((document.getElementById('blogBusca')||{}).value||'');
+  const lista=blogArtigos.filter(a=>(blogFiltro==='postar'?a.status!=='oculto'&&!a.insta:blogFiltro==='postadas'?!!a.insta:true)&&
+    (!busca||cliNorm([a.titulo,a.resumo,a.assunto,(a.pontos||[]).join(' ')].join(' ')).includes(busca)));
+  // por mês, como pastas: a do mês mais novo aberta (procurando, todas abertas)
+  const meses=new Map();
+  for(const a of lista){ const k=String(a.publicado_em||'').slice(0,7)||'sem data'; if(!meses.has(k)) meses.set(k,[]); meses.get(k).push(a); }
+  const nomeMes=k=>{ const d=new Date(k+'-15T12:00:00'); if(isNaN(d)) return 'Sem data'; const s=d.toLocaleDateString('pt-BR',{month:'long',year:'numeric'}); return s.charAt(0).toUpperCase()+s.slice(1); };
+  const pastas=[...meses.entries()].map(([k,l],i)=>`<details class="blog-mes"${i===0||busca?' open':''}><summary>📁 ${esc(nomeMes(k))} <small>· ${l.length} artigo${l.length!==1?'s':''}</small></summary>${l.map(blogItemHtml).join('')}</details>`).join('');
+  el.innerHTML=topo+`<div class="blog-pasta-top">${chip('postar','Para postar')}${chip('todas','Todas')}${chip('postadas','Já postadas')}</div>`+
+    (pastas||`<div class="tipo-auto">${busca?'Nada na pasta com "'+esc((document.getElementById('blogBusca')||{}).value||'')+'".':'Nada aqui por enquanto.'}</div>`);
 }
 const blogAchar=s=>blogArtigos.find(x=>x.slug===decodeURIComponent(s));
 function blogAbrir(id){ const d=document.getElementById(id); if(d.showModal) d.showModal(); else d.setAttribute('open',''); }
@@ -12950,8 +12997,9 @@ window.blogAlternar=async s=>{
   try{ Object.assign(a,(await blogApi({acao:ocultar?'ocultar':'mostrar',slug:a.slug})).artigo); blogRender(); blogMsg(ocultar?'Tirado do ar.':'De volta ao ar.'); }
   catch(e){ blogMsg('⚠️ '+e.message); }
 };
-window.blogEditar=s=>{
+window.blogEditar=async s=>{
   const a=blogAchar(s); if(!a) return;
+  if(a.corpo_fora){ try{ Object.assign(a,(await blogApi({acao:'artigo',slug:a.slug})).artigo); delete a.corpo_fora; }catch(e){ blogMsg('⚠️ '+e.message); return; } }
   blogEditando=a.slug;
   const v=(id,x)=>{ document.getElementById(id).value=x||''; };
   v('blogEdTit',a.titulo); v('blogEdRes',a.resumo); v('blogEdCorpo',a.corpo); v('blogEdPontos',(a.pontos||[]).join('\n')); v('blogEdLeg',a.legenda);
@@ -13042,18 +13090,76 @@ function blogFim(){
   blogRodape(ctx,true,'');
   return c;
 }
+// ── o anúncio do artigo: a notícia nos slides + uma máquina do estoque ligada ao assunto ──
+// A máquina: a que mais casa com os termos do artigo (marca, linha, processador); empate, a que
+// está em promoção; sem termo, a mais nova à venda. Só o que o cliente vê: nome, foto e preço.
+function blogMaquinaPara(a){
+  const maqs=anCatMaquinas(); if(!maqs.length) return null;
+  const termos=(a.termos||[]).map(cliNorm).filter(x=>x.length>=2);
+  const casa=p=>{ const t=cliNorm([p.nome,p.marca,p.modelo,p.processador].filter(Boolean).join(' '));
+    return termos.filter(x=>new RegExp('\\b'+x.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b').test(t)).length; };
+  return maqs.map((p,i)=>({p,i,n:casa(p),promo:precoVigente(p).pct>0?1:0})).sort((x,y)=>y.n-x.n||y.promo-x.promo||x.i-y.i)[0].p;
+}
+// o slide da máquina: a foto, o nome e o preço de agora (o mesmo do catálogo, com a promoção)
+function blogSlideMaq(p,img){
+  const {c,ctx}=blogTela('#FFFFFF',0.16), m=BLOG_M, larg=BLOG_W-2*m, foto=!!(img&&img.width);
+  ctx.font=blogFonte(600,28);
+  const et='NO ESTOQUE AGORA', w=ctx.measureText(et).width+48;
+  ctx.fillStyle='#0B1221'; blogRet(ctx,m,130,w,58,29); ctx.fill();
+  ctx.fillStyle='#1CF08F'; ctx.fillText(et,m+24,169);
+  let y=230;
+  if(foto){
+    const alt=500, cobre=Math.max(larg/img.width,alt/img.height), iw=img.width*cobre, ih=img.height*cobre;
+    ctx.save(); blogRet(ctx,m,y,larg,alt,32); ctx.clip();
+    ctx.fillStyle='#EEF1F5'; ctx.fillRect(m,y,larg,alt); ctx.drawImage(img,m+(larg-iw)/2,y+(alt-ih)/2,iw,ih);
+    ctx.restore();
+    y+=alt+36;
+  } else y+=40;
+  blogBloco(ctx,String(p.nome||'Notebook').replace(/\s+/g,' ').trim(),m,y,larg,foto?150:330,600,foto?52:76,34,'#0B1221',1.18);
+  y+=foto?166:350;
+  const pr=precoVigente(p);
+  if(pr.pct>0){ ctx.font=blogFonte(500,36); ctx.fillStyle='#8A94A3'; const de=fmt(pr.de); ctx.fillText(de,m,y+36); ctx.fillRect(m,y+22,ctx.measureText(de).width,3); y+=48; }
+  ctx.font=blogFonte(700,88); ctx.fillStyle='#00B368'; ctx.fillText(fmt(pr.por),m,y+84);
+  ctx.font=blogFonte(500,32); ctx.fillStyle='#556070'; ctx.fillText('Revisado, com 90 dias de garantia',m,y+140);
+  blogRodape(ctx,false,p.num?'#'+p.num:'');
+  return c;
+}
+const blogLinhaMaq=p=>{ const pr=precoVigente(p);
+  return `💻 No estoque agora: ${String(p.nome||'Notebook').replace(/\s+/g,' ').trim()}, ${pr.pct>0?'de '+fmt(pr.de)+' por ':'por '}${fmt(pr.por)}. Revisado, com 90 dias de garantia: chama no WhatsApp!`; };
+// a linha da máquina entra antes do "Leia o artigo completo" (sem ele, no fim)
+function blogComMaq(leg,linha){ if(!linha) return leg; const i=leg.indexOf('\n\n📖'); return i>=0?leg.slice(0,i)+'\n\n'+linha+leg.slice(i):(leg?leg+'\n\n':'')+linha; }
+let blogMaqDe={}, blogLinhaAtual='';
+async function blogMontarPrevia(a,id){
+  try{ await document.fonts.ready; }catch(e){}
+  const p=id?prods.find(x=>x.id===id):null;
+  let img=null; if(p){ try{ img=(await anCarregarFoto(p.id))[0]||null; }catch(e){} }
+  const pts=(a.pontos||[]).filter(Boolean).slice(0,7);
+  blogTelas=[blogCapa(a),...pts.map((t,i)=>blogSlide(a,t,i+1,pts.length)),...(p?[blogSlideMaq(p,img)]:[]),blogFim()];
+  document.getElementById('blogPrev').innerHTML=blogTelas.map((c,i)=>`<img alt="Slide ${i+1}" src="${c.toDataURL('image/jpeg',0.7)}">`).join('');
+  // troca só a linha da máquina na legenda: o resto do que ele editou fica
+  const ta=document.getElementById('blogPrevLeg'), nova=p?blogLinhaMaq(p):'';
+  if(blogLinhaAtual&&ta.value.includes(blogLinhaAtual)) ta.value=nova?ta.value.replace(blogLinhaAtual,nova):ta.value.replace('\n\n'+blogLinhaAtual,'').replace(blogLinhaAtual,'');
+  else if(nova) ta.value=blogComMaq(ta.value,nova);
+  blogLinhaAtual=nova;
+}
 window.blogPrevia=async s=>{
   const a=blogAchar(s); if(!a) return;
   blogPostando=a.slug;
-  try{ await document.fonts.ready; }catch(e){}
-  const pts=(a.pontos||[]).filter(Boolean).slice(0,7);
-  blogTelas=[blogCapa(a),...pts.map((p,i)=>blogSlide(a,p,i+1,pts.length)),blogFim()];
-  document.getElementById('blogPrev').innerHTML=blogTelas.map((c,i)=>`<img alt="Slide ${i+1}" src="${c.toDataURL('image/jpeg',0.7)}">`).join('');
+  const maqs=anCatMaquinas(), id=a.slug in blogMaqDe?blogMaqDe[a.slug]:((blogMaquinaPara(a)||{}).id||'');
+  document.getElementById('blogPrevMaq').innerHTML='<option value="">Sem máquina (só a notícia)</option>'+
+    maqs.map(p=>`<option value="${escAttr(p.id)}"${p.id===id?' selected':''}>#${esc(String(p.num||'?'))} · ${esc(p.nome||'Notebook')} · ${fmt(precoVigente(p).por)}</option>`).join('');
   // a legenda organizada pelo servidor: a introdução, o link do artigo (e na bio) e as hashtags
   document.getElementById('blogPrevLeg').value=a.legenda_insta||a.legenda||a.resumo||'';
+  blogLinhaAtual='';
+  await blogMontarPrevia(a,id);
   document.getElementById('blogPrevMsg').textContent=a.insta?'Esse artigo já foi para o Instagram uma vez.':'';
   const bt=document.getElementById('blogPostarBt'); bt.disabled=false;
   blogAbrir('blogPrevDlg');
+};
+window.blogTrocarMaq=async()=>{
+  const a=blogArtigos.find(x=>x.slug===blogPostando); if(!a) return;
+  const id=document.getElementById('blogPrevMaq').value; blogMaqDe[a.slug]=id;
+  await blogMontarPrevia(a,id);
 };
 window.blogPostar=async()=>{
   const a=blogArtigos.find(x=>x.slug===blogPostando); if(!a||!blogTelas) return;
@@ -13062,7 +13168,12 @@ window.blogPostar=async()=>{
   try{
     const r=await instaEnviar('carrossel',blogTelas,document.getElementById('blogPrevLeg').value.trim(),t=>{ m.textContent=t; });
     try{ Object.assign(a,(await blogApi({acao:'insta',slug:a.slug,post:r.id||''})).artigo); }catch(e){}
-    blogRender(); blogFechar('blogPrevDlg'); blogMsg('✅ No Instagram'+(r.link?': '+r.link:'.'));
+    // link em legenda de post nunca fica clicável no Instagram: o clicável é o da bio e a figurinha
+    // "Link" do story; o link do artigo fica copiado para isso
+    const url=location.origin+'/blog/'+encodeURIComponent(a.slug);
+    try{ await navigator.clipboard.writeText(url); }catch(e){}
+    blogRender(); blogFechar('blogPrevDlg');
+    blogMsg('✅ No Instagram'+(r.link?': '+r.link:'.')+' Para o link ficar clicável: no app, compartilhe o post no story e use a figurinha "Link" com '+url+' (já copiado).');
   }catch(e){ m.textContent='⚠️ '+e.message; bt.disabled=false; }
 };
 // Marca na máquina o que foi publicado (e o 📸 da lista mostra na hora).

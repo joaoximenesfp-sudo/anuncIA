@@ -225,6 +225,16 @@ const post = body => chamar({ method: 'POST', body: Object.assign({ idToken: 'so
   await post({ acao: 'mostrar', slug: a1.slug }); T.limparMemoria();
   r = await chamar({ query: { slug: a1.slug } });
   ok(r.status === 200 && r.body.includes('Windows 10 acabou: e agora, o que fazer?'), 'voltar ao ar');
+  const guardadoAntes = guardado;
+  const muitos = JSON.parse(guardado.conteudo);
+  for (let i = 0; i < 70; i++) muitos.artigos.push(Object.assign({}, muitos.artigos[0], { slug: 'velho-' + i, titulo: 'Artigo velho número ' + i, publicado_em: new Date(agora - (i + 2) * 864e5).toISOString() }));
+  guardado = { conteudo: JSON.stringify(muitos) }; T.limparMemoria();
+  r = await post({ acao: 'lista' });
+  const pasta = r.json().artigos;
+  ok(pasta.length === 71 && pasta.slice(0, 60).every(x => x.corpo) && pasta.slice(60).every(x => !x.corpo && x.corpo_fora), 'a pasta vem inteira (71 artigos); o texto, só dos 60 mais novos');
+  r = await post({ acao: 'artigo', slug: 'velho-69' });
+  ok(r.status === 200 && r.json().artigo.corpo && r.json().artigo.legenda_insta, 'abrir um antigo para editar: vem com o texto');
+  guardado = guardadoAntes; T.limparMemoria();
   r = await post({ acao: 'insta', slug: a1.slug, post: '18130493537478641' });
   ok(r.json().artigo.insta && r.json().artigo.insta.id === '18130493537478641', 'marca que foi para o Instagram');
 

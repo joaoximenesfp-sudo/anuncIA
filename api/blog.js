@@ -14,7 +14,7 @@
 // GET  /api/blog?sitemap=1       sitemap.xml             GET /api/blog?acao=gerar  o do dia (cron)
 // GET  /api/blog?acao=fontes     as notícias candidatas de agora (sem IA; para conferir as fontes)
 // GET  /api/blog?capa=x          a imagem do link do artigo (WhatsApp, Facebook), 1200×630
-// POST /api/blog {acao, idToken} só sócio: lista | salvar | ocultar | mostrar | gerar | insta
+// POST /api/blog {acao, idToken} só sócio: lista | artigo | salvar | ocultar | mostrar | gerar | insta
 const fs = require('fs'), path = require('path');
 const Anthropic = require('@anthropic-ai/sdk');
 const { put } = require('@vercel/blob');
@@ -434,7 +434,13 @@ async function exigirSocio(idToken) {
 const paraSistema = a => Object.assign({}, a, { legenda_insta: legendaInsta(a, `${SITE}/blog/${a.slug}`, { daLoja: true }) });
 async function acaoDoSistema(req, corpo) {
   await exigirSocio(corpo.idToken);
-  if (corpo.acao === 'lista') return { ok: true, artigos: (await lerBlog(true)).artigos.slice(0, 60).map(paraSistema) };
+  // a pasta inteira (todos os artigos); o texto só dos 60 mais novos, o resto vem ao abrir para editar
+  if (corpo.acao === 'lista') return { ok: true, artigos: (await lerBlog(true)).artigos.map((a, i) => paraSistema(i < 60 ? a : Object.assign({}, a, { corpo: undefined, corpo_fora: true }))) };
+  if (corpo.acao === 'artigo') {
+    const a = (await lerBlog(true)).artigos.find(x => x.slug === String(corpo.slug || ''));
+    if (!a) throw erro(404, 'Esse artigo não existe mais.');
+    return { ok: true, artigo: paraSistema(a) };
+  }
   if (corpo.acao === 'gerar') return gerar(req, { manual: true });
   const d = await lerBlog(true);
   const a = d.artigos.find(x => x.slug === String(corpo.slug || ''));
