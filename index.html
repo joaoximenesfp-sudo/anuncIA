@@ -13240,7 +13240,7 @@ window.mlEditorPublicar=async id=>{
     const r=await anCatPublicarCanais(p,['ml'],t=>{ if(st) st.textContent=t; });
     anCatAvisarResultado(p,r);
     if(st) st.innerHTML=!r.ml?'':r.ml.erro?'⚠️ Não foi para o Mercado Livre: o motivo está logo acima.':r.ml.faltam?'🛒 O Mercado Livre pede mais dados: responda logo acima (uma vez só).'
-      :'✅ No Mercado Livre'+(r.ml.link?` · <a href="${encodeURI(r.ml.link)}" target="_blank" rel="noopener">ver o anúncio</a>`:'');
+      :'✅ No Mercado Livre'+mlPrecoTxt(r.ml)+(r.ml.link?` · <a href="${encodeURI(r.ml.link)}" target="_blank" rel="noopener">ver o anúncio</a>`:'');
   }finally{ anCatMontar(); mlEditorMontar(); }
 };
 // Botão 📸 na linha da máquina: só o que pode ir pro Instagram (anunciada, com
@@ -13279,7 +13279,7 @@ const mlErros={};       // id da máquina -> o motivo da última recusa (fica no
 const mlFotosFeitas={}; // id da máquina -> { ass, ids }: fotos já enviadas nesta sessão
 const ML_DEV='https://developers.mercadolivre.com.br/devcenter';
 const ML_VOLTA='https://anunc-ia.vercel.app/api/ml';
-const ML_OPC={tipo:'gold_special',retirada:true,garantia:90,frete_gratis:false,caixa:{alt:10,larg:30,comp:40,peso:2.5}};
+const ML_OPC={tipo:'gold_special',retirada:true,garantia:90,frete_gratis:false,somar_tarifa:true,caixa:{alt:10,larg:30,comp:40,peso:2.5}};
 // Versão do que vai de características: anúncio publicado com uma versão menor ganha as que
 // faltam (ação "completar") na próxima vez que o sistema conferir os anúncios.
 const ML_FICHA_V=2;
@@ -13330,7 +13330,7 @@ function mlMostrar(){
       conta.textContent=mlCfg.usuario||'conta da loja';
       lig.innerHTML=`<div class="tipo-auto">Conectado${mlCfg.offline===false?' · ⚠️ sem acesso offline: a conexão cai em 6 horas (marque offline_access no app e conecte de novo)':''}.
           <a href="#" onclick="mlConectar();return false">Reconectar</a> · <a href="#" onclick="mlDesconectar();return false">Desconectar</a></div>
-        <details class="insta-guia ml-opc"><summary>Como os anúncios saem: ${mlTipoNome(o.tipo)} · Mercado Envios${o.frete_gratis?' com frete grátis':''}${o.retirada?' + retirada em Campinas':''} · garantia de ${o.garantia} dias</summary>
+        <details class="insta-guia ml-opc"><summary>Como os anúncios saem: ${mlTipoNome(o.tipo)} · Mercado Envios${o.frete_gratis?' com frete grátis':''}${o.retirada?' + retirada em Campinas':''} · garantia de ${o.garantia} dias${o.somar_tarifa!==false?' · preço + tarifa':''}</summary>
           <div class="ml-opc-grade">
             <label>Tipo de anúncio<select class="inp" id="mlOpTipo"><option value="gold_special"${o.tipo!=='gold_pro'?' selected':''}>Clássico — tarifa menor</option><option value="gold_pro"${o.tipo==='gold_pro'?' selected':''}>Premium — parcelado sem juros, tarifa maior</option></select></label>
             <label>Garantia (dias)<input class="inp" type="number" id="mlOpGar" min="0" max="365" value="${o.garantia}"></label>
@@ -13338,6 +13338,7 @@ function mlMostrar(){
             <label>Peso com a caixa (kg)<input class="inp" type="number" id="mlOpPeso" min="0.1" step="0.1" value="${o.caixa.peso}"></label>
             <label class="ml-chk"><input type="checkbox" id="mlOpRet"${o.retirada?' checked':''}> Retirada em mãos em Campinas</label>
             <label class="ml-chk"><input type="checkbox" id="mlOpFrete"${o.frete_gratis?' checked':''}> Frete grátis (o Mercado Livre desconta parte do frete na venda; o anúncio ganha posição)</label>
+            <label class="ml-chk"><input type="checkbox" id="mlOpTarifa"${o.somar_tarifa!==false?' checked':''}> Somar a tarifa do Mercado Livre no preço: descontada a tarifa da venda, chega o preço de tabela (ex.: R$ 2.199 vira R$ 2.529 no Clássico de 13%)</label>
           </div>
           <button class="bok" onclick="mlSalvarOpcoes()">Salvar</button> <span class="tipo-auto">Vale para os próximos anúncios. A condição é sempre <b>usado</b>.</span>
         </details>
@@ -13393,7 +13394,7 @@ window.mlAnatelSalvar=async inp=>{
 window.mlSalvarOpcoes=async()=>{
   const g=id=>document.getElementById(id);
   const num=(id,min,max,pad)=>{ const v=parseFloat(String((g(id)||{}).value||'').replace(',','.')); return isFinite(v)?Math.min(max,Math.max(min,v)):pad; };
-  const o={tipo:(g('mlOpTipo')||{}).value==='gold_pro'?'gold_pro':'gold_special', retirada:!!(g('mlOpRet')||{}).checked, frete_gratis:!!(g('mlOpFrete')||{}).checked, garantia:Math.round(num('mlOpGar',0,365,90)),
+  const o={tipo:(g('mlOpTipo')||{}).value==='gold_pro'?'gold_pro':'gold_special', retirada:!!(g('mlOpRet')||{}).checked, frete_gratis:!!(g('mlOpFrete')||{}).checked, somar_tarifa:!!(g('mlOpTarifa')||{}).checked, garantia:Math.round(num('mlOpGar',0,365,90)),
     caixa:{alt:Math.round(num('mlOpAlt',1,200,10)),larg:Math.round(num('mlOpLarg',1,200,30)),comp:Math.round(num('mlOpComp',1,200,40)),peso:Math.round(num('mlOpPeso',0.1,50,2.5)*10)/10}};
   try{ await setDoc(doc(db,'config','mercadolivre'),{opcoes:o},{merge:true}); mlCfg={...(mlCfg||{}),opcoes:o}; mlMostrar(); mlMsg('✅ Opções salvas: valem para os próximos anúncios.'); }
   catch(e){ mlMsg('⚠️ Não consegui salvar: '+e.message); return; }
@@ -13850,7 +13851,7 @@ async function mlPublicarMaquina(p,aviso){
   const o=mlOpcoes();
   if(aviso) aviso('Mercado Livre: criando o anúncio...');
   const r=await mlApi({acao:'publicar',item:{titulo:mlTitulo(p),preco,descricao:mlDescricao(p,o),fotos:ids,ficha:mlFicha(p),atributos:{...mlRespostasIguais(p),...(p.ml_atributos||{})},
-    tipo:o.tipo,retirada:o.retirada,frete_gratis:!!o.frete_gratis,garantia_dias:o.garantia,pacote:o.caixa,sku:p.num?String(p.num):'',categoria:p.ml_categoria||'',video:ytId(p.video)}});
+    tipo:o.tipo,retirada:o.retirada,frete_gratis:!!o.frete_gratis,somar_tarifa:o.somar_tarifa!==false,garantia_dias:o.garantia,pacote:o.caixa,sku:p.num?String(p.num):'',categoria:p.ml_categoria||'',video:ytId(p.video)}});
   const assFicha=mlAssFicha(p);
   if(!r.ok&&r.faltam){ mlFaltam[p.id]={faltam:r.faltam,categoria:r.categoria||{},motivo:r.motivo||''}; delete mlErros[p.id]; return {faltam:r.faltam}; }
   delete mlFaltam[p.id]; delete mlErros[p.id];
@@ -13863,8 +13864,10 @@ async function mlPublicarMaquina(p,aviso){
   for(let i=0;i<3&&!marcou;i++){ try{ await updateDoc(doc(db,'products',p.id),campos); marcou=true; }catch(e){ await new Promise(ok=>setTimeout(ok,800)); } }
   const avisos=[...(r.avisos||[])];
   if(!marcou) avisos.push(`publicado (${r.id}), mas não consegui marcar na máquina: não publique de novo`);
-  return {link:campos.ml_link,avisos};
+  return {link:campos.ml_link,avisos,preco:campos.ml_preco,base:preco,tarifa:r.tarifa||null};
 }
+// " · R$ 2.529 lá (R$ 2.199 + 13% de tarifa)": quando a tarifa foi somada
+const mlPrecoTxt=r=>r&&r.tarifa&&r.preco>r.base?` · ${fmt(r.preco)} lá (${fmt(r.base)} + ${String(r.tarifa).replace('.',',')}% de tarifa)`:'';
 function mlStatusHTML(p){
   if(mlFaltam[p.id]) return mlFaltamHTML(p);
   if(mlErros[p.id]&&!mlNoAr(p)){
@@ -13985,7 +13988,7 @@ window.mlCompletar=async (id,el)=>{
   const st=noEditor?document.getElementById('mlEditorStatus'):(card&&card.querySelector('.ancat-st'));
   const r=await anCatPublicarCanais(p,['ml'],t=>{ if(st) st.textContent=t; });
   anCatAvisarResultado(p,r);
-  if(noEditor&&st) st.innerHTML=!r.ml?'':r.ml.erro?'⚠️ Não foi para o Mercado Livre: o motivo está logo acima.':r.ml.faltam?'🛒 Ainda falta: responda acima.':'✅ No Mercado Livre'+(r.ml.link?` · <a href="${encodeURI(r.ml.link)}" target="_blank" rel="noopener">ver o anúncio</a>`:'');
+  if(noEditor&&st) st.innerHTML=!r.ml?'':r.ml.erro?'⚠️ Não foi para o Mercado Livre: o motivo está logo acima.':r.ml.faltam?'🛒 Ainda falta: responda acima.':'✅ No Mercado Livre'+mlPrecoTxt(r.ml)+(r.ml.link?` · <a href="${encodeURI(r.ml.link)}" target="_blank" rel="noopener">ver o anúncio</a>`:'');
   anCatMontar(); mlEditorMontar();
 };
 // O anúncio acompanha a máquina: vendida aqui encerra; reservada, chegando ou fora do
@@ -14487,7 +14490,7 @@ function anCatAvisarResultado(p,r){
   if(r.ml){
     if(r.ml.erro) mlMsg('⚠️ '+nome+' — '+esc(r.ml.erro),true);
     else if(r.ml.faltam) mlMsg('🛒 O Mercado Livre pede mais dados de '+nome+': responda no cartão da máquina (uma vez só).',true);
-    else mlMsg('✅ '+nome+' no Mercado Livre'+(r.ml.link?` · <a href="${encodeURI(r.ml.link)}" target="_blank" rel="noopener">ver o anúncio</a>`:'')
+    else mlMsg('✅ '+nome+' no Mercado Livre'+mlPrecoTxt(r.ml)+(r.ml.link?` · <a href="${encodeURI(r.ml.link)}" target="_blank" rel="noopener">ver o anúncio</a>`:'')
       +((r.ml.avisos||[]).length?' · ⚠️ '+r.ml.avisos.map(esc).join(' · '):''),true);
   }
 }

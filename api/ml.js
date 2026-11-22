@@ -421,6 +421,23 @@ async function foto(corpo) {
   console.log('ml foto: recusou', r.rota, r.status, JSON.stringify(r.j).slice(0, 400));
   throw erro(502, traduzir(r));
 }
+// A tarifa de venda do Mercado Livre para a categoria e o tipo de anúncio (Clássico ou Premium):
+// a porcentagem e o fixo (só existe em produto barato). Sem resposta, null: o preço vai sem somar.
+async function tarifaDe(token, cat, tipo, preco) {
+  const r = await ml('GET', '/sites/MLB/listing_prices', { token, query: { price: preco, listing_type_id: tipo, category_id: cat } });
+  if (!r.ok) { console.log('ml tarifa: não veio', r.status, JSON.stringify(r.j).slice(0, 300)); return null; }
+  const x = Array.isArray(r.j) ? (r.j.find(y => y && y.listing_type_id === tipo) || r.j[0]) : r.j;
+  const d = (x && x.sale_fee_details) || {};
+  const pct = Number(d.percentage_fee != null ? d.percentage_fee : d.meli_percentage_fee), fixo = Number(d.fixed_fee) || 0;
+  if (pct > 0 && pct < 60) return { pct, fixo };
+  const total = Number(x && x.sale_fee_amount); // sem o detalhe: a porcentagem sai do valor da tarifa
+  return total > 0 && preco > 0 && total < preco * 0.6 ? { pct: Math.round(total / preco * 1000) / 10, fixo: 0 } : null;
+}
+// O preço que, descontada a tarifa na venda, deixa o preço de tabela; terminado em 9 (R$ 2.529).
+function precoComTarifa(base, t) {
+  const p = (base + (t.fixo || 0)) / (1 - t.pct / 100);
+  return Math.ceil((p + 1) / 10) * 10 - 1;
+}
 function limparTitulo(t) {
   let s = String(t || '').replace(/[^\p{L}\p{N}\s.,+\-\/"()ªº°]/gu, ' ').replace(/\s+/g, ' ').trim();
   if (s.length > 60) { s = s.slice(0, 60); const k = s.lastIndexOf(' '); if (k > 40) s = s.slice(0, k); s = s.trim(); }
@@ -445,6 +462,13 @@ async function publicar(corpo) {
     if (top && /^MLB\d+$/.test(String(top.category_id || ''))) { cat = top.category_id; catNome = top.category_name || ''; }
   }
   if (!cat) cat = CAT_PADRAO;
+  // a tarifa do Mercado Livre somada ao preço (opção da loja): na venda, chega o de tabela
+  let precoLa = preco, tarifa = null;
+  if (it.somar_tarifa) {
+    tarifa = await tarifaDe(s.token, cat, tipo, preco);
+    if (tarifa) precoLa = precoComTarifa(preco, tarifa);
+    console.log('ml tarifa', cat, tipo, tarifa ? tarifa.pct + '%' + (tarifa.fixo ? ' + R$ ' + tarifa.fixo : '') : '(sem)', preco, '->', precoLa);
+  }
   // 2) o que a categoria pede
   const ra = await ml('GET', `/categories/${cat}/attributes`, { token: s.token });
   if (!ra.ok || !Array.isArray(ra.j)) throw erro(502, traduzir(ra));
@@ -456,7 +480,7 @@ async function publicar(corpo) {
   if (m.faltam.length) return { ok: false, faltam: m.faltam, categoria: { id: cat, nome: catNome }, cifraNova: s.cifraNova };
   // 3) o anúncio, validado antes de criar: o Mercado Livre diz o que falta sem publicar nada
   const item = {
-    title: titulo, category_id: cat, price: preco, currency_id: 'BRL', available_quantity: 1, buying_mode: 'buy_it_now',
+    title: titulo, category_id: cat, price: precoLa, currency_id: 'BRL', available_quantity: 1, buying_mode: 'buy_it_now',
     condition: 'used', listing_type_id: tipo, pictures: fotos.map(id => ({ id })), attributes: m.atributos,
     sale_terms: garantia ? [{ id: 'WARRANTY_TYPE', value_name: 'Garantia do vendedor' }, { id: 'WARRANTY_TIME', value_name: garantia + ' dias' }]
                          : [{ id: 'WARRANTY_TYPE', value_name: 'Sem garantia' }],
@@ -524,7 +548,7 @@ async function publicar(corpo) {
     const c = await usado(r.j.id, s.token, porId);
     if (!c) avisos.push('O Mercado Livre pôs o anúncio como Novo e não deixou mudar: troque para Usado no próprio Mercado Livre.');
   }
-  return { ok: true, id: r.j.id, link: r.j.permalink || '', status: r.j.status || 'active', preco: r.j.price || preco, tipo,
+  return { ok: true, id: r.j.id, link: r.j.permalink || '', status: r.j.status || 'active', preco: r.j.price || precoLa, preco_base: preco, tarifa: tarifa ? tarifa.pct : null, tipo,
     frete_gratis: !!((r.j.shipping && r.j.shipping.free_shipping) || item.shipping.free_shipping),
     categoria: { id: cat, nome: catNome }, avisos, cifraNova: s.cifraNova };
 }
@@ -749,4 +773,4 @@ module.exports = async (req, res) => {
     return json(res, e.status || 500, { erro: e.message || 'Erro inesperado.' });
   }
 };
-module.exports._teste = { cifrar, decifrar, novoEstado, estadoValido, verificador, desafio, montarAtributos, formatar, idsDosErros, limparTitulo, daFicha, infoAtributo, lerQualidade, VOLTA };
+module.exports._teste = { cifrar, decifrar, novoEstado, estadoValido, verificador, desafio, montarAtributos, formatar, idsDosErros, limparTitulo, daFicha, infoAtributo, lerQualidade, precoComTarifa, VOLTA };

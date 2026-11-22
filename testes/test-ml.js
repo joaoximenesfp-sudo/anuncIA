@@ -50,6 +50,7 @@ const NOTEBOOKS = [
 ];
 let pedidos = [], cfgDoc = null, gravarFalha = false, tokenSeq = 0, refreshRuim = false, validacoes = [], criados = [], criacoes = [], condicaoCriado = 'used', itemLa = null, putRecusas = [], descricoes = {}, pkceRuim = false, mlFora = false;
 const desativadas = new Set(); // rotas que o Mercado Livre tirou do ar para o app
+let tarifaFora = false, tarifaSemDetalhe = false; // a consulta da tarifa falha / vem só com o valor
 const resposta = (status, json) => ({ ok: status >= 200 && status < 300, status, json: async () => { if (json === undefined) throw new Error('sem corpo'); return json; } });
 global.fetch = async (url, op = {}) => {
   const h = op.headers || {};
@@ -88,6 +89,12 @@ global.fetch = async (url, op = {}) => {
   if (u.pathname === '/pictures' && p.metodo === 'POST') return resposta(201, { id: 'PICV' + pedidos.length, max_size: '1200x900' });
   if (u.pathname === '/sites/MLB/domain_discovery/search') return resposta(200, [{ domain_id: 'MLB-NOTEBOOKS', domain_name: 'Notebooks', category_id: 'MLB1652', category_name: 'Notebooks' }]);
   if (u.pathname === '/categories/MLB1652/attributes') return resposta(200, ATRIBUTOS);
+  if (u.pathname === '/sites/MLB/listing_prices') {
+    if (tarifaFora) return resposta(500, { message: 'internal error' });
+    const tipo = u.searchParams.get('listing_type_id'), pct = tipo === 'gold_pro' ? 18 : 13, preco = Number(u.searchParams.get('price'));
+    const x = { listing_type_id: tipo, currency_id: 'BRL', sale_fee_amount: Math.round(preco * pct) / 100 };
+    return resposta(200, tarifaSemDetalhe ? x : { ...x, sale_fee_details: { percentage_fee: pct, fixed_fee: 0, gross_amount: x.sale_fee_amount } });
+  }
   if (u.pathname === '/items/validate') {
     const corpo = JSON.parse(p.corpo); const proxima = validacoes.shift();
     if (proxima) return resposta(400, { message: 'Validation error', error: 'validation_error', status: 400, cause: typeof proxima === 'function' ? proxima(corpo) : proxima });
@@ -308,6 +315,29 @@ const ITEM = { titulo: 'Notebook Dell Latitude 5490 i5 8ª 16GB SSD 256GB', prec
   validacoes = []; criacoes = [[{ code: 'body.required_fields', message: 'The body does not contains some or none of the following properties [family_name]', type: 'error' }]]; criados = [];
   r = await post({ acao: 'publicar', item: { ...ITEM, atributos: KL } });
   ok(r.json().ok && criados.length === 1 && criados[0].family_name === ITEM.titulo && !criados[0].title, 'validou, mas a criação pediu family_name: refaz e cria');
+  console.log('\na tarifa do Mercado Livre somada no preço');
+  ok(T.precoComTarifa(2199, { pct: 13 }) === 2529 && T.precoComTarifa(2199, { pct: 18 }) === 2689 && T.precoComTarifa(2519, { pct: 0.0001 }) === 2529,
+    'R$ 2.199: 13% vira R$ 2.529 e 18% vira R$ 2.689 (sempre terminado em 9)');
+  ok([999, 1499, 2199, 3850, 5999].every(b => [11.5, 13, 16, 19].every(pct => { const v = T.precoComTarifa(b, { pct }); return v % 10 === 9 && v * (1 - pct / 100) >= b && v * (1 - pct / 100) < b + 12; })),
+    'descontada a tarifa, chega o de tabela (até uns R$ 10 a mais, nunca a menos)');
+  validacoes = []; criacoes = []; criados = []; pedidos = [];
+  r = await post({ acao: 'publicar', item: { ...ITEM, atributos: KL, somar_tarifa: true } });
+  const pt = pedidos.find(p => p.url.includes('/sites/MLB/listing_prices'));
+  ok(r.json().ok && criados[0].price === 2529 && r.json().preco === 2529 && r.json().preco_base === 2199 && r.json().tarifa === 13,
+    'com a opção: o anúncio sai por R$ 2.529 (R$ 2.199 + 13%) e devolve os dois preços');
+  ok(pt && /category_id=MLB1652/.test(pt.url) && /listing_type_id=gold_special/.test(pt.url) && /price=2199/.test(pt.url), 'a tarifa é a da categoria e do tipo do anúncio');
+  criados = [];
+  r = await post({ acao: 'publicar', item: { ...ITEM, tipo: 'gold_pro', atributos: KL, somar_tarifa: true } });
+  ok(r.json().ok && criados[0].price === 2689 && r.json().tarifa === 18, 'Premium (tarifa maior): R$ 2.689');
+  tarifaSemDetalhe = true; criados = [];
+  r = await post({ acao: 'publicar', item: { ...ITEM, atributos: KL, somar_tarifa: true } });
+  ok(r.json().ok && criados[0].price === 2529 && r.json().tarifa === 13, 'sem o detalhe, a porcentagem sai do valor da tarifa');
+  tarifaSemDetalhe = false; tarifaFora = true; criados = [];
+  r = await post({ acao: 'publicar', item: { ...ITEM, atributos: KL, somar_tarifa: true } });
+  ok(r.json().ok && criados[0].price === 2199 && r.json().tarifa === null, 'a consulta da tarifa falhou: publica no preço de tabela, sem travar');
+  tarifaFora = false; criados = []; pedidos = [];
+  r = await post({ acao: 'publicar', item: { ...ITEM, atributos: KL } });
+  ok(r.json().ok && criados[0].price === 2199 && r.json().preco_base === 2199 && !pedidos.some(p => p.url.includes('listing_prices')), 'sem a opção: o preço de tabela, sem consultar a tarifa');
   // o que aconteceu de verdade com o #480: pede family_name; depois só a advertência do me1
   const ME1 = { department: 'shipping', cause_id: 4053, type: 'warning', code: 'shipping.lost_me1_by_user', references: ['user.shipping_preferences.modes'], message: 'User has not mode me1' };
   validacoes = [[{ code: 'body.required_fields', message: 'The body does not contains some or none of the following properties [family_name]', type: 'error' }], [ME1]];
