@@ -3251,7 +3251,7 @@ div:has(> .fc2){flex-wrap:wrap;row-gap:6px}
     </style>
     <div class="cd" id="blogCard">
       <div class="cdh"><span class="cdht">📰 Blog da loja</span>
-        <span style="font-size:.74rem;color:var(--li)">todo dia o Giro do dia sai sozinho: de 3 a 5 notícias de tecnologia, ligadas e explicadas; você só edita se quiser</span></div>
+        <span style="font-size:.74rem;color:var(--li)">todo dia sai um artigo sozinho: um assunto por vez, curto e com slides; você só edita se quiser</span></div>
       <div class="cdb">
         <div class="blog-topo">
           <a class="bsm" href="/blog" target="_blank" rel="noopener" style="text-decoration:none">Abrir o blog</a>
@@ -3265,8 +3265,8 @@ div:has(> .fc2){flex-wrap:wrap;row-gap:6px}
         <div class="fi"><label class="fl" for="blogEdTit">Título</label><input class="inp" id="blogEdTit" maxlength="110"></div>
         <div class="fi"><label class="fl" for="blogEdRes">Resumo (aparece no Google)</label><textarea class="inp" id="blogEdRes" rows="2" maxlength="220"></textarea></div>
         <div class="fi"><label class="fl" for="blogEdCorpo">Texto</label><textarea class="inp" id="blogEdCorpo" rows="14"></textarea>
-          <div class="tipo-auto">"## " no começo da linha vira subtítulo, "- " vira lista e **assim** fica em negrito. No Giro do dia, a linha [[fonte:1]] vira o link da notícia daquele trecho.</div></div>
-        <div class="fi"><label class="fl" for="blogEdPontos">Slides do carrossel (um por linha)</label><textarea class="inp" id="blogEdPontos" rows="5"></textarea></div>
+          <div class="tipo-auto">"## " no começo da linha vira subtítulo, "- " vira lista e **assim** fica em negrito. As máquinas à venda entram sozinhas no meio do texto.</div></div>
+        <div class="fi"><label class="fl" for="blogEdPontos">Slides (no topo do artigo e no carrossel do Instagram; um por linha)</label><textarea class="inp" id="blogEdPontos" rows="5"></textarea></div>
         <div class="fi"><label class="fl" for="blogEdLeg">Legenda do Instagram</label><textarea class="inp" id="blogEdLeg" rows="6"></textarea></div>
         <div class="blog-dlg-bts"><button type="button" class="bsm" onclick="blogSalvar()">Salvar</button><button type="button" class="bsm blog-sec" onclick="blogFechar('blogEd')">Cancelar</button><span class="tipo-auto" id="blogEdMsg" style="margin:0"></span></div>
       </div></dialog>
@@ -12921,7 +12921,7 @@ function blogRender(){
     const origem=(a.fontes&&a.fontes.length)?'📰 '+a.fontes.length+' notícias ('+esc([...new Set(a.fontes.map(f=>f.nome))].join(', '))+')':a.fonte?'📰 '+esc(a.fonte.nome||''):'📘 guia';
     const info=[quando,esc(a.assunto||''),origem,a.editado?'editado':'',fora?'<b>fora do ar</b>':'',a.insta?'📸 no Instagram':''].filter(Boolean).join(' · ');
     return `<div class="blog-item${fora?' fora':''}"><div class="blog-item-txt"><a class="blog-tit" href="/blog/${s}" target="_blank" rel="noopener">${esc(a.titulo)}</a><div class="tipo-auto" style="margin:2px 0 0">${info}</div></div>
-      <div class="blog-item-bts"><button type="button" class="bsm blog-sec" onclick="blogEditar('${s}')">Editar</button><button type="button" class="bsm blog-sec" onclick="blogAlternar('${s}')">${fora?'Voltar ao ar':'Tirar do ar'}</button><button type="button" class="bsm" onclick="blogPrevia('${s}')">📸 Instagram</button></div></div>`;
+      <div class="blog-item-bts"><button type="button" class="bsm blog-sec" onclick="blogEditar('${s}')">Editar</button><button type="button" class="bsm blog-sec" onclick="blogAlternar('${s}')">${fora?'Voltar ao ar':'Tirar do ar'}</button><button type="button" class="bsm blog-sec" onclick="blogCompartilhar('${s}',this)">🔗 Compartilhar</button><button type="button" class="bsm" onclick="blogPrevia('${s}')">📸 Instagram</button></div></div>`;
   }).join('');
 }
 const blogAchar=s=>blogArtigos.find(x=>x.slug===decodeURIComponent(s));
@@ -12933,6 +12933,15 @@ window.blogGerar=async()=>{
   try{ const r=await blogApi({acao:'gerar'}); blogMsg(r.titulo?'✅ Publicado: '+r.titulo:(r.pulou||'Pronto.')); await blogCarregar(); }
   catch(e){ blogMsg('⚠️ '+e.message); }
   finally{ if(bt) bt.disabled=false; }
+};
+// Compartilhar o artigo: no celular, a lista do próprio aparelho (WhatsApp, status, grupos...);
+// no computador, o link vai para a área de transferência.
+window.blogCompartilhar=async(s,bt)=>{
+  const a=blogArtigos.find(x=>x.slug===decodeURIComponent(s)); if(!a) return;
+  const url=location.origin+'/blog/'+encodeURIComponent(a.slug);
+  if(navigator.share){ try{ await navigator.share({title:a.titulo,text:a.titulo,url}); }catch(e){} return; }
+  try{ await navigator.clipboard.writeText(a.titulo+' '+url); blogMsg('🔗 Link copiado: cole no WhatsApp, no Instagram ou onde quiser.'); }
+  catch(e){ window.prompt('Copie o link do artigo:',url); }
 };
 window.blogAlternar=async s=>{
   const a=blogAchar(s); if(!a) return;

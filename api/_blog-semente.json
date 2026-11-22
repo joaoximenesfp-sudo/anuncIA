@@ -1,56 +1,133 @@
-[
-  {
-    "titulo": "Semana de apagões, golpes de Black Friday e a pegadinha da placa de vídeo",
-    "resumo": "Por que tanta coisa saiu do ar na mesma semana, o golpe que mais aparece na Black Friday, a letra miúda dos notebooks gamer, a IA do Google com histórico e um gadget hacker.",
-    "corpo": "Teve semana em que a Microsoft, os voos dos Estados Unidos e grandes bancos saíram do ar quase ao mesmo tempo, e a Black Friday chega na sexta-feira, dia 27. O fio de hoje é a confiança: no sistema que se atualiza sozinho, no anúncio que parece bom demais e no adesivo colado no notebook.\n\n## Por que tanta coisa caiu ao mesmo tempo\n\nEm menos de uma semana, a Microsoft teve uma pane em massa, todos os voos dos Estados Unidos ficaram parados por horas e grandes bancos americanos tiveram falhas. Parece ataque combinado, mas não há evidência de ligação entre os casos.\n\nBoa parte começou numa atualização que deu errado: na Microsoft, uma mudança na rede sobrecarregou os servidores; no controle de tráfego aéreo, a troca de cabos de cobre antigos por fibra óptica. Especialistas lembram ainda que a inteligência artificial está acelerando a descoberta de falhas dos dois lados, de quem ataca e de quem defende, e isso aumenta o volume de correções a instalar.\n\n**Por que importa:** Atualizar continua sendo o certo, mas é na atualização que as coisas quebram: faça backup antes e deixe as grandes para quando não precisar do notebook com pressa.\n\n[[fonte:0]]\n\n## Na Black Friday, o golpe mora no anúncio falso\n\nUm levantamento da Clavis Segurança da Informação sobre a semana da Black Friday do ano passado achou um padrão: anúncios e perfis falsos foram 91,8% das ameaças. Pelos dados da Serasa Experian, foram 604 anúncios e 625 perfis falsos entre 23 e 29 de novembro de 2025.\n\nOs truques são conhecidos: páginas que imitam lojas famosas, ofertas que não existem e cobranças falsas por Pix e boleto. A diferença é que, com inteligência artificial, algumas fraudes ganham imagens e mensagens mais convincentes.\n\n**Por que importa:** Antes de pagar, confira se o endereço do site é mesmo o da loja e, na dúvida, procure a oferta direto nos canais oficiais; preço bom demais pede desconfiança em dobro.\n\n[[fonte:1]]\n\n## Duas RTX iguais, desempenhos bem diferentes\n\nDois notebooks gamer com a mesma placa de vídeo podem render muito diferente. O segredo está no TGP (Total Graphics Power), a potência máxima, em watts, que o fabricante do notebook deixa a placa consumir. O mesmo chip pode trabalhar com 35 W ou com até 140 W, conforme a refrigeração do aparelho.\n\nAntes, a Nvidia marcava as versões econômicas com o nome Max-Q. Hoje, um notebook fino e um parrudo exibem o mesmo adesivo de RTX 4070, e em jogos pesados a diferença de velocidade entre eles pode chegar a 40%.\n\n**Por que importa:** Na hora de comparar preço, o nome da placa não basta: procure o TGP na ficha do fabricante ou num anúncio completo.\n\n[[fonte:2]]\n\n## O Google agora lembra das suas conversas com a IA\n\nA página inicial do Google no computador ganhou uma barra lateral com as conversas recentes feitas no Modo IA, a parte do buscador para perguntas mais complexas. Dá para retomar uma pesquisa de onde parou, procurar conversas antigas e começar um assunto novo, e a barra pode ser recolhida. A liberação começou nesta semana, pela versão para computadores; o Google não disse quando chega a todo mundo.\n\nEla não junta todo o histórico de buscas, só as conversas com a IA. E, para quem não quer guardar uma pergunta, o Google já tinha anunciado as conversas temporárias, que não ficam salvas.\n\n**Por que importa:** Quem pesquisa no notebook para a escola ou o trabalho volta ao assunto mais rápido; se mais gente usa o computador com a mesma conta, as conversas aparecem ali para quem abrir o Google.\n\n[[fonte:3]]\n\n## O canivete suíço hacker que não vem para o Brasil\n\nO Flipper One, irmão do polêmico Flipper Zero, entrou em financiamento coletivo no Kickstarter e já arrecadou cerca de US$ 14 milhões, com preço a partir de US$ 399 (uns R$ 2.360 na conversão direta). É um computador de bolso com Linux, focado em redes: tem duas entradas de cabo de rede, Wi-Fi 6E e saída HDMI para monitor.\n\nPode servir para monitorar redes ou virar um servidor de VPN portátil, mas também pode ser mal usado. O Flipper Zero chegou a ser proibido no Brasil, e as entregas do One, previstas para julho de 2027, por enquanto não incluem o país.\n\n**Por que importa:** Mostra como a segurança da rede virou assunto do dia a dia: em casa, senha forte no Wi-Fi e computador atualizado seguem sendo a melhor defesa.\n\n[[fonte:4]]\n\n## Para ficar de olho\n\nNa sexta-feira, dia 27, é Black Friday. Se for trocar de notebook, compare a ficha inteira, não só o nome no adesivo, e compre de quem você consegue conferir; um usado revisado e com garantia também é uma boa saída. E você, já viu algum anúncio bom demais para ser verdade?",
-    "pontos": [
-      "Microsoft, voos e bancos fora do ar na mesma semana: boa parte começou numa atualização que deu errado.",
-      "Na Black Friday de 2025, 91,8% das ameaças eram anúncios e perfis falsos. Confira o site antes de pagar.",
-      "Duas RTX 4070 podem render até 40% diferente: quem manda é o TGP, a potência que o notebook libera.",
-      "O Google no computador agora guarda as conversas com a IA numa barra lateral, para retomar depois.",
-      "O Flipper One, o “canivete suíço hacker” com Linux, arrecadou cerca de US$ 14 milhões. Por ora, sem entrega no Brasil."
-    ],
-    "legenda": "Semana de apagões e véspera de Black Friday: o resumo do que importa para quem usa computador.\n\n🌐 Por que Microsoft, voos e bancos caíram quase juntos\n🛡️ O golpe que mais aparece na Black Friday\n🎮 A pegadinha das placas de vídeo iguais\n🔎 O Google agora guarda as conversas com a IA\n🧰 O gadget hacker que não vem para o Brasil\n\nLeia tudo no blog: link na bio.\n\n#tecnologia #blackfriday #segurancadigital #notebook #inteligenciaartificial #campinas",
-    "assunto": "Giro do dia",
-    "termos": [
-      "i7",
-      "16GB"
-    ],
-    "fontes": [
-      {
-        "nome": "Olhar Digital",
-        "url": "https://olhardigital.com.br/2026/11/22/carros-e-tecnologia/falhas-em-atualizacoes-e-brechas-de-seguranca-o-que-esta-por-tras-dos-apagoes-tecnologicos/",
-        "titulo": "Falhas em atualizações e brechas de segurança: o que está por trás dos apagões tecnológicos"
-      },
-      {
+{
+  "artigos": [
+    {
+      "titulo": "Black Friday: o golpe mais comum é o anúncio falso",
+      "resumo": "Na semana da Black Friday do ano passado, anúncios e perfis falsos foram 91,8% das ameaças. Veja como conferir uma oferta antes de pagar.",
+      "corpo": "A Black Friday é na sexta-feira, dia 27, e os golpistas já estão de olho. Um levantamento da Clavis Segurança da Informação sobre a semana da Black Friday do ano passado mostrou que anúncios e perfis falsos foram 91,8% das ameaças encontradas.\n\n## O que os golpistas fazem\n\nPelos dados da Serasa Experian, foram 604 anúncios e 625 perfis falsos entre 23 e 29 de novembro de 2025. Os truques se repetem:\n\n- páginas que imitam lojas conhecidas para roubar dados, o chamado phishing;\n- ofertas que não existem;\n- cobranças falsas por Pix e boleto.\n\nSegundo a Clavis, a inteligência artificial deixa algumas fraudes com imagens e mensagens mais convincentes. Ou seja: anúncio bonito não é garantia de nada.\n\n## Como conferir antes de pagar\n\n- Veja se o endereço da página é mesmo o site oficial da loja.\n- Desconfie de link de oferta que chega por grupo, live ou perfil que você não conhece. Na dúvida, procure a promoção direto nos canais oficiais da loja.\n- Preço muito abaixo do normal pede atenção em dobro.\n\nSe for comprar um notebook, peça fotos reais da máquina e pergunte quem dá a garantia e por quanto tempo. Quem vende de verdade mostra e responde.",
+      "pontos": [
+        "Na Black Friday de 2025, 91,8% das ameaças eram anúncios e perfis falsos.",
+        "Os truques: sites que imitam lojas, ofertas que não existem e cobranças falsas por Pix e boleto.",
+        "Antes de pagar, confira se o endereço é mesmo o site oficial da loja.",
+        "Oferta boa demais? Procure a promoção direto nos canais oficiais."
+      ],
+      "legenda": "A Black Friday é sexta, dia 27, e os golpistas também estão de olho. 🛡️\n\nNa semana da Black Friday do ano passado, anúncios e perfis falsos foram 91,8% das ameaças. No blog: o que eles fazem e como conferir uma oferta antes de pagar.\n\nLeia o artigo completo no blog: link na bio.\n\n#blackfriday #golpe #segurancadigital #compraonline #notebook",
+      "assunto": "Segurança",
+      "termos": [],
+      "slug": "black-friday-o-golpe-mais-comum-e-o-anuncio-falso",
+      "tipo": "noticia",
+      "fonte": {
         "nome": "TecMundo",
-        "url": "https://www.estadao.com.br/tecmundo/produto-e-review/perfis-e-anuncios-falsos-dominaram-ameacas-na-black-friday-2026-saiba-como-se-proteger/",
-        "titulo": "Perfis e anúncios falsos dominaram ameaças na Black Friday 2026; saiba como se proteger"
+        "titulo": "Perfis e anúncios falsos dominaram ameaças na Black Friday 2026; saiba como se proteger",
+        "url": "https://www.estadao.com.br/tecmundo/produto-e-review/perfis-e-anuncios-falsos-dominaram-ameacas-na-black-friday-2026-saiba-como-se-proteger/"
       },
-      {
+      "fontes": [],
+      "publicado_em": "2026-11-22T15:33:17.956Z",
+      "atualizado_em": "2026-11-22T15:33:17.956Z",
+      "status": "publicado",
+      "origem": "ia",
+      "editado": false,
+      "insta": null
+    },
+    {
+      "titulo": "Mesma placa de vídeo, desempenho diferente: o que é o TGP do notebook",
+      "resumo": "Dois notebooks com a mesma RTX podem render até 40% diferente em jogos pesados. A explicação está no TGP, a potência que o fabricante libera.",
+      "corpo": "Comprar notebook gamer olhando só o adesivo do teclado pode sair caro. Dois modelos com a mesmíssima placa de vídeo podem entregar desempenhos bem diferentes, e o motivo tem nome: TGP.\n\n## O que é o TGP\n\nTGP (Total Graphics Power) é a potência máxima, em watts, que a placa de vídeo do notebook pode consumir. Quem define é o fabricante do notebook, dentro de uma faixa que a Nvidia e a AMD permitem: o mesmo chip pode trabalhar com 35 W ou com até 140 W.\n\nMais potência pede mais refrigeração. Se o notebook é fino e a ventilação é modesta, o fabricante limita o TGP para não esquentar demais, e a placa trabalha mais devagar.\n\n## Por que o nome engana\n\nAntes, a Nvidia marcava as versões econômicas com o nome Max-Q. Essa marca sumiu, e hoje um notebook fino e um parrudo exibem o mesmo adesivo de RTX 4070. Na comparação do Canaltech, o parrudo mantém a placa perto de 2.100 MHz, enquanto o fino luta para passar de 1.400 MHz (quanto maior, mais rápido). Em jogos pesados, a diferença pode chegar a 40%.\n\n## O que olhar na hora de comprar\n\n- Procure o TGP na ficha do fabricante ou num anúncio completo, não só o nome da placa.\n- Para levar na mochila e usar em silêncio, TGP entre 45 W e 80 W dá conta.\n- Para jogos pesados, edição e inteligência artificial no próprio computador, o indicado é acima de 115 W, aceitando um notebook mais pesado e barulhento.",
+      "pontos": [
+        "Duas RTX 4070 podem render até 40% diferente em jogos pesados.",
+        "O motivo é o TGP: a potência máxima que o fabricante libera para a placa de vídeo.",
+        "Notebook fino costuma vir com TGP menor, para não esquentar.",
+        "Antes de comprar, procure o TGP na ficha, não só o nome da placa."
+      ],
+      "legenda": "Mesma placa de vídeo, desempenho bem diferente. 🎮\n\nDois notebooks com a mesma RTX podem render até 40% diferente em jogos pesados. O segredo é o TGP, a potência que o fabricante libera para a placa. No blog: o que é e como olhar isso antes de comprar.\n\nLeia o artigo completo no blog: link na bio.\n\n#notebookgamer #placadevideo #rtx #dicadetecnologia #notebook",
+      "assunto": "Dica",
+      "termos": [
+        "GeForce",
+        "RTX"
+      ],
+      "slug": "mesma-placa-de-video-desempenho-diferente-o-que-e-o-tgp-do-notebook",
+      "tipo": "noticia",
+      "fonte": {
         "nome": "Canaltech",
-        "url": "https://canaltech.com.br/notebook/tgp-em-notebooks-gamer-diferencas-em-placas-de-video/",
-        "titulo": "TGP em notebooks gamer: por que duas RTX iguais podem ter desempenhos opostos?"
+        "titulo": "TGP em notebooks gamer: por que duas RTX iguais podem ter desempenhos opostos?",
+        "url": "https://canaltech.com.br/notebook/tgp-em-notebooks-gamer-diferencas-em-placas-de-video/"
       },
-      {
-        "nome": "Tecnoblog",
-        "url": "https://tecnoblog.net/noticias/google-leva-historico-de-ia-a-pagina-inicial/",
-        "titulo": "Google leva histórico de IA à página inicial"
+      "fontes": [],
+      "publicado_em": "2026-11-22T15:31:17.956Z",
+      "atualizado_em": "2026-11-22T15:31:17.956Z",
+      "status": "publicado",
+      "origem": "ia",
+      "editado": false,
+      "insta": null
+    },
+    {
+      "titulo": "Por que Microsoft, voos e bancos saíram do ar na mesma semana",
+      "resumo": "Em poucos dias, falhas pararam a Microsoft, voos e bancos nos Estados Unidos. Não há sinal de ataque combinado: boa parte começou numa atualização.",
+      "corpo": "Em menos de uma semana, a Microsoft teve uma pane em massa, todos os voos dos Estados Unidos ficaram parados por horas e grandes bancos americanos tiveram falhas. Segundo o g1, a falha da Microsoft afetou centenas de milhões de usuários, e a parada no transporte aéreo interrompeu mais de 18 mil voos.\n\n## Foi ataque?\n\nParece coisa combinada, mas não há evidência de ligação entre os casos. Boa parte começou numa atualização que deu errado. Na Microsoft, uma atualização de rede sobrecarregou os servidores. No controle de tráfego aéreo, o problema surgiu na troca de cabos de cobre antigos por fibra óptica.\n\nEspecialistas lembram ainda que a inteligência artificial está acelerando a descoberta de falhas dos dois lados, de quem ataca e de quem defende. Resultado: mais correções para instalar, e em menos tempo.\n\n## O que isso muda no seu notebook\n\nAtualizar continua sendo o certo: é assim que as brechas descobertas são fechadas. Mas é justamente na atualização que as coisas quebram. Então:\n\n- faça backup dos arquivos importantes antes das atualizações grandes;\n- instale quando não for precisar do notebook com pressa;\n- não desligue o computador no meio da instalação.",
+      "pontos": [
+        "Microsoft, voos e bancos fora do ar na mesma semana, e sem sinal de ataque combinado.",
+        "Boa parte das falhas começou numa atualização de sistema que deu errado.",
+        "Atualizar continua sendo o certo: é assim que as brechas são fechadas.",
+        "Antes das atualizações grandes, faça backup e não desligue no meio."
+      ],
+      "legenda": "Microsoft, voos e bancos fora do ar na mesma semana. Foi ataque? 🌐\n\nNão há sinal de ligação entre os casos, e boa parte começou numa atualização que deu errado. No blog: o que aconteceu e o que isso muda no seu notebook.\n\nLeia o artigo completo no blog: link na bio.\n\n#tecnologia #microsoft #segurancadigital #backup #notebook",
+      "assunto": "Notícia",
+      "termos": [],
+      "slug": "por-que-microsoft-voos-e-bancos-sairam-do-ar-na-mesma-semana",
+      "tipo": "noticia",
+      "fonte": {
+        "nome": "Olhar Digital",
+        "titulo": "Falhas em atualizações e brechas de segurança: o que está por trás dos apagões tecnológicos",
+        "url": "https://olhardigital.com.br/2026/11/22/carros-e-tecnologia/falhas-em-atualizacoes-e-brechas-de-seguranca-o-que-esta-por-tras-dos-apagoes-tecnologicos/"
       },
-      {
+      "fontes": [
+        {
+          "nome": "Olhar Digital",
+          "titulo": "Falhas em atualizações e brechas de segurança: o que está por trás dos apagões tecnológicos",
+          "url": "https://olhardigital.com.br/2026/11/22/carros-e-tecnologia/falhas-em-atualizacoes-e-brechas-de-seguranca-o-que-esta-por-tras-dos-apagoes-tecnologicos/"
+        },
+        {
+          "nome": "g1",
+          "titulo": "Após falhas que afetaram Microsoft e suspenderam voos, Trump demite diretor de segurança cibernética",
+          "url": "https://g1.globo.com/tecnologia/noticia/2026/11/20/apos-falhas-que-afetaram-microsoft-e-suspenderam-voos-trump-demite-diretor-de-seguranca-cibernetica.ghtml"
+        }
+      ],
+      "publicado_em": "2026-11-22T15:29:17.956Z",
+      "atualizado_em": "2026-11-22T15:29:17.956Z",
+      "status": "publicado",
+      "origem": "ia",
+      "editado": false,
+      "insta": null
+    },
+    {
+      "titulo": "O Google agora guarda as suas conversas com a IA na página inicial",
+      "resumo": "No computador, a página do Google ganhou uma barra lateral com as conversas recentes do Modo IA, para retomar uma pesquisa de onde parou.",
+      "corpo": "Quem usa o Google no computador vai ver uma novidade na página inicial: uma barra lateral com as conversas recentes feitas no Modo IA, a parte do buscador que aceita perguntas mais complexas. A liberação começou nesta semana, no mundo todo, pela versão para computadores; o Google ainda não disse quando chega a todos.\n\n## O que dá para fazer\n\n- retomar uma pesquisa de onde parou, sem repetir as perguntas;\n- procurar conversas antigas;\n- começar um assunto novo;\n- recolher a barra e voltar ao Google de sempre.\n\nA barra não junta todo o histórico de buscas: só as conversas com a IA. Com ela, a página inicial fica mais parecida com um chatbot, aqueles assistentes de conversa, do que com o buscador tradicional.\n\n## O que muda para você\n\nPara quem pesquisa no notebook para a escola ou o trabalho, fica mais fácil voltar a um assunto no dia seguinte. Mas, se mais gente usa o computador com a mesma conta, as conversas aparecem ali para quem abrir o Google. Para as perguntas que você não quer guardar, o Google já tinha anunciado as conversas temporárias, que não ficam salvas no histórico.",
+      "pontos": [
+        "O Google no computador ganhou uma barra lateral com as suas conversas com a IA.",
+        "Dá para retomar uma pesquisa de onde parou, sem repetir as perguntas.",
+        "Ela guarda só as conversas do Modo IA, não todo o histórico de buscas.",
+        "Divide o computador? As conversas aparecem para quem abrir o Google na mesma conta."
+      ],
+      "legenda": "O Google agora lembra das suas conversas com a IA. 🔎\n\nNo computador, a página inicial ganhou uma barra lateral com as conversas recentes do Modo IA, para retomar a pesquisa de onde parou. No blog: o que muda e um cuidado para quem divide o notebook.\n\nLeia o artigo completo no blog: link na bio.\n\n#google #inteligenciaartificial #tecnologia #dicadetecnologia #notebook",
+      "assunto": "Notícia",
+      "termos": [],
+      "slug": "o-google-agora-guarda-as-suas-conversas-com-a-ia-na-pagina-inicial",
+      "tipo": "noticia",
+      "fonte": {
         "nome": "Tecnoblog",
-        "url": "https://tecnoblog.net/noticias/flipper-one-chega-como-um-canivete-suico-hacker-que-roda-linux/",
-        "titulo": "Flipper One chega como um “canivete suíço hacker” que roda Linux"
-      }
-    ],
-    "slug": "semana-de-apagoes-golpes-de-black-friday-e-a-pegadinha-da-placa-de-video",
-    "tipo": "giro",
-    "fonte": null,
-    "publicado_em": "2026-11-22T15:08:22.914Z",
-    "atualizado_em": "2026-11-22T15:08:22.914Z",
-    "status": "publicado",
-    "origem": "ia",
-    "editado": false,
-    "insta": null
-  }
-]
+        "titulo": "Google leva histórico de IA à página inicial",
+        "url": "https://tecnoblog.net/noticias/google-leva-historico-de-ia-a-pagina-inicial/"
+      },
+      "fontes": [],
+      "publicado_em": "2026-11-22T15:27:17.956Z",
+      "atualizado_em": "2026-11-22T15:27:17.956Z",
+      "status": "publicado",
+      "origem": "ia",
+      "editado": false,
+      "insta": null
+    }
+  ],
+  "retirar": [
+    "semana-de-apagoes-golpes-de-black-friday-e-a-pegadinha-da-placa-de-video"
+  ]
+}

@@ -5,6 +5,7 @@
     { "source": "/blog", "destination": "/api/blog" },
     { "source": "/blog/", "destination": "/api/blog" },
     { "source": "/blog/feed.xml", "destination": "/api/blog?feed=1" },
+    { "source": "/blog/capa/:slug", "destination": "/api/blog?capa=:slug" },
     { "source": "/blog/:slug", "destination": "/api/blog?slug=:slug" },
     { "source": "/sitemap.xml", "destination": "/api/blog?sitemap=1" }
   ],
@@ -17,6 +18,6 @@
   "functions": {
     "api/insta.js": { "maxDuration": 60 },
     "api/ml.js": { "maxDuration": 60 },
-    "api/blog.js": { "maxDuration": 300 }
+    "api/blog.js": { "maxDuration": 300, "includeFiles": "fontes/inter-latin-600.woff" }
   }
 }

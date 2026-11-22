@@ -74,7 +74,7 @@ const ARTIGO_IA = { titulo: 'Windows 10 sem suporte: o que fazer com o seu noteb
 function chamar({ method = 'GET', query = {}, body, headers = {} } = {}) {
   return new Promise(resolve => {
     const res = { statusCode: 200, headers: {}, setHeader(k, v) { this.headers[k.toLowerCase()] = v; },
-      end(b) { resolve({ status: this.statusCode, headers: this.headers, body: String(b || ''), json: () => JSON.parse(String(b)) }); } };
+      end(b) { resolve({ status: this.statusCode, headers: this.headers, raw: b, body: String(b || ''), json: () => JSON.parse(String(b)) }); } };
     blog({ method, query, body, headers: Object.assign({ 'x-vercel-oidc-token': 'oidc-de-teste' }, headers) }, res);
   });
 }
@@ -133,8 +133,8 @@ const post = body => chamar({ method: 'POST', body: Object.assign({ idToken: 'so
   ok(h.includes('<h2>Subtítulo</h2>') && h.includes('<ul><li>item &lt;b&gt;um&lt;/b&gt;</li><li>item dois</li></ul>') && h.includes('<h2>Título solto</h2>'), 'subtítulos e listas');
 
   console.log('\no artigo do dia (cron)');
-  // só uma notícia boa no dia: sai o artigo dela (com 3 ou mais boas, sai o Giro do dia; mais abaixo)
-  roteiro = [respostaIA({ escolhas: [0], fio: '', motivo: 'Só essa afeta quem tem notebook antigo.' }), respostaIA(ARTIGO_IA)];
+  // um assunto por dia: a IA escolhe a notícia (sem outra do mesmo assunto, vai só ela)
+  roteiro = [respostaIA({ escolha: 0, relacionadas: [], motivo: 'Afeta quem tem notebook antigo.' }), respostaIA(ARTIGO_IA)];
   let r = await chamar({ query: { acao: 'gerar' } });
   const d1 = guardado && JSON.parse(guardado.conteudo);
   const a1 = d1 && d1.artigos[0];
@@ -147,7 +147,8 @@ const post = body => chamar({ method: 'POST', body: Object.assign({ idToken: 'so
   ok(pEsc.output_config.effort === 'low' && pArt.output_config.effort === 'medium' && !('temperature' in pArt) && !('thinking' in pArt) && pArt.max_tokens === 16000,
     'esforço baixo para escolher e médio para escrever; sem temperatura; o pensamento fica no padrão do modelo');
   const pedido = pArt.messages[0].content;
-  ok(/<materia>[\s\S]*encerrou o suporte ao Windows 10[\s\S]*<\/materia>/.test(pedido) && !/menu do site/.test(pedido) && !/<script/.test(pedido) && /material de consulta/.test(pArt.system),
+  ok(/<materia n="0">[\s\S]*encerrou o suporte ao Windows 10[\s\S]*<\/materia>/.test(pedido) && !/menu do site/.test(pedido) && !/<script/.test(pedido) && /material de consulta/.test(pArt.system) &&
+    /UM assunto só/.test(pEsc.system) && /de 250 a 400 palavras/.test(pArt.system) && pEsc.output_config.format.schema === T.ESQUEMA_ESCOLHA,
     'manda o texto da matéria (só os parágrafos do artigo, sem script) marcado como material de consulta');
   ok(/0\) \[Tecnoblog/.test(pEsc.messages[0].content) && !/iphone/i.test(pEsc.messages[0].content), 'a lista que vai para a escolha já vem sem o que não interessa');
   ok(fabricadas.every(c => c === null) && guardado.op.access === 'public' && guardado.op.allowOverwrite === true && guardado.op.addRandomSuffix === false && guardado.op.cacheControlMaxAge === 60,
@@ -169,6 +170,24 @@ const post = body => chamar({ method: 'POST', body: Object.assign({ idToken: 'so
   ok(r.body.includes('Lenovo ThinkPad T14 i5 10ª') && r.body.indexOf('ThinkPad T14') < r.body.indexOf('Latitude 3410') && !r.body.includes('Latitude 5490') && r.body.includes('src="data:image/jpeg;base64,AAAA"') &&
     r.body.includes('href="/catalogo.html?q=Notebook%20Lenovo%20ThinkPad%20T14%20i5%2010%C2%AA"'), 'máquinas à venda que combinam com o assunto primeiro (a reservada não), com foto e link para o catálogo');
   ok(r.body.includes('https://wa.me/5519999990000?text='), 'botão do WhatsApp da loja');
+  const iCorpo = r.body.indexOf('<div class="corpo">'), iMaq = r.body.indexOf('Máquinas à venda agora'), iCred = r.body.indexOf('Com informações de');
+  const pCorpo = (r.body.slice(iCorpo, iCred).match(/<p>/g) || []).length, pAntes = (r.body.slice(iCorpo, iMaq).match(/<p>/g) || []).length;
+  ok(iCorpo > 0 && iMaq > iCorpo && iMaq < iCred && pAntes >= 1 && pAntes < pCorpo, `as máquinas no meio do texto (depois de ${pAntes} de ${pCorpo} parágrafos), não no fim`);
+  const sl = r.body.match(/<li class="sl">/g) || [];
+  ok(sl.length === 4 && r.body.indexOf('class="slides"') < iCorpo && r.body.includes('01 / 04') && r.body.includes('Sem elas, o notebook fica mais exposto.'), 'os pontos em slides no topo do artigo (01 / 04...)');
+  const url1 = 'https://anunc-ia.vercel.app/blog/' + a1.slug;
+  ok((r.body.match(/class="partilha/g) || []).length === 2 && r.body.includes('https://wa.me/?text=' + encodeURIComponent(a1.titulo + ' ' + url1)) &&
+    r.body.includes('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(url1)) && r.body.includes('pt-copiar') && /navigator\.share/.test(r.body),
+    'compartilhar no topo e no fim: WhatsApp, Facebook, copiar o link e o do próprio celular');
+  ok(r.body.includes('<meta property="og:image" content="https://anunc-ia.vercel.app/blog/capa/' + a1.slug + '?v=') && r.body.includes('<meta name="twitter:card" content="summary_large_image">') &&
+    r.body.includes('"image":"https://anunc-ia.vercel.app/blog/capa/'), 'a página aponta para a imagem do link (WhatsApp, Facebook e Google)');
+  const capa = await chamar({ query: { capa: a1.slug } });
+  ok(capa.status === 200 && capa.headers['content-type'] === 'image/png' && Buffer.isBuffer(capa.raw) && capa.raw.slice(1, 4).toString() === 'PNG' &&
+    capa.raw.readUInt32BE(16) === 1200 && capa.raw.readUInt32BE(20) === 630 && /s-maxage=604800/.test(capa.headers['cache-control']), 'a imagem do link: PNG 1200×630 com o título, guardada no cache');
+  ok(T.urlCapa(a1) !== T.urlCapa(Object.assign({}, a1, { titulo: 'Outro título para o mesmo artigo' })), 'mudou o título: muda o endereço da imagem (o WhatsApp não fica com a velha)');
+  const meio = T.noMeio('<p>a</p><h2>Um</h2><p>' + 'b'.repeat(300) + '</p><h2>Dois</h2><p>' + 'c'.repeat(300) + '</p>', '[Q]');
+  ok(meio.indexOf('[Q]') === meio.indexOf('<h2>Dois</h2>') - 3 && T.noMeio('<p>só um</p>', '[Q]').endsWith('[Q]') && T.noMeio('<p>x</p>', '') === '<p>x</p>',
+    'o quadro entra antes do subtítulo do meio; texto curto demais: no fim');
   r = await chamar({ query: { slug: 'nao-existe' } });
   ok(r.status === 404 && /não está mais no ar/.test(r.body), 'artigo que não existe: 404');
   r = await chamar({ query: { sitemap: '1' } });
@@ -197,37 +216,20 @@ const post = body => chamar({ method: 'POST', body: Object.assign({ idToken: 'so
   r = await post({ acao: 'insta', slug: a1.slug, post: '18130493537478641' });
   ok(r.json().artigo.insta && r.json().artigo.insta.id === '18130493537478641', 'marca que foi para o Instagram');
 
-  console.log('\no Giro do dia (de 3 a 5 notícias, no jeito de newsletter)');
+  console.log('\num assunto só, com as matérias do mesmo assunto de outros sites');
   guardado = null; T.limparMemoria(); chamadasIA = [];
-  const GIRO_IA = { titulo: 'Falso técnico, Ryzen mais barato e Windows 10 sem suporte', resumo: 'Três notícias que mexem com quem usa computador.',
-    abertura: 'Hoje o assunto é cuidado: com golpe, com o bolso e com o sistema.',
-    itens: [
-      { titulo: 'O falso técnico que liga', texto: 'Criminosos ligam fingindo ser da Microsoft e pedem acesso ao computador. '.repeat(3), importa: 'Ninguém da Microsoft liga para você.', noticia: 1 },
-      { titulo: 'Ryzen chega aos notebooks baratos', texto: 'A AMD leva processadores Ryzen para notebooks de entrada. '.repeat(3), importa: 'Notebook bom pode ficar mais barato.', noticia: 2 },
-      { titulo: 'Windows 10 sem suporte', texto: 'O Windows 10 parou de receber atualizações, veja em https://golpe.example.com/x. '.repeat(3), importa: 'Sem atualização, o risco sobe.', noticia: 0 },
-      { titulo: 'Item de mentira', texto: 'aponta para notícia que não existe', importa: '', noticia: 9 } ],
-    fechamento: 'E você, já recebeu a ligação do falso técnico?',
-    pontos: ['Golpista finge ser da Microsoft e pede acesso ao seu PC.', 'Ryzen chega aos notebooks de entrada.', 'Windows 10 ficou sem atualização de segurança.'],
-    legenda: 'Giro do dia 💻\n\n🔒 golpe\n💰 Ryzen\n🪟 Windows\n\nLeia tudo no blog (link na bio)\n\n#tecnologia #notebook', termos_catalogo: ['Ryzen'] };
-  roteiro = [respostaIA({ escolhas: [0, 1, 2, 2, 7], fio: 'cuidado com golpe, bolso e sistema', motivo: 'atuais e diferentes' }), respostaIA(GIRO_IA)];
+  roteiro = [respostaIA({ escolha: 0, relacionadas: [1, 0, 1, 99], motivo: 'mesmo assunto em dois sites' }), respostaIA(ARTIGO_IA)];
   r = await post({ acao: 'gerar' });
   let d = JSON.parse(guardado.conteudo);
   const g1 = d.artigos[0];
-  ok(r.status === 200 && g1 && g1.tipo === 'giro' && g1.assunto === 'Giro do dia' && g1.fontes.length === 3 && g1.fonte === null && d.usadas.length === 3,
-    'junta 3 notícias num giro (repetida e número fora da lista não contam), com as 3 fontes, e marca as 3 como usadas');
-  ok(chamadasIA[0].output_config.format.schema === T.ESQUEMA_GIRO_ESCOLHA && chamadasIA[1].output_config.format.schema === T.ESQUEMA_GIRO && chamadasIA[1].output_config.effort === 'medium',
-    'escolhe as notícias e escreve o giro com os esquemas próprios');
+  ok(r.status === 200 && g1 && g1.tipo === 'noticia' && g1.fontes.length === 2 && g1.fonte && g1.fonte.url === g1.fontes[0].url && d.usadas.length === 2 && d.usadas.includes(g1.fontes[1].url),
+    'a principal e uma do mesmo assunto (repetida e número fora da lista não contam): as duas fontes, e as duas marcadas como usadas');
   const pg = chamadasIA[1].messages[0].content;
-  ok(/<materia n="0">[\s\S]*Windows 10[\s\S]*<\/materia>/.test(pg) && /cuidado com golpe, bolso e sistema/.test(pg) && (pg.match(/<materia n=/g) || []).length >= 2,
-    'manda o texto de cada matéria marcado com o número dela, e o fio que o editor viu');
-  ok(/^Hoje o assunto é cuidado/.test(g1.corpo) && (g1.corpo.match(/^## /gm) || []).length === 4 && /\*\*Por que importa:\*\* Ninguém da Microsoft/.test(g1.corpo) &&
-    g1.corpo.includes('[[fonte:0]]') && g1.corpo.includes('[[fonte:2]]') && !/Item de mentira/.test(g1.corpo) && !/https?:|golpe\.example/.test(g1.corpo),
-    'abertura, um subtítulo por notícia com o "por que importa" e a fonte, o fecho; sem link no texto e sem item inventado');
+  ok(/mesmo assunto \(junte num artigo só\)/.test(pg) && /<materia n="0">/.test(pg) && /Notícia 1 \(Olhar Digital/.test(pg) && /não deu para ler a matéria inteira/.test(pg) &&
+    chamadasIA[1].output_config.format.schema === T.ESQUEMA_ARTIGO, 'manda as duas, numeradas, para juntar num texto só (a que não abriu vai só com título e resumo)');
   T.limparMemoria();
   r = await chamar({ query: { slug: g1.slug } });
-  const fontesNaPagina = (r.body.match(/<p class="fonte-item">Fonte: <a href="https:\/\//g) || []).length;
-  ok(r.status === 200 && fontesNaPagina === 3 && r.body.includes('<h2>Para ficar de olho</h2>') && r.body.includes('<strong>Por que importa:</strong>') && /Com informações de <a[^>]+>[^<]+<\/a>(, <a[^>]+>[^<]+<\/a>)* e <a/.test(r.body),
-    'na página: o link da fonte embaixo de cada notícia e todas no fim ("Com informações de A, B e C")');
+  ok(r.status === 200 && /Com informações de <a[^>]+>[^<]+<\/a> e <a/.test(r.body), 'na página, o crédito das duas ("Com informações de A e B")');
   ok(T.mdHtml('[[fonte:5]]\n\ntexto', [{ nome: 'X', url: 'https://x.com' }]) === '<p>texto</p>' && T.mdHtml('[[fonte:0]]', [{ nome: 'X', url: 'javascript:alert(1)' }]) === '',
     'marca de fonte que não existe ou sem https: some');
 
@@ -266,13 +268,13 @@ const post = body => chamar({ method: 'POST', body: Object.assign({ idToken: 'so
 
   console.log('\na edição escrita à mão (entra uma vez só, sem a IA)');
   const SEM = { slug: 'primeira-edicao-do-giro', titulo: 'Primeira edição do giro de tecnologia', resumo: 'Os destaques da semana.', corpo: CORPO, pontos: ARTIGO_IA.pontos,
-    legenda: 'legenda', assunto: 'Giro do dia', termos: ['ThinkPad'], tipo: 'giro', fonte: null, fontes: [{ nome: 'g1', url: 'https://g1.globo.com/tecnologia/x.ghtml', titulo: 'X' }],
+    legenda: 'legenda', assunto: 'Notícia', termos: ['ThinkPad'], tipo: 'noticia', fonte: { nome: 'g1', url: 'https://g1.globo.com/tecnologia/x.ghtml', titulo: 'X' }, fontes: [],
     publicado_em: new Date(agora + 60e3).toISOString(), atualizado_em: new Date(agora + 60e3).toISOString(), status: 'publicado', origem: 'ia', editado: false, insta: null };
-  T.usarSementes([SEM]); T.limparMemoria();
-  const antes = JSON.parse(guardado.conteudo), qtd = antes.artigos.length;
+  const antes = JSON.parse(guardado.conteudo), qtd = antes.artigos.length, velho = antes.artigos[0].slug;
+  T.usarSementes({ artigos: [SEM], retirar: [velho, 'nunca-existiu'] }); T.limparMemoria();
   r = await chamar();
-  ok(r.status === 200 && r.body.includes('Primeira edição do giro de tecnologia') && r.body.indexOf('Primeira edição do giro') < r.body.indexOf(antes.artigos[0].titulo),
-    'aparece no blog na hora, a mais nova no alto, sem precisar da IA');
+  ok(r.status === 200 && r.body.includes('Primeira edição do giro de tecnologia') && !r.body.includes('href="/blog/' + velho + '"'),
+    'aparece no blog na hora, sem precisar da IA; a que mandou retirar sai do ar');
   r = await chamar({ query: { slug: 'primeira-edicao-do-giro' } });
   ok(r.status === 200 && /g1\.globo\.com\/tecnologia\/x\.ghtml/.test(r.body), 'tem a página dela, com o link da fonte');
   r = await post({ acao: 'ocultar', slug: 'primeira-edicao-do-giro' });
@@ -283,10 +285,15 @@ const post = body => chamar({ method: 'POST', body: Object.assign({ idToken: 'so
   r = await chamar({ query: { slug: 'primeira-edicao-do-giro' } });
   const r2 = await post({ acao: 'lista' });
   ok(r.status === 404 && r2.json().artigos.filter(x => x.slug === 'primeira-edicao-do-giro').length === 1, 'ocultada, não volta sozinha (e não duplica)');
+  dS = JSON.parse(guardado.conteudo);
+  ok(dS.artigos.find(x => x.slug === velho).status === 'oculto' && dS.semeados.includes('retirado:' + velho), 'a retirada fica no arquivo, com a marca de que já foi feita');
+  await post({ acao: 'mostrar', slug: velho }); T.limparMemoria();
+  r = await chamar({ query: { slug: velho } });
+  ok(r.status === 200, 'o sócio voltou com ela: fica no ar (a retirada vale uma vez só)');
   const REAIS = JSON.parse(require('fs').readFileSync(path.join(__dirname, '..', 'api', '_blog-semente.json'), 'utf8'));
-  ok(Array.isArray(REAIS) && REAIS.every(x => x.slug === T.slugDe(x.titulo) && x.titulo.length <= 110 && x.resumo.length <= 220 && x.corpo.length >= 600 && x.pontos.length >= 3 && x.pontos.length <= 5 &&
-    x.status === 'publicado' && /^\d{4}-\d\d-\d\dT/.test(x.publicado_em) && (x.fontes || []).every(f => /^https:\/\//.test(f.url)) && [...x.corpo.matchAll(/\[\[fonte:(\d+)\]\]/g)].every(m => x.fontes[+m[1]])),
-    'as do repositório estão no formato (slug, tamanhos, slides, data e fontes com link)');
+  ok(Array.isArray(REAIS.artigos) && REAIS.artigos.length > 0 && Array.isArray(REAIS.retirar) && REAIS.artigos.every(x => x.pontos.length <= 4 && x.corpo.split(/\s+/).length <= 450 && x.slug === T.slugDe(x.titulo) && x.titulo.length <= 110 && x.resumo.length <= 220 && x.corpo.length >= 600 && x.pontos.length >= 3 && x.pontos.length <= 5 &&
+    x.status === 'publicado' && /^\d{4}-\d\d-\d\dT/.test(x.publicado_em) && x.fonte && /^https:\/\//.test(x.fonte.url) && (x.fontes || []).every(f => /^https:\/\//.test(f.url)) && !/\[\[fonte:/.test(x.corpo)),
+    'as do repositório estão no formato (um assunto, até 450 palavras, até 4 slides, data e fontes com link)');
   T.usarSementes([]); T.limparMemoria();
 
   console.log('\nfontes');
