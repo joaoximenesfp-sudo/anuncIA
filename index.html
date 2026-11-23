@@ -1064,6 +1064,7 @@ tr.marcada>td:first-child{box-shadow:inset 3px 0 0 var(--gr)}
 .brec{background:var(--bg);border:1px solid var(--b2);border-radius:7px;padding:3px 6px;cursor:pointer;
   font-size:.8rem;line-height:1;margin-left:3px}
 .brec:hover{border-color:var(--gr)}
+.vend-tag{font-size:.67rem;font-weight:600;padding:2px 7px;border-radius:10px;margin-left:4px;background:var(--bg);color:var(--mu);border:1px solid var(--b2);white-space:nowrap}
 /* avaliações dos clientes (aba Clientes) */
 .av-box{background:var(--w);border:1px solid var(--b);border-radius:var(--rad);padding:14px 16px;margin:0 0 14px}
 .av-topo{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
@@ -3952,6 +3953,15 @@ div:has(> .fc2){flex-wrap:wrap;row-gap:6px}
           <span>✔ Já foi feito — sai da lista de compras, mas o texto acima fica registrado<span id="eFaltaFeitoQuando"></span></span>
         </label>
       </div>
+      <div class="fc full" id="eVendWrap">
+        <label class="fl">🙋 Quem vendeu <span style="font-size:.67rem;color:var(--li);font-weight:400">quem atendeu e fechou com o cliente</span></label>
+        <select class="inp" id="eVendedor">
+          <option value="">— Não informado —</option>
+          <option value="João">João</option>
+          <option value="Igor">Igor</option>
+          <option value="Os dois">Os dois</option>
+        </select>
+      </div>
       <div class="fc full" id="ePlatWrap">
         <label class="fl">📍 De onde veio esse cliente? <span style="font-size:.67rem;color:var(--li);font-weight:400">o anúncio ou contato que trouxe a pessoa — não onde a conversa terminou</span></label>
         <select class="inp" id="ePlat">
@@ -4114,6 +4124,15 @@ div:has(> .fc2){flex-wrap:wrap;row-gap:6px}
           <option value="Outro">Outro</option>
         </select>
       </div>
+      <div class="fc full">
+        <label class="fl">🙋 Quem vendeu <span style="font-size:.67rem;color:var(--li);font-weight:400">quem atendeu e fechou com o cliente</span></label>
+        <select class="inp" id="lvVendedor">
+          <option value="">— Selecione —</option>
+          <option value="João">João</option>
+          <option value="Igor">Igor</option>
+          <option value="Os dois">Os dois</option>
+        </select>
+      </div>
       <div class="fc"><label class="fl">Data da venda</label>
         <input class="inp" type="date" id="lvData"></div>
       <div class="fc"><label class="fl">💰 Valor total do lote</label>
@@ -4165,6 +4184,15 @@ div:has(> .fc2){flex-wrap:wrap;row-gap:6px}
           <option value="Outro">Outro</option>
         </select>
         <div id="smPlatHint" style="font-size:.68rem;color:var(--gr);margin-top:4px;display:none"></div>
+      </div>
+      <div class="fc full">
+        <label class="fl">🙋 Quem vendeu <span style="font-size:.67rem;color:var(--li);font-weight:400">quem atendeu e fechou com o cliente</span></label>
+        <select class="inp" id="smVendedor">
+          <option value="">— Selecione —</option>
+          <option value="João">João</option>
+          <option value="Igor">Igor</option>
+          <option value="Os dois">Os dois</option>
+        </select>
       </div>
       <div class="fc full">
         <label class="fl">👤 Cliente <span style="font-size:.67rem;color:var(--li);font-weight:400">opcional — vira base de recompra</span></label>
@@ -5406,6 +5434,7 @@ window.updStatus=(id,newVal)=>{
     document.getElementById('smPreco').value=precoVigente(p).por||p.venda||''; // com promoção valendo, o preço dela
     smSetPgto('vista');   // padrão à vista a cada abertura
     document.getElementById('smPlat').value=p.plataforma||'';
+    document.getElementById('smVendedor').value=p.vendedor||(perfilAtual==='igor'?'Igor':'João'); // quem registra costuma ser quem vendeu
     document.getElementById('smData').value=new Date().toISOString().split('T')[0];
     preencherDiasDoMes();
     // Cliente: limpa e pré-preenche se o produto já tiver um vinculado
@@ -5599,6 +5628,7 @@ window.confirmSell=async()=>{
     pagamento='parcelado';
   }
   const upd={status:'Vendido',plataforma:plat,venda:preco,lucro:preco-(p?.custo||0),data_venda:dataVenda||'',data:mesVenda,diasParado:dias>=0?dias:null,cliente_id:cliId,cliente_nome:cliNome,repasse_socio:socioVal,pagamento,parcelas,
+    vendedor:(document.getElementById('smVendedor')?.value||''),
     preco_cheio:parseFloat(document.getElementById('smPrecoCheio')?.value)||0,
     nota_venda:(document.getElementById('smNotaVenda')?.value||'').trim()};
   await vincularTroca(sellId, upd);
@@ -6730,6 +6760,7 @@ window.openEdit=id=>{
   // Plataforma de venda — só faz sentido para vendidos
   const ePlat=document.getElementById('ePlat');
   if(ePlat) ePlat.value=p.plataforma||'';
+  const eVend=document.getElementById('eVendedor'); if(eVend) eVend.value=p.vendedor||'';
   // Repasse ao sócio já registrado (se houver)
   const eRep=document.getElementById('eRepasse');
   if(eRep) eRep.value=p.repasse_socio||'';
@@ -6783,6 +6814,7 @@ window.ePlatToggle=()=>{
   if(!st||!wrap)return;
   const vendido = st.value==='Vendido';
   wrap.style.display = vendido ? '' : 'none';
+  const vw=document.getElementById('eVendWrap'); if(vw) vw.style.display = vendido ? '' : 'none';
   // Repasse ao sócio também só faz sentido para vendidos
   const rw=document.getElementById('eRepasseWrap');
   if(rw) rw.style.display = vendido ? '' : 'none';
@@ -6992,7 +7024,7 @@ window.saveEdit=async()=>{
   const custoFinal=baseMaquina+somaJa+somaNovas;
   const totalPecas=somaJa+somaNovas;
 
-  const upd={nome,...(document.getElementById('eFichaMarca')?{ficha:fichaCampos('e')}:{}),custo:custoFinal,custo_base:baseMaquina,custo_pecas:totalPecas,venda,lucro:venda-custoFinal,status,investidor,plataforma:(status==='Vendido'?(document.getElementById('ePlat')?.value||''):''),repasse_socio:(status==='Vendido'?(parseFloat(document.getElementById('eRepasse')?.value)||0):0),falta_comprar:(status!=='Vendido'?(document.getElementById('eFalta')?.value.trim()||''):''),falta_feito:(status!=='Vendido'&&!!document.getElementById('eFaltaFeito')?.checked),falta_feito_em:((status!=='Vendido'&&document.getElementById('eFaltaFeito')?.checked)?((_pAtual&&_pAtual.falta_feito&&_pAtual.falta_feito_em)||new Date().toISOString().slice(0,10)):''),...hwCampos('e'),revisado:!!document.getElementById('eRevisado')?.checked,revisado_em:(document.getElementById('eRevisado')?.checked?((_pAtual&&_pAtual.revisado&&_pAtual.revisado_em)||new Date().toISOString().slice(0,10)):''),revisao_obs:(document.getElementById('eRevObs')?.value.trim()||''),descricao:(document.getElementById('eDescricao')?.value.trim()||''),tipo_catalogo:(document.getElementById('eTipoCat')?.value||''),num_planilha:(document.getElementById('eNumPlan')?.value.trim()||''),fornecedor_id:fornId,fornecedor_nome:fornNome,data_compra:dc,data_compra_mes:dcMes,data_venda:dv,data:(dv?dv.slice(0,7):dcMes),gas_pagante:(document.getElementById('eGasPag')?.value||'ambos'),aporte_joao:(parseFloat(document.getElementById('eApJoao')?.value)||0),aporte_igor:(parseFloat(document.getElementById('eApIgor')?.value)||0),cliente_id:cliId,cliente_nome:cliNome,preco_cheio:(status==='Vendido'?(parseFloat(document.getElementById('ePrecoCheio')?.value)||0):0),nota_venda:(status==='Vendido'?(document.getElementById('eNotaVenda')?.value.trim()||''):'')};
+  const upd={nome,...(document.getElementById('eFichaMarca')?{ficha:fichaCampos('e')}:{}),custo:custoFinal,custo_base:baseMaquina,custo_pecas:totalPecas,venda,lucro:venda-custoFinal,status,investidor,plataforma:(status==='Vendido'?(document.getElementById('ePlat')?.value||''):''),vendedor:(status==='Vendido'?(document.getElementById('eVendedor')?.value||''):''),repasse_socio:(status==='Vendido'?(parseFloat(document.getElementById('eRepasse')?.value)||0):0),falta_comprar:(status!=='Vendido'?(document.getElementById('eFalta')?.value.trim()||''):''),falta_feito:(status!=='Vendido'&&!!document.getElementById('eFaltaFeito')?.checked),falta_feito_em:((status!=='Vendido'&&document.getElementById('eFaltaFeito')?.checked)?((_pAtual&&_pAtual.falta_feito&&_pAtual.falta_feito_em)||new Date().toISOString().slice(0,10)):''),...hwCampos('e'),revisado:!!document.getElementById('eRevisado')?.checked,revisado_em:(document.getElementById('eRevisado')?.checked?((_pAtual&&_pAtual.revisado&&_pAtual.revisado_em)||new Date().toISOString().slice(0,10)):''),revisao_obs:(document.getElementById('eRevObs')?.value.trim()||''),descricao:(document.getElementById('eDescricao')?.value.trim()||''),tipo_catalogo:(document.getElementById('eTipoCat')?.value||''),num_planilha:(document.getElementById('eNumPlan')?.value.trim()||''),fornecedor_id:fornId,fornecedor_nome:fornNome,data_compra:dc,data_compra_mes:dcMes,data_venda:dv,data:(dv?dv.slice(0,7):dcMes),gas_pagante:(document.getElementById('eGasPag')?.value||'ambos'),aporte_joao:(parseFloat(document.getElementById('eApJoao')?.value)||0),aporte_igor:(parseFloat(document.getElementById('eApIgor')?.value)||0),cliente_id:cliId,cliente_nome:cliNome,preco_cheio:(status==='Vendido'?(parseFloat(document.getElementById('ePrecoCheio')?.value)||0):0),nota_venda:(status==='Vendido'?(document.getElementById('eNotaVenda')?.value.trim()||''):'')};
   await vincularTroca(editId, upd);
   if(!idLocal(editId)) await gravar(updateDoc(doc(db,'products',editId),upd), 'Editar "'+nome+'"');
   // Grava as peças novas na aba Peças, vinculadas a esta máquina
@@ -7043,7 +7075,7 @@ function brand(n){
 // Texto onde toda busca de produto procura. Um lugar só, pra busca da tela,
 // busca dentro do grupo e contagem nunca discordarem entre si.
 function alvoBusca(p){
-  return [p.nome,fichaTexto(p),p.cliente_nome,p.fornecedor_nome,p.investidor,p.status,p.plataforma,p.canal_compra,p.num]
+  return [p.nome,fichaTexto(p),p.cliente_nome,p.fornecedor_nome,p.investidor,p.status,p.plataforma,p.vendedor,p.canal_compra,p.num]
     .filter(Boolean).join(' ').toLowerCase();
 }
 function casaBusca(p,termos){ const a=alvoBusca(p); return termos.every(t=>a.includes(t)); }
@@ -8192,7 +8224,7 @@ window.confirmarDevolucao=async()=>{
   // Desfaz a venda da máquina que voltou: zera os valores para ela parar de contar.
   // Ela volta pro status escolhido (padrão Anunciado) e o histórico fica no campo devolucao.
   const upd={ status:volta, venda:0, lucro:0, data_venda:'', data:getMesCompra(p)||'',
-              plataforma:'', cliente_id:'', cliente_nome:'',
+              plataforma:'', cliente_id:'', cliente_nome:'', vendedor:'',
               devolvido:true, devolucao:registro };
 
   // Numa TROCA a venda não deixou de existir — ela mudou de máquina. Por isso a
@@ -8212,6 +8244,7 @@ window.confirmarDevolucao=async()=>{
       data_venda:data, data:data.slice(0,7),
       plataforma:'Troca',
       cliente_id:p.cliente_id||'', cliente_nome:p.cliente_nome||'',
+      vendedor:p.vendedor||'',
       veio_de_troca:true,
       troca_de:{ data, de_id:dvId, de_nome:p.nome||'',
                  valor_devolvido:vendaAnterior, diferenca:valorNovo-vendaAnterior,
@@ -8643,7 +8676,7 @@ function renderTabela(lista, tipo){
         <td style="color:var(--li);font-size:.75rem">${tipo==='vendidos'?fdt(p.data_venda):'—'}</td>
         <td class="ps">${fmt(p.venda)}</td>
         <td class="pp ${lp>=0?'pos':'neg'}">${fmt(lp)}${splitLucro}</td>
-        <td>${sb}${platInfo}${parcInfo}${revInfo}${hwInfo}${faltaInfo}</td>
+        <td>${sb}${platInfo}${p.status==='Vendido'&&p.vendedor?`<span class="vend-tag" title="Quem vendeu">🙋 ${esc(p.vendedor)}</span>`:''}${parcInfo}${revInfo}${hwInfo}${faltaInfo}</td>
         <td>${statusSelectHTML(p)}</td>
         <td><button class="bed" onclick="openEdit('${p.id}')" title="Editar">✎</button>${instaBtn(p)}${p.status==='Vendido'?`<button class="brec" onclick="abrirRecibo('${p.id}')" title="Gerar recibo de venda">🧾</button><button class="brec" onclick="avPedir('${p.id}')" title="Pedir avaliação ao cliente (link pelo WhatsApp)">⭐</button><button class="bdev" onclick="abrirDevolucao('${p.id}')" title="Registrar devolução ou troca">↩</button>`:''}</td>
         <td><button class="bdl" onclick="delProd('${p.id}')" title="Excluir">✕</button></td>
@@ -8760,7 +8793,7 @@ function render(){
         <td style="color:var(--mu)">${fmt(p.custo)}${(p.custo_pecas>0)?`<div class="custo-brk"><span title="Pago na máquina">📦 ${fmt(p.custo_base!==undefined?p.custo_base:(p.custo-p.custo_pecas))}</span> <span class="cb-pc" title="Pago em peças">🔧 ${fmt(p.custo_pecas)}</span></div>`:''}</td>
         <td class="ps">${fmt(p.venda)}</td>
         <td class="pp ${lp>=0?'pos':'neg'}">${fmt(lp)}${diasInfo}${splitLucro}</td>
-        <td>${sb}${platInfo}${parcInfo}${revInfo}${hwInfo}${faltaInfo}</td>
+        <td>${sb}${platInfo}${p.status==='Vendido'&&p.vendedor?`<span class="vend-tag" title="Quem vendeu">🙋 ${esc(p.vendedor)}</span>`:''}${parcInfo}${revInfo}${hwInfo}${faltaInfo}</td>
         <td>${statusSelectHTML(p)}</td>
         <td><button class="bed" onclick="openEdit('${p.id}')" title="Editar">✎</button>${instaBtn(p)}${p.status==='Vendido'?`<button class="brec" onclick="abrirRecibo('${p.id}')" title="Gerar recibo de venda">🧾</button><button class="brec" onclick="avPedir('${p.id}')" title="Pedir avaliação ao cliente (link pelo WhatsApp)">⭐</button><button class="bdev" onclick="abrirDevolucao('${p.id}')" title="Registrar devolução ou troca">↩</button>`:''}</td>
         <td><button class="bdl" onclick="delProd('${p.id}')" title="Excluir">✕</button></td>
@@ -15641,7 +15674,7 @@ window.lvAbrir=()=>{
   }
   const set=(id,v)=>{ const e=document.getElementById(id); if(e) e.value=v; };
   set('lvCliBusca',''); set('lvCliId',''); set('lvCliWpp',''); set('lvCliPerfil','');
-  set('lvPlat',''); set('lvCarteira','');
+  set('lvPlat',''); set('lvCarteira',''); set('lvVendedor', perfilAtual==='igor'?'Igor':'João');
   set('lvData', new Date().toISOString().split('T')[0]);
   // O total já vem somado pelos preços de tabela: se ele não deu desconto, é só
   // confirmar; se deu, ele digita por cima e vê o rateio mudar.
@@ -15737,6 +15770,7 @@ window.lvConfirmar=async()=>{
     const upd={status:'Vendido',plataforma:plat,venda:preco,lucro:preco-(p.custo||0),
       data_venda:dataVenda,data:mesVenda,diasParado:(dias>=0?dias:null),
       cliente_id:cliId,cliente_nome:cliNome,pagamento:'vista',parcelas:null,
+      vendedor:(document.getElementById('lvVendedor')?.value||''),
       venda_lote:true};
     if(!idLocal(p.id)){
       const gravou=await gravar(updateDoc(doc(db,'products',p.id),upd),'Vender "'+(p.nome||p.id)+'"');
