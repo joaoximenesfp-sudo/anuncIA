@@ -310,6 +310,31 @@ b,strong,th,h1,h2,h3,h4,h5,h6{font-weight:600}
   .av small{color:var(--mu);font-size:.82rem;line-height:1.4}
   .avs-bt{margin-top:16px;border:1px solid var(--b);background:var(--card);color:var(--tx);border-radius:999px;padding:10px 18px;font:inherit;font-weight:600;font-size:.88rem;cursor:pointer}
 
+  /* ── compramos seu usado: a conversa abre no WhatsApp já escrita ── */
+  .vnd{padding:0 0 72px}
+  .vnd[hidden]{display:none}
+  .vnd-g{display:grid;grid-template-columns:1fr 1.05fr;gap:32px;align-items:start;padding-top:44px;border-top:1px solid var(--b)}
+  .vnd-k{font-size:.74rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--g2);margin-bottom:10px}
+  .vnd h2{font-size:clamp(1.6rem,3vw,2.2rem);letter-spacing:-.02em;margin:0 0 12px;font-weight:600;line-height:1.1}
+  .vnd-tx p{color:var(--mu);font-size:1rem;line-height:1.55;margin:0 0 18px}
+  .vnd-ps{margin:0 0 18px;padding:0;list-style:none;counter-reset:vp;display:grid;gap:12px}
+  .vnd-ps li{counter-increment:vp;display:flex;gap:12px;align-items:center;font-size:.95rem;color:var(--mu);line-height:1.4}
+  .vnd-ps li::before{content:counter(vp);flex:none;width:30px;height:30px;border-radius:10px;display:grid;place-items:center;font-weight:600;font-size:.86rem;
+    color:#03140C;background:linear-gradient(135deg,var(--g1),var(--g2))}
+  .vnd-ps b{color:var(--tx);font-weight:600}
+  .vnd-tx .vnd-dica{font-size:.9rem;margin:0}
+  .vnd-f{background:var(--card);border-radius:var(--r);padding:24px;box-shadow:var(--sh);display:grid;gap:18px;margin:0}
+  .vnd-c{display:flex;flex-direction:column;gap:8px;margin:0}
+  .vnd-r{font-size:.84rem;font-weight:600;color:var(--tx)}
+  .vnd-r small{font-weight:500;color:var(--li)}
+  .vnd-ops{display:flex;flex-wrap:wrap;gap:8px}
+  .vnd-ops .op{padding:10px 16px;font-size:.88rem}
+  .vnd-i{width:100%;padding:13px 14px;border:1px solid var(--b);border-radius:14px;background:var(--bg);color:var(--tx);font:inherit;font-size:1rem}
+  .vnd-i:focus{outline:2px solid var(--g2);outline-offset:1px}
+  .vnd-f .cta{margin-top:2px}
+  .vnd-obs{margin:-8px 0 0;font-size:.8rem;color:var(--li);text-align:center;line-height:1.4}
+  @media(max-width:800px){ .vnd-g{grid-template-columns:1fr;gap:22px;padding-top:36px} .vnd{padding:0 0 54px} .vnd-f{padding:20px} }
+
   /* ── detalhe ── */
   .ov{position:fixed;inset:0;background:rgba(5,8,15,.62);z-index:60;display:none;align-items:flex-end;justify-content:center;
     -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
@@ -503,6 +528,32 @@ b,strong,th,h1,h2,h3,h4,h5,h6{font-weight:600}
   </div>
 </section>
 
+<section class="vnd" id="vender" hidden>
+  <div class="wrap vnd-g">
+    <div class="vnd-tx">
+      <div class="vnd-k">Compramos seu usado</div>
+      <h2>Tem um notebook parado? A gente compra.</h2>
+      <p>Notebook ou desktop que você não usa mais: conte o que ele tem e mande as fotos pelo WhatsApp. A loja avalia e responde com uma proposta.</p>
+      <ol class="vnd-ps">
+        <li><span><b>Responda</b> as perguntas rápidas.</span></li>
+        <li><span><b>Mande as fotos</b> na conversa que abrir.</span></li>
+        <li><span><b>Receba a proposta</b> da loja.</span></li>
+      </ol>
+      <p class="vnd-dica">📸 Fotos que ajudam: a tela ligada, a tampa, o teclado e a etiqueta embaixo do aparelho.</p>
+    </div>
+    <form class="vnd-f" id="vndForm" autocomplete="off">
+      <div class="vnd-c"><span class="vnd-r" id="vndTipoR">O que você quer vender?</span><div class="vnd-ops" id="vndTipo" role="group" aria-labelledby="vndTipoR"></div></div>
+      <label class="vnd-c"><span class="vnd-r">Marca e modelo</span><input class="vnd-i" id="vndModelo" maxlength="80" placeholder="Ex.: Dell Latitude 5490"></label>
+      <label class="vnd-c"><span class="vnd-r">Processador e memória <small>(se souber)</small></span><input class="vnd-i" id="vndConfig" maxlength="80" placeholder="Ex.: i5 de 8ª geração, 8 GB"></label>
+      <div class="vnd-c"><span class="vnd-r" id="vndEstadoR">Como ele está?</span><div class="vnd-ops" id="vndEstado" role="group" aria-labelledby="vndEstadoR"></div></div>
+      <div class="vnd-c"><span class="vnd-r" id="vndCarregR">Tem carregador ou fonte?</span><div class="vnd-ops" id="vndCarreg" role="group" aria-labelledby="vndCarregR"></div></div>
+      <label class="vnd-c"><span class="vnd-r">Seu bairro e cidade</span><input class="vnd-i" id="vndLocal" maxlength="60" placeholder="Ex.: Cambuí, Campinas"></label>
+      <a class="cta" id="vndBt" href="#" target="_blank" rel="noopener">Enviar no WhatsApp</a>
+      <p class="vnd-obs">A conversa abre com tudo isso escrito. É só enviar e mandar as fotos.</p>
+    </form>
+  </div>
+</section>
+
 <footer><div class="wrap" id="rodape"></div></footer>
 
 <a class="fab" id="fab" href="#" target="_blank" rel="noopener" aria-label="Chamar no WhatsApp" hidden></a>
@@ -621,6 +672,7 @@ async function carregar(){
   cabecalho();
   confianca();
   rodape();
+  compraUsados();
   if(!itens.length){
     $('destaque').innerHTML=''; $('heroG').classList.add('so');
     $('lojaSub').textContent='Nenhuma máquina no momento — o estoque muda toda semana.';
@@ -779,6 +831,7 @@ function rodape(){
         <p>Notebooks e desktops seminovos, testados antes da venda.</p>
         <p><strong style="color:#E8EEF6">90 dias de garantia</strong> em todas as máquinas.</p>
         <p><a href="/blog" style="color:#E8EEF6">📰 Blog: notícias e dicas de notebook</a></p>
+        ${vndAtiva()?'<p><a href="#vender" style="color:#E8EEF6">💸 Compramos seu notebook ou desktop usado</a></p>':''}
       </div>
       <div>
         <h4>Contato</h4>
@@ -1248,6 +1301,66 @@ async function avaliacoes(){
   // o atalho no topo só aparece quando há o que mostrar
   const como=document.querySelector('.nav-lk a[href="#como"]');
   if(como && !document.querySelector('.nav-lk a[href="#avaliacoes"]')){ const a=document.createElement('a'); a.href='#avaliacoes'; a.textContent='Avaliações'; como.before(a); }
+}
+
+// Compramos seu usado: o cliente conta o que tem e a conversa abre no WhatsApp já escrita,
+// começando por "Vi no site", para a loja saber de onde veio. As fotos ele manda lá. Nada
+// fica guardado aqui. Não aparece no catálogo de revendedor nem quando a loja desliga a compra.
+const VND_TIPOS=[['notebook','Notebook'],['desktop','Desktop ou mini PC'],['outro','Outro']];
+const VND_ESTADOS=[['bem','Funcionando bem'],['defeito','Funciona com defeito'],['nao_liga','Não liga']];
+const VND_CARREG=[['sim','Sim'],['nao','Não']];
+const vnd={tipo:'notebook', estado:'', carreg:''};
+let vndLigada=false;
+function vndNum(){ return String(cfg.whatsapp_compra||cfg.whatsapp||'').replace(/\D/g,''); }
+function vndAtiva(){ return !REV_ID && cfg.compra_off!==true && !!vndNum(); }
+function vndMsg(d){
+  const limpa=s=>String(s==null?'':s).replace(/\s+/g,' ').trim().slice(0,80);
+  const oQue={notebook:'um notebook', desktop:'um desktop ou mini PC', outro:'um equipamento'}[d.tipo]||'um equipamento';
+  const estado={bem:'funcionando bem', defeito:'funciona, mas tem defeito', nao_liga:'não liga'}[d.estado]||'';
+  const carreg={sim:'tem', nao:'não tem'}[d.carreg]||'';
+  const L=['Olá! Vi no site que vocês compram usados. Tenho '+oQue+' para vender.'];
+  const item=(r,v)=>{ v=limpa(v); if(v) L.push('• '+r+': '+v); };
+  item('Marca e modelo', d.modelo);
+  item('Processador e memória', d.config);
+  item('Estado', estado);
+  item('Carregador ou fonte', carreg);
+  item('Bairro e cidade', d.local);
+  L.push('', 'Vou mandar as fotos aqui.');
+  return L.join('\n');
+}
+function vndLink(){
+  const n=vndNum(); if(!n) return '#';
+  const t=encodeURIComponent(vndMsg({...vnd, modelo:$('vndModelo').value, config:$('vndConfig').value, local:$('vndLocal').value}));
+  return `https://wa.me/55${n.replace(/^55/,'')}?text=${t}`;
+}
+function vndChips(id, ops, chave){
+  $(id).innerHTML=ops.map(([v,t])=>`<button type="button" class="op${vnd[chave]===v?' on':''}" data-v="${v}" aria-pressed="${vnd[chave]===v}">${t}</button>`).join('');
+}
+function vndPintar(){
+  vndChips('vndTipo',VND_TIPOS,'tipo'); vndChips('vndEstado',VND_ESTADOS,'estado'); vndChips('vndCarreg',VND_CARREG,'carreg');
+  $('vndBt').href=vndLink();
+}
+function compraUsados(){
+  const sec=$('vender'); if(!sec) return;
+  sec.hidden=!vndAtiva();
+  if(sec.hidden) return;
+  $('vndBt').innerHTML=IC.wa+' Enviar no WhatsApp';
+  vndPintar();
+  if(vndLigada) return;
+  vndLigada=true;
+  // o tipo sempre tem um marcado; estado e carregador dá para desmarcar tocando de novo
+  [['vndTipo','tipo'],['vndEstado','estado'],['vndCarreg','carreg']].forEach(([id,chave])=>{
+    $(id).addEventListener('click',e=>{
+      const b=e.target.closest('button[data-v]'); if(!b) return;
+      vnd[chave]=(chave!=='tipo' && vnd[chave]===b.dataset.v)?'':b.dataset.v;
+      vndPintar();
+    });
+  });
+  ['vndModelo','vndConfig','vndLocal'].forEach(id=>$(id).addEventListener('input',()=>{ $('vndBt').href=vndLink(); }));
+  $('vndForm').addEventListener('submit',e=>{ e.preventDefault(); $('vndBt').click(); });
+  // no menu, antes do Blog
+  const blog=document.querySelector('.nav-lk a[href="/blog"]');
+  if(blog && !document.querySelector('.nav-lk a[href="#vender"]')){ const a=document.createElement('a'); a.href='#vender'; a.textContent='Venda o seu'; blog.before(a); }
 }
 
 carregar();

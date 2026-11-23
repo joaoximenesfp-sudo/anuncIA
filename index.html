@@ -956,6 +956,8 @@ tr.marcada>td:first-child{box-shadow:inset 3px 0 0 var(--gr)}
 .cat-cfg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
 .cat-cfg label{display:flex;flex-direction:column;gap:3px;font-size:.7rem;font-weight:600;color:var(--mu)}
 .cat-cfg .inp{font-size:.8rem;padding:8px 10px}
+.cat-cfg label.cat-chk{flex-direction:row;align-items:flex-start;gap:8px;font-size:.74rem;color:var(--tx);line-height:1.4;padding-top:16px}
+.cat-chk input{width:16px;height:16px;flex:none;margin:1px 0 0;accent-color:var(--g2)}
 .cat-bts{display:flex;gap:8px;flex-wrap:wrap}
 .cat-descs{margin-top:12px;border:1px solid var(--b2);border-radius:10px;background:var(--bg);
   padding:10px 11px;max-height:420px;overflow-y:auto}
@@ -2282,6 +2284,7 @@ div:has(> .fc2){flex-wrap:wrap;row-gap:6px}
                 <option value="Instagram">Instagram</option>
                 <option value="Presencial">Presencial / loja</option>
                 <option value="Indicação">Indicação</option>
+                <option value="Site / Google">Site / Google (Compramos seu usado)</option>
                 <option value="Uber">Uber — tela no carro</option>
                 <option value="Outro">Outro</option>
               </select>
@@ -3661,6 +3664,8 @@ div:has(> .fc2){flex-wrap:wrap;row-gap:6px}
             <label>Instagram<input class="inp" id="catInsta" placeholder="tech.campinas"></label>
             <label>E-mail<input class="inp" id="catEmail" placeholder="contato.techcampinas@gmail.com"></label>
             <label>Link de avaliação no Google <span style="font-weight:400;color:var(--li)">(aparece para o cliente depois que ele avalia aqui)</span><input class="inp" id="catGoogle" placeholder="https://g.page/r/..."></label>
+            <label class="cat-chk"><input type="checkbox" id="catCompra" checked> <span>Mostrar <b>"Compramos seu usado"</b> no catálogo <span style="font-weight:400;color:var(--li)">(o cliente oferece notebook ou desktop pelo WhatsApp)</span></span></label>
+            <label>WhatsApp para compras <span style="font-weight:400;color:var(--li)">(quem recebe as ofertas; vazio = o WhatsApp da loja)</span><input class="inp" id="catWppCompra" placeholder="19999999999"></label>
           </div>
           <div class="cat-bts">
             <button class="bok" id="catPubBt" onclick="publicarCatalogo()">🌐 Publicar catálogo</button>
@@ -10176,7 +10181,7 @@ function renderVendasPlat(){
 // compra se julga pelo preço de entrada; o lucro depende do que veio depois.
 const CANAL_CORES={'Marketplace':'#2563eb','Facebook':'#2563eb','OLX':'#f97316',
   'Mercado Livre':'#eab308','Shopee':'#ea580c','Instagram':'#7c3aed','Indicação':'#0891b2',
-  'Presencial':'#16a34a','Uber':'#111827','Outro':'#64748b'};
+  'Presencial':'#16a34a','Uber':'#111827','Site / Google':'#db2777','Outro':'#64748b'};
 // Terceiro recorte do mesmo estoque: por marca. Conta a máquina inteira (vendida
 // ou não), porque a pergunta aqui é "com que marca a gente trabalha", não "o que
 // vendeu". O lucro médio embaixo sai só das vendidas, como nos outros painéis.
@@ -16175,7 +16180,7 @@ window.eDescContar=()=>descContar('e');
 // invisíveis na tela e visíveis no DevTools. Por isso existe a coleção
 // 'catalogo', que recebe só o que é público. O que não é escrito não vaza.
 const CAT_CFG_ID='loja';
-let catCfg={nome:'',whatsapp:'',cidade:'',instagram:'',email:'',google_avaliar:''};
+let catCfg={nome:'',whatsapp:'',cidade:'',instagram:'',email:'',google_avaliar:'',whatsapp_compra:'',compra_off:false};
 
 // O link que vai pro cliente sai pelo domínio da loja. Aberto por qualquer
 // endereço da Vercel (o de produção, o de um deploy ou o da branch, que ficam
@@ -16249,6 +16254,8 @@ async function catCarregarCfg(){
   const set=(id,v)=>{const e=document.getElementById(id); if(e&&!e.value) e.value=v||'';};
   set('catNome',catCfg.nome); set('catWpp',catCfg.whatsapp);
   set('catCidade',catCfg.cidade); set('catInsta',catCfg.instagram); set('catEmail',catCfg.email); set('catGoogle',catCfg.google_avaliar);
+  set('catWppCompra',catCfg.whatsapp_compra);
+  const cc=document.getElementById('catCompra'); if(cc) cc.checked=catCfg.compra_off!==true;
 }
 
 // Miniatura do cartão. A foto original tem 1100px e uns 250 KB; vinte delas
@@ -16570,7 +16577,9 @@ window.publicarCatalogo=async()=>{
     }catch(e){ falhas.push('não consegui remover o que saiu do catálogo'); }
 
     catCfg={nome, whatsapp:wpp, cidade:g('catCidade'), instagram:g('catInsta').replace(/^@/,''),
-            email:g('catEmail'), google_avaliar:(/^https:\/\/\S+$/.test(g('catGoogle'))?g('catGoogle'):''), publicado_em:new Date().toISOString()};
+            email:g('catEmail'), google_avaliar:(/^https:\/\/\S+$/.test(g('catGoogle'))?g('catGoogle'):''),
+            whatsapp_compra:g('catWppCompra').replace(/\D/g,''), compra_off:!(document.getElementById('catCompra')?.checked??true),
+            publicado_em:new Date().toISOString()};
     await gravar(setDoc(doc(db,'catalogo_cfg',CAT_CFG_ID),catCfg),'Dados da loja no catálogo');
 
     const nCheg=chegando.length, nRes=reservadas.length, nDisp=publicadas-nCheg-nRes;
