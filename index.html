@@ -13135,7 +13135,7 @@ window.blogGerar=async()=>{
 // no computador, o link vai para a área de transferência.
 window.blogCompartilhar=async(s,bt)=>{
   const a=blogArtigos.find(x=>x.slug===decodeURIComponent(s)); if(!a) return;
-  const url=location.origin+'/blog/'+encodeURIComponent(a.slug);
+  const url=CAT_ORIGEM_PUBLICA+'/blog/'+encodeURIComponent(a.slug);
   if(navigator.share){ try{ await navigator.share({title:a.titulo,text:a.titulo,url}); }catch(e){} return; }
   try{ await navigator.clipboard.writeText(a.titulo+' '+url); blogMsg('🔗 Link copiado: cole no WhatsApp, no Instagram ou onde quiser.'); }
   catch(e){ window.prompt('Copie o link do artigo:',url); }
@@ -13374,7 +13374,7 @@ window.blogPostar=async()=>{
     try{ Object.assign(a,(await blogApi({acao:'insta',slug:a.slug,post:r.id||'',story})).artigo); }catch(e){}
     // link em legenda de post nunca fica clicável no Instagram: o clicável é o da bio e a figurinha
     // "Link" do story; o link do artigo fica copiado para isso
-    const url=location.origin+'/blog/'+encodeURIComponent(a.slug);
+    const url=CAT_ORIGEM_PUBLICA+'/blog/'+encodeURIComponent(a.slug);
     try{ await navigator.clipboard.writeText(url); }catch(e){}
     blogRender(); blogFechar('blogPrevDlg');
     blogMsg('✅ No Instagram'+(story?' (post e story)':'')+(r.link?': '+r.link:'.')+(erroStory?' ⚠️ O story não foi: '+erroStory+'.':'')+
@@ -15870,15 +15870,13 @@ window.eDescContar=()=>descContar('e');
 const CAT_CFG_ID='loja';
 let catCfg={nome:'',whatsapp:'',cidade:'',instagram:'',email:''};
 
-// Os endereços de deploy e de branch da Vercel (anunc-xxxx-...vercel.app,
-// anunc-ia-git-main-...vercel.app) ficam atrás do login da Vercel; só o domínio
-// de produção é público. Abrindo o sistema por um deles, o link do catálogo
-// copiado pro cliente caía na tela de login, e pra ele (logado na Vercel)
-// abria normal. O link sai sempre pelo endereço público.
-const CAT_ORIGEM_PUBLICA='https://anunc-ia.vercel.app';
+// O link que vai pro cliente sai pelo domínio da loja. Aberto por qualquer
+// endereço da Vercel (o de produção, o de um deploy ou o da branch, que ficam
+// atrás do login da Vercel), o sistema manda o techcampinas.com.br.
+const CAT_ORIGEM_PUBLICA='https://techcampinas.com.br';
 function catUrl(){
   const h=location.hostname;
-  if(/\.vercel\.app$/.test(h) && h!=='anunc-ia.vercel.app') return CAT_ORIGEM_PUBLICA+'/catalogo.html';
+  if(/\.vercel\.app$/.test(h)) return CAT_ORIGEM_PUBLICA+'/catalogo.html';
   return location.origin+location.pathname.replace(/[^/]*$/,'')+'catalogo.html';
 }
 

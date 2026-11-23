@@ -21,7 +21,9 @@ const { put } = require('@vercel/blob');
 let guardar = put; // os testes trocam por um de mentira
 const N = require('../tela/nucleo.js');
 
-const SITE = N.SITE;
+// O endereço público da loja: o Google, o compartilhar e o Instagram levam para ele
+// (o anunc-ia.vercel.app continua abrindo o mesmo site).
+const SITE = 'https://techcampinas.com.br';
 const ARQ = 'blog/artigos.json';
 // Claude Haiku 5.5, o mais barato da Claude (no nome do AI Gateway): US$ 0,10 por milhão de tokens
 // lidos e US$ 0,50 por milhão escritos, uns 40 vezes menos que o Opus. Um artigo curto por dia

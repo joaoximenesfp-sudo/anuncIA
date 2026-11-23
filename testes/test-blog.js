@@ -165,7 +165,7 @@ const post = body => chamar({ method: 'POST', body: Object.assign({ idToken: 'so
   r = await chamar({ query: { slug: a1.slug } });
   ok(r.status === 200 && r.body.includes('<h2>O que muda para você</h2>') && r.body.includes('&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;') && !r.body.includes('<script>alert'),
     'página do artigo: o texto formatado, e o que a IA puser de HTML aparece escrito, sem rodar');
-  ok(r.body.includes('<link rel="canonical" href="https://anunc-ia.vercel.app/blog/' + a1.slug + '">') && r.body.includes('"@type":"BlogPosting"') && r.body.includes('Com informações de <a href="https://tecnoblog.net/noticias/windows-10-suporte/" rel="nofollow noopener"'),
+  ok(r.body.includes('<link rel="canonical" href="https://techcampinas.com.br/blog/' + a1.slug + '">') && r.body.includes('"@type":"BlogPosting"') && r.body.includes('Com informações de <a href="https://tecnoblog.net/noticias/windows-10-suporte/" rel="nofollow noopener"'),
     'endereço oficial, dados para o Google e o crédito com link para a fonte');
   ok(r.body.includes('Lenovo ThinkPad T14 i5 10ª') && r.body.indexOf('ThinkPad T14') < r.body.indexOf('Latitude 3410') && !r.body.includes('Latitude 5490') && r.body.includes('src="data:image/jpeg;base64,AAAA"') &&
     r.body.includes('href="/catalogo.html?q=Notebook%20Lenovo%20ThinkPad%20T14%20i5%2010%C2%AA"'), 'máquinas à venda que combinam com o assunto primeiro (a reservada não), com foto e link para o catálogo');
@@ -175,12 +175,12 @@ const post = body => chamar({ method: 'POST', body: Object.assign({ idToken: 'so
   ok(iCorpo > 0 && iMaq > iCorpo && iMaq < iCred && pAntes >= 1 && pAntes < pCorpo, `as máquinas no meio do texto (depois de ${pAntes} de ${pCorpo} parágrafos), não no fim`);
   const sl = r.body.match(/<li class="sl">/g) || [];
   ok(sl.length === 4 && r.body.indexOf('class="slides"') < iCorpo && r.body.includes('01 / 04') && r.body.includes('Sem elas, o notebook fica mais exposto.'), 'os pontos em slides no topo do artigo (01 / 04...)');
-  const url1 = 'https://anunc-ia.vercel.app/blog/' + a1.slug;
+  const url1 = 'https://techcampinas.com.br/blog/' + a1.slug;
   ok((r.body.match(/class="partilha/g) || []).length === 2 && r.body.includes('https://wa.me/?text=' + encodeURIComponent(a1.titulo + ' ' + url1)) &&
     r.body.includes('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(url1)) && r.body.includes('pt-copiar') && /navigator\.share/.test(r.body),
     'compartilhar no topo e no fim: WhatsApp, Facebook, copiar o link e o do próprio celular');
-  ok(r.body.includes('<meta property="og:image" content="https://anunc-ia.vercel.app/blog/capa/' + a1.slug + '?v=') && r.body.includes('<meta name="twitter:card" content="summary_large_image">') &&
-    r.body.includes('"image":"https://anunc-ia.vercel.app/blog/capa/'), 'a página aponta para a imagem do link (WhatsApp, Facebook e Google)');
+  ok(r.body.includes('<meta property="og:image" content="https://techcampinas.com.br/blog/capa/' + a1.slug + '?v=') && r.body.includes('<meta name="twitter:card" content="summary_large_image">') &&
+    r.body.includes('"image":"https://techcampinas.com.br/blog/capa/'), 'a página aponta para a imagem do link (WhatsApp, Facebook e Google)');
   const capa = await chamar({ query: { capa: a1.slug } });
   ok(capa.status === 200 && capa.headers['content-type'] === 'image/png' && Buffer.isBuffer(capa.raw) && capa.raw.slice(1, 4).toString() === 'PNG' &&
     capa.raw.readUInt32BE(16) === 1200 && capa.raw.readUInt32BE(20) === 630 && /s-maxage=604800/.test(capa.headers['cache-control']), 'a imagem do link: PNG 1200×630 com o título, guardada no cache');
@@ -203,7 +203,7 @@ const post = body => chamar({ method: 'POST', body: Object.assign({ idToken: 'so
   r = await chamar({ query: { slug: 'nao-existe' } });
   ok(r.status === 404 && /não está mais no ar/.test(r.body), 'artigo que não existe: 404');
   r = await chamar({ query: { sitemap: '1' } });
-  ok(/application\/xml/.test(r.headers['content-type']) && r.body.includes('<loc>https://anunc-ia.vercel.app/blog/' + a1.slug + '</loc>') && r.body.includes('<loc>https://anunc-ia.vercel.app/catalogo.html</loc>'),
+  ok(/application\/xml/.test(r.headers['content-type']) && r.body.includes('<loc>https://techcampinas.com.br/blog/' + a1.slug + '</loc>') && r.body.includes('<loc>https://techcampinas.com.br/catalogo.html</loc>'),
     'sitemap com o catálogo, o blog e cada artigo');
   r = await chamar({ query: { feed: '1' } });
   ok(/rss/.test(r.headers['content-type']) && r.body.includes('<title>Windows 10 sem suporte'), 'feed RSS do próprio blog');

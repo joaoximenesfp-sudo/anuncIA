@@ -1,5 +1,5 @@
 {
- "versao": "2026-11-22.2",
+ "versao": "2026-11-23.1",
  "app": "2026-11-20.7",
  "regioes": {
   "centro": {"nome": "Centro de Campinas", "lat": -22.9056, "lon": -47.0608, "km": 1.5},
@@ -28,7 +28,7 @@
   },
   "catalogo": {
    "nome": "Tech Campinas · catálogo",
-   "destino": "https://anunc-ia.vercel.app/catalogo.html"
+   "destino": "https://techcampinas.com.br/catalogo.html"
   },
   "gio": {
    "nome": "Dra. Giovanna Molinari",

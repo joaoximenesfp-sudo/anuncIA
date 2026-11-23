@@ -6,4 +6,4 @@ Disallow: /index.html
 Disallow: /api/
 Disallow: /tela/
 
-Sitemap: https://anunc-ia.vercel.app/sitemap.xml
+Sitemap: https://techcampinas.com.br/sitemap.xml
