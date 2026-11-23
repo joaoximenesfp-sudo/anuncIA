@@ -317,8 +317,8 @@ const post = body => chamar({ method: 'POST', body: Object.assign({ idToken: 'so
   ok(r.status === 200, 'o sócio voltou com ela: fica no ar (a retirada vale uma vez só)');
   const REAIS = JSON.parse(require('fs').readFileSync(path.join(__dirname, '..', 'api', '_blog-semente.json'), 'utf8'));
   ok(Array.isArray(REAIS.artigos) && REAIS.artigos.length > 0 && Array.isArray(REAIS.retirar) && REAIS.artigos.every(x => x.pontos.length <= 4 && x.corpo.split(/\s+/).length <= 450 && x.slug === T.slugDe(x.titulo) && x.titulo.length <= 110 && x.resumo.length <= 220 && x.corpo.length >= 600 && x.pontos.length >= 3 && x.pontos.length <= 5 &&
-    x.status === 'publicado' && /^\d{4}-\d\d-\d\dT/.test(x.publicado_em) && x.fonte && /^https:\/\//.test(x.fonte.url) && (x.fontes || []).every(f => /^https:\/\//.test(f.url)) && !/\[\[fonte:/.test(x.corpo)),
-    'as do repositório estão no formato (um assunto, até 450 palavras, até 4 slides, data e fontes com link)');
+    x.status === 'publicado' && /^\d{4}-\d\d-\d\dT/.test(x.publicado_em) && (x.tipo === 'guia' ? !x.fonte : x.fonte && /^https:\/\//.test(x.fonte.url)) && (x.fontes || []).every(f => /^https:\/\//.test(f.url)) && !/\[\[fonte:/.test(x.corpo)),
+    'as do repositório estão no formato (um assunto, até 450 palavras, até 4 slides, data, e notícia com a fonte e o link; guia da loja sem fonte)');
   T.usarSementes([]); T.limparMemoria();
 
   console.log('\nfontes');
