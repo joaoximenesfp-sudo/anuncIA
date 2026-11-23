@@ -20,6 +20,7 @@ node testes/test-captcha.js        # imagem de confirmação do login: código s
 node testes/test-ml-ficha.js       # o que vai preenchido para o Mercado Livre: descrição, tela pelo modelo, código do processador, máquina igual
 node testes/test-avaliacoes.js     # avaliações dos clientes: convite por venda, uma avaliação por link, só aparece depois de aprovada, arquivo em caminho secreto
 node testes/test-etiqueta.js       # etiqueta com QR: números "101-110", próximo livre pulando os impressos, o que vai escrito e o endereço do QR
+node testes/test-search-console.js # Search Console: o arquivo de verificação do Google segue na raiz, sem redirecionamento
 ```
 
 Rode o `checar.js` sempre antes de subir. Tag desbalanceada ou chave de CSS
