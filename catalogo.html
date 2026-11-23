@@ -310,6 +310,20 @@ b,strong,th,h1,h2,h3,h4,h5,h6{font-weight:600}
   .av small{color:var(--mu);font-size:.82rem;line-height:1.4}
   .avs-bt{margin-top:16px;border:1px solid var(--b);background:var(--card);color:var(--tx);border-radius:999px;padding:10px 18px;font:inherit;font-weight:600;font-size:.88rem;cursor:pointer}
 
+  /* cartão "Compramos seu usado" no topo: a compra com o mesmo destaque da venda */
+  .vnd-hero{display:flex;align-items:center;gap:14px;max-width:560px;margin-top:22px;padding:14px 16px;border-radius:18px;text-decoration:none;color:#fff;
+    background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.16);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);transition:border-color .15s,background .15s}
+  .vnd-hero[hidden]{display:none}
+  .vnd-hero:hover{border-color:rgba(28,240,143,.55);background:rgba(255,255,255,.09)}
+  .vnd-hero-ic{flex:none;width:44px;height:44px;border-radius:13px;display:grid;place-items:center;color:#03140C;background:linear-gradient(135deg,var(--g1),var(--g2))}
+  .vnd-hero-ic svg{width:24px;height:24px}
+  .vnd-hero-tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+  .vnd-hero-tx b{font-size:1rem;font-weight:600;letter-spacing:-.01em}
+  .vnd-hero-tx span{font-size:.86rem;color:#B7C3D4;line-height:1.4}
+  .vnd-hero-bt{flex:none;display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:.9rem;color:var(--g1);white-space:nowrap}
+  .vnd-hero-bt svg{width:16px;height:16px}
+  @media(max-width:520px){ .vnd-hero{flex-wrap:wrap} .vnd-hero-tx{flex-basis:calc(100% - 58px)} .vnd-hero-bt{margin-left:58px} }
+
   /* ── compramos seu usado: a conversa abre no WhatsApp já escrita ── */
   .vnd{padding:0 0 72px}
   .vnd[hidden]{display:none}
@@ -475,6 +489,11 @@ b,strong,th,h1,h2,h3,h4,h5,h6{font-weight:600}
       <h1>Tecnologia revisada.<br><span class="grad">Pronta pra você.</span></h1>
       <p class="hero-sub" id="lojaSub">Carregando as máquinas…</p>
       <div class="hero-ctas" id="heroCtas"><a class="bt bt-pri" href="#maquinas">Ver máquinas</a></div>
+      <a class="vnd-hero" id="vndHero" href="#vender" hidden>
+        <span class="vnd-hero-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="11" rx="2"/><path d="M2 19h20"/><path d="M12 12V7"/><path d="m9.5 9.5 2.5-2.5 2.5 2.5"/></svg></span>
+        <span class="vnd-hero-tx"><b>Compramos seu usado</b><span>Notebook ou desktop parado? Mande as fotos e receba uma proposta.</span></span>
+        <span class="vnd-hero-bt">Quero vender <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></span>
+      </a>
     </div>
     <div id="destaque"><div class="dest"><div class="dest-sk"></div></div></div>
   </div>
@@ -508,26 +527,6 @@ b,strong,th,h1,h2,h3,h4,h5,h6{font-weight:600}
   </div>
 </section>
 
-<section class="avs" id="avaliacoes" hidden>
-  <div class="wrap">
-    <h2>Quem comprou, recomenda.</h2>
-    <div class="avs-media" id="avMedia"></div>
-    <div class="avg" id="avLista"></div>
-    <button class="avs-bt" id="avMais" hidden>Ver mais avaliações</button>
-  </div>
-</section>
-
-<section class="passos" id="como">
-  <div class="wrap">
-    <h2>Comprar é simples.</h2>
-    <div class="ps">
-      <div class="p"><div class="nu">1</div><b>Escolha a sua</b><span>Veja as fotos reais, a ficha e o estado de cada máquina: bateria, tela e o que dá pra ampliar.</span></div>
-      <div class="p"><div class="nu">2</div><b>Chame no WhatsApp</b><span>Tiramos suas dúvidas e separamos a máquina pra você.</span></div>
-      <div class="p"><div class="nu">3</div><b>Receba</b><span>Entrega combinada em Campinas e região, ou envio pelos Correios com rastreio para todo o Brasil.</span></div>
-    </div>
-  </div>
-</section>
-
 <section class="vnd" id="vender" hidden>
   <div class="wrap vnd-g">
     <div class="vnd-tx">
@@ -553,6 +552,27 @@ b,strong,th,h1,h2,h3,h4,h5,h6{font-weight:600}
     </form>
   </div>
 </section>
+
+<section class="avs" id="avaliacoes" hidden>
+  <div class="wrap">
+    <h2>Quem comprou, recomenda.</h2>
+    <div class="avs-media" id="avMedia"></div>
+    <div class="avg" id="avLista"></div>
+    <button class="avs-bt" id="avMais" hidden>Ver mais avaliações</button>
+  </div>
+</section>
+
+<section class="passos" id="como">
+  <div class="wrap">
+    <h2>Comprar é simples.</h2>
+    <div class="ps">
+      <div class="p"><div class="nu">1</div><b>Escolha a sua</b><span>Veja as fotos reais, a ficha e o estado de cada máquina: bateria, tela e o que dá pra ampliar.</span></div>
+      <div class="p"><div class="nu">2</div><b>Chame no WhatsApp</b><span>Tiramos suas dúvidas e separamos a máquina pra você.</span></div>
+      <div class="p"><div class="nu">3</div><b>Receba</b><span>Entrega combinada em Campinas e região, ou envio pelos Correios com rastreio para todo o Brasil.</span></div>
+    </div>
+  </div>
+</section>
+
 
 <footer><div class="wrap" id="rodape"></div></footer>
 
@@ -1343,6 +1363,7 @@ function vndPintar(){
 function compraUsados(){
   const sec=$('vender'); if(!sec) return;
   sec.hidden=!vndAtiva();
+  const topo=$('vndHero'); if(topo) topo.hidden=sec.hidden;
   if(sec.hidden) return;
   $('vndBt').innerHTML=IC.wa+' Enviar no WhatsApp';
   vndPintar();
@@ -1358,9 +1379,9 @@ function compraUsados(){
   });
   ['vndModelo','vndConfig','vndLocal'].forEach(id=>$(id).addEventListener('input',()=>{ $('vndBt').href=vndLink(); }));
   $('vndForm').addEventListener('submit',e=>{ e.preventDefault(); $('vndBt').click(); });
-  // no menu, antes do Blog
-  const blog=document.querySelector('.nav-lk a[href="/blog"]');
-  if(blog && !document.querySelector('.nav-lk a[href="#vender"]')){ const a=document.createElement('a'); a.href='#vender'; a.textContent='Venda o seu'; blog.before(a); }
+  // no menu, logo depois de Máquinas: comprar e vender com o mesmo peso
+  const maq=document.querySelector('.nav-lk a[href="#maquinas"]');
+  if(maq && !document.querySelector('.nav-lk a[href="#vender"]')){ const a=document.createElement('a'); a.href='#vender'; a.textContent='Venda o seu'; maq.after(a); }
 }
 
 carregar();

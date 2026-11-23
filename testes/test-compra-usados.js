@@ -43,6 +43,8 @@ const ativa = extrairDe(CAT, 'function vndAtiva(){');
 ok(/REV_ID/.test(ativa) && /compra_off/.test(ativa) && /vndNum\(\)/.test(ativa), 'some no catálogo de revendedor, quando a loja desliga e sem WhatsApp');
 ok(/cfg\.whatsapp_compra\|\|cfg\.whatsapp/.test(extrairDe(CAT, 'function vndNum(){')), 'usa o WhatsApp de compras e, sem ele, o da loja');
 ok(!/Balão|consigna/i.test(CAT), 'texto e visual próprios da loja');
+ok(/<a class="vnd-hero" id="vndHero" href="#vender" hidden>/.test(CAT) && CAT.indexOf('id="vndHero"') < CAT.indexOf('id="maquinas"'), 'cartão "Compramos seu usado" no topo, antes das máquinas (some junto com a seção)');
+ok(CAT.indexOf('id="maquinas"') < CAT.indexOf('id="vender"') && CAT.indexOf('id="vender"') < CAT.indexOf('id="avaliacoes"'), 'o formulário fica logo depois das máquinas');
 
 console.log('\no sistema');
 ok(/id="catCompra"/.test(IDX) && /id="catWppCompra"/.test(IDX), 'configurações do catálogo: ligar a seção e o WhatsApp de compras');
