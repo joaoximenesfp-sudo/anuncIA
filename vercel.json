@@ -5,6 +5,7 @@
   "rewrites": [
     { "source": "/q/:anuncio/:carro", "destination": "/api/q?anuncio=:anuncio&carro=:carro" },
     { "source": "/insta/img/:arq", "destination": "/api/insta?img=:arq" },
+    { "source": "/avaliar", "destination": "/avaliar.html" },
     { "source": "/blog", "destination": "/api/blog" },
     { "source": "/blog/", "destination": "/api/blog" },
     { "source": "/blog/feed.xml", "destination": "/api/blog?feed=1" },

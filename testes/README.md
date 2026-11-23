@@ -18,6 +18,7 @@ node testes/test-busca.js          # busca do Gerar anúncio: palavras em qualqu
 node testes/test-ml.js             # Mercado Livre: autorização (PKCE), tokens cifrados e renovados, foto, atributos, validação, preço/situação e pedidos
 node testes/test-captcha.js        # imagem de confirmação do login: código sem letra que confunde, só desenho, resposta conferida no servidor, validade
 node testes/test-ml-ficha.js       # o que vai preenchido para o Mercado Livre: descrição, tela pelo modelo, código do processador, máquina igual
+node testes/test-avaliacoes.js     # avaliações dos clientes: convite por venda, uma avaliação por link, só aparece depois de aprovada, arquivo em caminho secreto
 node testes/test-etiqueta.js       # etiqueta com QR: números "101-110", próximo livre pulando os impressos, o que vai escrito e o endereço do QR
 ```
 

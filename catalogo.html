@@ -296,6 +296,20 @@ b,strong,th,h1,h2,h3,h4,h5,h6{font-weight:600}
   .p b{display:block;font-size:1.04rem;margin-bottom:6px;letter-spacing:-.01em}
   .p span{font-size:.9rem;color:var(--mu);line-height:1.55}
 
+  /* ── avaliações dos clientes (só as aprovadas pela loja) ── */
+  .avs{padding:56px 0 4px}
+  .avs[hidden]{display:none}
+  .avs h2{font-size:clamp(1.6rem,3vw,2.2rem);letter-spacing:-.02em;margin:0 0 8px;font-weight:600}
+  .avs-media{display:flex;align-items:center;gap:10px;flex-wrap:wrap;color:var(--mu);margin:0 0 20px;font-size:.95rem}
+  .avs-media b{font-size:1.7rem;color:var(--tx);letter-spacing:-.02em}
+  .av-est{color:#F5B301;letter-spacing:2px}
+  .avg{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  @media(max-width:800px){ .avg{grid-template-columns:1fr} .avs{padding:40px 0 0} }
+  .av{background:var(--card);border-radius:var(--r);padding:22px;box-shadow:var(--sh);display:flex;flex-direction:column;gap:10px}
+  .av p{margin:0;line-height:1.55;font-size:.95rem;white-space:pre-line}
+  .av small{color:var(--mu);font-size:.82rem;line-height:1.4}
+  .avs-bt{margin-top:16px;border:1px solid var(--b);background:var(--card);color:var(--tx);border-radius:999px;padding:10px 18px;font:inherit;font-weight:600;font-size:.88rem;cursor:pointer}
+
   /* ── detalhe ── */
   .ov{position:fixed;inset:0;background:rgba(5,8,15,.62);z-index:60;display:none;align-items:flex-end;justify-content:center;
     -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
@@ -466,6 +480,15 @@ b,strong,th,h1,h2,h3,h4,h5,h6{font-weight:600}
     <div class="cont" id="contagem"></div>
     <div class="gr" id="grade"></div>
     <div id="vazio"></div>
+  </div>
+</section>
+
+<section class="avs" id="avaliacoes" hidden>
+  <div class="wrap">
+    <h2>Quem comprou, recomenda.</h2>
+    <div class="avs-media" id="avMedia"></div>
+    <div class="avg" id="avLista"></div>
+    <button class="avs-bt" id="avMais" hidden>Ver mais avaliações</button>
   </div>
 </section>
 
@@ -1206,7 +1229,29 @@ $('busca').oninput=e=>{ busca=e.target.value; render(); };
   setTimeout(ir,900); })();
 document.addEventListener('keydown',e=>{ if(e.key==='Escape') fechar(); });
 
+// Avaliações dos clientes: só as que a loja aprovou, de quem comprou (cada uma veio de
+// um link mandado depois da venda). No catálogo de revendedor não aparecem: lá a loja é ele.
+async function avaliacoes(){
+  if(REV_ID) return;
+  let j; try{ const r=await fetch('/api/avaliacoes'); if(!r.ok) return; j=await r.json(); }catch(e){ return; }
+  if(!j||!j.total||!Array.isArray(j.avaliacoes)) return;
+  const est=n=>'★'.repeat(n)+'☆'.repeat(5-n);
+  const mes=d=>{ try{ return new Date(d+'T12:00:00').toLocaleDateString('pt-BR',{month:'long',year:'numeric'}); }catch(e){ return ''; } };
+  const card=a=>`<div class="av"><div class="av-est" aria-label="${a.nota} de 5 estrelas">${est(a.nota)}</div><p>${esc(a.texto)}</p>`
+    +`<small><b>${esc(a.nome)}</b>${a.produto?' · '+esc(a.produto):''}${a.data?' · '+esc(mes(a.data)):''}</small></div>`;
+  const media=String(j.media).replace('.',',');
+  $('avMedia').innerHTML=`<b>${media}</b><span class="av-est">${est(Math.round(j.media))}</span><span>${j.total} avaliaç${j.total===1?'ão':'ões'} de clientes</span>`;
+  const MOSTRA=6;
+  $('avLista').innerHTML=j.avaliacoes.slice(0,MOSTRA).map(card).join('');
+  if(j.avaliacoes.length>MOSTRA){ const b=$('avMais'); b.hidden=false; b.onclick=()=>{ $('avLista').innerHTML=j.avaliacoes.map(card).join(''); b.hidden=true; }; }
+  $('avaliacoes').hidden=false;
+  // o atalho no topo só aparece quando há o que mostrar
+  const como=document.querySelector('.nav-lk a[href="#como"]');
+  if(como && !document.querySelector('.nav-lk a[href="#avaliacoes"]')){ const a=document.createElement('a'); a.href='#avaliacoes'; a.textContent='Avaliações'; como.before(a); }
+}
+
 carregar();
+avaliacoes();
 </script>
 </body>
 </html>

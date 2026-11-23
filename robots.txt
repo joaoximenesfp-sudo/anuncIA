@@ -4,6 +4,8 @@ Allow: /catalogo.html
 Disallow: /$
 Disallow: /index.html
 Disallow: /api/
+Allow: /api/avaliacoes
 Disallow: /tela/
+Disallow: /avaliar
 
 Sitemap: https://techcampinas.com.br/sitemap.xml
