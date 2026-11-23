@@ -21,5 +21,10 @@ ok(url('https://anunc-ia-git-main-joaoximenesfp-sudos-projects.vercel.app','/')=
 ok(url('https://www.lojadojoao.com.br','/')==='https://www.lojadojoao.com.br/catalogo.html',
    'num domínio próprio, usa o próprio domínio');
 
+console.log('\nstory do blog');
+const story=extrair('function blogStory(a){');
+ok(!/location\.(host|origin)/.test(story) && /CAT_ORIGEM_PUBLICA/.test(story),
+   'o story do artigo mostra o endereço da loja, nunca o endereço da Vercel em que o sistema está aberto');
+
 console.log('\n'+(falhas?falhas+' FALHA(S)':'tudo verde'));
 process.exit(falhas?1:0);

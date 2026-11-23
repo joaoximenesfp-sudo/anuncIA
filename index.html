@@ -13328,7 +13328,8 @@ function blogStory(a){
     const lk='Leia no blog: link na bio ↑', lw=Math.min(larg,cx.measureText(lk).width+84);
     cx.fillStyle='#1CF08F'; blogRet(cx,m,y,lw,104,52); cx.fill();
     cx.fillStyle='#06231A'; cx.fillText(lk,m+42,y+68);
-    cx.font=blogFonte(500,32); cx.fillStyle='#556070'; cx.fillText(location.host+'/blog',m,y+170);
+    // sempre o endereço público: o sistema pode estar aberto num endereço técnico da Vercel
+    cx.font=blogFonte(500,32); cx.fillStyle='#556070'; cx.fillText(CAT_ORIGEM_PUBLICA.replace(/^https?:\/\//,'')+'/blog',m,y+170);
     return y+180;
   };
   const rascunho=document.createElement('canvas'); rascunho.width=BLOG_W; rascunho.height=BLOG_SH;
