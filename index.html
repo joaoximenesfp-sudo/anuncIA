@@ -3970,6 +3970,7 @@ div:has(> .fc2){flex-wrap:wrap;row-gap:6px}
           <option value="OLX">🟠 OLX</option>
           <option value="Mercado Livre">🟡 Mercado Livre</option>
           <option value="Instagram">📸 Instagram</option>
+          <option value="Site / Google">🌐 Site / Google — catálogo ou blog</option>
           <option value="Recompra">🔁 Recompra — cliente que voltou</option>
           <option value="Indicação">🤝 Indicação</option>
           <option value="Troca">🔄 Troca — levou no lugar de outra</option>
@@ -4116,6 +4117,7 @@ div:has(> .fc2){flex-wrap:wrap;row-gap:6px}
           <option value="OLX">🟠 OLX</option>
           <option value="Mercado Livre">🟡 Mercado Livre</option>
           <option value="Instagram">📸 Instagram</option>
+          <option value="Site / Google">🌐 Site / Google — catálogo ou blog</option>
           <option value="Recompra">🔁 Recompra — cliente que voltou</option>
           <option value="Indicação">🤝 Indicação</option>
           <option value="Shopee">🛍️ Shopee</option>
@@ -4175,6 +4177,7 @@ div:has(> .fc2){flex-wrap:wrap;row-gap:6px}
           <option value="OLX">🟠 OLX</option>
           <option value="Mercado Livre">🟡 Mercado Livre</option>
           <option value="Instagram">📸 Instagram</option>
+          <option value="Site / Google">🌐 Site / Google — catálogo ou blog</option>
           <option value="Recompra">🔁 Recompra — cliente que voltou</option>
           <option value="Indicação">🤝 Indicação</option>
           <option value="Troca">🔄 Troca — levou no lugar de outra</option>
@@ -8641,9 +8644,9 @@ function renderTabela(lista, tipo){
       }
 
       const sb = statusBadge(p);
-      const platColors={'Marketplace':'#1d4ed8','OLX':'#f97316','Mercado Livre':'#eab308','WhatsApp':'#16a34a','Instagram':'#7c3aed','Indicação':'#0891b2','Outro':'#64748b'};
-      const platBg={'Marketplace':'#eff6ff','OLX':'#fff7ed','Mercado Livre':'#fefce8','WhatsApp':'#f0fdf4','Instagram':'#faf5ff','Indicação':'#e0f2fe','Outro':'#f5f5f5'};
-      const platBd={'Marketplace':'#bfdbfe','OLX':'#fed7aa','Mercado Livre':'#fef08a','WhatsApp':'#bbf7d0','Instagram':'#e9d5ff','Indicação':'#bae6fd','Outro':'#d4d4d4'};
+      const platColors={'Marketplace':'#1d4ed8','OLX':'#f97316','Mercado Livre':'#eab308','WhatsApp':'#16a34a','Instagram':'#7c3aed','Site / Google':'#db2777','Indicação':'#0891b2','Outro':'#64748b'};
+      const platBg={'Marketplace':'#eff6ff','OLX':'#fff7ed','Mercado Livre':'#fefce8','WhatsApp':'#f0fdf4','Instagram':'#faf5ff','Site / Google':'#fdf2f8','Indicação':'#e0f2fe','Outro':'#f5f5f5'};
+      const platBd={'Marketplace':'#bfdbfe','OLX':'#fed7aa','Mercado Livre':'#fef08a','WhatsApp':'#bbf7d0','Instagram':'#e9d5ff','Site / Google':'#fbcfe8','Indicação':'#bae6fd','Outro':'#d4d4d4'};
       const platInfo=p.status==='Vendido'&&p.plataforma?`<span style="font-size:.67rem;font-weight:600;padding:2px 7px;border-radius:10px;margin-left:4px;background:${platBg[p.plataforma]||'#f5f5f5'};color:${platColors[p.plataforma]||'#64748b'};border:1px solid ${platBd[p.plataforma]||'#d4d4d4'}">${esc(p.plataforma)}</span>`:'';
       const faltaInfo=faltaBadge(p);
       const revInfo=revisaoBadge(p);
@@ -8757,9 +8760,9 @@ function render(){
     const rows=g2.map(p=>{
       const lp=p.lucro!==undefined?p.lucro:(p.venda-p.custo);
       const sb=statusBadge(p);
-      const platColors={'Marketplace':'#1d4ed8','OLX':'#f97316','Mercado Livre':'#eab308','WhatsApp':'#16a34a','Instagram':'#7c3aed','Indicação':'#0891b2','Outro':'#64748b'};
-      const platBg={'Marketplace':'#eff6ff','OLX':'#fff7ed','Mercado Livre':'#fefce8','WhatsApp':'#f0fdf4','Instagram':'#faf5ff','Indicação':'#e0f2fe','Outro':'#f5f5f5'};
-      const platBd={'Marketplace':'#bfdbfe','OLX':'#fed7aa','Mercado Livre':'#fef08a','WhatsApp':'#bbf7d0','Instagram':'#e9d5ff','Indicação':'#bae6fd','Outro':'#d4d4d4'};
+      const platColors={'Marketplace':'#1d4ed8','OLX':'#f97316','Mercado Livre':'#eab308','WhatsApp':'#16a34a','Instagram':'#7c3aed','Site / Google':'#db2777','Indicação':'#0891b2','Outro':'#64748b'};
+      const platBg={'Marketplace':'#eff6ff','OLX':'#fff7ed','Mercado Livre':'#fefce8','WhatsApp':'#f0fdf4','Instagram':'#faf5ff','Site / Google':'#fdf2f8','Indicação':'#e0f2fe','Outro':'#f5f5f5'};
+      const platBd={'Marketplace':'#bfdbfe','OLX':'#fed7aa','Mercado Livre':'#fef08a','WhatsApp':'#bbf7d0','Instagram':'#e9d5ff','Site / Google':'#fbcfe8','Indicação':'#bae6fd','Outro':'#d4d4d4'};
       const platInfo=p.status==='Vendido'&&p.plataforma?`<span style="font-size:.67rem;font-weight:600;padding:2px 7px;border-radius:10px;margin-left:4px;background:${platBg[p.plataforma]||'#f5f5f5'};color:${platColors[p.plataforma]||'#64748b'};border:1px solid ${platBd[p.plataforma]||'#d4d4d4'}">${esc(p.plataforma)}</span>`:'';
       const faltaInfo=faltaBadge(p);
       const revInfo=revisaoBadge(p);
@@ -9855,7 +9858,7 @@ function mapaCanais(lista){
 // ao redesenho quando os dados do Firestore chegam depois.
 let platSel='', compSel='';
 const PLAT_CORES={'Marketplace':'#2563eb','OLX':'#f97316','Mercado Livre':'#eab308',
-  'WhatsApp':'#16a34a','Instagram':'#7c3aed','Indicação':'#0891b2','Recompra':'#9ca3af',
+  'WhatsApp':'#16a34a','Instagram':'#7c3aed','Site / Google':'#db2777','Indicação':'#0891b2','Recompra':'#9ca3af',
   'Troca':'#9ca3af','Outro':'#64748b'};
 
 // Um card só resume; a lista é quem responde "quais máquinas são essas?".
@@ -15974,7 +15977,8 @@ async function avCarregar(){
   const dia=s=>s?new Date(s).toLocaleDateString('pt-BR'):'';
   const item=(a,bts)=>`<div class="av-it"><div class="av-est">${est(a.nota)}</div><p>${esc(a.texto)}</p>`
     +`<small><b>${esc(a.nome)}</b>${a.produto?' · '+esc(a.produto):''} · ${dia(a.criada_em)}</small><div class="av-bts">${bts}</div></div>`;
-  const pend=j.avaliacoes.filter(a=>a.status==='pendente'), pub=j.avaliacoes.filter(a=>a.status==='publicada');
+  const todas=Array.isArray(j.avaliacoes)?j.avaliacoes:[];
+  const pend=todas.filter(a=>a.status==='pendente'), pub=todas.filter(a=>a.status==='publicada');
   res.textContent=(j.total?`${String(j.media).replace('.',',')} ★ · ${j.total} no site`:'nenhuma no site ainda')
     +(pend.length?` · ${pend.length} para aprovar`:'')+(j.convites_abertos?` · ${j.convites_abertos} link${j.convites_abertos!==1?'s':''} esperando resposta`:'');
   document.getElementById('avPend').innerHTML=pend.length
