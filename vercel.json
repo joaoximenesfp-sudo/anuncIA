@@ -1,4 +1,7 @@
 {
+  "redirects": [
+    { "source": "/", "has": [{ "type": "host", "value": "techcampinas.com.br" }], "destination": "/catalogo.html", "permanent": false }
+  ],
   "rewrites": [
     { "source": "/q/:anuncio/:carro", "destination": "/api/q?anuncio=:anuncio&carro=:carro" },
     { "source": "/insta/img/:arq", "destination": "/api/insta?img=:arq" },
