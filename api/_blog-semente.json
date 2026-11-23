@@ -48,43 +48,28 @@
       "insta": null
     },
     {
-      "titulo": "Notebook para estudar e trabalhar: o que olhar na Black Friday",
-      "resumo": "Memória que não aumenta depois, Linux no lugar do Windows e tela que cansa menos: o que as listas de notebooks da Black Friday ensinam antes de olhar o preço.",
-      "corpo": "A Black Friday é na sexta-feira, dia 27, e as listas de notebooks recomendados já estão no ar. Nas do Canaltech para quem estuda e trabalha aparece um padrão: o que separa uma boa compra de uma dor de cabeça está na ficha, não no desconto.\n\n## Memória: 8 GB é o mínimo, 16 GB é o conforto\n\nA opção mais barata da lista, o ASUS VivoBook Go 15, vem com 8 GB de memória RAM soldados na placa. Dá conta de estudo e escritório, mas não aceita aumento depois. Para muitas abas, planilhas e videochamadas ao mesmo tempo, as opções do meio e de cima já vêm com 16 GB ou mais. Antes de comprar, confira se a memória pode ser ampliada.\n\n## O sistema vem no preço?\n\nPara baratear, vários modelos saem de fábrica com Linux, e não com Windows. É o caso do VivoBook Go 15, do VAIO FE16 e até do gamer Acer Nitro V16, da lista de até R$ 8.000. Quem precisa do Windows e do Office tem que somar o custo das licenças ao preço da oferta.\n\n## O que mais pesa no dia a dia\n\n- **SSD**: todos os escolhidos têm SSD de 512 GB ou mais. É ele que faz o notebook ligar e abrir os programas rápido.\n- **Tela**: as de proporção 16:10, como 1920 x 1200, mostram mais texto na vertical, e o acabamento antirreflexo cansa menos a vista.\n- **Construção**: a linha ThinkPad, por exemplo, aposta em teclado confortável, resistência testada em padrão militar e tampa de privacidade na câmera.\n\n## Desconto de verdade\n\nNa Black Friday os preços mudam o tempo todo, e o próprio Canaltech recomenda acompanhar as ofertas antes de fechar. Compare a configuração inteira, não só o valor final. E lembre que um notebook empresarial usado, revisado e com garantia também entrega essa construção por bem menos.",
+      "titulo": "Notebook para estudar e trabalhar: o que olhar antes de comprar",
+      "resumo": "Memória, SSD, sistema e construção: o que faz diferença no dia a dia de quem estuda e trabalha, com exemplos das máquinas que estão na loja.",
+      "corpo": "Nesta semana de Black Friday, muita gente vai trocar de notebook para estudar ou trabalhar. Antes de olhar o desconto, vale olhar a ficha: é ela que decide se a máquina aguenta o seu dia a dia pelos próximos anos.\n\n## Memória: 8 GB é o mínimo, 16 GB é o conforto\n\nCom 8 GB dá para estudar, escrever e navegar sem sufoco. Para muitas abas, planilhas e videochamadas ao mesmo tempo, 16 GB fazem diferença. Na loja há ThinkPad e Latitude com 16 GB, como os ThinkPad E14 e T14 de 11ª geração e os Latitude 3410, 3420 e 7440.\n\n## SSD não é luxo\n\nÉ o SSD que faz o notebook ligar em segundos e abrir os programas rápido. A maioria das máquinas da loja já tem SSD NVMe, o tipo mais rápido. Fuja de notebook com HD comum, mesmo que seja barato.\n\n## O sistema já vem pronto?\n\nMuito notebook novo de entrada sai de fábrica com Linux para baixar o preço, e quem precisa de Windows e Office paga as licenças à parte. As máquinas da Tech Campinas saem com Windows e Office instalados, prontas para usar.\n\n## Construção que aguenta a rotina\n\nAs linhas empresariais, como ThinkPad e Latitude, foram feitas para o uso pesado de escritório: teclado confortável, carcaça resistente e manutenção mais fácil. Por isso, um usado dessas linhas, revisado, pode durar mais que muito modelo de entrada novo.\n\n## Na prática\n\n- **Estudo e tarefas leves**: um i5 com 8 GB, como o ThinkPad E480 ou o Latitude 5280, resolve.\n- **Trabalho com muitas abas e reuniões**: prefira 16 GB, como os ThinkPad E14 de 11ª geração e o Latitude 3410.\n- **Para durar muitos anos**: os de processador mais novo, como o Latitude 7440, com i5 de 13ª geração.\n\nTodas as máquinas são revisadas por dentro e saem com 90 dias de garantia.",
       "pontos": [
-        "8 GB de RAM é o mínimo para estudar. Com 16 GB, abas, planilhas e videochamadas rodam juntas.",
-        "Memória soldada na placa não aumenta depois: confira antes de comprar.",
-        "Vários notebooks em oferta vêm com Linux. Precisa de Windows e Office? Some as licenças.",
-        "Compare a ficha inteira, não só o desconto: SSD e uma boa tela fazem diferença todo dia."
+        "8 GB de RAM dá para estudar. Com 16 GB, abas, planilhas e videochamadas rodam juntas.",
+        "É o SSD que faz o notebook ligar em segundos. Fuja de HD comum, mesmo barato.",
+        "Muito notebook novo vem com Linux. Os da Tech Campinas saem com Windows e Office.",
+        "ThinkPad e Latitude: feitos para o escritório, revisados e com 90 dias de garantia."
       ],
-      "legenda": "Vai comprar notebook na Black Friday? Olhe a ficha antes do desconto. 💻\n\nMemória que não aumenta depois, Linux no lugar do Windows, SSD e tela que cansa menos: no blog, o que as listas de notebooks para estudar e trabalhar ensinam antes de fechar a compra.\n\nLeia o artigo completo no blog: link na bio.\n\n#blackfriday #notebook #estudos #trabalho #dicas",
-      "assunto": "Dica",
+      "legenda": "Vai trocar de notebook para estudar ou trabalhar? Olhe a ficha antes do desconto. 💻\n\nMemória, SSD, sistema e construção: no blog, o que faz diferença no dia a dia, com exemplos das máquinas que estão na loja.\n\nLeia o artigo completo no blog: link na bio.\n\n#notebook #estudos #trabalho #thinkpad #dicas",
+      "assunto": "Guia",
       "termos": [
         "ThinkPad",
         "Latitude",
         "16GB"
       ],
-      "slug": "notebook-para-estudar-e-trabalhar-o-que-olhar-na-black-friday",
-      "tipo": "noticia",
-      "fonte": {
-        "nome": "Canaltech",
-        "titulo": "3 melhores notebooks para estudar e trabalhar em 2026",
-        "url": "https://canaltech.com.br/notebook/melhores-notebooks-para-estudar-trabalhar-2026/"
-      },
-      "fontes": [
-        {
-          "nome": "Canaltech",
-          "titulo": "3 melhores notebooks para estudar e trabalhar em 2026",
-          "url": "https://canaltech.com.br/notebook/melhores-notebooks-para-estudar-trabalhar-2026/"
-        },
-        {
-          "nome": "Canaltech",
-          "titulo": "5 notebooks bons até R$ 8.000 que valem à pena comprar na Black Friday 2026",
-          "url": "https://canaltech.com.br/notebook/black-friday-notebooks-bons-ate-8000-reais-para-comprar/"
-        }
-      ],
+      "slug": "notebook-para-estudar-e-trabalhar-o-que-olhar-antes-de-comprar",
+      "tipo": "guia",
+      "fonte": null,
+      "fontes": [],
       "publicado_em": "2026-11-23T14:48:12.018Z",
-      "atualizado_em": "2026-11-23T14:48:12.018Z",
+      "atualizado_em": "2026-11-23T16:10:01.067Z",
       "status": "publicado",
       "origem": "ia",
       "editado": false,
@@ -249,6 +234,7 @@
     }
   ],
   "retirar": [
-    "semana-de-apagoes-golpes-de-black-friday-e-a-pegadinha-da-placa-de-video"
+    "semana-de-apagoes-golpes-de-black-friday-e-a-pegadinha-da-placa-de-video",
+    "notebook-para-estudar-e-trabalhar-o-que-olhar-na-black-friday"
   ]
 }
