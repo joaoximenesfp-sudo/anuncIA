@@ -1,6 +1,122 @@
 {
   "artigos": [
     {
+      "titulo": "Jensen Huang volta à Nvidia: o que aconteceu e por que importa",
+      "resumo": "O cofundador da Nvidia renunciou no dia 12, em meio a um escândalo com suspeita de espionagem, e foi reconduzido ao cargo 11 dias depois.",
+      "corpo": "O conselho da Nvidia decidiu reconduzir o cofundador Jensen Huang ao cargo de presidente-executivo, o CEO da empresa. Ele tinha renunciado no dia 12 de novembro. A volta foi comemorada nesta segunda-feira (23) pelo presidente dos Estados Unidos, Donald Trump, que disse que ela não traz risco para a segurança nacional do país.\n\n## Por que ele tinha saído\n\nHuang deixou o cargo depois da revelação de casos extraconjugais. Um deles seria com Alice Huang, que já comandou a Megaspeed International. A empresa, de Singapura, está entre as grandes clientes da Nvidia e é investigada pelas autoridades americanas desde 2024 por suspeita de contrabandear chips de inteligência artificial da Nvidia para a China.\n\nSegundo o jornal The New York Times, Alice manteve contato com um agente do serviço de espionagem chinês entre meados de 2025 e outubro. O governo americano diz que ainda não há conclusão sobre se ela atuava como espiã.\n\n## A pressão pela volta\n\nCom o escândalo, as ações da Nvidia caíram forte, e a empresa perdeu centenas de bilhões de dólares em valor de mercado. No dia 17, o presidente do conselho, Harvey Jones, chegou a dizer que Huang não seria recontratado. Veio então a campanha Bring Jensen Back (\"Tragam Jensen de volta\"), com uma carta aberta assinada por Elon Musk, por Tim Sweeney, fundador da Epic Games, e por funcionários da própria Nvidia. No domingo, Trump pediu a recontratação, e o conselho voltou atrás.\n\n## Por que isso importa\n\nA Nvidia começou fazendo chips de vídeo para jogos, como as GeForce dos notebooks gamer, e hoje domina os chips usados em inteligência artificial. Vale cerca de US$ 3,8 trilhões e, além de vender, financia várias empresas do setor. Por isso, um analista ouvido pela BBC viu \"risco real\" de a saída de Huang mudar a estratégia da empresa e frear os investimentos em IA.\n\nPara quem tem um notebook ou uma placa da Nvidia, nada muda no dia a dia: a troca no comando não mexe nos equipamentos nem nos programas em uso. O que estava em jogo era o rumo da empresa que mais pesa na onda da IA.",
+      "pontos": [
+        "Jensen Huang, cofundador da Nvidia, voltou ao comando da empresa 11 dias depois de renunciar.",
+        "Ele saiu em meio a um escândalo com suspeita de espionagem chinesa, ainda sem conclusão nos EUA.",
+        "Elon Musk, o fundador da Epic Games e funcionários pediram a volta. Trump apoiou.",
+        "A Nvidia faz as GeForce dos notebooks gamer e domina os chips de IA. Para quem usa, nada muda."
+      ],
+      "legenda": "O chefe da Nvidia está de volta, 11 dias depois de renunciar. 🔁\n\nJensen Huang saiu em meio a um escândalo com suspeita de espionagem e voltou depois de uma campanha com Elon Musk e funcionários da empresa. No blog: o que aconteceu e por que isso importa para a onda da IA.\n\nLeia o artigo completo no blog: link na bio.\n\n#nvidia #tecnologia #inteligenciaartificial #notebook #noticias",
+      "assunto": "Mercado",
+      "termos": [
+        "GeForce",
+        "Gaming"
+      ],
+      "slug": "jensen-huang-volta-a-nvidia-o-que-aconteceu-e-por-que-importa",
+      "tipo": "noticia",
+      "fonte": {
+        "nome": "g1",
+        "titulo": "Trump celebra retorno de Jensen Huang ao comando da Nvidia e diz que não há risco de segurança nacional",
+        "url": "https://g1.globo.com/mundo/noticia/2026/11/23/trump-celebra-retorno-de-jensen-huang-ao-comando-da-nvidia-e-diz-que-nao-ha-risco-de-seguranca-nacional.ghtml"
+      },
+      "fontes": [
+        {
+          "nome": "g1",
+          "titulo": "Trump celebra retorno de Jensen Huang ao comando da Nvidia e diz que não há risco de segurança nacional",
+          "url": "https://g1.globo.com/mundo/noticia/2026/11/23/trump-celebra-retorno-de-jensen-huang-ao-comando-da-nvidia-e-diz-que-nao-ha-risco-de-seguranca-nacional.ghtml"
+        },
+        {
+          "nome": "g1 (BBC)",
+          "titulo": "Saída de Jensen Huang da Nvidia pode frear a onda da IA?",
+          "url": "https://g1.globo.com/inovacao/noticia/2026/11/21/saida-de-jensen-huang-da-nvidia-pode-frear-a-onda-da-ia.ghtml"
+        }
+      ],
+      "publicado_em": "2026-11-23T14:50:12.018Z",
+      "atualizado_em": "2026-11-23T14:50:12.018Z",
+      "status": "publicado",
+      "origem": "ia",
+      "editado": false,
+      "insta": null
+    },
+    {
+      "titulo": "Notebook para estudar e trabalhar: o que olhar na Black Friday",
+      "resumo": "Memória que não aumenta depois, Linux no lugar do Windows e tela que cansa menos: o que as listas de notebooks da Black Friday ensinam antes de olhar o preço.",
+      "corpo": "A Black Friday é na sexta-feira, dia 27, e as listas de notebooks recomendados já estão no ar. Nas do Canaltech para quem estuda e trabalha aparece um padrão: o que separa uma boa compra de uma dor de cabeça está na ficha, não no desconto.\n\n## Memória: 8 GB é o mínimo, 16 GB é o conforto\n\nA opção mais barata da lista, o ASUS VivoBook Go 15, vem com 8 GB de memória RAM soldados na placa. Dá conta de estudo e escritório, mas não aceita aumento depois. Para muitas abas, planilhas e videochamadas ao mesmo tempo, as opções do meio e de cima já vêm com 16 GB ou mais. Antes de comprar, confira se a memória pode ser ampliada.\n\n## O sistema vem no preço?\n\nPara baratear, vários modelos saem de fábrica com Linux, e não com Windows. É o caso do VivoBook Go 15, do VAIO FE16 e até do gamer Acer Nitro V16, da lista de até R$ 8.000. Quem precisa do Windows e do Office tem que somar o custo das licenças ao preço da oferta.\n\n## O que mais pesa no dia a dia\n\n- **SSD**: todos os escolhidos têm SSD de 512 GB ou mais. É ele que faz o notebook ligar e abrir os programas rápido.\n- **Tela**: as de proporção 16:10, como 1920 x 1200, mostram mais texto na vertical, e o acabamento antirreflexo cansa menos a vista.\n- **Construção**: a linha ThinkPad, por exemplo, aposta em teclado confortável, resistência testada em padrão militar e tampa de privacidade na câmera.\n\n## Desconto de verdade\n\nNa Black Friday os preços mudam o tempo todo, e o próprio Canaltech recomenda acompanhar as ofertas antes de fechar. Compare a configuração inteira, não só o valor final. E lembre que um notebook empresarial usado, revisado e com garantia também entrega essa construção por bem menos.",
+      "pontos": [
+        "8 GB de RAM é o mínimo para estudar. Com 16 GB, abas, planilhas e videochamadas rodam juntas.",
+        "Memória soldada na placa não aumenta depois: confira antes de comprar.",
+        "Vários notebooks em oferta vêm com Linux. Precisa de Windows e Office? Some as licenças.",
+        "Compare a ficha inteira, não só o desconto: SSD e uma boa tela fazem diferença todo dia."
+      ],
+      "legenda": "Vai comprar notebook na Black Friday? Olhe a ficha antes do desconto. 💻\n\nMemória que não aumenta depois, Linux no lugar do Windows, SSD e tela que cansa menos: no blog, o que as listas de notebooks para estudar e trabalhar ensinam antes de fechar a compra.\n\nLeia o artigo completo no blog: link na bio.\n\n#blackfriday #notebook #estudos #trabalho #dicas",
+      "assunto": "Dica",
+      "termos": [
+        "ThinkPad",
+        "Latitude",
+        "16GB"
+      ],
+      "slug": "notebook-para-estudar-e-trabalhar-o-que-olhar-na-black-friday",
+      "tipo": "noticia",
+      "fonte": {
+        "nome": "Canaltech",
+        "titulo": "3 melhores notebooks para estudar e trabalhar em 2026",
+        "url": "https://canaltech.com.br/notebook/melhores-notebooks-para-estudar-trabalhar-2026/"
+      },
+      "fontes": [
+        {
+          "nome": "Canaltech",
+          "titulo": "3 melhores notebooks para estudar e trabalhar em 2026",
+          "url": "https://canaltech.com.br/notebook/melhores-notebooks-para-estudar-trabalhar-2026/"
+        },
+        {
+          "nome": "Canaltech",
+          "titulo": "5 notebooks bons até R$ 8.000 que valem à pena comprar na Black Friday 2026",
+          "url": "https://canaltech.com.br/notebook/black-friday-notebooks-bons-ate-8000-reais-para-comprar/"
+        }
+      ],
+      "publicado_em": "2026-11-23T14:48:12.018Z",
+      "atualizado_em": "2026-11-23T14:48:12.018Z",
+      "status": "publicado",
+      "origem": "ia",
+      "editado": false,
+      "insta": null
+    },
+    {
+      "titulo": "Dots: os agentes do ChatGPT que seguem trabalhando sem você",
+      "resumo": "Os dots pesquisam, usam aplicativos e acompanham projetos sozinhos, em computadores na nuvem. Veja o que eles fazem, quem pode usar e o cuidado antes de liberar o acesso.",
+      "corpo": "Os dots são agentes de inteligência artificial dentro do ChatGPT que cuidam de tarefas e acompanham projetos por conta própria. A diferença para o chat comum é que eles continuam trabalhando mesmo quando você fecha o ChatGPT: rodam em computadores na nuvem, pesquisam informações e usam aplicativos sozinhos.\n\n## Como eles funcionam\n\nOs dots usam a memória do ChatGPT para entender as suas preferências e o seu jeito de trabalhar. Por meio de plugins, se conectam a mais de 4 mil aplicativos. Dá para conversar com eles pelo site, pelo aplicativo do computador e do celular e até pelo Slack e pelo Microsoft Teams. O recurso é dos planos pagos Pro, Business Premium e Enterprise.\n\n## O que dá para pedir\n\n- **Agenda e pendências**: olhar a agenda toda manhã e listar os compromissos do dia, ou achar um serviço já feito que não foi cobrado e preparar a fatura para você aprovar.\n- **Apresentações**: montar os slides e atualizar os gráficos quando os números mudam.\n- **Conteúdo**: escolher trechos de uma entrevista para vídeos curtos e sugerir posts.\n- **Vendas**: preparar propostas de acordo com o que cada cliente pediu.\n- **Programação**: investigar erros relatados e testar as correções no código.\n\n## O cuidado antes de liberar\n\nPara trabalhar, o agente precisa de acesso: e-mail, Google Agenda, Drive e, se você autorizar pelo aplicativo do ChatGPT no computador, até os arquivos do seu notebook. Libere só o que a tarefa precisa e revise antes de qualquer envio. Nos próprios exemplos, a fatura espera a sua aprovação e, na pesquisa científica, a análise final continua com o pesquisador.\n\nPara quem trabalha no notebook, é um assistente que adianta o serviço. A decisão continua sendo sua.",
+      "pontos": [
+        "Os dots são agentes do ChatGPT que seguem trabalhando mesmo com o chat fechado.",
+        "Eles pesquisam, usam mais de 4 mil aplicativos e acompanham projetos sozinhos.",
+        "O recurso é dos planos pagos Pro, Business Premium e Enterprise.",
+        "Antes de liberar e-mail, agenda e arquivos, dê só o acesso que a tarefa precisa."
+      ],
+      "legenda": "Já imaginou um assistente que continua trabalhando depois que você fecha o ChatGPT? 🤖\n\nOs dots são agentes que pesquisam, usam aplicativos e acompanham projetos sozinhos. No blog: o que eles fazem, quem pode usar e o cuidado antes de liberar o acesso.\n\nLeia o artigo completo no blog: link na bio.\n\n#chatgpt #inteligenciaartificial #produtividade #tecnologia #notebook",
+      "assunto": "Notícia",
+      "termos": [
+        "i7",
+        "16GB"
+      ],
+      "slug": "dots-os-agentes-do-chatgpt-que-seguem-trabalhando-sem-voce",
+      "tipo": "noticia",
+      "fonte": {
+        "nome": "Canaltech",
+        "titulo": "8 maneiras de usar os dots do ChatGPT",
+        "url": "https://canaltech.com.br/inteligencia-artificial/como-usar-dots-do-chatgpt/"
+      },
+      "fontes": [],
+      "publicado_em": "2026-11-23T14:46:12.018Z",
+      "atualizado_em": "2026-11-23T14:46:12.018Z",
+      "status": "publicado",
+      "origem": "ia",
+      "editado": false,
+      "insta": null
+    },
+    {
       "titulo": "Black Friday: o golpe mais comum é o anúncio falso",
       "resumo": "Na semana da Black Friday do ano passado, anúncios e perfis falsos foram 91,8% das ameaças. Veja como conferir uma oferta antes de pagar.",
       "corpo": "A Black Friday é na sexta-feira, dia 27, e os golpistas já estão de olho. Um levantamento da Clavis Segurança da Informação sobre a semana da Black Friday do ano passado mostrou que anúncios e perfis falsos foram 91,8% das ameaças encontradas.\n\n## O que os golpistas fazem\n\nPelos dados da Serasa Experian, foram 604 anúncios e 625 perfis falsos entre 23 e 29 de novembro de 2025. Os truques se repetem:\n\n- páginas que imitam lojas conhecidas para roubar dados, o chamado phishing;\n- ofertas que não existem;\n- cobranças falsas por Pix e boleto.\n\nSegundo a Clavis, a inteligência artificial deixa algumas fraudes com imagens e mensagens mais convincentes. Ou seja: anúncio bonito não é garantia de nada.\n\n## Como conferir antes de pagar\n\n- Veja se o endereço da página é mesmo o site oficial da loja.\n- Desconfie de link de oferta que chega por grupo, live ou perfil que você não conhece. Na dúvida, procure a promoção direto nos canais oficiais da loja.\n- Preço muito abaixo do normal pede atenção em dobro.\n\nSe for comprar um notebook, peça fotos reais da máquina e pergunte quem dá a garantia e por quanto tempo. Quem vende de verdade mostra e responde.",
