@@ -250,6 +250,39 @@ button{transition:transform .08s ease}
 .qr-entrar{margin:0 0 14px;padding:9px 12px;border-radius:9px;background:var(--bbg);border:1px solid var(--bbd);color:var(--tx);font-size:.78rem;line-height:1.4}
 .fotos-cam{background:#0f766e}
 .etq .mca button:disabled{opacity:.5;cursor:default}
+
+/* ── FECHAMENTO DO MÊS ── */
+.fch .mc{max-width:720px}
+.fch-mes{display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 24px;border-bottom:1px solid var(--b);flex-shrink:0}
+.fch-mes .inp{max-width:190px;text-align:center}
+.fch-seta{width:34px;height:34px;flex:none;border-radius:999px;border:1px solid var(--b2);background:var(--w);color:var(--tx);font-size:1.2rem;line-height:1;cursor:pointer}
+.fch-seta:hover{border-color:var(--tx)}
+.fch-corpo{overflow-y:auto;flex:1 1 auto;min-height:0;padding:18px 24px 22px}
+.fch-tit{font-size:1.15rem;font-weight:600;letter-spacing:-.02em}
+.fch-sub{font-size:.76rem;color:var(--mu);margin:2px 0 14px}
+.fch-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.fch-kpi{border:1px solid var(--b);border-radius:14px;padding:11px 13px;background:var(--w);min-width:0}
+.fch-kpi .k{font-size:.64rem;font-weight:600;color:var(--li);text-transform:uppercase;letter-spacing:.07em}
+.fch-kpi .v{font-size:1.15rem;font-weight:600;letter-spacing:-.02em;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fch-kpi .d{font-size:.68rem;color:var(--li);margin-top:2px}
+.fch-kpi .d.up{color:var(--gr)}
+.fch-kpi .d.dn{color:var(--re)}
+.fch-sec{margin-top:18px}
+.fch-sec h4{font-size:.84rem;font-weight:600;margin-bottom:6px;display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.fch-sec h4 small{font-weight:500;color:var(--li);font-size:.72rem}
+.fch-lin{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:12px;align-items:center;padding:7px 0;border-bottom:1px solid var(--b);font-size:.8rem}
+.fch-lin:last-child{border-bottom:none}
+.fch-lin .n{font-weight:600;color:var(--tx);min-width:0;overflow-wrap:anywhere}
+.fch-lin .q{color:var(--mu);white-space:nowrap}
+.fch-lin .r{font-weight:600;white-space:nowrap;text-align:right;min-width:78px}
+.fch-lin.cinza .n{color:var(--li);font-weight:500}
+.fch-lin.cinza .fch-barra i{background:var(--b2)}
+.fch-barra{height:4px;border-radius:2px;background:var(--b);margin-top:5px;max-width:240px}
+.fch-barra i{display:block;height:100%;border-radius:2px;background:var(--g2)}
+.fch-nota{font-size:.74rem;color:var(--mu);margin-top:6px;line-height:1.45}
+.fch-aviso{margin-top:18px;padding:10px 12px;border-radius:12px;background:var(--abg);border:1px solid var(--abd);color:var(--am);font-size:.76rem;line-height:1.45}
+.fch-vazio{padding:10px 0;color:var(--li);font-size:.8rem}
+@media(max-width:560px){ .fch-kpis{grid-template-columns:repeat(2,minmax(0,1fr))} .fch-corpo{padding:16px 16px 20px} .fch-mes{padding:10px 16px} .fch .mca{flex-wrap:wrap} .fch .mca button{flex:1} }
 @media(max-width:600px){
   .qrb,.etq{padding:8px}
   .qrb .mc,.etq .mc{max-height:calc(100vh - 16px);max-height:calc(100dvh - 16px)}
@@ -2464,7 +2497,8 @@ div:has(> .fc2){flex-wrap:wrap;row-gap:6px}
   <!-- INSIGHTS -->
   <div class="pg" id="pg-insights">
     <div class="wr">
-      <div class="ph"><div><div class="pht">Insights</div><div class="phs">Análise real da operação — dados direto da planilha</div></div></div>
+      <div class="ph"><div><div class="pht">Insights</div><div class="phs">Análise real da operação — dados direto da planilha</div></div>
+        <button class="fc2 on" onclick="fchAbrir()">📅 Fechamento do mês</button></div>
       <div class="ig">
         <div class="ib"><div class="ii">📈</div><div><div class="il">Melhor mês</div><div class="iv" id="iBM">—</div><div class="in" id="iBMN">—</div></div></div>
         <div class="ib"><div class="ii">💵</div><div><div class="il">Receita total</div><div class="iv g" id="iRec">—</div><div class="in" id="iRecN">—</div></div></div>
@@ -3840,6 +3874,27 @@ div:has(> .fc2){flex-wrap:wrap;row-gap:6px}
     <div class="mca">
       <button class="bcan" id="etqBaixarBt" onclick="etqBaixar()">⬇️ Baixar imagens</button>
       <button class="bsav" id="etqImprimirBt" onclick="etqImprimir()">🖨️ Imprimir</button>
+    </div>
+  </div>
+</div>
+
+<!-- FECHAMENTO DO MÊS -->
+<div class="mo h fch" id="FCH">
+  <div class="moo" onclick="fchFechar()"></div>
+  <div class="mc">
+    <div class="mch">
+      <span class="mct">📅 Fechamento do mês</span>
+      <button class="mcl" onclick="fchFechar()" aria-label="Fechar">✕</button>
+    </div>
+    <div class="fch-mes">
+      <button type="button" class="fch-seta" onclick="fchMudar(-1)" aria-label="Mês anterior">‹</button>
+      <input class="inp" type="month" id="fchMes" onchange="fchMostrar()" aria-label="Mês do fechamento">
+      <button type="button" class="fch-seta" onclick="fchMudar(1)" aria-label="Próximo mês">›</button>
+    </div>
+    <div class="fch-corpo" id="fchCorpo"></div>
+    <div class="mca">
+      <button class="bcan" onclick="fchWhats()">💬 Enviar no WhatsApp</button>
+      <button class="bsav" id="fchCopiarBt" onclick="fchCopiar()">📋 Copiar resumo</button>
     </div>
   </div>
 </div>
@@ -9631,6 +9686,198 @@ function renderAlertas(){
   }
   row.innerHTML=alertas.slice(0,4).map(a=>`<div class="al ${a.tipo}"><span class="al-ic">${a.ic}</span><div class="al-tx">${a.txt}</div></div>`).join('');
 }
+
+// ── FECHAMENTO DO MÊS ──
+// O mês inteiro numa tela, para os dois sócios olharem o mesmo número: vendas,
+// de onde veio cada cliente, quem vendeu, compras, o estoque no fim do mês e o
+// que ainda falta preencher. As contas são as mesmas dos gráficos desta aba
+// (getMesVenda, getLucro, getMesCompra, custoSplit), então os números batem.
+// Não divide lucro: mostra o que aconteceu.
+let fchUltimo=null;
+function fchHoje(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function fchMesDeslocado(mes, n){
+  const d=new Date(+mes.slice(0,4), +mes.slice(5,7)-1+n, 1);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+}
+function fchFimDoMes(mes){
+  return mes+'-'+String(new Date(+mes.slice(0,4), +mes.slice(5,7), 0).getDate()).padStart(2,'0');
+}
+function fchDados(mes, lista, hojeISO){
+  const ESTOQUE=['Estoque','Anunciado','Reservado','Aguardando'];
+  const VEND=['João','Igor','Os dois'];
+  const mesAnt=fchMesDeslocado(mes,-1);
+  // 'WhatsApp' em registro antigo era onde a conversa fechou, não de onde a pessoa veio
+  const semOrigem=p=>{ const r=(p.plataforma||'').trim(); return !r || r==='WhatsApp'; };
+  const vendasDe=m=>lista.filter(p=>p.status==='Vendido' && getMesVenda(p)===m);
+  const resumo=vs=>{
+    const fat=vs.reduce((s,p)=>s+(p.venda||0),0), luc=vs.reduce((s,p)=>s+getLucro(p),0);
+    const giros=vs.map(diasGiro).filter(g=>g&&g.preciso).map(g=>g.dias);
+    return {qtd:vs.length, fat, luc, ticket:vs.length?fat/vs.length:0, margem:fat>0?luc/fat:0,
+      giro:giros.length?Math.round(giros.reduce((a,b)=>a+b,0)/giros.length):null};
+  };
+  const vend=vendasDe(mes);
+  const grupo=(chave, vazio)=>{
+    const g={};
+    vend.forEach(p=>{
+      const k=chave(p);
+      const x=g[k]||(g[k]={nome:k||vazio, qtd:0, fat:0, falta:!k});
+      x.qtd++; x.fat+=(p.venda||0);
+    });
+    return g;
+  };
+  const go=grupo(p=>semOrigem(p)?'':p.plataforma.trim(), 'Não informada');
+  const origens=Object.values(go).sort((a,b)=>(a.falta-b.falta)||(b.qtd-a.qtd)||(b.fat-a.fat));
+  const gv=grupo(p=>VEND.includes(p.vendedor)?p.vendedor:'', 'Não informado');
+  const vendedores=VEND.concat(['']).filter(k=>gv[k]).map(k=>gv[k]);
+  // compras: toda máquina comprada no mês, vendida ou não (a mesma conta do gráfico de gasto)
+  const comp=lista.filter(p=>getMesCompra(p)===mes);
+  let joao=0, igor=0, total=0;
+  const porCanal={};
+  comp.forEach(p=>{
+    const sp=custoSplit(p); joao+=sp.joao; igor+=sp.igor; total+=custoRealDe(p);
+    const c=(p.canal_compra||'').trim()||'Não informado';
+    porCanal[c]=(porCanal[c]||0)+1;
+  });
+  const canais=Object.keys(porCanal).map(nome=>({nome, qtd:porCanal[nome]})).sort((a,b)=>b.qtd-a.qtd);
+  // estoque no fim do mês; se o mês ainda está correndo, o de hoje
+  const corrente=hojeISO.slice(0,7)===mes;
+  const ref=corrente?hojeISO.slice(0,10):fchFimDoMes(mes);
+  const est=lista.filter(p=>{
+    const mc=getMesCompra(p);
+    if(!mc || mc>mes) return false;
+    if(p.status==='Vendido'){ if(corrente) return false; const mv=getMesVenda(p); return !!mv && mv>mes; }
+    return ESTOQUE.includes(p.status);
+  }).map(p=>{
+    const dc=(p.data_compra||'').length>=10 ? p.data_compra.slice(0,10) : getMesCompra(p)+'-01';
+    const dias=Math.max(0, Math.round((new Date(ref+'T12:00:00')-new Date(dc+'T12:00:00'))/86400000));
+    return {num:p.num||'', nome:p.nome||'', status:p.status, custo:custoRealDe(p), dias};
+  }).sort((a,b)=>b.dias-a.dias);
+  return {mes, mesAnt, corrente, ref,
+    atual:resumo(vend), ant:resumo(vendasDe(mesAnt)), origens, vendedores,
+    compras:{qtd:comp.length, total, joao, igor, caixa:Math.max(0,total-joao-igor), canais},
+    estoque:{qtd:est.length, capital:est.reduce((s,x)=>s+x.custo,0),
+      media:est.length?Math.round(est.reduce((s,x)=>s+x.dias,0)/est.length):0,
+      mais60:est.filter(x=>x.dias>60).length, top:est.slice(0,5)},
+    faltando:{origem:vend.filter(semOrigem).map(p=>p.nome||''), vendedor:vend.filter(p=>!VEND.includes(p.vendedor)).map(p=>p.nome||'')}};
+}
+// Variação contra o mês anterior. 'pct' em %, 'pp' em pontos de margem, 'dias' (menos é melhor).
+function fchVar(a, b, tipo){
+  let v;
+  if(tipo==='pct'){ if(!(b>0)) return null; v=Math.round((a-b)/b*100); }
+  else if(tipo==='pp'){ v=Math.round((a-b)*100); }
+  else { if(a==null || b==null) return null; v=a-b; }
+  const un=tipo==='pct'?'%':tipo==='pp'?' p.p.':(Math.abs(v)===1?' dia':' dias');
+  return {v, txt:Math.abs(v)+un, bom:tipo==='dias'?v<=0:v>=0};
+}
+function fchNomeCurto(n){ return String(n||'').split(/·|\|/)[0].trim().split(/\s+/).slice(0,4).join(' '); }
+function fchPlural(n, um, varios){ return n+' '+(n===1?um:varios); }
+function fchLista(nomes){
+  const c=nomes.map(fchNomeCurto);
+  return c.slice(0,4).join(', ')+(c.length>4?' e mais '+(c.length-4):'');
+}
+function fchHTML(d){
+  const a=d.atual, b=d.ant, c=d.compras, e=d.estoque, f=d.faltando;
+  const antNome=nomeDoMes(d.mesAnt).split(' ')[0].toLowerCase();
+  const temBase=b.qtd>0;
+  const nada=temBase?'<div class="d">—</div>':'';
+  const comp=x=>!temBase?''
+    : !x?nada
+    : `<div class="d ${x.v===0?'':(x.bom?'up':'dn')}">${x.v>0?'▲':x.v<0?'▼':'='} ${x.v===0?'igual a':x.txt+' vs'} ${antNome}</div>`;
+  const kpi=(k,v,dd)=>`<div class="fch-kpi"><div class="k">${k}</div><div class="v">${v}</div>${dd}</div>`;
+  const barra=(q,max)=>`<div class="fch-barra"><i style="width:${max>0?Math.round(q/max*100):0}%"></i></div>`;
+  const linhasVenda=arr=>{
+    const max=Math.max(1,...arr.map(x=>x.qtd));
+    return arr.map(x=>`<div class="fch-lin${x.falta?' cinza':''}"><div class="n">${esc(x.nome)}${barra(x.qtd,max)}</div><div class="q">${fchPlural(x.qtd,'venda','vendas')}</div><div class="r">${fmt(x.fat)}</div></div>`).join('');
+  };
+  const lin=(n,q,r,cls)=>`<div class="fch-lin${cls?' '+cls:''}"><div class="n">${n}</div><div class="q">${q}</div><div class="r">${r}</div></div>`;
+  if(!a.qtd && !c.qtd && !e.qtd)
+    return `<div class="fch-tit">${nomeDoMes(d.mes)}</div><div class="fch-vazio">Nada registrado neste mês: nenhuma venda, compra ou máquina em estoque.</div>`;
+  let h=`<div class="fch-tit">${nomeDoMes(d.mes)}</div>
+    <div class="fch-sub">${d.corrente?'Mês em andamento: os números ainda vão mudar.':'Mês fechado.'} ${temBase?'Comparação com '+nomeDoMes(d.mesAnt).toLowerCase()+'.':'Sem vendas em '+antNome+' para comparar.'}</div>
+    <div class="fch-kpis">
+      ${kpi('Vendas', fchPlural(a.qtd,'máquina','máquinas'), comp(fchVar(a.qtd,b.qtd,'pct')))}
+      ${kpi('Faturamento', fmt(a.fat), comp(fchVar(a.fat,b.fat,'pct')))}
+      ${kpi('Lucro', fmt(a.luc), comp(fchVar(a.luc,b.luc,'pct')))}
+      ${kpi('Margem', a.qtd?Math.round(a.margem*100)+'%':'—', a.qtd?comp(fchVar(a.margem,b.margem,'pp')):nada)}
+      ${kpi('Ticket médio', a.qtd?fmt(a.ticket):'—', a.qtd?comp(fchVar(a.ticket,b.ticket,'pct')):nada)}
+      ${kpi('Giro médio', a.giro!=null?fchPlural(a.giro,'dia','dias'):'—', a.giro!=null?comp(fchVar(a.giro,b.giro,'dias')):'<div class="d">compra até a venda</div>')}
+    </div>`;
+  h+=`<div class="fch-sec"><h4>📍 De onde vieram os clientes <small>${fchPlural(a.qtd,'venda','vendas')}</small></h4>
+    ${a.qtd?linhasVenda(d.origens):'<div class="fch-vazio">Nenhuma venda no mês.</div>'}</div>`;
+  if(a.qtd) h+=`<div class="fch-sec"><h4>🙋 Quem vendeu</h4>${linhasVenda(d.vendedores)}</div>`;
+  h+=`<div class="fch-sec"><h4>🛒 Compras do mês <small>${fchPlural(c.qtd,'máquina','máquinas')} · ${fmt(c.total)}</small></h4>`;
+  if(c.qtd){
+    h+=lin('João bancou','',fmt(c.joao))+lin('Igor bancou','',fmt(c.igor))+(c.caixa>=1?lin('Caixa da loja','',fmt(c.caixa)):'');
+    h+=`<div class="fch-nota">Comprou em: ${c.canais.map(x=>esc(x.nome)+' '+x.qtd).join(' · ')}</div>`;
+  } else h+='<div class="fch-vazio">Nenhuma compra registrada no mês.</div>';
+  h+='</div>';
+  h+=`<div class="fch-sec"><h4>📦 Estoque ${d.corrente?'hoje':'no fim do mês'} <small>${fchPlural(e.qtd,'máquina','máquinas')} · ${fmt(e.capital)}</small></h4>`;
+  if(e.qtd){
+    h+=lin('Tempo médio parado','',fchPlural(e.media,'dia','dias'))+lin('Paradas há mais de 60 dias','',String(e.mais60));
+    h+=`<div class="fch-nota"><b>Mais antigas:</b> ${e.top.map(x=>(x.num?'#'+esc(String(x.num))+' ':'')+esc(fchNomeCurto(x.nome))+' ('+fchPlural(x.dias,'dia','dias')+')').join(' · ')}</div>`;
+  } else h+='<div class="fch-vazio">Sem máquinas em estoque.</div>';
+  h+='</div>';
+  if(f.origem.length || f.vendedor.length){
+    const partes=[];
+    if(f.origem.length) partes.push(`<b>${fchPlural(f.origem.length,'venda','vendas')} sem origem</b> (${esc(fchLista(f.origem))})`);
+    if(f.vendedor.length) partes.push(`<b>${fchPlural(f.vendedor.length,'venda','vendas')} sem quem vendeu</b> (${esc(fchLista(f.vendedor))})`);
+    h+=`<div class="fch-aviso">📝 Para o fechamento ficar completo: ${partes.join(' e ')}. Preencha no ✎ de cada venda.</div>`;
+  }
+  return h;
+}
+function fchTexto(d){
+  const a=d.atual, c=d.compras, e=d.estoque, f=d.faltando;
+  const antNome=nomeDoMes(d.mesAnt).split(' ')[0].toLowerCase();
+  const seta=x=>x?` (${x.v>0?'▲ ':x.v<0?'▼ ':''}${x.v===0?'igual a '+antNome:x.txt+' vs '+antNome})`:'';
+  const L=['📅 Fechamento de '+nomeDoMes(d.mes)+(d.corrente?' (parcial)':''), ''];
+  L.push('Vendas: '+fchPlural(a.qtd,'máquina','máquinas')+' · '+fmt(a.fat)+(d.ant.qtd?seta(fchVar(a.fat,d.ant.fat,'pct')):''));
+  if(a.qtd){
+    L.push('Lucro: '+fmt(a.luc)+' · margem '+Math.round(a.margem*100)+'%');
+    L.push('Ticket médio: '+fmt(a.ticket)+(a.giro!=null?' · giro médio: '+fchPlural(a.giro,'dia','dias'):''));
+    L.push('De onde vieram: '+d.origens.map(x=>x.nome+' '+x.qtd).join(' · '));
+    L.push('Quem vendeu: '+d.vendedores.map(x=>x.nome+' '+x.qtd).join(' · '));
+  }
+  L.push('Compras: '+fchPlural(c.qtd,'máquina','máquinas')+' · '+fmt(c.total)
+    +(c.qtd?' (João '+fmt(c.joao)+' · Igor '+fmt(c.igor)+(c.caixa>=1?' · caixa da loja '+fmt(c.caixa):'')+')':''));
+  L.push('Estoque '+(d.corrente?'hoje':'no fim do mês')+': '+fchPlural(e.qtd,'máquina','máquinas')+' · '+fmt(e.capital)
+    +(e.qtd?' · paradas em média há '+fchPlural(e.media,'dia','dias'):''));
+  if(e.top.length) L.push('Mais antigas: '+e.top.slice(0,3).map(x=>(x.num?'#'+x.num+' ':'')+fchNomeCurto(x.nome)+' ('+fchPlural(x.dias,'dia','dias')+')').join(' · '));
+  const falta=[f.origem.length?fchPlural(f.origem.length,'venda','vendas')+' sem origem':'', f.vendedor.length?fchPlural(f.vendedor.length,'venda','vendas')+' sem quem vendeu':''].filter(Boolean);
+  if(falta.length) L.push('Falta preencher: '+falta.join(' · '));
+  return L.join('\n');
+}
+window.fchAbrir=()=>{
+  const inp=document.getElementById('fchMes'), mesHoje=fchHoje().slice(0,7);
+  inp.max=mesHoje;
+  if(!inp.value || inp.value>mesHoje) inp.value=mesHoje;
+  document.getElementById('FCH').classList.remove('h');
+  fchMostrar();
+};
+window.fchFechar=()=>{ document.getElementById('FCH').classList.add('h'); };
+window.fchMudar=n=>{
+  const inp=document.getElementById('fchMes'), mesHoje=fchHoje().slice(0,7);
+  let m=fchMesDeslocado(inp.value||mesHoje, n);
+  if(m>mesHoje) m=mesHoje;
+  inp.value=m; fchMostrar();
+};
+window.fchMostrar=()=>{
+  const inp=document.getElementById('fchMes'), hoje=fchHoje();
+  const mes=/^\d{4}-\d{2}$/.test(inp.value)?inp.value:hoje.slice(0,7);
+  fchUltimo=fchDados(mes, prods, hoje);
+  document.getElementById('fchCorpo').innerHTML=fchHTML(fchUltimo);
+};
+window.fchCopiar=async()=>{
+  if(!fchUltimo) return;
+  const txt=fchTexto(fchUltimo), bt=document.getElementById('fchCopiarBt');
+  let copiou=false;
+  try{ await navigator.clipboard.writeText(txt); copiou=true; }
+  catch(e){
+    try{ const t=document.createElement('textarea'); t.value=txt; t.style.cssText='position:fixed;top:0;left:0;opacity:0';
+      document.body.appendChild(t); t.select(); copiou=document.execCommand('copy'); t.remove(); }catch(e2){}
+  }
+  if(bt){ bt.textContent=copiou?'✓ Copiado':'Não consegui copiar'; setTimeout(()=>{ bt.textContent='📋 Copiar resumo'; },2000); }
+};
+window.fchWhats=()=>{ if(fchUltimo) window.open('https://wa.me/?text='+encodeURIComponent(fchTexto(fchUltimo)),'_blank','noopener'); };
 
 // ── RANKING ──
 let rkMode='lucro';
