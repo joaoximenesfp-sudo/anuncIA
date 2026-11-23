@@ -220,6 +220,46 @@ button{transition:transform .08s ease}
 .bsav{padding:9px 22px;background:var(--tx);color:#fff;border:none;border-radius:8px;font-family:var(--fonte);font-size:.82rem;font-weight:600;cursor:pointer;transition:opacity .15s}
 .bsav:hover{opacity:.85}
 
+/* ── ETIQUETA COM QR ── */
+.etq-bt{height:30px;padding:0 12px;border:1px solid var(--b2);border-radius:8px;background:var(--w);color:var(--tx);font-family:var(--fonte);font-size:.75rem;font-weight:600;cursor:pointer;white-space:nowrap}
+.etq-bt:hover{border-color:var(--tx)}
+.mch-acoes{display:flex;align-items:center;gap:8px}
+.qrb .mc{max-width:760px}
+.qrb-aviso{padding:10px 24px;font-size:.76rem;color:var(--mu);background:var(--bbg);border-bottom:1px solid var(--b);flex-shrink:0;line-height:1.45}
+.qrb-corpo{overflow-y:auto;flex:1 1 auto;min-height:0;padding:16px 20px 20px}
+.qrb-corpo .cd{margin:0;border:none;box-shadow:none;background:transparent}
+.qrb-corpo .cdh{display:none}
+.qrb-corpo .cdb{padding:0}
+.qrb-corpo .fr{grid-template-columns:1fr 1fr}
+.qrb-corpo .fr .fc:first-child{grid-column:1/-1}
+.etq{z-index:160}
+.etq .mc{max-width:640px}
+.etq-corpo{padding:16px 22px;overflow-y:auto;flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:12px}
+.etq-dica{font-size:.76rem;color:var(--mu);line-height:1.5}
+.etq-linha{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.etq-linha .fc{flex:1 1 200px}
+.etq-linha .fc.tam{flex:0 1 190px}
+.etq-chips{display:flex;gap:6px;flex-wrap:wrap}
+.etq-chip{padding:5px 11px;border:1px solid var(--b2);border-radius:999px;background:var(--w);color:var(--tx);font-family:var(--fonte);font-size:.72rem;font-weight:600;cursor:pointer}
+.etq-chip:hover{border-color:var(--tx)}
+.etq-info{font-size:.74rem;color:var(--tx);line-height:1.45}
+.etq-info small{color:var(--mu)}
+.etq-prev{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;background:var(--b);padding:10px;border-radius:10px;max-height:320px;overflow:auto}
+.etq-prev img{display:block;width:100%;height:auto;background:#fff;border-radius:3px;box-shadow:0 1px 3px rgba(0,0,0,.18)}
+.etq-prev .mais{display:flex;align-items:center;justify-content:center;font-size:.74rem;color:var(--mu)}
+.qr-entrar{margin:0 0 14px;padding:9px 12px;border-radius:9px;background:var(--bbg);border:1px solid var(--bbd);color:var(--tx);font-size:.78rem;line-height:1.4}
+.fotos-cam{background:#0f766e}
+.etq .mca button:disabled{opacity:.5;cursor:default}
+@media(max-width:600px){
+  .qrb,.etq{padding:8px}
+  .qrb .mc,.etq .mc{max-height:calc(100vh - 16px);max-height:calc(100dvh - 16px)}
+  .qrb-corpo{padding:12px 12px 16px}
+  .qrb-aviso{padding:9px 14px}
+  .etq-corpo{padding:14px}
+}
+/* botão da câmera: só onde tem câmera na mão (celular e tablet) */
+@media (pointer:fine){.so-toque{display:none!important}}
+
 /* ── SELL MODAL ── */
 .smo{position:fixed;inset:0;z-index:150;display:flex;align-items:center;justify-content:center;padding:24px}
 .smo.h{display:none}
@@ -1880,6 +1920,7 @@ div:has(> .fc2){flex-wrap:wrap;row-gap:6px}
 <!-- AUTH -->
 <div class="as" id="AS">
   <div class="ac">
+    <div class="qr-entrar" id="qrEntrar" hidden></div>
     <div class="alo"><span class="nmk nmk-g"><svg viewBox="0 0 800 800" aria-hidden="true"><rect x="232" y="222" width="336" height="232" rx="26" fill="none" stroke="#06231A" stroke-width="46"/><polyline points="300,347 356,403 492,268" fill="none" stroke="#06231A" stroke-width="56" stroke-linecap="round" stroke-linejoin="round"/><rect x="168" y="486" width="464" height="52" rx="26" fill="#06231A"/></svg></span><span class="aln">Business IJX</span><span class="alt">Gestão de Notebooks</span></div>
     <div class="ats">
       <button class="at on" onclick="swAt('login')">Entrar</button>
@@ -2068,7 +2109,7 @@ div:has(> .fc2){flex-wrap:wrap;row-gap:6px}
       <!-- ADICIONAR PRODUTO — só aparece na aba inicial "Na mão hoje" -->
       <div id="vendas-addprod">
       <div class="cd">
-        <div class="cdh"><span class="cdht">Adicionar produto</span></div>
+        <div class="cdh"><span class="cdht">Adicionar produto</span><button type="button" class="etq-bt" onclick="etqAbrir()" title="Etiquetas numeradas com QR para colar atrás do notebook">🏷️ Etiquetas QR</button></div>
         <div class="cdb">
           <div class="fr">
             <div class="fc" style="grid-column:1/-1">
@@ -2139,6 +2180,8 @@ div:has(> .fc2){flex-wrap:wrap;row-gap:6px}
                 <option value="Vendido">Vendido</option>
               </select>
             </div>
+            <div class="fc"><span class="fla">🏷️ Nº da etiqueta <span style="font-size:.62rem;color:var(--li)">vazio = automático</span></span>
+              <input class="inp" type="number" id="pNumEtq" min="1" step="1" placeholder="auto" inputmode="numeric" oninput="etqCampo()"></div>
             <div class="fc"><span class="fla">Quantidade <span style="font-size:.62rem;color:var(--li)">máquinas iguais</span></span>
               <input class="inp" type="number" id="pQtd" value="1" min="1" max="20" oninput="copiaHint()"></div>
             <div class="fc"><span class="fla">Investidor</span>
@@ -2223,9 +2266,14 @@ div:has(> .fc2){flex-wrap:wrap;row-gap:6px}
               <div class="fotos-box">
                 <div class="fotos-head">
                   <span class="fla" style="margin:0">📷 Fotos desta máquina <span style="font-weight:400;color:var(--li);text-transform:none">— já entram junto no cadastro; a primeira é a capa</span></span>
-                  <label class="fotos-add">+ Foto
-                    <input type="file" id="pFotoInput" accept="image/*" multiple onchange="fpSubir(this,'prod')" style="display:none">
-                  </label>
+                  <div class="fotos-acoes">
+                    <label class="fotos-add fotos-cam so-toque">📷 Câmera
+                      <input type="file" id="pFotoCam" accept="image/*" capture="environment" onchange="fpSubir(this,'prod')" style="display:none">
+                    </label>
+                    <label class="fotos-add">+ Foto
+                      <input type="file" id="pFotoInput" accept="image/*" multiple onchange="fpSubir(this,'prod')" style="display:none">
+                    </label>
+                  </div>
                 </div>
                 <div id="pFotoLista" class="fotos-grid"></div>
                 <div id="pFotoStatus" class="fotos-status"></div>
@@ -3718,13 +3766,71 @@ div:has(> .fc2){flex-wrap:wrap;row-gap:6px}
     </div>
   </div>
 
+<!-- CADASTRO PELA ETIQUETA: o QR escaneado abre o "Adicionar produto" aqui
+     dentro, já com o número da etiqueta (o formulário é o mesmo da página,
+     movido para a caixa e devolvido ao fechar) -->
+<div class="mo h qrb" id="QRB">
+  <div class="moo"></div>
+  <div class="mc">
+    <div class="mch">
+      <span class="mct" id="qrbTit">Nova máquina</span>
+      <button class="mcl" onclick="qrCadFechar()" aria-label="Fechar">✕</button>
+    </div>
+    <div class="qrb-aviso" id="qrbAviso"></div>
+    <div class="qrb-corpo" id="qrbCorpo"></div>
+  </div>
+</div>
+
+<!-- ETIQUETAS COM QR (impressora térmica) -->
+<div class="mo h etq" id="ETQ">
+  <div class="moo" onclick="etqFechar()"></div>
+  <div class="mc">
+    <div class="mch">
+      <span class="mct">🏷️ Etiquetas com QR</span>
+      <button class="mcl" onclick="etqFechar()" aria-label="Fechar">✕</button>
+    </div>
+    <div class="etq-corpo">
+      <div class="etq-dica">Cole atrás do notebook e aponte a câmera do celular para o QR: se a máquina ainda não está no sistema, abre o cadastro já com o número; se já está, abre a edição dela, com as fotos.</div>
+      <div class="etq-linha">
+        <div class="fc"><span class="fla">Números</span>
+          <input class="inp" type="text" id="etqNums" placeholder="ex: 101-110, 115" autocomplete="off" oninput="etqPrevia()"></div>
+        <div class="fc tam"><span class="fla">Tamanho da etiqueta</span>
+          <select class="inp" id="etqTam" onchange="etqTrocouTam()">
+            <option value="50x30">50 × 30 mm</option>
+            <option value="40x30">40 × 30 mm</option>
+            <option value="40x25">40 × 25 mm</option>
+            <option value="60x40">60 × 40 mm</option>
+            <option value="30x20">30 × 20 mm</option>
+            <option value="58x30">Bobina 58 mm</option>
+            <option value="80x40">Bobina 80 mm</option>
+          </select></div>
+      </div>
+      <div class="etq-chips">
+        <button type="button" class="etq-chip" onclick="etqNovas(10)">+10 novas</button>
+        <button type="button" class="etq-chip" onclick="etqNovas(20)">+20 novas</button>
+        <button type="button" class="etq-chip" onclick="etqNaMao()">As que estão na mão</button>
+      </div>
+      <div class="etq-info" id="etqInfo"></div>
+      <div class="etq-prev" id="etqPrev"></div>
+      <div class="etq-dica">Impressora ligada no computador: <b>Imprimir</b> (o tamanho da página já vai certo). Impressora pelo app do celular: <b>Baixar imagens</b> e abra no app dela. Os números novos ficam reservados: o cadastro sem etiqueta pula eles.</div>
+    </div>
+    <div class="mca">
+      <button class="bcan" id="etqBaixarBt" onclick="etqBaixar()">⬇️ Baixar imagens</button>
+      <button class="bsav" id="etqImprimirBt" onclick="etqImprimir()">🖨️ Imprimir</button>
+    </div>
+  </div>
+</div>
+
 <!-- EDIT MODAL -->
 <div class="mo h" id="MO">
   <div class="moo" onclick="closeModal()"></div>
   <div class="mc">
     <div class="mch">
-      <span class="mct">Editar produto</span>
-      <button class="mcl" onclick="closeModal()">✕</button>
+      <span class="mct" id="moTit">Editar produto</span>
+      <div class="mch-acoes">
+        <button type="button" class="etq-bt" onclick="etqDaEdicao()" title="Imprimir a etiqueta com QR desta máquina">🏷️ Etiqueta</button>
+        <button class="mcl" onclick="closeModal()">✕</button>
+      </div>
     </div>
     <div class="mcb">
       <div class="fc full"><label class="fl">Nome do produto</label><input class="inp" id="eN" type="text"></div>
@@ -3871,6 +3977,9 @@ div:has(> .fc2){flex-wrap:wrap;row-gap:6px}
             <span class="fl" style="margin:0">📷 Fotos <span style="font-weight:400;color:var(--li);text-transform:none">— ficam prontas pro anúncio e vão no aviso do Telegram</span></span>
             <div class="fotos-acoes">
               <button type="button" class="fotos-sel-bt" id="foSelBt" onclick="foSelecionar()" hidden>☑ Selecionar</button>
+              <label class="fotos-add fotos-cam so-toque">📷 Câmera
+                <input type="file" id="foCam" accept="image/*" capture="environment" onchange="foSubir(this)" style="display:none">
+              </label>
               <label class="fotos-add">+ Foto
                 <input type="file" id="foInput" accept="image/*" multiple onchange="foSubir(this)" style="display:none">
               </label>
@@ -4263,6 +4372,7 @@ const CLM={labels:['Dell','Lenovo','Acer','Samsung','HP','Asus','Outros'],luc:[2
 const CMarca={labels:['Dell','Lenovo','Acer','Samsung','HP','Asus','Outros'],values:[97,45,33,23,14,2,14]};
 
 let user=null,prods=[],filt='todos',editId=null,chartsOk=false,sellId=null,clientes=[],fornecedores=[];
+let prodsProntos=null; // a carga das máquinas depois do login (quem precisa da lista completa espera por ela)
 
 // Emails autorizados
 // Dono: pode ter mais de uma conta. Para criar acesso novo sem excluir nada,
@@ -4299,11 +4409,12 @@ onAuthStateChanged(auth,u=>{
     // Mostrar botão admin só para o dono
     const btnAdm = document.getElementById('btnAdmin');
     if(btnAdm) btnAdm.style.display = perfilAtual==='joao' ? '' : 'none';
-    loadProds();loadFinancas();loadPecas();loadClientes();loadFornecedores();loadMetas3();loadMilhao();loadSolo();loadFinInicio();loadReciboCfg();try{montarHw();}catch(e){}
+    prodsProntos=loadProds();loadFinancas();loadPecas();loadClientes();loadFornecedores();loadMetas3();loadMilhao();loadSolo();loadFinInicio();loadReciboCfg();try{montarHw();}catch(e){}
     try{ initSpecBuilder(); loadCpuOutros(); }catch(e){}
     try{ grMontar(); }catch(e){}
     try{ instaVoltaDoLogin(); }catch(e){}
     try{ mlVoltaDoLogin(); }catch(e){}
+    try{ etqCarregar(); qrVoltaDoLogin(); }catch(e){}   // etiqueta escaneada antes de entrar
     setTimeout(carregarAvisos, 2000); // carregar avisos após login
     // Depois do login os cards já existem na tela; antes disso não havia o
     // que observar.
@@ -5120,6 +5231,15 @@ window.addProd=async()=>{
   const nome=g('pN'),custo=parseFloat(document.getElementById('pC').value)||0,venda=parseFloat(document.getElementById('pV').value)||0,status=document.getElementById('pS').value,dc=document.getElementById('pDC').value,investidor=document.getElementById('pInv').value;
   const canal=document.getElementById('pCanal').value;
   if(!nome){alert('Digite o nome!');return;}
+  // Etiqueta com QR: o número vem dela (escaneada ou digitada) e não pode repetir
+  const numEtq=etqNumDoCampo();
+  if(numEtq){
+    const ja=prods.find(p=>+p.num===numEtq);
+    if(ja){
+      if(confirm('A etiqueta #'+numEtq+' já é da máquina "'+(ja.nome||'')+'".\n\nAbrir ela para editar?')){ qrCadFechar(); openEdit(ja.id); }
+      return;
+    }
+  }
   // o check do anúncio: anunciada com algo faltando, pergunta antes
   if(status==='Anunciado'){ try{ const c=hwConferencia('p');
     const msg=[c.falta.length?'Para o anúncio sair completo (catálogo, Instagram e Mercado Livre), falta:\n\n• '+c.falta.join('\n• '):'',c.alerta?'⚠️ '+c.alerta:''].filter(Boolean).join('\n\n');
@@ -5139,9 +5259,13 @@ window.addProd=async()=>{
   // atualizando o telefone quando ele mudou. Por isso vale também para o já vinculado.
   const fornWpp=(document.getElementById('pFornWpp')?.value||'').replace(/\D/g,'');
   if(fornNome){ const fid=await salvarFornecedor({nome:fornNome,whatsapp:fornWpp}); if(fid) fornId=fid; }
-  const num=prods.length>0?Math.max(...prods.map(p=>p.num||0))+1:1;
+  // Sem etiqueta: o próximo número livre, pulando os já impressos em etiqueta —
+  // senão esta máquina pegaria o número de uma etiqueta já colada em outra.
+  if(!numEtq) await etqCarregar();
+  const num=numEtq||proxNumLivre();
   // Lote de máquinas iguais: uma passada só, um registro pra cada.
-  const qtd=Math.max(1,Math.min(20,parseInt(document.getElementById('pQtd')?.value)||1));
+  // Com etiqueta é uma só: cada máquina tem a sua.
+  const qtd=numEtq?1:Math.max(1,Math.min(20,parseInt(document.getElementById('pQtd')?.value)||1));
   // Molde: descrição do catálogo e tipo (notebook/mini desktop) não têm campo
   // no cadastro, então vêm direto do registro copiado em vez de se perderem.
   const copiaId=document.getElementById('pCopiaId')?.value||'';
@@ -5201,7 +5325,7 @@ window.addProd=async()=>{
   // duas ficam só na primeira; a cópia entra com o custo cheio da máquina.
   let criadas=1;
   if(qtd>1){
-    let ult=Math.max(num, ...prods.map(p=>p.num||0));
+    let ult=Math.max(num, etqUlt, ...prods.map(p=>p.num||0));
     for(let k=1;k<qtd;k++){
       const cop={...obj, custo:custo, custo_base:custo, custo_pecas:0, custo_gasolina:0,
                  lucro:venda-custo, aporte_joao:0, aporte_igor:0, fotos_n:0,
@@ -5215,7 +5339,8 @@ window.addProd=async()=>{
     }
   }
   document.getElementById('pN').value='';document.getElementById('pC').value='';document.getElementById('pV').value='';document.getElementById('pDC').value='';document.getElementById('pCanal').value='';document.getElementById('pForn').value='';document.getElementById('pFornId').value='';
-  const pq=document.getElementById('pQtd'); if(pq) pq.value='1';
+  const pq=document.getElementById('pQtd'); if(pq){ pq.value='1'; pq.disabled=false; }
+  const pne=document.getElementById('pNumEtq'); if(pne) pne.value='';
   const pd=document.getElementById('pDescricao'); if(pd) pd.value='';
   try{ descContar('p'); }catch(e){}
   try{ copiaLimpar(); }catch(e){}
@@ -5235,6 +5360,8 @@ window.addProd=async()=>{
   // Diz o que foi criado e leva até lá. Sem isso, cadastrar em lote era um
   // formulário que esvaziava e mais nada.
   try{ cadastrouOk(novosIds, status, nome); }catch(e){ console.error('cadastrouOk:',e); }
+  // veio da etiqueta: fecha a caixa e mostra a máquina na lista
+  if(numEtq){ try{ qrCadConcluir(); }catch(e){} }
   if(typeof renderPecas==='function') renderPecas();
   if(document.getElementById('fornView')&&document.getElementById('fornView').style.display!=='none')renderFornecedores();
 };
@@ -6529,6 +6656,8 @@ function renderClientes(){
 window.openEdit=id=>{
   const p=prods.find(p=>p.id===id);if(!p)return;
   editId=id;
+  // o número é o mesmo da etiqueta colada atrás do notebook
+  const moTit=document.getElementById('moTit'); if(moTit) moTit.textContent='Editar produto'+(p.num?' #'+p.num:'');
   document.getElementById('eN').value=p.nome||'';
   document.getElementById('eC').value=p.custo||'';
   document.getElementById('eV').value=p.venda||'';
@@ -15020,6 +15149,286 @@ window.verUltimoCadastro=()=>{
     ids.forEach(id=>piscarLinha(id));
   },80);
 };
+
+// ════════════════════════════════════════
+// ETIQUETA COM QR — o número nasce na etiqueta
+// ════════════════════════════════════════
+// Etiqueta numerada colada atrás do notebook, sem marcar a carcaça. O QR leva
+// ao sistema com o número: máquina que ainda não existe abre o "Adicionar
+// produto" já com ele; a que existe abre a edição (com as fotos). Os números
+// impressos ficam reservados (config/etiquetas): sem isso, a próxima máquina
+// cadastrada sem etiqueta pegaria o número de uma etiqueta já colada em outra.
+// O domínio é fixo: a etiqueta colada não pode depender de onde foi impressa.
+const QR_ORIGEM='https://anunc-ia.vercel.app';
+const ETQ_TAM={'50x30':[50,30],'40x30':[40,30],'40x25':[40,25],'60x40':[60,40],'30x20':[30,20],'58x30':[58,30],'80x40':[80,40]};
+const ETQ_PONTOS=8;   // impressora térmica de 203 dpi: 8 pontos por milímetro
+const ETQ_MAX=200;    // por vez
+const ETQ_FONTE='"Inter Variable", "Helvetica Neue", Arial, sans-serif';
+let etqUlt=0, qrPend=0, qrCadAberto=false, etqCache=null, etqTimer=0, etqGeracao=0;
+const qrUrl=n=>QR_ORIGEM+'/#n='+n;
+
+async function etqCarregar(){
+  try{ const s=await getDoc(doc(db,'config','etiquetas')); const u=s.exists()?(+s.data().ult||0):0; if(u>etqUlt) etqUlt=u; }catch(e){}
+  return etqUlt;
+}
+function proxNumLivre(){ return Math.max(0, etqUlt, ...prods.map(p=>+p.num||0))+1; }
+async function etqReservar(nums){
+  const m=Math.max(0,...nums);
+  if(m<=etqUlt) return;
+  etqUlt=m;
+  await gravar(setDoc(doc(db,'config','etiquetas'),{userId:'shared_ijx',tipo:'etiquetas',ult:m,em:new Date().toISOString()},{merge:true}),
+               'Reservar os números das etiquetas');
+}
+// "101-110, 115" → [101…110, 115]. Aceita também "101 a 110" e "#101".
+function etqLerNums(txt){
+  const vistos=new Set(), out=[];
+  const s=String(txt||'').replace(/#/g,'').replace(/\s*(?:-|–|até|a)\s*/gi,'-');
+  for(const parte of s.split(/[^\d-]+/)){
+    const m=parte.match(/^(\d{1,6})(?:-(\d{1,6}))?$/); if(!m) continue;
+    let a=+m[1], b=m[2]?+m[2]:a; if(b<a) [a,b]=[b,a];
+    for(let n=a;n<=b&&out.length<ETQ_MAX;n++) if(n>0&&!vistos.has(n)){ vistos.add(n); out.push(n); }
+  }
+  return out;
+}
+function etqFaixas(nums){
+  const a=[...new Set(nums)].sort((x,y)=>x-y), out=[];
+  for(let i=0;i<a.length;){ let j=i; while(j+1<a.length&&a[j+1]===a[j]+1) j++; out.push(i===j?String(a[i]):a[i]+'-'+a[j]); i=j+1; }
+  return out.join(', ');
+}
+// O que vai escrito: número e, se a máquina já existe, modelo e configuração.
+// Custo, preço e fornecedor nunca: a etiqueta fica colada na máquina.
+function etqDados(n){
+  const p=prods.find(x=>+x.num===n);
+  if(!p) return {num:n};
+  const f=fichaDe(p)||{};
+  const nome=([f.marca,f.modelo].filter(Boolean).join(' ')||String(p.nome||'').split(/·|\|/)[0]).trim();
+  const spec=[[f.cpu,f.ger].filter(Boolean).join(' '), f.ram, f.armaz].filter(Boolean).join(' · ');
+  return {num:n, nome, spec};
+}
+async function etqPreparar(){
+  if(!window.qrcode) await new Promise((ok,erro)=>{
+    const s=document.createElement('script'); s.src='/tela/qrcode.js';
+    s.onload=ok; s.onerror=()=>erro(new Error('não consegui carregar o gerador de QR. Confira a internet.'));
+    document.head.appendChild(s);
+  });
+  try{ await Promise.all([document.fonts.load('800 40px "Inter Variable"'), document.fonts.load('600 20px "Inter Variable"')]); }catch(e){}
+}
+// Desenha no tamanho exato da impressora (1 pixel = 1 ponto) e em preto e
+// branco puro: a térmica não tem cinza, e cinza vira borrão ou some.
+function etqDesenhar(d, tam){
+  const [wmm,hmm]=ETQ_TAM[tam]||ETQ_TAM['50x30'], K=ETQ_PONTOS, W=wmm*K, H=hmm*K;
+  const c=document.createElement('canvas'); c.width=W; c.height=H;
+  const x=c.getContext('2d');
+  x.fillStyle='#fff'; x.fillRect(0,0,W,H); x.fillStyle='#000';
+  const m=Math.round(1.5*K);   // a térmica não imprime colado na borda
+  // QR com módulo de pontos inteiros, e com folga em volta para a câmera achar
+  const q=qrcode(0,'M'); q.addData(qrUrl(d.num)); q.make();
+  const nm=q.getModuleCount(), lado=Math.min(H-2*m, Math.round(W*0.5));
+  let px=Math.max(2,Math.floor(lado/nm));
+  while(px>4 && m+(lado-nm*px)/2<2*px) px--;
+  const qx=m+Math.floor((lado-nm*px)/2), qy=Math.floor((H-nm*px)/2);
+  for(let r=0;r<nm;r++) for(let k=0;k<nm;k++) if(q.isDark(r,k)) x.fillRect(qx+k*px, qy+r*px, px, px);
+  // Texto à direita do QR
+  const tx=m+lado+K, tw=W-m-tx;
+  const fonte=(peso,s)=>peso+' '+s+'px '+ETQ_FONTE;
+  const caber=(txt,peso,max,min)=>{ let s=max; x.font=fonte(peso,s); while(s>min&&x.measureText(txt).width>tw){ s--; x.font=fonte(peso,s); } return s; };
+  const cortar=(txt,peso,s)=>{ x.font=fonte(peso,s); let t=txt; while(t.length>1&&x.measureText(t).width>tw) t=t.slice(0,-2).trimEnd()+'…'; return t; };
+  const linhas=[];   // {txt, peso, s, depois}
+  const sLoja=caber('TECH CAMPINAS',700,Math.round(H*0.085),9);
+  linhas.push({txt:'TECH CAMPINAS',peso:700,s:sLoja,depois:Math.round(H*0.045)});
+  const numTxt='#'+d.num;
+  linhas.push({txt:numTxt,peso:800,s:caber(numTxt,800,Math.round(H*(d.nome?0.33:0.42)),12),depois:Math.round(H*0.06)});
+  if(d.nome){
+    // o modelo em até duas linhas, diminuindo a letra antes de cortar
+    let s=Math.round(H*0.085), ls=[];
+    for(;;s--){
+      x.font=fonte(600,s); ls=[''];
+      for(const w of d.nome.split(/\s+/)){ const t=ls[ls.length-1]?ls[ls.length-1]+' '+w:w; if(!ls[ls.length-1]||x.measureText(t).width<=tw) ls[ls.length-1]=t; else ls.push(w); }
+      if((ls.length<=2&&ls.every(l=>x.measureText(l).width<=tw))||s<=9) break;
+    }
+    ls=ls.slice(0,2).map(l=>cortar(l,600,s));
+    ls.forEach((l,i)=>linhas.push({txt:l,peso:600,s,depois:i===ls.length-1?Math.round(H*0.03):Math.round(s*0.18)}));
+  }
+  if(d.spec){
+    const s=caber(d.spec,600,Math.round(H*0.075),8);
+    linhas.push({txt:cortar(d.spec,600,s),peso:600,s,depois:0});
+  }
+  // centraliza o bloco na altura
+  const alt=linhas.map(l=>{ x.font=fonte(l.peso,l.s); const mt=x.measureText(l.txt);
+    l.a=Math.ceil(mt.actualBoundingBoxAscent||l.s*0.75); l.d=Math.ceil(mt.actualBoundingBoxDescent||0); return l.a+l.d+l.depois; });
+  let y=Math.max(m, Math.round((H-alt.reduce((a,b)=>a+b,0))/2));
+  x.textBaseline='alphabetic';
+  for(const l of linhas){ x.font=fonte(l.peso,l.s); x.fillText(l.txt,tx,y+l.a); y+=l.a+l.d+l.depois; }
+  // preto e branco puro
+  const im=x.getImageData(0,0,W,H), a=im.data;
+  for(let i=0;i<a.length;i+=4){ const v=(a[i]*299+a[i+1]*587+a[i+2]*114)/1000<140?0:255; a[i]=a[i+1]=a[i+2]=v; a[i+3]=255; }
+  x.putImageData(im,0,0);
+  return c;
+}
+function etqBotoes(ok){ ['etqBaixarBt','etqImprimirBt'].forEach(id=>{ const b=document.getElementById(id); if(b) b.disabled=!ok; }); }
+window.etqPrevia=()=>{ clearTimeout(etqTimer); etqBotoes(false); etqTimer=setTimeout(etqMontar,250); };
+// Gera todas já na prévia: na hora de mandar pro app da impressora (celular),
+// o compartilhar precisa sair no mesmo toque, sem espera no meio.
+async function etqMontar(){
+  const minha=++etqGeracao;
+  const inp=document.getElementById('etqNums'), tam=document.getElementById('etqTam').value;
+  const info=document.getElementById('etqInfo'), prev=document.getElementById('etqPrev');
+  const nums=etqLerNums(inp.value);
+  etqCache=null; etqBotoes(false);
+  if(!nums.length){ info.textContent='Digite os números das etiquetas (ex: 101-110).'; prev.innerHTML=''; return; }
+  info.textContent='Gerando…';
+  try{ await etqPreparar(); }catch(e){ info.textContent='⚠️ '+e.message; return; }
+  if(minha!==etqGeracao) return;
+  const cvs=nums.map(n=>etqDesenhar(etqDados(n),tam));
+  const urls=cvs.map(c=>c.toDataURL('image/png'));
+  const arqs=await Promise.all(cvs.map((c,i)=>new Promise(r=>c.toBlob(b=>r(new File([b],'etiqueta-'+nums[i]+'.png',{type:'image/png'})),'image/png'))));
+  if(minha!==etqGeracao) return;   // mudaram os números no meio
+  etqCache={nums,tam,urls,arqs};
+  const novas=nums.filter(n=>!prods.some(p=>+p.num===n)).length, ja=nums.length-novas;
+  info.innerHTML='<b>'+nums.length+' etiqueta'+(nums.length!==1?'s':'')+'</b>: '+esc(etqFaixas(nums).replace(/(\d+)/g,'#$1'))
+    +'<br><small>'+[novas?novas+' nova'+(novas!==1?'s':'')+' (o QR abre o cadastro com o número)':'',
+                    ja?ja+' já cadastrada'+(ja!==1?'s':'')+' (o QR abre a edição)':''].filter(Boolean).join(' · ')+'</small>';
+  const MOSTRA=12;
+  prev.innerHTML=urls.slice(0,MOSTRA).map((u,i)=>'<img src="'+u+'" alt="Etiqueta #'+nums[i]+'">').join('')
+    +(urls.length>MOSTRA?'<div class="mais">+'+(urls.length-MOSTRA)+' etiquetas</div>':'');
+  etqBotoes(true);
+}
+window.etqAbrir=async(nums)=>{
+  document.getElementById('ETQ').classList.remove('h');
+  const sel=document.getElementById('etqTam');
+  try{ const t=localStorage.getItem('etqTam'); if(t&&ETQ_TAM[t]) sel.value=t; }catch(e){}
+  const inp=document.getElementById('etqNums');
+  if(nums) inp.value=String(nums);
+  else { inp.value=''; await etqCarregar(); const a=proxNumLivre(); inp.value=a+'-'+(a+9); }
+  etqMontar();
+};
+window.etqFechar=()=>{ document.getElementById('ETQ').classList.add('h'); };
+window.etqTrocouTam=()=>{ try{ localStorage.setItem('etqTam',document.getElementById('etqTam').value); }catch(e){} etqPrevia(); };
+window.etqNovas=k=>{ const a=proxNumLivre(); document.getElementById('etqNums').value=a+'-'+(a+k-1); etqMontar(); };
+// as que estão fisicamente com vocês: nem vendidas nem a caminho
+window.etqNaMao=()=>{
+  const ns=prods.filter(p=>p.status!=='Vendido'&&p.status!=='Aguardando'&&+p.num>0).map(p=>+p.num);
+  document.getElementById('etqNums').value=etqFaixas(ns); etqMontar();
+};
+window.etqDaEdicao=()=>{
+  const p=prods.find(x=>x.id===editId); if(!p) return;
+  if(!p.num){ alert('Esta máquina ainda não tem número.'); return; }
+  etqAbrir(String(p.num));
+};
+// Impressora no computador: página do tamanho da etiqueta, uma por página.
+window.etqImprimir=async()=>{
+  const e=etqCache; if(!e) return;
+  const [w,h]=ETQ_TAM[e.tam]||ETQ_TAM['50x30'];
+  etqReservar(e.nums);   // sem esperar: a impressão não depende do banco
+  const fr=document.createElement('iframe');
+  fr.setAttribute('aria-hidden','true'); fr.className='etq-impressao';
+  fr.style.cssText='position:fixed;right:0;bottom:0;width:0;height:0;border:0';
+  document.body.appendChild(fr);
+  const d=fr.contentDocument;
+  d.open();
+  d.write('<!doctype html><html><head><meta charset="utf-8"><title>Etiquetas</title><style>'
+    +'@page{size:'+w+'mm '+h+'mm;margin:0}html,body{margin:0;padding:0;background:#fff}'
+    +'img{display:block;width:'+w+'mm;height:'+h+'mm;break-after:page;page-break-after:always;image-rendering:pixelated}'
+    +'img:last-child{break-after:auto;page-break-after:auto}</style></head><body>'
+    +e.urls.map(u=>'<img src="'+u+'">').join('')+'</body></html>');
+  d.close();
+  await Promise.all([...d.images].map(i=>i.complete?0:new Promise(r=>{ i.onload=i.onerror=r; })));
+  const tirar=()=>{ try{ fr.remove(); }catch(_){} };
+  try{ fr.contentWindow.addEventListener('afterprint',()=>setTimeout(tirar,500)); }catch(_){}
+  setTimeout(tirar,120000);
+  fr.contentWindow.focus(); fr.contentWindow.print();
+};
+// Impressora pelo app do celular: as imagens vão direto para o app (ou para a
+// galeria). No computador, baixa uma imagem por etiqueta.
+window.etqBaixar=async()=>{
+  const e=etqCache; if(!e) return;
+  if(matchMedia('(pointer: coarse)').matches && navigator.share && navigator.canShare){
+    let pode=false; try{ pode=navigator.canShare({files:e.arqs}); }catch(_){}
+    if(pode){
+      try{ await navigator.share({files:e.arqs}); etqReservar(e.nums); return; }
+      catch(err){ if(err&&err.name==='AbortError') return; }
+    }
+  }
+  etqReservar(e.nums);
+  for(let i=0;i<e.arqs.length;i++){
+    const f=e.arqs[i], a=document.createElement('a'), u=URL.createObjectURL(f);
+    a.href=u; a.download=f.name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(u),60000);
+    if(i<e.arqs.length-1) await new Promise(r=>setTimeout(r,300));
+  }
+};
+
+// ── O QR escaneado ──
+// O número chega no endereço (#n=101) e fica guardado antes do login, porque a
+// tela de entrar pode vir no meio.
+function qrLerHash(){
+  let n=0;
+  try{
+    n=parseInt(new URLSearchParams(location.hash.slice(1)).get('n'),10)||0;
+    if(n>0){
+      history.replaceState(null,'',location.pathname+location.search);
+      qrPend=n; try{ sessionStorage.setItem('qrNum',String(n)); }catch(_){}
+      const av=document.getElementById('qrEntrar');
+      if(av){ av.textContent='🏷️ Etiqueta #'+n+': entre para abrir esta máquina.'; av.hidden=false; }
+    }
+  }catch(e){}
+  return n>0?n:0;
+}
+async function qrVoltaDoLogin(){
+  let n=qrPend; qrPend=0;
+  try{ n=n||parseInt(sessionStorage.getItem('qrNum')||'',10)||0; sessionStorage.removeItem('qrNum'); }catch(e){}
+  const av=document.getElementById('qrEntrar'); if(av) av.hidden=true;
+  if(!(n>0)) return;
+  try{ await prodsProntos; }catch(e){}
+  await etqCarregar();
+  qrAbrir(n);
+}
+window.qrAbrir=n=>{
+  // lista de demonstração (o banco não respondeu): não dá pra saber se ela existe
+  if(!prods.length || prods.every(p=>/^x\d+$/.test(String(p.id)))){
+    alert('🏷️ Etiqueta #'+n+': não consegui ler as máquinas agora. Confira a internet e escaneie de novo.'); return;
+  }
+  const p=prods.find(x=>+x.num===n);
+  if(p){ qrCadFechar(); openEdit(p.id); return; }
+  qrCadAbrir(n);
+};
+// Máquina que ainda não existe: o mesmo "Adicionar produto" da página, dentro
+// de uma caixa, já com o número da etiqueta. Fechar devolve o formulário.
+function qrCadAbrir(n){
+  const card=document.querySelector('#vendas-addprod > .cd'), corpo=document.getElementById('qrbCorpo');
+  if(!card||!corpo) return;
+  try{ closeModal(); }catch(e){}
+  const ne=document.getElementById('pNumEtq'); if(ne){ ne.value=String(n); etqCampo(); }
+  corpo.appendChild(card);
+  qrCadAberto=true;
+  document.getElementById('qrbTit').textContent='🏷️ Nova máquina #'+n;
+  document.getElementById('qrbAviso').innerHTML='A etiqueta <b>#'+n+'</b> ainda não tem máquina no sistema. Preencha e toque em <b>+ Adicionar</b>: ela entra com este número, e as fotos tiradas aqui vão junto.';
+  const ok=document.getElementById('addOk'); if(ok) ok.style.display='none';
+  document.getElementById('QRB').classList.remove('h');
+  corpo.scrollTop=0;
+}
+window.qrCadFechar=()=>{
+  if(!qrCadAberto) return;
+  const card=document.querySelector('#qrbCorpo > .cd'), casa=document.getElementById('vendas-addprod');
+  if(card&&casa) casa.appendChild(card);
+  document.getElementById('QRB').classList.add('h');
+  qrCadAberto=false;
+};
+function qrCadConcluir(){
+  if(!qrCadAberto) return;
+  qrCadFechar();
+  try{ sp2('vendas'); }catch(e){}
+  try{ verUltimoCadastro(); }catch(e){}
+}
+// Número da etiqueta digitado no cadastro: com ele, é uma máquina só (sem lote)
+window.etqCampo=()=>{
+  const q=document.getElementById('pQtd');
+  if(q){ if(etqNumDoCampo()){ q.value='1'; q.disabled=true; } else q.disabled=false; }
+  try{ copiaHint(); }catch(e){}
+};
+function etqNumDoCampo(){ const v=parseInt(document.getElementById('pNumEtq')?.value,10); return v>0?v:0; }
+window.addEventListener('hashchange',()=>{ if(qrLerHash()&&user) qrVoltaDoLogin(); });
+qrLerHash();
 
 function piscarLinha(id){
   try{
