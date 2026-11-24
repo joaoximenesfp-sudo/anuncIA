@@ -1,5 +1,5 @@
 {
- "versao": "2026-11-24.2",
+ "versao": "2026-11-24.3",
  "app": "2026-11-20.7",
  "regioes": {
   "centro": {"nome": "Centro de Campinas", "lat": -22.9056, "lon": -47.0608, "km": 1.5},
@@ -45,6 +45,10 @@
   "of-3420": {
    "nome": "Tech Campinas · Latitude 3420",
    "destino": "https://wa.me/5519993956265?text=Oi%21%20Vi%20no%20carro%20o%20Dell%20Latitude%203420%20por%20R%24%202.200.%20Ainda%20tem%3F"
+  },
+  "bf": {
+   "nome": "Tech Campinas · Black Friday",
+   "destino": "https://wa.me/5519993956265?text=Oi%21%20Vi%20a%20Black%20Friday%20no%20carro%20e%20quero%20usar%20o%20cupom%20BLACKFRIDAY."
   }
  },
  "midias": {
@@ -754,6 +758,24 @@
      "ate": 14
     }
    ]
+  },
+  "bf": {
+   "arquivo": "midia/bf.mp4",
+   "tipo": "video",
+   "duracao": 13,
+   "bytes": 2983252,
+   "hash": "c319db6b1e4c",
+   "dono": "bf",
+   "qr": [
+    {
+     "anuncio": "bf",
+     "x": 1287,
+     "y": 387,
+     "lado": 406,
+     "de": 5.2,
+     "ate": 13
+    }
+   ]
   }
  },
  "loop": [
@@ -773,8 +795,20 @@
    "segundos": 14
   },
   {
-   "midia": "c01",
-   "segundos": 13
+   "cota": "black-friday-1",
+   "opcoes": [
+    {
+     "midia": "bf",
+     "periodo": {
+      "inicio": "2026-11-24",
+      "fim": "2026-11-30"
+     }
+    },
+    {
+     "midia": "c01",
+     "segundos": 13
+    }
+   ]
   },
   {
    "midia": "ofertas",
@@ -817,8 +851,20 @@
    "segundos": 14
   },
   {
-   "midia": "c06",
-   "segundos": 13
+   "cota": "black-friday-2",
+   "opcoes": [
+    {
+     "midia": "bf",
+     "periodo": {
+      "inicio": "2026-11-24",
+      "fim": "2026-11-30"
+     }
+    },
+    {
+     "midia": "c06",
+     "segundos": 13
+    }
+   ]
   },
   {
    "midia": "of-e14",
@@ -879,8 +925,20 @@
    "segundos": 14
   },
   {
-   "midia": "c02",
-   "segundos": 13
+   "cota": "black-friday-3",
+   "opcoes": [
+    {
+     "midia": "bf",
+     "periodo": {
+      "inicio": "2026-11-24",
+      "fim": "2026-11-30"
+     }
+    },
+    {
+     "midia": "c02",
+     "segundos": 13
+    }
+   ]
   },
   {
    "midia": "p03",
