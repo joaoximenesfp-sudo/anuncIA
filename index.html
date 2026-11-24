@@ -276,9 +276,20 @@ button{transition:transform .08s ease}
 .etq-chip:hover{border-color:var(--tx)}
 .etq-info{font-size:.74rem;color:var(--tx);line-height:1.45}
 .etq-info small{color:var(--mu)}
-.etq-prev{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;background:var(--b);padding:10px;border-radius:10px;max-height:320px;overflow:auto}
+/* flex:none: no celular a tela das etiquetas rola inteira; sem isso a prévia era espremida até sumir */
+.etq-prev{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;background:var(--b);padding:10px;border-radius:10px;max-height:320px;overflow:auto;flex:none}
 .etq-prev img{display:block;width:100%;height:auto;background:#fff;border-radius:3px;box-shadow:0 1px 3px rgba(0,0,0,.18)}
 .etq-prev .mais{display:flex;align-items:center;justify-content:center;font-size:.74rem;color:var(--mu)}
+/* rolo ou folha A4: dois botões lado a lado, o escolhido fica azul */
+.etq-folha{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.etq-fl{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:9px 12px;border:1px solid var(--b2);border-radius:10px;background:var(--w);color:var(--tx);font-family:var(--fonte);text-align:left;cursor:pointer;min-width:0}
+.etq-fl b{font-size:.8rem;font-weight:600}
+.etq-fl small{font-size:.7rem;color:var(--mu);line-height:1.35}
+.etq-fl:hover{border-color:var(--tx)}
+.etq-fl.on{border-color:var(--bl);box-shadow:inset 0 0 0 1px var(--bl);background:var(--bbg)}
+/* a folha A4 inteira em miniatura, antes das etiquetas */
+.etq-prev .folha{grid-column:1/-1;justify-self:center;width:min(100%,190px);border-radius:2px}
+.etq-prev .folha-cap{grid-column:1/-1;text-align:center;font-size:.72rem;color:var(--mu);margin-top:-4px}
 .qr-entrar{margin:0 0 14px;padding:9px 12px;border-radius:9px;background:var(--bbg);border:1px solid var(--bbd);color:var(--tx);font-size:.78rem;line-height:1.4}
 .fotos-cam{background:#0f766e}
 .etq .mca button:disabled{opacity:.5;cursor:default}
@@ -321,6 +332,8 @@ button{transition:transform .08s ease}
   .qrb-corpo{padding:12px 12px 16px}
   .qrb-aviso{padding:9px 14px}
   .etq-corpo{padding:14px}
+  .etq .mca{flex-wrap:wrap;padding:12px 14px 14px}
+  .etq .mca button{flex:1 1 auto}
 }
 /* botão da câmera: só onde tem câmera na mão (celular e tablet) */
 @media (pointer:fine){.so-toque{display:none!important}}
@@ -962,6 +975,7 @@ tr.marcada>td:first-child{box-shadow:inset 3px 0 0 var(--gr)}
 .lote-bt{border:1px solid var(--bl);background:var(--bl);color:#fff;font-family:inherit;
   font-size:.74rem;font-weight:600;padding:6px 13px;border-radius:6px;cursor:pointer}
 .lote-bt:hover{filter:brightness(1.08)}
+.lote-bt:disabled{opacity:.6;cursor:default}
 /* Linha própria, pequena: é texto de apoio e estava roubando a largura dos
    botões quando dividia a faixa com eles. */
 .lote-obs{font-size:.68rem;color:var(--li);line-height:1.45;
@@ -3904,6 +3918,10 @@ div:has(> .fc2){flex-wrap:wrap;row-gap:6px}
             <option value="80x40">Bobina 80 mm</option>
           </select></div>
       </div>
+      <div class="etq-folha" role="group" aria-label="Papel">
+        <button type="button" class="etq-fl on" data-folha="rolo" aria-pressed="true" onclick="etqTrocouFolha('rolo')"><b>🧻 Rolo de etiquetas</b><small>uma por página, no tamanho da etiqueta</small></button>
+        <button type="button" class="etq-fl" data-folha="a4" aria-pressed="false" onclick="etqTrocouFolha('a4')"><b>📄 Folha A4</b><small id="etqFolhaSub">várias por folha, com linha para recortar</small></button>
+      </div>
       <div class="etq-chips">
         <button type="button" class="etq-chip" onclick="etqNovas(10)">+10 novas</button>
         <button type="button" class="etq-chip" onclick="etqNovas(20)">+20 novas</button>
@@ -3912,11 +3930,12 @@ div:has(> .fc2){flex-wrap:wrap;row-gap:6px}
       <div class="etq-aviso" id="etqAvisoNum" hidden></div>
       <div class="etq-info" id="etqInfo"></div>
       <div class="etq-prev" id="etqPrev"></div>
-      <div class="etq-dica">Impressora ligada no computador: <b>Imprimir</b> (o tamanho da página já vai certo). Impressora pelo app do celular: <b>Baixar imagens</b> e abra no app dela. Os números novos ficam reservados: o cadastro sem etiqueta pula eles.</div>
+      <div class="etq-dica"><b>Baixar PDF</b> serve para as duas: no rolo, cada página do PDF tem o tamanho de uma etiqueta; na folha A4, saem várias por folha, com uma linha fina para recortar (na hora de imprimir, deixe em tamanho real, 100%). Impressora pelo app do celular que não abre PDF: <b>Imagens</b>. Os números novos ficam reservados: o cadastro sem etiqueta pula eles.</div>
     </div>
     <div class="mca">
-      <button class="bcan" id="etqBaixarBt" onclick="etqBaixar()">⬇️ Baixar imagens</button>
-      <button class="bsav" id="etqImprimirBt" onclick="etqImprimir()">🖨️ Imprimir</button>
+      <button class="bcan" id="etqBaixarBt" onclick="etqBaixar()">🖼️ Imagens</button>
+      <button class="bcan" id="etqImprimirBt" onclick="etqImprimir()">🖨️ Imprimir</button>
+      <button class="bsav" id="etqPdfBt" onclick="etqPdfBaixar()">📄 Baixar PDF</button>
     </div>
   </div>
 </div>
@@ -4169,6 +4188,7 @@ div:has(> .fc2){flex-wrap:wrap;row-gap:6px}
     </select>
     <button class="lote-bt" id="loteAplicarBt" onclick="loteAplicar()">Aplicar</button>
     <span class="lote-sep"></span>
+    <button class="lote-bt" id="loteEtqBt" style="background:#334155;border-color:#334155" onclick="loteEtiquetas()" title="Etiquetas com QR das marcadas, em PDF, várias por folha">🏷️ Etiquetas</button>
     <button class="lote-bt" style="background:var(--gr);border-color:var(--gr)" onclick="lvAbrir()">💰 Vender em lote</button>
   </div>
   <span class="lote-obs" id="loteObs"></span>
@@ -15646,7 +15666,7 @@ const ETQ_TAM={'50x30':[50,30],'40x30':[40,30],'40x25':[40,25],'60x40':[60,40],'
 const ETQ_PONTOS=8;   // impressora térmica de 203 dpi: 8 pontos por milímetro
 const ETQ_MAX=200;    // por vez
 const ETQ_FONTE='"Inter Variable", "Helvetica Neue", Arial, sans-serif';
-let etqUlt=0, qrPend=0, qrCadAberto=false, etqCache=null, etqTimer=0, etqGeracao=0;
+let etqUlt=0, qrPend=0, qrCadAberto=false, etqCache=null, etqTimer=0, etqGeracao=0, etqFolha='rolo', etqGerFolha=0;
 const qrUrl=n=>QR_ORIGEM+'/#n='+n;
 
 async function etqCarregar(){
@@ -15756,7 +15776,159 @@ function etqDesenhar(d, tam){
   x.putImageData(im,0,0);
   return c;
 }
-function etqBotoes(ok){ ['etqBaixarBt','etqImprimirBt'].forEach(id=>{ const b=document.getElementById(id); if(b) b.disabled=!ok; }); }
+function etqBotoes(ok){ ['etqBaixarBt','etqImprimirBt','etqPdfBt'].forEach(id=>{ const b=document.getElementById(id); if(b) b.disabled=!ok; }); }
+
+// ── PDF DAS ETIQUETAS ──
+// Feito aqui mesmo, sem biblioteca. Cada etiqueta entra como imagem de 1 bit (preto ou
+// branco, igual a térmica imprime) no tamanho exato em milímetros. No rolo, cada página tem
+// o tamanho de uma etiqueta; na folha A4 cabem várias, coladas, com uma linha cinza fina
+// para recortar. A margem de 5 mm passa da borda que as impressoras comuns não alcançam.
+const MM_PT=72/25.4, A4_MM=[210,297], A4_MARGEM=5;
+function etqGrade(tam){
+  const [w,h]=ETQ_TAM[tam]||ETQ_TAM['50x30'];
+  const cols=Math.max(1,Math.floor((A4_MM[0]-2*A4_MARGEM)/w)), lins=Math.max(1,Math.floor((A4_MM[1]-2*A4_MARGEM)/h));
+  // a grade fica no meio da folha
+  return {w,h,cols,lins,porFolha:cols*lins,x0:(A4_MM[0]-cols*w)/2,y0:(A4_MM[1]-lins*h)/2};
+}
+// Onde cada etiqueta cai: [{pag, x, y}] em mm, a partir do canto de cima da folha.
+function etqPosicoes(qtd, tam, folha){
+  if(folha!=='a4') return Array.from({length:qtd},(_,i)=>({pag:i,x:0,y:0}));
+  const g=etqGrade(tam);
+  return Array.from({length:qtd},(_,i)=>{ const k=i%g.porFolha;
+    return {pag:Math.floor(i/g.porFolha), x:g.x0+(k%g.cols)*g.w, y:g.y0+Math.floor(k/g.cols)*g.h}; });
+}
+// RGBA do canvas → 1 bit por ponto (1 = branco, 0 = preto), cada linha completa até o byte
+function etqBits(rgba, W, H){
+  const lb=Math.ceil(W/8), out=new Uint8Array(lb*H);
+  for(let y=0;y<H;y++){ const o=y*lb, r=y*W*4;
+    for(let x=0;x<W;x++) if(rgba[r+x*4]>=128) out[o+(x>>3)]|=0x80>>(x&7); }
+  return out;
+}
+// zlib (o que o FlateDecode do PDF lê). Sem CompressionStream (navegador antigo), vai sem compactar.
+async function pdfComprimir(u8){
+  if(typeof CompressionStream!=='function') return null;
+  try{ return new Uint8Array(await new Response(new Blob([u8]).stream().pipeThrough(new CompressionStream('deflate'))).arrayBuffer()); }
+  catch(e){ return null; }
+}
+// paginas: [{w, h, itens:[{img, x, y, w, h}], depois}] em pontos, origem embaixo à esquerda
+// imagens: [{w, h, dados, flate}] (1 bit, cinza)
+function pdfMontar(paginas, imagens){
+  const enc=new TextEncoder(), partes=[], offs=[];
+  let tam=0;
+  const put=x=>{ const b=typeof x==='string'?enc.encode(x):x; partes.push(b); tam+=b.length; };
+  const n=v=>String(Math.round(v*100)/100);
+  const obj=(k,dic,stream)=>{ offs[k]=tam; put(k+' 0 obj\n'+dic); if(stream){ put('\nstream\n'); put(stream); put('\nendstream'); } put('\nendobj\n'); };
+  put('%PDF-1.6\n'); put(new Uint8Array([37,226,227,207,211,10]));   // %âãÏÓ: avisa que tem binário
+  const P0=3+imagens.length;
+  // PrintScaling None: o leitor de PDF já sugere imprimir em tamanho real
+  obj(1,'<< /Type /Catalog /Pages 2 0 R /ViewerPreferences << /PrintScaling /None >> >>');
+  obj(2,'<< /Type /Pages /Kids ['+paginas.map((_,i)=>(P0+2*i)+' 0 R').join(' ')+'] /Count '+paginas.length+' >>');
+  imagens.forEach((im,i)=>obj(3+i,'<< /Type /XObject /Subtype /Image /Width '+im.w+' /Height '+im.h
+    +' /ColorSpace /DeviceGray /BitsPerComponent 1'+(im.flate?' /Filter /FlateDecode':'')+' /Length '+im.dados.length+' >>', im.dados));
+  paginas.forEach((pg,i)=>{
+    const usadas=[...new Set(pg.itens.map(d=>d.img))];
+    let c='';
+    for(const d of pg.itens) c+='q '+n(d.w)+' 0 0 '+n(d.h)+' '+n(d.x)+' '+n(d.y)+' cm /I'+d.img+' Do Q\n';
+    const cb=enc.encode(c+(pg.depois||''));
+    obj(P0+2*i,'<< /Type /Page /Parent 2 0 R /MediaBox [0 0 '+n(pg.w)+' '+n(pg.h)+'] /Resources << /XObject << '
+      +usadas.map(k=>'/I'+k+' '+(3+k)+' 0 R').join(' ')+' >> >> /Contents '+(P0+2*i+1)+' 0 R >>');
+    obj(P0+2*i+1,'<< /Length '+cb.length+' >>', cb);
+  });
+  const total=P0+2*paginas.length, xref=tam;
+  let x='xref\n0 '+total+'\n0000000000 65535 f \n';
+  for(let k=1;k<total;k++) x+=String(offs[k]).padStart(10,'0')+' 00000 n \n';
+  put(x+'trailer\n<< /Size '+total+' /Root 1 0 R >>\nstartxref\n'+xref+'\n%%EOF\n');
+  const out=new Uint8Array(tam); let o=0;
+  for(const p of partes){ out.set(p,o); o+=p.length; }
+  return out;
+}
+// As páginas do PDF para `qtd` etiquetas: no rolo, uma por página; na A4, a grade.
+function etqPaginas(qtd, tam, folha){
+  const [w,h]=ETQ_TAM[tam]||ETQ_TAM['50x30'], pt=v=>v*MM_PT;
+  const pos=etqPosicoes(qtd,tam,folha), pags=[];
+  pos.forEach((p,i)=>{
+    if(!pags[p.pag]) pags[p.pag]=folha==='a4' ? {w:pt(A4_MM[0]),h:pt(A4_MM[1]),itens:[],cortes:''} : {w:pt(w),h:pt(h),itens:[]};
+    const pg=pags[p.pag], it={img:i, x:pt(p.x), y:pg.h-pt(p.y+h), w:pt(w), h:pt(h)};
+    pg.itens.push(it);
+    if(folha==='a4') pg.cortes+=[it.x,it.y,it.w,it.h].map(v=>String(Math.round(v*100)/100)).join(' ')+' re\n';
+  });
+  // a linha de corte em volta de cada etiqueta: cinza claro e fininha, por cima da borda branca
+  pags.forEach(pg=>{ if(pg.cortes){ pg.depois='q 0.7 G 0.3 w\n'+pg.cortes+'S Q\n'; delete pg.cortes; } });
+  return pags;
+}
+async function etqPdf(cvs, tam, folha){
+  const imagens=[];
+  for(const c of cvs){
+    const W=c.width, H=c.height, bits=etqBits(c.getContext('2d').getImageData(0,0,W,H).data, W, H);
+    const z=await pdfComprimir(bits);
+    imagens.push({w:W, h:H, dados:z||bits, flate:!!z});
+  }
+  return pdfMontar(etqPaginas(cvs.length,tam,folha), imagens);
+}
+function etqNomeArq(nums, ext){
+  const f=etqFaixas(nums).replace(/,\s*/g,'_');
+  return 'etiquetas-'+(f.length<=40?f:nums.length+'-maquinas')+'.'+ext;
+}
+// A primeira folha A4 em miniatura, para ver como vai sair antes de imprimir.
+function etqFolhaPrevia(cvs, tam){
+  const S=3, c=document.createElement('canvas'); c.width=A4_MM[0]*S; c.height=A4_MM[1]*S;
+  const x=c.getContext('2d'), [w,h]=ETQ_TAM[tam]||ETQ_TAM['50x30'];
+  x.fillStyle='#fff'; x.fillRect(0,0,c.width,c.height);
+  x.imageSmoothingEnabled=true; x.imageSmoothingQuality='high';
+  x.strokeStyle='#b3b3b3'; x.lineWidth=1;
+  etqPosicoes(cvs.length,tam,'a4').forEach((p,i)=>{ if(p.pag) return;
+    x.drawImage(cvs[i], p.x*S, p.y*S, w*S, h*S); x.strokeRect(p.x*S+.5, p.y*S+.5, w*S-1, h*S-1); });
+  return c.toDataURL('image/png');
+}
+function etqPintarFolha(){
+  document.querySelectorAll('#ETQ .etq-fl').forEach(b=>{ const on=b.dataset.folha===etqFolha; b.classList.toggle('on',on); b.setAttribute('aria-pressed',on?'true':'false'); });
+  const sub=document.getElementById('etqFolhaSub'), tam=(document.getElementById('etqTam')||{}).value;
+  if(sub) sub.textContent=etqGrade(tam).porFolha+' por folha, com linha para recortar';
+}
+window.etqTrocouFolha=f=>{
+  etqFolha=f==='a4'?'a4':'rolo';
+  try{ localStorage.setItem('etqFolha',etqFolha); }catch(e){}
+  etqPintarFolha(); etqMontarFolha();
+};
+// O PDF fica pronto junto com a prévia: no celular, o compartilhar precisa sair no mesmo
+// toque do botão. Trocar rolo ↔ A4 refaz só o PDF, com as etiquetas já desenhadas.
+async function etqMontarFolha(){
+  const minha=++etqGerFolha, e=etqCache; if(!e) return;
+  const folha=etqFolha, pdfBt=document.getElementById('etqPdfBt');
+  if(pdfBt) pdfBt.disabled=true;
+  e.pdf=null;
+  const prev=document.getElementById('etqPrev');
+  if(prev){
+    prev.querySelectorAll('.folha,.folha-cap').forEach(el=>el.remove());
+    if(folha==='a4'){
+      const g=etqGrade(e.tam), fls=Math.ceil(e.nums.length/g.porFolha);
+      prev.insertAdjacentHTML('afterbegin','<img class="folha" src="'+etqFolhaPrevia(e.cvs,e.tam)+'" alt="Folha A4 com as etiquetas">'
+        +'<div class="folha-cap">'+g.porFolha+' por folha · '+fls+' folha'+(fls!==1?'s':'')+(fls>1?' (aqui, a primeira)':'')+'</div>');
+    }
+  }
+  let u8;
+  try{ u8=await etqPdf(e.cvs,e.tam,folha); }
+  catch(err){ console.warn('PDF das etiquetas', err); if(minha===etqGerFolha&&pdfBt) pdfBt.disabled=true; return; }
+  if(minha!==etqGerFolha || etqCache!==e) return;   // trocaram a folha ou os números no meio
+  e.pdf={folha, arq:new File([u8], etqNomeArq(e.nums,'pdf'), {type:'application/pdf'})};
+  if(pdfBt) pdfBt.disabled=false;
+}
+// Celular: manda o PDF direto para o app da impressora (ou salva). Computador: baixa.
+window.etqPdfBaixar=async()=>{
+  const e=etqCache; if(!e||!e.pdf) return;
+  const arq=e.pdf.arq;
+  if(matchMedia('(pointer: coarse)').matches && navigator.share && navigator.canShare){
+    let pode=false; try{ pode=navigator.canShare({files:[arq]}); }catch(_){}
+    if(pode){
+      try{ await navigator.share({files:[arq], title:'Etiquetas'}); etqReservar(e.nums); return; }
+      catch(err){ if(err&&err.name==='AbortError') return; }
+    }
+  }
+  etqReservar(e.nums);
+  const a=document.createElement('a'), u=URL.createObjectURL(arq);
+  a.href=u; a.download=arq.name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(u),60000);
+};
 window.etqPrevia=()=>{ clearTimeout(etqTimer); etqBotoes(false); etqTimer=setTimeout(etqMontar,250); };
 // Gera todas já na prévia: na hora de mandar pro app da impressora (celular),
 // o compartilhar precisa sair no mesmo toque, sem espera no meio.
@@ -15774,7 +15946,7 @@ async function etqMontar(){
   const urls=cvs.map(c=>c.toDataURL('image/png'));
   const arqs=await Promise.all(cvs.map((c,i)=>new Promise(r=>c.toBlob(b=>r(new File([b],'etiqueta-'+nums[i]+'.png',{type:'image/png'})),'image/png'))));
   if(minha!==etqGeracao) return;   // mudaram os números no meio
-  etqCache={nums,tam,urls,arqs};
+  etqCache={nums,tam,urls,arqs,cvs,pdf:null};
   try{ maqAgendar(4000); }catch(e){}   // a página do QR com a ficha em dia antes de colar a etiqueta
   const novas=nums.filter(n=>!prodPorNum(n)).length, ja=nums.length-novas;
   info.innerHTML='<b>'+nums.length+' etiqueta'+(nums.length!==1?'s':'')+'</b>: '+esc(etqFaixas(nums).replace(/(\d+)/g,'#$1'))
@@ -15784,6 +15956,7 @@ async function etqMontar(){
   prev.innerHTML=urls.slice(0,MOSTRA).map((u,i)=>'<img src="'+u+'" alt="Etiqueta #'+nums[i]+'">').join('')
     +(urls.length>MOSTRA?'<div class="mais">+'+(urls.length-MOSTRA)+' etiquetas</div>':'');
   etqBotoes(true);
+  etqMontarFolha();   // o PDF (e a miniatura da folha A4) sai logo em seguida
 }
 window.etqAbrir=async(nums)=>{
   document.getElementById('ETQ').classList.remove('h');
@@ -15791,13 +15964,15 @@ window.etqAbrir=async(nums)=>{
   const bt=document.getElementById('etqNaMaoBt'); if(bt) bt.textContent='As que estão na mão ('+etqNaMaoLista().length+')';
   const sel=document.getElementById('etqTam');
   try{ const t=localStorage.getItem('etqTam'); if(t&&ETQ_TAM[t]) sel.value=t; }catch(e){}
+  try{ const f=localStorage.getItem('etqFolha'); if(f==='a4'||f==='rolo') etqFolha=f; }catch(e){}
+  etqPintarFolha();
   const inp=document.getElementById('etqNums');
   if(nums) inp.value=String(nums);
   else { inp.value=''; await etqCarregar(); const a=proxNumLivre(); inp.value=a+'-'+(a+9); }
   etqMontar();
 };
 window.etqFechar=()=>{ document.getElementById('ETQ').classList.add('h'); };
-window.etqTrocouTam=()=>{ try{ localStorage.setItem('etqTam',document.getElementById('etqTam').value); }catch(e){} etqPrevia(); };
+window.etqTrocouTam=()=>{ try{ localStorage.setItem('etqTam',document.getElementById('etqTam').value); }catch(e){} etqPintarFolha(); etqPrevia(); };
 window.etqNovas=k=>{ const a=proxNumLivre(); document.getElementById('etqNums').value=a+'-'+(a+k-1); etqMontar(); };
 // as que estão fisicamente com vocês: nem vendidas nem a caminho
 // Antes de imprimir, a máquina sem número gravado ganha o próximo número livre, gravado no
@@ -15820,17 +15995,41 @@ async function etqFixarNumeros(lista){
   return feitas;
 }
 function etqNaMaoLista(){ return prods.filter(p=>p.status!=='Vendido'&&p.status!=='Aguardando'); }
+// O aviso amarelo da tela das etiquetas: quais ganharam número agora e o que ficou de fora.
+function etqAvisoNumeros(feitas, fora){
+  const av=document.getElementById('etqAvisoNum'); if(!av) return;
+  const partes=[];
+  if(feitas.length) partes.push('🔢 <b>'+feitas.length+(feitas.length!==1?' máquinas não tinham número fixo e ganharam':' máquina não tinha número fixo e ganhou')
+    +' agora: '+esc(etqFaixas(feitas).replace(/(\d+)/g,'#$1'))+'.</b> É esse número que vai na etiqueta e aparece na lista.');
+  if(fora) partes.push('⚠️ '+esc(fora));
+  av.hidden=!partes.length;
+  av.innerHTML=partes.join('<br>');
+}
 window.etqNaMao=async()=>{
   const naMao=etqNaMaoLista();
   const feitas=await etqFixarNumeros(naMao);
-  const av=document.getElementById('etqAvisoNum');
-  if(av){
-    av.hidden=!feitas.length;
-    if(feitas.length) av.innerHTML='🔢 <b>'+feitas.length+(feitas.length!==1?' máquinas não tinham número fixo e ganharam':' máquina não tinha número fixo e ganhou')
-      +' agora: '+esc(etqFaixas(feitas).replace(/(\d+)/g,'#$1'))+'.</b> É esse número que vai na etiqueta e aparece na lista.';
-  }
+  etqAvisoNumeros(feitas,'');
   const ns=naMao.filter(p=>!numProv.has(p.id)).map(p=>+p.num).filter(n=>n>0);
   document.getElementById('etqNums').value=etqFaixas(ns); etqMontar();
+};
+// Da barra de seleção da lista: as etiquetas das marcadas (ou da lista na tela, sem
+// marcação), todas de uma vez. A máquina sem número fixo ganha um antes, como na "na mão".
+window.loteEtiquetas=async()=>{
+  const itens=loteLista.filter(p=>p.status!=='Vendido');
+  if(!itens.length){ alert('Nenhuma máquina para etiquetar. Marque a bolinha das que vão ganhar etiqueta.'); return; }
+  const bt=document.getElementById('loteEtqBt');
+  if(bt){ bt.disabled=true; bt.textContent='Preparando…'; }
+  let feitas=[];
+  try{ feitas=await etqFixarNumeros(itens); }
+  finally{ if(bt){ bt.disabled=false; bt.textContent='🏷️ Etiquetas'; } }
+  const ns=[...new Set(itens.filter(p=>!numProv.has(p.id)).map(p=>+p.num).filter(n=>n>0))].sort((a,b)=>a-b);
+  if(!ns.length){ alert('Não consegui dar um número fixo a essas máquinas agora. Confira a internet e tente de novo.'); return; }
+  const semNum=itens.length-ns.length, demais=Math.max(0,ns.length-ETQ_MAX);
+  await etqAbrir(etqFaixas(ns.slice(0,ETQ_MAX)));
+  etqAvisoNumeros(feitas, [
+    semNum ? semNum+(semNum!==1?' máquinas ficaram de fora: ainda não subiram para o banco (sem internet na hora do cadastro).':' máquina ficou de fora: ainda não subiu para o banco (sem internet na hora do cadastro).') : '',
+    demais ? 'São '+ETQ_MAX+' etiquetas por vez: '+demais+' ficaram para a próxima (#'+ns[ETQ_MAX]+' em diante).' : ''
+  ].filter(Boolean).join(' '));
 };
 window.etqDaEdicao=async()=>{
   const p=prods.find(x=>x.id===editId); if(!p) return;
@@ -15840,9 +16039,28 @@ window.etqDaEdicao=async()=>{
   etqAbrir(String(p.num));
 };
 // Impressora no computador: página do tamanho da etiqueta, uma por página.
+// A página que vai para a impressora: no rolo, uma etiqueta por página do tamanho dela;
+// na A4, as folhas com a grade (as mesmas posições do PDF) e a linha de corte.
+function etqHtmlImpressao(urls, tam, folha){
+  const [w,h]=ETQ_TAM[tam]||ETQ_TAM['50x30'], mm=v=>(Math.round(v*100)/100)+'mm';
+  const ini='<!doctype html><html><head><meta charset="utf-8"><title>Etiquetas</title><style>';
+  if(folha!=='a4') return ini
+    +'@page{size:'+w+'mm '+h+'mm;margin:0}html,body{margin:0;padding:0;background:#fff}'
+    +'img{display:block;width:'+w+'mm;height:'+h+'mm;break-after:page;page-break-after:always;image-rendering:pixelated}'
+    +'img:last-child{break-after:auto;page-break-after:auto}</style></head><body>'
+    +urls.map(u=>'<img src="'+u+'">').join('')+'</body></html>';
+  const fls=[];
+  etqPosicoes(urls.length,tam,'a4').forEach((p,i)=>{ (fls[p.pag]=fls[p.pag]||[]).push('<img src="'+urls[i]+'" style="left:'+mm(p.x)+';top:'+mm(p.y)+'">'); });
+  // a folha um tico mais baixa que a A4: com 297 mm cravados, o arredondamento joga uma página em branco entre as folhas
+  return ini
+    +'@page{size:A4;margin:0}html,body{margin:0;padding:0;background:#fff}'
+    +'.fl{position:relative;width:210mm;height:296mm;overflow:hidden;break-after:page;page-break-after:always}'
+    +'.fl:last-child{break-after:auto;page-break-after:auto}'
+    +'.fl img{position:absolute;width:'+w+'mm;height:'+h+'mm;image-rendering:pixelated;outline:.1mm solid #b3b3b3}'
+    +'</style></head><body>'+fls.map(f=>'<div class="fl">'+f.join('')+'</div>').join('')+'</body></html>';
+}
 window.etqImprimir=async()=>{
   const e=etqCache; if(!e) return;
-  const [w,h]=ETQ_TAM[e.tam]||ETQ_TAM['50x30'];
   etqReservar(e.nums);   // sem esperar: a impressão não depende do banco
   const fr=document.createElement('iframe');
   fr.setAttribute('aria-hidden','true'); fr.className='etq-impressao';
@@ -15850,11 +16068,7 @@ window.etqImprimir=async()=>{
   document.body.appendChild(fr);
   const d=fr.contentDocument;
   d.open();
-  d.write('<!doctype html><html><head><meta charset="utf-8"><title>Etiquetas</title><style>'
-    +'@page{size:'+w+'mm '+h+'mm;margin:0}html,body{margin:0;padding:0;background:#fff}'
-    +'img{display:block;width:'+w+'mm;height:'+h+'mm;break-after:page;page-break-after:always;image-rendering:pixelated}'
-    +'img:last-child{break-after:auto;page-break-after:auto}</style></head><body>'
-    +e.urls.map(u=>'<img src="'+u+'">').join('')+'</body></html>');
+  d.write(etqHtmlImpressao(e.urls, e.tam, etqFolha));
   d.close();
   await Promise.all([...d.images].map(i=>i.complete?0:new Promise(r=>{ i.onload=i.onerror=r; })));
   const tirar=()=>{ try{ fr.remove(); }catch(_){} };
@@ -16001,7 +16215,7 @@ function loteBolaHTML(p){
   if(!p || p.status==='Vendido') return '';
   return `<span class="lote-bola${loteSel.has(p.id)?' on':''}" data-lote="${p.id}"
     onclick="event.stopPropagation();loteBolinha(this,'${p.id}')"
-    title="Marcar pra mudar status ou vender junto">✓</span>`;
+    title="Marcar pra mudar status, vender junto ou imprimir as etiquetas">✓</span>`;
 }
 window.loteMarcar=(id,on)=>{
   if(on) loteSel.add(id); else loteSel.delete(id);
@@ -16060,7 +16274,8 @@ function loteBarra(mostrar){
     ? 'Vale só as marcadas, mesmo as que sumiram da busca. '
     : 'Marque a bolinha ao lado da máquina, ou deixe sem marcar nenhuma pra valer a lista inteira. ')
     + 'Pra VENDER (inclusive reservadas), escolha "Vendido" na lista ou use o botão verde — '
-    + 'os dois abrem a mesma tela, que pede cliente, data e valor.';
+    + 'os dois abrem a mesma tela, que pede cliente, data e valor. '
+    + '🏷️ Etiquetas: as etiquetas com QR de todas de uma vez, em PDF (várias por folha A4 ou no rolo).';
 }
 // Tirar pela etiqueta: a máquina pode não estar na tela, então a caixinha
 // correspondente talvez nem exista pra desmarcar.
