@@ -72,6 +72,11 @@ ok(E.qrUrl(15).length <= 42, 'curto (cabe no QR versão 3, que fica grande na et
   ok(E.etqDados(32).nome === 'Lenovo ThinkPad T480' && E.etqDados(31).nome === 'Acer Aspire 5', 'a etiqueta sai com o modelo de cada uma');
   ok(E.ehProv('l9') && E.ehProv('falha') && prods.find(p => p.id === 'falha').num === 15, 'cadastro local e gravação que falhou continuam sem número fixo (e sem etiqueta)');
   ok(JSON.stringify(await E.etqFixarNumeros(prods.filter(p => p.id === 'a'))) === '[]', 'máquina que já tem número gravado não muda');
+  console.log('\nos essenciais do lado do QR');
+  prods.push({ id: 'g', num: 40, nome: 'Lenovo ThinkPad E14', ficha: { marca: 'Lenovo', modelo: 'ThinkPad E14', cpu: 'i5', ger: '11ª', ram: '16GB', armaz: 'SSD 512GB', tela: '14”' } });
+  const g = E.etqDados(40);
+  ok(JSON.stringify(g.specs) === JSON.stringify(['i5 11ª · 16GB', 'SSD 512GB · 14”']), 'duas linhas: processador e memória; armazenamento e tela — ' + JSON.stringify(g.specs));
+  ok(JSON.stringify(E.etqDados(12).specs) === JSON.stringify(['i5 8ª · 16GB', 'SSD 256GB']), 'sem tela no cadastro: a segunda linha só com o armazenamento');
   console.log(falhas ? `\n${falhas} FALHA(S)` : '\ntudo verde');
   process.exit(falhas ? 1 : 0);
 })().catch(e => { console.error('ERRO', e); process.exit(2); });

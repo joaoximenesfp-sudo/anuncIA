@@ -23,6 +23,7 @@ node testes/test-etiqueta.js       # etiqueta com QR: números "101-110", próxi
 node testes/test-search-console.js # Search Console: o arquivo de verificação do Google segue na raiz, sem redirecionamento
 node testes/test-fechamento.js     # fechamento do mês: vendas, comparação, origem, quem vendeu, compras por sócio, estoque no fim do mês e o texto do WhatsApp
 node testes/test-compra-usados.js  # "Compramos seu usado" no catálogo: a mensagem do WhatsApp, quando a seção aparece e as opções no sistema
+node testes/test-maquina.js        # página da máquina (QR da etiqueta): só sócio grava, só campos públicos, um aparelho não desfaz o outro, o que aparece para quem escaneia
 ```
 
 Rode o `checar.js` sempre antes de subir. Tag desbalanceada ou chave de CSS

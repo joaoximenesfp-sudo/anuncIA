@@ -233,6 +233,36 @@ button{transition:transform .08s ease}
 .qrb-corpo .fr{grid-template-columns:1fr 1fr}
 .qrb-corpo .fr .fc:first-child{grid-column:1/-1}
 .etq{z-index:160}
+/* ── PÁGINA DA MÁQUINA (QR escaneado sem login) ── */
+.maq{position:fixed;inset:0;z-index:300;background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch}
+.maq[hidden]{display:none}
+.maq-topo{background:var(--navy);color:#fff;padding:14px 16px}
+.maq-topo>div{max-width:640px;margin:0 auto;display:flex;align-items:center;gap:10px;font-weight:600;letter-spacing:.01em}
+.maq-topo i{width:28px;height:28px;border-radius:9px;background:linear-gradient(135deg,var(--g1),var(--g2));display:inline-block}
+.maq-c{max-width:640px;margin:0 auto;padding:20px 16px 44px}
+.maq-k{font-size:.72rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--gr)}
+.maq-t{font-size:1.6rem;font-weight:600;letter-spacing:-.02em;line-height:1.15;margin:6px 0 10px;color:var(--tx)}
+.maq-est{display:inline-flex;align-items:center;font-size:.78rem;font-weight:600;padding:5px 11px;border-radius:999px;background:var(--gbg);color:var(--gr);border:1px solid var(--gbd)}
+.maq-est.vendida{background:#f1f5f9;color:var(--mu);border-color:var(--b)}
+.maq-est.reservada,.maq-est.chegando{background:var(--abg);color:var(--am);border-color:var(--abd)}
+.maq-fotos{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;margin:16px 0 0;scrollbar-width:none}
+.maq-fotos[hidden]{display:none}
+.maq-fotos::-webkit-scrollbar{display:none}
+.maq-fotos img{flex:none;width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:16px;background:#e9edf2;scroll-snap-align:start}
+.maq-card{background:var(--w);border:1px solid var(--b);border-radius:18px;padding:16px;margin-top:14px;box-shadow:var(--sh)}
+.maq-card h3{font-size:.72rem;font-weight:600;color:var(--mu);text-transform:uppercase;letter-spacing:.09em;margin-bottom:10px}
+.maq-ft{display:grid;grid-template-columns:auto 1fr;gap:8px 14px;font-size:.92rem;margin:0}
+.maq-ft dt{color:var(--mu)}
+.maq-ft dd{font-weight:600;margin:0;color:var(--tx)}
+.maq-li{display:flex;flex-wrap:wrap;gap:6px}
+.maq-li span{font-size:.82rem;padding:5px 10px;border-radius:999px;background:#f1f5f9;border:1px solid var(--b);color:var(--tx)}
+.maq-desc{font-size:.92rem;line-height:1.55;white-space:pre-line;color:var(--tx)}
+.maq-bts{display:grid;gap:10px;margin-top:18px}
+.maq-bt{display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;border-radius:14px;font-weight:600;font-size:.95rem;text-decoration:none;border:0;cursor:pointer;font-family:var(--fonte)}
+.maq-bt.wa{background:#25D366;color:#04210F}
+.maq-bt.cat{background:var(--navy);color:#fff}
+.maq-socio{display:block;margin:24px auto 0;background:none;border:0;color:var(--mu);font-size:.82rem;text-decoration:underline;cursor:pointer;font-family:var(--fonte)}
+.maq-vazio{text-align:center;padding:40px 10px;color:var(--mu)}
 .etq-aviso{margin-top:10px;padding:8px 10px;border-radius:10px;background:var(--abg);border:1px solid var(--abd);color:var(--am);font-size:.76rem;line-height:1.45}
 .etq-aviso[hidden]{display:none}
 .etq .mc{max-width:640px}
@@ -1970,6 +2000,11 @@ div:has(> .fc2){flex-wrap:wrap;row-gap:6px}
 <div id="salvaAviso" class="salva-aviso" style="display:none" onclick="verFalhasGravacao()"></div>
 
 <!-- AUTH -->
+<!-- PÁGINA DA MÁQUINA: quem escaneia o QR da etiqueta sem estar logado vê a ficha pública -->
+<div class="maq" id="MAQ" hidden>
+  <div class="maq-topo"><div><i></i><span id="maqLoja">Tech Campinas</span></div></div>
+  <div class="maq-c" id="maqCorpo"><div class="maq-vazio">Carregando a máquina…</div></div>
+</div>
 <div class="as" id="AS">
   <div class="ac">
     <div class="qr-entrar" id="qrEntrar" hidden></div>
@@ -4533,13 +4568,16 @@ onAuthStateChanged(auth,u=>{
     try{ grMontar(); }catch(e){}
     try{ instaVoltaDoLogin(); }catch(e){}
     try{ mlVoltaDoLogin(); }catch(e){}
+    try{ maqPublicaFechar(); }catch(e){}
     try{ etqCarregar(); qrVoltaDoLogin(); }catch(e){}   // etiqueta escaneada antes de entrar
     setTimeout(carregarAvisos, 2000); // carregar avisos após login
     // Depois do login os cards já existem na tela; antes disso não havia o
     // que observar.
     try{ ligarPiscaNumeros(); }catch(e){}
   }
-  else{document.getElementById('AS').classList.remove('h');document.getElementById('APP').classList.remove('v');capNova();}
+  else{document.getElementById('AS').classList.remove('h');document.getElementById('APP').classList.remove('v');capNova();
+    try{ maqPublicaTalvez(); }catch(e){}   // etiqueta escaneada por quem não é da loja: a ficha da máquina
+  }
 });
 
 window.swAt=t=>{document.querySelectorAll('.at').forEach((b,i)=>b.classList.toggle('on',(i===0&&t==='login')||(i===1&&t==='reg')));document.getElementById('fLogin').style.display=t==='login'?'block':'none';document.getElementById('fReg').style.display=t==='reg'?'block':'none';document.getElementById('AE').textContent='';
@@ -4747,6 +4785,7 @@ async function loadProds(){
   // alterações manuais (Anunciado/Estoque/etc). O Firestore é a fonte da verdade agora.
   render();renderSecoes();calcStats();renderAlertas();renderMeta();
   try{ mlIniciar(); }catch(e){} // Mercado Livre: acompanha os anúncios e os pedidos de lá
+  try{ maqAgendar(8000); }catch(e){} // a ficha de cada máquina para a página do QR
 }
 
 // ── MONTADOR DE SPECS POR SELEÇÃO ──
@@ -8775,6 +8814,8 @@ function renderTabela(lista, tipo){
 function render(){
   // vendeu, reservou ou mudou o preço: o anúncio do Mercado Livre acompanha (logo depois)
   try{ mlAgendarSinc(); }catch(e){}
+  // e a página da máquina (o QR da etiqueta) também
+  try{ if(user) maqAgendar(); }catch(e){}
   const list=document.getElementById('PL');
   // Reservado e Chegando não podem ser comparação exata de status: a marcação
   // antiga de "aguardando" era um campo à parte, e quem foi marcado assim
@@ -9890,6 +9931,128 @@ window.fchCopiar=async()=>{
   if(bt){ bt.textContent=copiou?'✓ Copiado':'Não consegui copiar'; setTimeout(()=>{ bt.textContent='📋 Copiar resumo'; },2000); }
 };
 window.fchWhats=()=>{ if(fchUltimo) window.open('https://wa.me/?text='+encodeURIComponent(fchTexto(fchUltimo)),'_blank','noopener'); };
+
+// ── PÁGINA DA MÁQUINA (o QR da etiqueta) ──
+// O QR abre o sistema. Sócio logado cai na edição, como sempre; quem não está logado vê a
+// ficha pública da máquina. Essa ficha sai daqui: o sistema manda para /api/maquina só as
+// máquinas que mudaram desde o último envio (no máximo uma vez por minuto). Só vai o que o
+// catálogo já mostra; custo, preço, fornecedor, cliente e anotação interna ficam de fora.
+let maqTimer=0, maqQuando=0, maqAberta=0;
+function maqEstado(p){
+  if(p.status==='Vendido') return 'vendida';
+  if(reservadoP(p)) return 'reservada';
+  if(aguardandoP(p)) return 'chegando';
+  return p.status==='Anunciado'?'a_venda':'em_preparo';
+}
+// marcações internas do nome (quem investiu) não vão para fora
+function maqNomePublico(n){ return String(n||'').replace(/\((jo[ãa]o|igor)[^)]*\)/ig,'').replace(/\*/g,'').replace(/\s+/g,' ').trim(); }
+function maqFicha(p){
+  let r={}; try{ r=recursosLinhas(p)||{}; }catch(e){}
+  let specs=[]; try{ specs=hwResumo(p,true)||[]; }catch(e){}
+  let tipo=''; try{ tipo=tipoMaquina(p)||''; }catch(e){}
+  let video=''; try{ video=ytId(p.video)||''; }catch(e){}
+  return {num:+p.num, id:p.id, nome:maqNomePublico(p.nome), tipo, estado:maqEstado(p), ficha:fichaDe(p)||{},
+    specs:Array.isArray(specs)?specs:[], recursos:Array.isArray(r.recursos)?r.recursos:[],
+    sistema:(r.sistema&&r.sistema!=='Sem sistema')?r.sistema:'', resolucao:r.resolucao||'', cor:r.cor||'',
+    descricao:String(p.descricao||'').slice(0,600), video};
+}
+function maqLista(){
+  const vistos=new Set();
+  return prods.filter(p=>+p.num>0 && !numProv.has(p.id) && !idLocal(p.id))
+    .sort((a,b)=>(+a.num)-(+b.num))
+    .filter(p=>{ if(vistos.has(+p.num)) return false; vistos.add(+p.num); return true; })
+    .map(maqFicha);
+}
+function maqHash(s){ let h=5381; for(let i=0;i<s.length;i++) h=((h<<5)+h+s.charCodeAt(i))|0; return (h>>>0).toString(36)+'.'+s.length; }
+async function maqSincronizar(){
+  maqTimer=0; maqQuando=0;
+  if(!user || !prods.length || prods.every(p=>idSeed(p.id))) return;
+  let antes={}; try{ antes=JSON.parse(localStorage.getItem('maqHashes')||'{}')||{}; }catch(e){ antes={}; }
+  const agora={}, mudaram=[];
+  for(const f of maqLista()){ const h=maqHash(JSON.stringify(f)); agora[f.num]=h; if(antes[f.num]!==h) mudaram.push(f); }
+  const remover=Object.keys(antes).filter(k=>!(k in agora)).map(Number).filter(n=>n>0);
+  if(!mudaram.length && !remover.length) return;
+  try{
+    const idToken=await user.getIdToken();
+    const LOTE=400, voltas=Math.max(1,Math.ceil(mudaram.length/LOTE));
+    for(let i=0;i<voltas;i++){
+      const r=await fetch('/api/maquina',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({acao:'sincronizar',idToken,maquinas:mudaram.slice(i*LOTE,(i+1)*LOTE),remover:i===0?remover:[]})});
+      if(!r.ok) return;
+    }
+    try{ localStorage.setItem('maqHashes',JSON.stringify(agora)); }catch(e){}
+  }catch(e){}
+}
+function maqAgendar(ms){
+  ms=ms||60000; const q=Date.now()+ms;
+  if(maqTimer && maqQuando<=q) return;
+  clearTimeout(maqTimer); maqQuando=q; maqTimer=setTimeout(maqSincronizar,ms);
+}
+// O que aparece para quem escaneou. n: número da etiqueta; m: a ficha (ou null); loja: nome e WhatsApp.
+function maqPublicaHTML(n, m, loja, erroTxt){
+  loja=loja||{};
+  const nomeLoja=loja.nome||'Tech Campinas';
+  const wa=String(loja.whatsapp||'').replace(/\D/g,'');
+  const f=(m&&m.ficha)||{};
+  const nome=m?(([f.marca,f.modelo].filter(Boolean).join(' '))||m.nome||'Máquina'):'';
+  const waLink=wa?'https://wa.me/55'+wa.replace(/^55/,'')+'?text='+encodeURIComponent('Olá! Escaneei a etiqueta #'+n+(nome?' ('+nome+')':'')+' da '+nomeLoja+'.'):'';
+  const bts=cat=>'<div class="maq-bts">'+(waLink?'<a class="maq-bt wa" href="'+waLink+'" target="_blank" rel="noopener">💬 Chamar no WhatsApp</a>':'')+(cat||'')+'</div>'
+    +'<button type="button" class="maq-socio" id="maqSocio">Sou da loja: entrar no sistema</button>';
+  if(!m) return '<div class="maq-k">Etiqueta #'+n+'</div><div class="maq-t">'+(erroTxt?'Não consegui abrir a ficha agora':'Máquina ainda sem ficha')+'</div>'
+    +'<p class="maq-desc">'+esc(erroTxt?erroTxt+' Tente de novo em instantes.':'Esta etiqueta é da '+nomeLoja+'. A ficha aparece aqui quando a máquina for cadastrada.')+'</p>'+bts('');
+  const EST={a_venda:['À venda',''],reservada:['Reservada','reservada'],chegando:['Chegando','chegando'],em_preparo:['Na loja',''],vendida:['Vendida','vendida']};
+  const [estTxt,estCls]=EST[m.estado]||EST.em_preparo;
+  const linhas=[['Processador',[f.cpu,f.ger].filter(Boolean).join(' ')],['Memória',[f.ram,f.ram_tipo].filter(Boolean).join(' ')],
+    ['Armazenamento',f.armaz],['Tela',[f.tela,m.resolucao].filter(Boolean).join(' · ')],['Sistema',m.sistema],['Cor',m.cor]].filter(l=>l[1]);
+  const fichas=a=>'<div class="maq-li">'+a.map(x=>'<span>'+esc(String(x))+'</span>').join('')+'</div>';
+  let h='<div class="maq-k">Etiqueta #'+n+'</div><div class="maq-t">'+esc(nome)+'</div><span class="maq-est '+estCls+'">'+estTxt+'</span>'
+    +'<div class="maq-fotos" id="maqFotos" hidden></div>';
+  if(linhas.length) h+='<div class="maq-card"><h3>Ficha</h3><dl class="maq-ft">'+linhas.map(([k,v])=>'<dt>'+k+'</dt><dd>'+esc(String(v))+'</dd>').join('')+'</dl></div>';
+  if(m.specs&&m.specs.length) h+='<div class="maq-card"><h3>Estado e detalhes</h3>'+fichas(m.specs)+'</div>';
+  if(m.recursos&&m.recursos.length) h+='<div class="maq-card"><h3>Recursos</h3>'+fichas(m.recursos)+'</div>';
+  if(m.descricao) h+='<div class="maq-card"><h3>Sobre esta máquina</h3><div class="maq-desc">'+esc(m.descricao)+'</div></div>';
+  if(m.estado==='vendida') h+='<div class="maq-card"><div class="maq-desc">Esta máquina já foi vendida. Se ela é sua, a garantia é de 90 dias a partir da compra: chame a loja no WhatsApp.</div></div>';
+  const noCatalogo=['a_venda','reservada','chegando'].includes(m.estado);
+  const cat=noCatalogo?'<a class="maq-bt cat" href="'+CAT_ORIGEM_PUBLICA+'/catalogo.html?q='+encodeURIComponent(nome)+'" target="_blank" rel="noopener">Ver no catálogo</a>':'';
+  return h+bts(cat);
+}
+async function maqPublicaFotos(id){
+  try{
+    const snap=await getDocs(query(collection(db,'catalogo_fotos'),where('produto_id','==',id)));
+    const ok=u=>/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(String(u||''));
+    const fotos=snap.docs.map(d=>d.data()).filter(f=>f&&!f.insta&&ok(f.dataUrl)).sort((a,b)=>(a.ordem||0)-(b.ordem||0)).slice(0,8);
+    const box=document.getElementById('maqFotos');
+    if(!box||!fotos.length) return;
+    box.innerHTML=fotos.map((f,i)=>'<img src="'+f.dataUrl+'" alt="Foto '+(i+1)+'" loading="lazy">').join('');
+    box.hidden=false;
+  }catch(e){}
+}
+async function maqPublicaAbrir(n){
+  const box=document.getElementById('MAQ'), corpo=document.getElementById('maqCorpo');
+  if(!box||!corpo||!(n>0)) return;
+  maqAberta=n; box.hidden=false; box.scrollTop=0;
+  corpo.innerHTML='<div class="maq-vazio">Carregando a máquina…</div>';
+  let loja={nome:'Tech Campinas', whatsapp:''};
+  const cfgPronta=getDocs(collection(db,'catalogo_cfg')).then(s=>{ s.forEach(d=>{ if(d.id===CAT_CFG_ID) loja={...loja,...d.data()}; }); }).catch(()=>{});
+  let m=null, erroTxt='';
+  try{
+    const r=await fetch('/api/maquina?n='+n);
+    const j=await r.json().catch(()=>({}));
+    if(r.ok&&j.ok) m=j.maquina; else if(r.status!==404) erroTxt=j.erro||'Não consegui falar com a loja.';
+  }catch(e){ erroTxt='Sem conexão agora.'; }
+  await cfgPronta;
+  if(maqAberta!==n || box.hidden) return;
+  document.getElementById('maqLoja').textContent=loja.nome||'Tech Campinas';
+  corpo.innerHTML=maqPublicaHTML(n,m,loja,erroTxt);
+  const s=document.getElementById('maqSocio'); if(s) s.onclick=maqPublicaFechar;
+  if(m&&m.id) maqPublicaFotos(m.id);
+}
+function maqPublicaFechar(){ maqAberta=0; const box=document.getElementById('MAQ'); if(box) box.hidden=true; }
+function maqPublicaTalvez(){
+  let n=qrPend;
+  try{ n=n||parseInt(sessionStorage.getItem('qrNum')||'',10)||0; }catch(e){}
+  if(n>0) maqPublicaAbrir(n);
+}
 
 // ── RANKING ──
 let rkMode='lucro';
@@ -15523,8 +15686,12 @@ function etqDados(n){
   if(!p) return {num:n};
   const f=fichaDe(p)||{};
   const nome=([f.marca,f.modelo].filter(Boolean).join(' ')||String(p.nome||'').split(/·|\|/)[0]).trim();
-  const spec=[[f.cpu,f.ger].filter(Boolean).join(' '), f.ram, f.armaz].filter(Boolean).join(' · ');
-  return {num:n, nome, spec};
+  // os essenciais, para não precisar escanear à toa: processador e memória numa linha,
+  // armazenamento e tela na outra
+  const proc=[f.cpu,f.ger].filter(Boolean).join(' ');
+  const specs=[[proc,f.ram].filter(Boolean).join(' · '), [f.armaz,f.tela].filter(Boolean).join(' · ')].filter(Boolean);
+  const spec=specs.join(' · ');
+  return {num:n, nome, spec, specs};
 }
 async function etqPreparar(){
   if(!window.qrcode) await new Promise((ok,erro)=>{
@@ -15558,7 +15725,7 @@ function etqDesenhar(d, tam){
   const sLoja=caber('TECH CAMPINAS',700,Math.round(H*0.085),9);
   linhas.push({txt:'TECH CAMPINAS',peso:700,s:sLoja,depois:Math.round(H*0.045)});
   const numTxt='#'+d.num;
-  linhas.push({txt:numTxt,peso:800,s:caber(numTxt,800,Math.round(H*(d.nome?0.33:0.42)),12),depois:Math.round(H*0.06)});
+  linhas.push({txt:numTxt,peso:800,s:caber(numTxt,800,Math.round(H*(d.nome?((d.specs||[]).length>1?0.29:0.33):0.42)),12),depois:Math.round(H*0.055)});
   if(d.nome){
     // o modelo em até duas linhas, diminuindo a letra antes de cortar
     let s=Math.round(H*0.085), ls=[];
@@ -15570,9 +15737,12 @@ function etqDesenhar(d, tam){
     ls=ls.slice(0,2).map(l=>cortar(l,600,s));
     ls.forEach((l,i)=>linhas.push({txt:l,peso:600,s,depois:i===ls.length-1?Math.round(H*0.03):Math.round(s*0.18)}));
   }
-  if(d.spec){
-    const s=caber(d.spec,600,Math.round(H*0.075),8);
-    linhas.push({txt:cortar(d.spec,600,s),peso:600,s,depois:0});
+  const specs=Array.isArray(d.specs)&&d.specs.length?d.specs:(d.spec?[d.spec]:[]);
+  if(specs.length){
+    // as linhas da configuração com a mesma letra, a maior que couber
+    let s=Math.round(H*0.075);
+    for(;s>8;s--){ x.font=fonte(600,s); if(specs.every(l=>x.measureText(l).width<=tw)) break; }
+    specs.forEach((l,i)=>linhas.push({txt:cortar(l,600,s),peso:600,s,depois:i===specs.length-1?0:Math.round(s*0.28)}));
   }
   // centraliza o bloco na altura
   const alt=linhas.map(l=>{ x.font=fonte(l.peso,l.s); const mt=x.measureText(l.txt);
@@ -15605,6 +15775,7 @@ async function etqMontar(){
   const arqs=await Promise.all(cvs.map((c,i)=>new Promise(r=>c.toBlob(b=>r(new File([b],'etiqueta-'+nums[i]+'.png',{type:'image/png'})),'image/png'))));
   if(minha!==etqGeracao) return;   // mudaram os números no meio
   etqCache={nums,tam,urls,arqs};
+  try{ maqAgendar(4000); }catch(e){}   // a página do QR com a ficha em dia antes de colar a etiqueta
   const novas=nums.filter(n=>!prodPorNum(n)).length, ja=nums.length-novas;
   info.innerHTML='<b>'+nums.length+' etiqueta'+(nums.length!==1?'s':'')+'</b>: '+esc(etqFaixas(nums).replace(/(\d+)/g,'#$1'))
     +'<br><small>'+[novas?novas+' nova'+(novas!==1?'s':'')+' (o QR abre o cadastro com o número)':'',
@@ -15780,7 +15951,7 @@ window.etqCampo=()=>{
   try{ copiaHint(); }catch(e){}
 };
 function etqNumDoCampo(){ const v=parseInt(document.getElementById('pNumEtq')?.value,10); return v>0?v:0; }
-window.addEventListener('hashchange',()=>{ if(qrLerHash()&&user) qrVoltaDoLogin(); });
+window.addEventListener('hashchange',()=>{ const n=qrLerHash(); if(!n) return; if(user) qrVoltaDoLogin(); else maqPublicaAbrir(n); });
 qrLerHash();
 
 function piscarLinha(id){
