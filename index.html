@@ -233,6 +233,8 @@ button{transition:transform .08s ease}
 .qrb-corpo .fr{grid-template-columns:1fr 1fr}
 .qrb-corpo .fr .fc:first-child{grid-column:1/-1}
 .etq{z-index:160}
+.etq-aviso{margin-top:10px;padding:8px 10px;border-radius:10px;background:var(--abg);border:1px solid var(--abd);color:var(--am);font-size:.76rem;line-height:1.45}
+.etq-aviso[hidden]{display:none}
 .etq .mc{max-width:640px}
 .etq-corpo{padding:16px 22px;overflow-y:auto;flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:12px}
 .etq-dica{font-size:.76rem;color:var(--mu);line-height:1.5}
@@ -3870,8 +3872,9 @@ div:has(> .fc2){flex-wrap:wrap;row-gap:6px}
       <div class="etq-chips">
         <button type="button" class="etq-chip" onclick="etqNovas(10)">+10 novas</button>
         <button type="button" class="etq-chip" onclick="etqNovas(20)">+20 novas</button>
-        <button type="button" class="etq-chip" onclick="etqNaMao()">As que estão na mão</button>
+        <button type="button" class="etq-chip" id="etqNaMaoBt" onclick="etqNaMao()">As que estão na mão</button>
       </div>
+      <div class="etq-aviso" id="etqAvisoNum" hidden></div>
       <div class="etq-info" id="etqInfo"></div>
       <div class="etq-prev" id="etqPrev"></div>
       <div class="etq-dica">Impressora ligada no computador: <b>Imprimir</b> (o tamanho da página já vai certo). Impressora pelo app do celular: <b>Baixar imagens</b> e abra no app dela. Os números novos ficam reservados: o cadastro sem etiqueta pula eles.</div>
@@ -4486,6 +4489,9 @@ const CMarca={labels:['Dell','Lenovo','Acer','Samsung','HP','Asus','Outros'],val
 
 let user=null,prods=[],filt='todos',editId=null,chartsOk=false,sellId=null,clientes=[],fornecedores=[];
 let prodsProntos=null; // a carga das máquinas depois do login (quem precisa da lista completa espera por ela)
+// Máquina antiga sem número gravado ganha, ao carregar, um número provisório pela posição na lista.
+// Ele muda de uma carga para outra e pode repetir o de outra máquina: não serve para etiqueta.
+let numProv=new Set();
 
 // Emails autorizados
 // Dono: pode ter mais de uma conta. Para criar acesso novo sem excluir nada,
@@ -4734,7 +4740,8 @@ async function loadProds(){
     prods = SEED_PRODS.map((p,i)=>({...p,userId:'shared_ijx',id:'x'+(i+1)}));
     avisarDemo('Não consegui ler o banco: '+((e&&e.message)||e));
   }
-  prods.forEach((p,i)=>{if(!p.num)p.num=i+1;});
+  numProv=new Set();
+  prods.forEach((p,i)=>{ if(!p.num){ p.num=i+1; numProv.add(p.id); } });
   // (Removido) A normalização de status pela lista SEED_PRODS foi retirada:
   // ela sobrescrevia o status salvo no Firestore a cada load, revertendo
   // alterações manuais (Anunciado/Estoque/etc). O Firestore é a fonte da verdade agora.
@@ -5347,7 +5354,7 @@ window.addProd=async()=>{
   // Etiqueta com QR: o número vem dela (escaneada ou digitada) e não pode repetir
   const numEtq=etqNumDoCampo();
   if(numEtq){
-    const ja=prods.find(p=>+p.num===numEtq);
+    const ja=prodPorNum(numEtq);
     if(ja){
       if(confirm('A etiqueta #'+numEtq+' já é da máquina "'+(ja.nome||'')+'".\n\nAbrir ela para editar?')){ qrCadFechar(); openEdit(ja.id); }
       return;
@@ -15424,7 +15431,8 @@ function cadastrouOk(ids, status, nome){
   box.style.display='block';
   box.innerHTML=`✅ <b>${q}</b> máquina${q!==1?'s':''} cadastrada${q!==1?'s':''}: `
     +`<b>${faixa}</b> · entraram em <b>${esc(rot)}</b>`
-    +`<button onclick="verUltimoCadastro()">Ver na lista</button>`;
+    +`<button onclick="verUltimoCadastro()">Ver na lista</button>`
+    +`<button onclick="etqAbrir('${etqFaixas(novos.map(p=>+p.num).filter(n=>n>0))}')">🏷️ Imprimir etiqueta${q!==1?'s':''}</button>`;
   verUltimoCadastro();
 }
 // Tira a busca da frente, põe o filtro no status em que elas entraram, abre o
@@ -15483,6 +15491,8 @@ async function etqCarregar(){
   return etqUlt;
 }
 function proxNumLivre(){ return Math.max(0, etqUlt, ...prods.map(p=>+p.num||0))+1; }
+// A máquina de um número: só vale número gravado (o provisório pode ser de outra).
+function prodPorNum(n){ return prods.find(p=>+p.num===n && !numProv.has(p.id))||null; }
 async function etqReservar(nums){
   const m=Math.max(0,...nums);
   if(m<=etqUlt) return;
@@ -15509,7 +15519,7 @@ function etqFaixas(nums){
 // O que vai escrito: número e, se a máquina já existe, modelo e configuração.
 // Custo, preço e fornecedor nunca: a etiqueta fica colada na máquina.
 function etqDados(n){
-  const p=prods.find(x=>+x.num===n);
+  const p=prodPorNum(n);
   if(!p) return {num:n};
   const f=fichaDe(p)||{};
   const nome=([f.marca,f.modelo].filter(Boolean).join(' ')||String(p.nome||'').split(/·|\|/)[0]).trim();
@@ -15595,7 +15605,7 @@ async function etqMontar(){
   const arqs=await Promise.all(cvs.map((c,i)=>new Promise(r=>c.toBlob(b=>r(new File([b],'etiqueta-'+nums[i]+'.png',{type:'image/png'})),'image/png'))));
   if(minha!==etqGeracao) return;   // mudaram os números no meio
   etqCache={nums,tam,urls,arqs};
-  const novas=nums.filter(n=>!prods.some(p=>+p.num===n)).length, ja=nums.length-novas;
+  const novas=nums.filter(n=>!prodPorNum(n)).length, ja=nums.length-novas;
   info.innerHTML='<b>'+nums.length+' etiqueta'+(nums.length!==1?'s':'')+'</b>: '+esc(etqFaixas(nums).replace(/(\d+)/g,'#$1'))
     +'<br><small>'+[novas?novas+' nova'+(novas!==1?'s':'')+' (o QR abre o cadastro com o número)':'',
                     ja?ja+' já cadastrada'+(ja!==1?'s':'')+' (o QR abre a edição)':''].filter(Boolean).join(' · ')+'</small>';
@@ -15606,6 +15616,8 @@ async function etqMontar(){
 }
 window.etqAbrir=async(nums)=>{
   document.getElementById('ETQ').classList.remove('h');
+  const av=document.getElementById('etqAvisoNum'); if(av) av.hidden=true;
+  const bt=document.getElementById('etqNaMaoBt'); if(bt) bt.textContent='As que estão na mão ('+etqNaMaoLista().length+')';
   const sel=document.getElementById('etqTam');
   try{ const t=localStorage.getItem('etqTam'); if(t&&ETQ_TAM[t]) sel.value=t; }catch(e){}
   const inp=document.getElementById('etqNums');
@@ -15617,13 +15629,43 @@ window.etqFechar=()=>{ document.getElementById('ETQ').classList.add('h'); };
 window.etqTrocouTam=()=>{ try{ localStorage.setItem('etqTam',document.getElementById('etqTam').value); }catch(e){} etqPrevia(); };
 window.etqNovas=k=>{ const a=proxNumLivre(); document.getElementById('etqNums').value=a+'-'+(a+k-1); etqMontar(); };
 // as que estão fisicamente com vocês: nem vendidas nem a caminho
-window.etqNaMao=()=>{
-  const ns=prods.filter(p=>p.status!=='Vendido'&&p.status!=='Aguardando'&&+p.num>0).map(p=>+p.num);
+// Antes de imprimir, a máquina sem número gravado ganha o próximo número livre, gravado no
+// banco. Assim a etiqueta e a lista mostram o mesmo número para sempre, e o QR abre a máquina certa.
+async function etqFixarNumeros(lista){
+  const sem=lista.filter(p=>numProv.has(p.id) && !idLocal(p.id))
+    .sort((a,b)=>String(a.data_compra||a.createdAt||'').localeCompare(String(b.data_compra||b.createdAt||'')));
+  if(!sem.length) return [];
+  await etqCarregar();
+  let n=Math.max(0, etqUlt, ...prods.map(p=>+p.num||0));
+  const feitas=[];
+  for(const p of sem){
+    const novo=n+1;
+    const ok=await gravar(updateDoc(doc(db,'products',p.id),{num:novo}), 'Número da máquina "'+(p.nome||p.id)+'"');
+    if(!ok) continue;
+    n=novo; p.num=novo; numProv.delete(p.id);
+    feitas.push(novo);
+  }
+  if(feitas.length){ etqReservar(feitas); try{ render(); }catch(e){} }
+  return feitas;
+}
+function etqNaMaoLista(){ return prods.filter(p=>p.status!=='Vendido'&&p.status!=='Aguardando'); }
+window.etqNaMao=async()=>{
+  const naMao=etqNaMaoLista();
+  const feitas=await etqFixarNumeros(naMao);
+  const av=document.getElementById('etqAvisoNum');
+  if(av){
+    av.hidden=!feitas.length;
+    if(feitas.length) av.innerHTML='🔢 <b>'+feitas.length+(feitas.length!==1?' máquinas não tinham número fixo e ganharam':' máquina não tinha número fixo e ganhou')
+      +' agora: '+esc(etqFaixas(feitas).replace(/(\d+)/g,'#$1'))+'.</b> É esse número que vai na etiqueta e aparece na lista.';
+  }
+  const ns=naMao.filter(p=>!numProv.has(p.id)).map(p=>+p.num).filter(n=>n>0);
   document.getElementById('etqNums').value=etqFaixas(ns); etqMontar();
 };
-window.etqDaEdicao=()=>{
+window.etqDaEdicao=async()=>{
   const p=prods.find(x=>x.id===editId); if(!p) return;
-  if(!p.num){ alert('Esta máquina ainda não tem número.'); return; }
+  await etqFixarNumeros([p]);
+  if(!p.num || numProv.has(p.id)){ alert('Não consegui dar um número fixo a esta máquina agora. Confira a internet e tente de novo.'); return; }
+  const t=document.getElementById('moTit'); if(t) t.textContent='Editar produto #'+p.num;
   etqAbrir(String(p.num));
 };
 // Impressora no computador: página do tamanho da etiqueta, uma por página.
@@ -15699,7 +15741,7 @@ window.qrAbrir=n=>{
   if(!prods.length || prods.every(p=>/^x\d+$/.test(String(p.id)))){
     alert('🏷️ Etiqueta #'+n+': não consegui ler as máquinas agora. Confira a internet e escaneie de novo.'); return;
   }
-  const p=prods.find(x=>+x.num===n);
+  const p=prodPorNum(n);
   if(p){ qrCadFechar(); openEdit(p.id); return; }
   qrCadAbrir(n);
 };
