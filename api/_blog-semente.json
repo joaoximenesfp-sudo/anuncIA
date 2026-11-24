@@ -1,6 +1,96 @@
 {
   "artigos": [
     {
+      "titulo": "Memória cara: notebooks baratos devem voltar a ter 8 GB de RAM",
+      "resumo": "Com a memória RAM custando caro, a ASUS diz que PCs de entrada e intermediários devem sair com 8 GB em vez de 16 GB. Veja por que e o que conferir antes de comprar.",
+      "corpo": "A memória RAM, a peça que deixa o computador trabalhar com vários programas abertos ao mesmo tempo, ficou tão cara que está mudando a ficha dos notebooks. Em reunião com os acionistas, o co-CEO da ASUS, S.Y. Hsu, disse que as máquinas de entrada e as intermediárias, que vinham com 16 GB, podem passar a sair com a metade disso.\n\n## Por que isso está acontecendo\n\nO mercado vive uma crise de memória, e o preço disparou: hoje, 16 GB de memória DDR5 custam mais que uma placa de vídeo de entrada de gerações passadas. A ASUS conta que tentou repassar a alta ao longo do ano, mas os clientes começaram a adiar a compra. Cortar a memória para 8 GB foi a saída para segurar o preço, principalmente dos notebooks.\n\nA empresa também prevê que as vendas de computadores no mundo caiam de 10% a 15% em 2027, mais no primeiro semestre, com chance de recuperação no segundo. Já quem compra máquina de ponta tem aceitado melhor os aumentos.\n\n## 8 GB dão conta?\n\nSegundo Hsu, os 16 GB eram recomendados para garantir uma boa experiência no Windows. A Microsoft fez ajustes recentes, que diminuíram o consumo de memória e as integrações mais pesadas do Copilot, e a ASUS trabalha com ela para que 8 GB entreguem um desempenho aceitável. Para estudar, escrever e navegar, dá. Com muitas abas, planilhas e reuniões ao mesmo tempo, o aperto aparece.\n\n## O que fazer antes de comprar\n\n- Na ficha do notebook, confira quanta memória vem e se ela pode ser aumentada depois.\n- Se o seu dia a dia pede 16 GB, não aceite menos só pelo preço: aumentar depois ficou caro, porque a memória avulsa também subiu.\n- Compare com um notebook corporativo seminovo, como ThinkPad e Latitude. Muitos têm 16 GB e foram feitos para o trabalho pesado do escritório.",
+      "pontos": [
+        "Memória RAM está cara: notebooks baratos devem voltar a sair com 8 GB em vez de 16 GB.",
+        "Quem disse foi o co-CEO da ASUS. Repassar a alta fez os clientes adiarem a compra.",
+        "Com os ajustes recentes no Windows, 8 GB dão para o básico. Muitas abas e reuniões pedem 16 GB.",
+        "Antes de comprar, veja quanta memória vem e se dá para aumentar depois."
+      ],
+      "legenda": "A memória RAM ficou cara, e os notebooks baratos vão sentir. 🧠\n\nSegundo a ASUS, as máquinas de entrada que vinham com 16 GB devem voltar a sair com 8 GB. No blog: por que isso está acontecendo, se 8 GB dão conta e o que conferir antes de comprar.\n\nLeia o artigo completo no blog: link na bio.\n\n#notebook #memoriaram #hardware #tecnologia #dicas",
+      "assunto": "Mercado",
+      "termos": [
+        "16GB",
+        "ThinkPad",
+        "Latitude"
+      ],
+      "slug": "memoria-cara-notebooks-baratos-devem-voltar-a-ter-8-gb-de-ram",
+      "tipo": "noticia",
+      "fonte": {
+        "nome": "Canaltech",
+        "titulo": "Retrocesso: ASUS diz que PCs baratos voltarão a ter 8 GB de RAM por padrão",
+        "url": "https://canaltech.com.br/hardware/retrocesso-asus-diz-que-pcs-baratos-voltarao-a-ter-8-gb-de-ram-por-padrao/"
+      },
+      "fontes": [],
+      "publicado_em": "2026-11-24T14:42:00.000Z",
+      "atualizado_em": "2026-11-24T14:42:00.000Z",
+      "status": "publicado",
+      "origem": "ia",
+      "editado": false,
+      "insta": null
+    },
+    {
+      "titulo": "Windows 11 26H2 começa a chegar sozinho: o que muda e como adiar",
+      "resumo": "A Microsoft vai instalar a versão 26H2 automaticamente nos PCs com Windows 11 24H2 ou 25H2. A atualização é pequena, mas dá para pausar se você estiver no meio de um trabalho.",
+      "corpo": "A Microsoft começou a instalar sozinha a versão 26H2 do Windows 11, lançada oficialmente em setembro. Até agora, quem quisesse a novidade precisava abrir o Windows Update e pedir a instalação. A partir de agora, a atualização chega aos poucos e é feita em segundo plano, sem que você precise fazer nada.\n\n## Quem recebe\n\nA instalação automática vale para os computadores que já estão no Windows 11 nas versões 24H2 ou 25H2. Ela é voltada às máquinas que não são administradas pelo setor de TI de uma empresa, o que inclui os notebooks de casa. A liberação é gradual: alguns computadores recebem antes, outros depois.\n\n## É seguro?\n\nEm linhas gerais, sim. A 26H2 usa os mesmos arquivos essenciais das versões 24H2 e 25H2 e traz recursos que já tinham chegado em atualizações anteriores, por isso o pacote, em muitos casos, é pequeno. Como toda atualização desse porte, ela também corrige falhas e faz ajustes no sistema.\n\n## O que fazer\n\n- **Quer esperar?** Vá em Configurações, Windows Update, e use Pausar atualizações. Dá para escolher uma data ou um período.\n- **Quer já?** No mesmo lugar, clique em Verificar se há atualizações.\n- **Antes de instalar**, salve o que estiver aberto e deixe o notebook na tomada.\n\nPausar ajuda a não ser pego no meio de uma entrega, mas não deixe para sempre: as atualizações também fecham brechas de segurança. Se o seu notebook não roda o Windows 11 ou ficou lento demais para ele, pode ser a hora de trocar. Os corporativos revisados, como ThinkPad e Latitude, saem da loja com Windows e Office instalados.",
+      "pontos": [
+        "O Windows 11 26H2 começou a ser instalado sozinho nos PCs com as versões 24H2 e 25H2.",
+        "A liberação é aos poucos e vale para os PCs de casa, fora do controle de TI de empresas.",
+        "O pacote é pequeno: usa a mesma base das versões anteriores e traz correções de falhas.",
+        "Quer esperar? Configurações, Windows Update, Pausar atualizações. Só não adie para sempre."
+      ],
+      "legenda": "O Windows 11 vai se atualizar sozinho para a versão 26H2. 🔄\n\nA Microsoft começou a liberar a atualização automática para quem já está nas versões 24H2 ou 25H2. No blog: quem recebe, se é seguro e como adiar se você estiver no meio de um trabalho.\n\nLeia o artigo completo no blog: link na bio.\n\n#windows11 #windows #notebook #tecnologia #dicas",
+      "assunto": "Notícia",
+      "termos": [
+        "ThinkPad",
+        "Latitude"
+      ],
+      "slug": "windows-11-26h2-comeca-a-chegar-sozinho-o-que-muda-e-como-adiar",
+      "tipo": "noticia",
+      "fonte": {
+        "nome": "Tecnoblog",
+        "titulo": "Microsoft anuncia atualização automática para o Windows 11 26H2",
+        "url": "https://tecnoblog.net/noticias/microsoft-anuncia-atualizacao-automatica-para-o-windows-11-26h2/"
+      },
+      "fontes": [],
+      "publicado_em": "2026-11-24T14:41:00.000Z",
+      "atualizado_em": "2026-11-24T14:41:00.000Z",
+      "status": "publicado",
+      "origem": "ia",
+      "editado": false,
+      "insta": null
+    },
+    {
+      "titulo": "Bateria de notebook usado: como ver a saúde dela em 1 minuto",
+      "resumo": "O próprio Windows gera um relatório que mostra quanto a bateria ainda segura e quantas vezes ela já foi carregada. Veja como pedir e como ler, antes de comprar.",
+      "corpo": "Antes de comprar um notebook usado, vale saber como está a bateria. Ela se desgasta com o uso, e uma máquina que funciona bem na tomada pode durar pouco longe dela. O próprio Windows mostra isso num relatório, sem instalar nenhum programa.\n\n## Como gerar o relatório\n\n- **Passo 1:** abra o menu Iniciar, digite **cmd** e abra o Prompt de Comando.\n- **Passo 2:** digite powercfg /batteryreport e aperte Enter.\n- **Passo 3:** o Windows avisa onde salvou o arquivo battery-report.html, normalmente na sua pasta de usuário. Abra esse arquivo no navegador.\n\n## O que olhar\n\nNa parte Installed batteries aparecem dois números. DESIGN CAPACITY é quanto a bateria segurava quando era nova, e FULL CHARGE CAPACITY é quanto ela segura hoje. Divida o segundo pelo primeiro e você tem a saúde da bateria em porcentagem. Logo abaixo, CYCLE COUNT mostra quantos ciclos de carga ela já fez.\n\nUma regra prática para ler o resultado:\n\n- **Perto de 80% ou mais:** bateria em boa forma para o dia a dia.\n- **Entre 60% e 80%:** ainda serve, mas dura menos longe da tomada.\n- **Abaixo de 60%:** conte com usar mais na tomada ou trocar a bateria.\n\n## Na hora de comprar\n\nPeça o relatório ao vendedor ou gere você mesmo, na frente dele: leva menos de um minuto. Desconfie de quem não deixa ver. E lembre que bateria é peça de desgaste: o número de hoje mostra como ela está, mas não garante por quanto tempo vai durar.\n\nNa Tech Campinas, os notebooks são revisados um a um, e muitos anúncios já trazem o resultado desse relatório.",
+      "pontos": [
+        "O Windows mostra a saúde da bateria: no Prompt de Comando, digite powercfg /batteryreport.",
+        "Compare FULL CHARGE CAPACITY com DESIGN CAPACITY: é quanto a bateria segura hoje.",
+        "Regra prática: perto de 80% ou mais está boa; abaixo de 60%, dura pouco longe da tomada.",
+        "Comprando usado? Peça o relatório ou gere na frente do vendedor."
+      ],
+      "legenda": "Vai comprar notebook usado? Veja a bateria antes de pagar. 🔋\n\nO próprio Windows gera um relatório que mostra quanto a bateria ainda segura e quantos ciclos de carga ela já fez. No blog: o passo a passo e como ler os números.\n\nLeia o artigo completo no blog: link na bio.\n\n#notebook #bateria #windows #notebookusado #dicas",
+      "assunto": "Guia",
+      "termos": [
+        "Latitude",
+        "ThinkPad"
+      ],
+      "slug": "bateria-de-notebook-usado-como-ver-a-saude-dela-em-1-minuto",
+      "tipo": "guia",
+      "fonte": null,
+      "fontes": [],
+      "publicado_em": "2026-11-24T14:40:00.000Z",
+      "atualizado_em": "2026-11-24T14:40:00.000Z",
+      "status": "publicado",
+      "origem": "ia",
+      "editado": false,
+      "insta": null
+    },
+    {
       "titulo": "Jensen Huang volta à Nvidia: o que aconteceu e por que importa",
       "resumo": "O cofundador da Nvidia renunciou no dia 12, em meio a um escândalo com suspeita de espionagem, e foi reconduzido ao cargo 11 dias depois.",
       "corpo": "O conselho da Nvidia decidiu reconduzir o cofundador Jensen Huang ao cargo de presidente-executivo, o CEO da empresa. Ele tinha renunciado no dia 12 de novembro. A volta foi comemorada nesta segunda-feira (23) pelo presidente dos Estados Unidos, Donald Trump, que disse que ela não traz risco para a segurança nacional do país.\n\n## Por que ele tinha saído\n\nHuang deixou o cargo depois da revelação de casos extraconjugais. Um deles seria com Alice Huang, que já comandou a Megaspeed International. A empresa, de Singapura, está entre as grandes clientes da Nvidia e é investigada pelas autoridades americanas desde 2024 por suspeita de contrabandear chips de inteligência artificial da Nvidia para a China.\n\nSegundo o jornal The New York Times, Alice manteve contato com um agente do serviço de espionagem chinês entre meados de 2025 e outubro. O governo americano diz que ainda não há conclusão sobre se ela atuava como espiã.\n\n## A pressão pela volta\n\nCom o escândalo, as ações da Nvidia caíram forte, e a empresa perdeu centenas de bilhões de dólares em valor de mercado. No dia 17, o presidente do conselho, Harvey Jones, chegou a dizer que Huang não seria recontratado. Veio então a campanha Bring Jensen Back (\"Tragam Jensen de volta\"), com uma carta aberta assinada por Elon Musk, por Tim Sweeney, fundador da Epic Games, e por funcionários da própria Nvidia. No domingo, Trump pediu a recontratação, e o conselho voltou atrás. Com a notícia, as ações da Nvidia dispararam cerca de 30% antes da abertura da bolsa nesta segunda.\n\n## Por que isso importa\n\nA Nvidia começou fazendo chips de vídeo para jogos, como as GeForce dos notebooks gamer, e hoje domina os chips usados em inteligência artificial. Vale cerca de US$ 3,8 trilhões e, além de vender, financia várias empresas do setor. Por isso, um analista ouvido pela BBC viu \"risco real\" de a saída de Huang mudar a estratégia da empresa e frear os investimentos em IA.\n\nPara quem tem um notebook ou uma placa da Nvidia, nada muda no dia a dia: a troca no comando não mexe nos equipamentos nem nos programas em uso. O que estava em jogo era o rumo da empresa que mais pesa na onda da IA.",
