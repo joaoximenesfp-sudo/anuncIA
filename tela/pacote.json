@@ -1,5 +1,5 @@
 {
- "versao": "2026-11-23.1",
+ "versao": "2026-11-24.1",
  "app": "2026-11-20.7",
  "regioes": {
   "centro": {"nome": "Centro de Campinas", "lat": -22.9056, "lon": -47.0608, "km": 1.5},
@@ -33,6 +33,18 @@
   "gio": {
    "nome": "Dra. Giovanna Molinari",
    "destino": "https://wa.me/5519983895564?text=Ol%C3%A1%2C%20Dra.%20Giovanna!%20Vi%20o%20an%C3%BAncio%20no%20carro%20e%20quero%20agendar%20um%20atendimento%20em%20casa."
+  },
+  "of-t14": {
+   "nome": "Tech Campinas · ThinkPad T14 Gen 2",
+   "destino": "https://wa.me/5519993956265?text=Oi%21%20Vi%20no%20carro%20o%20ThinkPad%20T14%20Gen%202%20i7%20por%20R%24%203.700.%20Ainda%20tem%3F"
+  },
+  "of-e14": {
+   "nome": "Tech Campinas · ThinkPad E14 Gen 2",
+   "destino": "https://wa.me/5519993956265?text=Oi%21%20Vi%20no%20carro%20o%20ThinkPad%20E14%20Gen%202%20i5%2016%20GB%20por%20R%24%202.400.%20Ainda%20tem%3F"
+  },
+  "of-3420": {
+   "nome": "Tech Campinas · Latitude 3420",
+   "destino": "https://wa.me/5519993956265?text=Oi%21%20Vi%20no%20carro%20o%20Dell%20Latitude%203420%20por%20R%24%202.200.%20Ainda%20tem%3F"
   }
  },
  "midias": {
@@ -55,8 +67,8 @@
    "arquivo": "midia/tech.mp4",
    "tipo": "video",
    "duracao": 71.8,
-   "bytes": 9418751,
-   "hash": "5163f67744d0",
+   "bytes": 9426498,
+   "hash": "69376f3b5585",
    "dono": "tech",
    "qr": [
     {
@@ -441,7 +453,7 @@
    "hash": "48f40bb2e80d",
    "qr": [
     {
-     "anuncio": "gio",
+     "anuncio": "catalogo",
      "x": 1603,
      "y": 843,
      "lado": 163,
@@ -646,6 +658,66 @@
      "segue": true
     }
    ]
+  },
+  "ofertas": {
+   "arquivo": "midia/ofertas.webp",
+   "tipo": "imagem",
+   "bytes": 105570,
+   "hash": "6b03baf1ca32",
+   "dono": "catalogo",
+   "qr": [
+    {
+     "anuncio": "catalogo",
+     "x": 1361,
+     "y": 303,
+     "lado": 377
+    }
+   ]
+  },
+  "of-t14": {
+   "arquivo": "midia/of-t14.webp",
+   "tipo": "imagem",
+   "bytes": 97304,
+   "hash": "51e898d3a735",
+   "dono": "of-t14",
+   "qr": [
+    {
+     "anuncio": "of-t14",
+     "x": 1568,
+     "y": 648,
+     "lado": 232
+    }
+   ]
+  },
+  "of-e14": {
+   "arquivo": "midia/of-e14.webp",
+   "tipo": "imagem",
+   "bytes": 106602,
+   "hash": "4468289c7901",
+   "dono": "of-e14",
+   "qr": [
+    {
+     "anuncio": "of-e14",
+     "x": 1568,
+     "y": 648,
+     "lado": 232
+    }
+   ]
+  },
+  "of-3420": {
+   "arquivo": "midia/of-3420.webp",
+   "tipo": "imagem",
+   "bytes": 109548,
+   "hash": "56a6312dbd51",
+   "dono": "of-3420",
+   "qr": [
+    {
+     "anuncio": "of-3420",
+     "x": 1568,
+     "y": 648,
+     "lado": 232
+    }
+   ]
   }
  },
  "loop": [
@@ -669,6 +741,10 @@
    "segundos": 13
   },
   {
+   "midia": "ofertas",
+   "segundos": 14
+  },
+  {
    "midia": "p04",
    "segundos": 14
   },
@@ -681,12 +757,12 @@
    "segundos": 7
   },
   {
-   "midia": "t02",
-   "segundos": 14
+   "midia": "of-t14",
+   "segundos": 13
   },
   {
-   "midia": "c03",
-   "segundos": 13
+   "midia": "t02",
+   "segundos": 14
   },
   {
    "midia": "manut",
@@ -701,14 +777,6 @@
    "segundos": 14
   },
   {
-   "midia": "p05",
-   "segundos": 14
-  },
-  {
-   "midia": "t04",
-   "segundos": 14
-  },
-  {
    "midia": "compro",
    "segundos": 14
   },
@@ -717,7 +785,11 @@
    "segundos": 13
   },
   {
-   "midia": "p06",
+   "midia": "of-e14",
+   "segundos": 13
+  },
+  {
+   "midia": "p05",
    "segundos": 14
   },
   {
@@ -748,12 +820,12 @@
    "segundos": 14
   },
   {
-   "midia": "c02",
-   "segundos": 13
-  },
-  {
    "midia": "compro",
    "segundos": 14
+  },
+  {
+   "midia": "of-3420",
+   "segundos": 13
   },
   {
    "midia": "t06",
@@ -764,8 +836,16 @@
    "segundos": 14
   },
   {
-   "midia": "t08",
+   "midia": "t04",
    "segundos": 14
+  },
+  {
+   "midia": "ofertas",
+   "segundos": 14
+  },
+  {
+   "midia": "c02",
+   "segundos": 13
   },
   {
    "midia": "p03",
@@ -786,14 +866,6 @@
   {
    "midia": "p08",
    "segundos": 14
-  },
-  {
-   "midia": "t10",
-   "segundos": 14
-  },
-  {
-   "midia": "c07",
-   "segundos": 13
   },
   {
    "midia": "compro",
