@@ -1,5 +1,5 @@
 {
- "versao": "2026-11-24.3",
+ "versao": "2026-11-24.4",
  "app": "2026-11-20.7",
  "regioes": {
   "centro": {"nome": "Centro de Campinas", "lat": -22.9056, "lon": -47.0608, "km": 1.5},
@@ -811,8 +811,7 @@
    ]
   },
   {
-   "midia": "ofertas",
-   "segundos": 14
+   "midia": "mapa-tech"
   },
   {
    "midia": "p04",
@@ -875,7 +874,7 @@
    "segundos": 14
   },
   {
-   "midia": "t07",
+   "midia": "ofertas",
    "segundos": 14
   },
   {
@@ -953,7 +952,8 @@
    "segundos": 13
   },
   {
-   "midia": "mapa-tech"
+   "midia": "t07",
+   "segundos": 14
   },
   {
    "midia": "p08",
