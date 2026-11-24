@@ -1,5 +1,5 @@
 {
- "versao": "2026-11-24.1",
+ "versao": "2026-11-24.2",
  "app": "2026-11-20.7",
  "regioes": {
   "centro": {"nome": "Centro de Campinas", "lat": -22.9056, "lon": -47.0608, "km": 1.5},
@@ -718,6 +718,42 @@
      "lado": 232
     }
    ]
+  },
+  "mapa-tech": {
+   "arquivo": "midia/mapa-tech.mp4",
+   "tipo": "video",
+   "duracao": 17,
+   "bytes": 4644830,
+   "hash": "be86fac3951a",
+   "dono": "tech",
+   "qr": [
+    {
+     "anuncio": "catalogo",
+     "x": 1237,
+     "y": 497,
+     "lado": 406,
+     "de": 12,
+     "ate": 17
+    }
+   ]
+  },
+  "mapa-gio": {
+   "arquivo": "midia/mapa-gio.mp4",
+   "tipo": "video",
+   "duracao": 14,
+   "bytes": 2049708,
+   "hash": "9f3f2c0f6482",
+   "dono": "gio",
+   "qr": [
+    {
+     "anuncio": "gio",
+     "x": 150,
+     "y": 600,
+     "lado": 319,
+     "de": 8.5,
+     "ate": 14
+    }
+   ]
   }
  },
  "loop": [
@@ -805,7 +841,7 @@
   },
   {
    "midia": "t05",
-   "segundos": 14
+   "segundos": 13
   },
   {
    "midia": "q03a",
@@ -816,8 +852,7 @@
    "segundos": 7
   },
   {
-   "midia": "p02",
-   "segundos": 14
+   "midia": "mapa-gio"
   },
   {
    "midia": "compro",
@@ -829,7 +864,7 @@
   },
   {
    "midia": "t06",
-   "segundos": 14
+   "segundos": 13
   },
   {
    "midia": "p07",
@@ -837,7 +872,7 @@
   },
   {
    "midia": "t04",
-   "segundos": 14
+   "segundos": 13
   },
   {
    "midia": "ofertas",
@@ -860,8 +895,7 @@
    "segundos": 13
   },
   {
-   "midia": "t09",
-   "segundos": 14
+   "midia": "mapa-tech"
   },
   {
    "midia": "p08",
