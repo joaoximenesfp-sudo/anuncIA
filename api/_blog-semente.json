@@ -1,6 +1,109 @@
 {
   "artigos": [
     {
+      "titulo": "Chrome fechado continua gastando memória: o culpado pode ser o Gemini",
+      "resumo": "Um usuário do Windows viu o Chrome ocupar de 300 a 700 MB de RAM com todas as janelas fechadas. O motivo é o acesso rápido ao Gemini, que dá para desligar.",
+      "corpo": "Fechou o Chrome, mas o notebook continua pesado? Um usuário do Windows contou no Reddit que o navegador seguia ocupando de 300 a 700 MB de memória RAM mesmo com todas as janelas fechadas. Ele resolveu ao desligar o acesso rápido ao Gemini, o assistente de inteligência artificial do Google que vem dentro do Chrome.\n\n## Por que isso acontece\n\nDepois de ativado, o Gemini pode ser chamado pela bandeja do Windows, a área de ícones perto do relógio, e por um atalho de teclado. Por isso, fechar as janelas não encerra o navegador inteiro: parte dele continua rodando. No caso relatado, desativar extensões e apagar aplicativos não adiantou. Num perfil novo, sem login na conta Google, o Chrome fechou normalmente.\n\n## Como conferir e resolver\n\n- **Conferir:** feche o Chrome, abra o Gerenciador de Tarefas com Ctrl + Shift + Esc e veja se o Google Chrome ainda aparece na lista.\n- **Desligar o acesso rápido:** nas Configurações do Chrome, procure a parte do Gemini e desligue o acesso pela bandeja e pelo atalho. Se a opção não aparecer, abra o Gemini pelo menu de três pontos e conclua a ativação primeiro.\n- **Segundo plano:** em Configurações, Sistema, desligue a opção de continuar executando apps em segundo plano quando o Chrome for fechado.\n- **Durante o uso:** em Configurações, Desempenho, ligue a Economia de memória, que libera a memória das abas paradas.\n\n## Por que cada MB conta\n\nA memória deve seguir cara por um bom tempo. A Samsung, uma das três maiores fabricantes, já tem quase toda a produção de 2027 a 2029 reservada, boa parte dela para servidores, puxada pela corrida da inteligência artificial. Hoje as fabricantes atendem só de 60% a 70% da procura, e isso deve piorar em 2027.\n\nNum notebook de 8 GB, 700 MB é quase um décimo da memória. Se o seu dia a dia pede mais, vale uma máquina que já venha com 16 GB, como muitos ThinkPad e Latitude.",
+      "pontos": [
+        "O Chrome pode seguir gastando de 300 a 700 MB de RAM mesmo com todas as janelas fechadas.",
+        "O motivo é o acesso rápido ao Gemini, pela bandeja do Windows e por um atalho de teclado.",
+        "Para resolver, desligue esse acesso nas Configurações do Chrome e confira no Gerenciador de Tarefas.",
+        "Memória vai seguir cara: a Samsung já tem quase toda a produção de 2027 a 2029 reservada."
+      ],
+      "legenda": "Fechou o Chrome e o notebook continua pesado? 🐢\n\nO navegador pode seguir gastando até 700 MB de memória por causa do acesso rápido ao Gemini. No blog: como conferir no Gerenciador de Tarefas e como desligar.\n\nLeia o artigo completo no blog: link na bio.\n\n#chrome #notebook #memoriaram #dicas #tecnologia",
+      "assunto": "Dica",
+      "termos": [
+        "16GB",
+        "ThinkPad",
+        "Latitude"
+      ],
+      "slug": "chrome-fechado-continua-gastando-memoria-o-culpado-pode-ser-o-gemini",
+      "tipo": "noticia",
+      "fonte": {
+        "nome": "Tecnoblog",
+        "titulo": "Chrome “bebe” até 700 MB de RAM mesmo quando Gemini está fechado",
+        "url": "https://tecnoblog.net/noticias/chrome-bebe-ate-700-mb-de-ram-mesmo-quando-gemini-esta-fechado/"
+      },
+      "fontes": [
+        {
+          "nome": "Tecnoblog",
+          "titulo": "Chrome “bebe” até 700 MB de RAM mesmo quando Gemini está fechado",
+          "url": "https://tecnoblog.net/noticias/chrome-bebe-ate-700-mb-de-ram-mesmo-quando-gemini-esta-fechado/"
+        },
+        {
+          "nome": "Canaltech",
+          "titulo": "Corrida da IA esgota fábricas de memória da Samsung até 2029 e gera fila até 2031",
+          "url": "https://canaltech.com.br/hardware/corrida-da-ia-esgota-fabricas-de-memoria-da-samsung-ate-2029-e-gera-fila-ate-2031/"
+        }
+      ],
+      "publicado_em": "2026-11-25T15:17:00.000Z",
+      "atualizado_em": "2026-11-25T15:17:00.000Z",
+      "status": "publicado",
+      "origem": "ia",
+      "editado": false,
+      "insta": null
+    },
+    {
+      "titulo": "Apagão no Outlook faz a Microsoft decretar Código Vermelho",
+      "resumo": "O Outlook ficou fora do ar de 12 para 13 de novembro. Agora a Microsoft quer resolver falhas globais em até uma hora. Veja o que muda e como se preparar para a próxima.",
+      "corpo": "O apagão que derrubou o Outlook e outros serviços da Microsoft no dia 12 de novembro ainda mexe com a empresa. Segundo a agência Reuters, que teve acesso a documentos internos, a Microsoft criou um plano chamado Código Vermelho para evitar que algo assim se repita.\n\n## O que é o Código Vermelho\n\nApesar do nome, não é um alarme temporário. É um plano com cinco frentes de trabalho, e a principal é resolver em até uma hora os problemas que atingem o mundo inteiro, distribuindo mais rápido as correções urgentes.\n\nA empresa ainda está longe disso. Nos documentos, Jason Henderson, presidente da divisão M365 Core, conta que, em outro caso recente, uma correção urgente levou de cinco a seis dias para chegar ao mundo todo.\n\n## O que causou o apagão\n\nNão foi ataque hacker nem vírus. A falha veio de uma atualização de software nos gateways de rede do Microsoft 365, os servidores que recebem as conexões dos usuários e as distribuem entre os serviços da empresa. O problema só foi resolvido no dia seguinte e atrapalhou milhares de pessoas e empresas no mundo todo.\n\n## Como se preparar para a próxima\n\n- **Veja se a falha é geral:** antes de mexer no notebook, confira a página de status do Microsoft 365 ou sites que acompanham quedas de serviços.\n- **Guarde no notebook o que é importante:** baixe os anexos e documentos de que você vai precisar, para não depender só da nuvem.\n- **Tenha um plano B:** combine com clientes e colegas outro canal, como telefone ou WhatsApp, para os dias de falha.\n- **Desconfie de e-mails sobre a falha:** golpistas aproveitam a confusão para pedir senha. Não clique em mensagens que pedem para reativar a conta.\n\nCom o plano, a Microsoft quer falhas mais curtas, mas o próprio Henderson admite que a empresa ainda não chegou lá. Um pouco de preparo evita que um dia sem e-mail vire um dia sem trabalho.",
+      "pontos": [
+        "O Outlook caiu em 12 de novembro e só voltou no dia seguinte. A causa foi uma atualização, não um ataque.",
+        "A Microsoft criou o Código Vermelho, um plano para resolver falhas globais em até uma hora.",
+        "Em outro caso recente, uma correção urgente levou até seis dias para chegar ao mundo todo.",
+        "Prepare-se: guarde no notebook o que é importante e tenha outro canal para falar com clientes."
+      ],
+      "legenda": "O Outlook ficou um dia fora do ar, e a Microsoft entrou em Código Vermelho. 🚨\n\nA meta agora é resolver falhas globais em até uma hora. No blog: o que causou o apagão, o que muda e como se preparar para não ficar parado na próxima.\n\nLeia o artigo completo no blog: link na bio.\n\n#microsoft #outlook #trabalho #tecnologia #dicas",
+      "assunto": "Notícia",
+      "termos": [
+        "ThinkPad",
+        "Latitude"
+      ],
+      "slug": "apagao-no-outlook-faz-a-microsoft-decretar-codigo-vermelho",
+      "tipo": "noticia",
+      "fonte": {
+        "nome": "Tecnoblog",
+        "titulo": "Microsoft decreta “Código Vermelho” após apagão no Outlook",
+        "url": "https://tecnoblog.net/noticias/microsoft-decreta-codigo-vermelho-apos-apagao-no-outlook/"
+      },
+      "fontes": [],
+      "publicado_em": "2026-11-25T15:16:00.000Z",
+      "atualizado_em": "2026-11-25T15:16:00.000Z",
+      "status": "publicado",
+      "origem": "ia",
+      "editado": false,
+      "insta": null
+    },
+    {
+      "titulo": "Notebook usado na Black Friday: o que testar antes de pagar",
+      "resumo": "Desconto bom não adianta se a máquina vem com defeito. Veja o que conferir em uns 10 minutos, da tela à bateria, e os sinais de que é melhor não fechar negócio.",
+      "corpo": "A Black Friday é uma boa hora para comprar notebook usado, mas desconto nenhum compensa uma máquina com defeito. Com uns 10 minutos de teste, dá para pegar a maior parte dos problemas antes de pagar.\n\n## Antes de ir buscar\n\nPeça o modelo exato, que fica na etiqueta embaixo do notebook, e confira a ficha dele: processador, memória e SSD. Pergunte também se tem garantia e se vem com nota ou recibo.\n\n## Com o notebook ligado\n\n- **Ficha:** em Configurações, Sistema, Sobre, veja se o processador e a memória batem com o anúncio.\n- **Tela:** abra uma imagem toda branca e outra toda preta em tela cheia. Procure pontos apagados, manchas e listras.\n- **Teclado e touchpad:** abra o Bloco de Notas, digite todas as teclas e teste os dois cliques.\n- **Bateria:** no Prompt de Comando, digite powercfg /batteryreport e veja quanto ela ainda segura.\n- **Conexões:** teste as portas USB, a entrada do carregador, a do fone, o Wi-Fi e o Bluetooth.\n- **Câmera e microfone:** abra o app Câmera e grave um vídeo curto com som.\n- **Windows:** em Configurações, Sistema, Ativação, confira se ele está ativado.\n\n## Sinais para não fechar negócio\n\n- Pedido de senha logo ao ligar, antes do Windows, ou tela de login de uma empresa: a máquina pode estar bloqueada.\n- Ventoinha muito alta ou notebook esquentando com pouco uso.\n- Vendedor com pressa, que não deixa testar ou que só aceita pagamento adiantado.\n\nTeste com calma, mesmo com o vendedor apressado. Se algo falhar, peça desconto ou procure outro.\n\nNa Tech Campinas, as máquinas saem revisadas e com 90 dias de garantia.",
+      "pontos": [
+        "Antes de pagar, teste tela, teclado, touchpad, portas, Wi-Fi, câmera e microfone. Leva uns 10 minutos.",
+        "Em Configurações, Sistema, Sobre, veja se o processador e a memória batem com o anúncio.",
+        "Bateria: no Prompt de Comando, powercfg /batteryreport mostra quanto ela ainda segura.",
+        "Senha ao ligar, vendedor com pressa ou que não deixa testar: melhor não fechar negócio."
+      ],
+      "legenda": "Vai comprar notebook usado na Black Friday? Teste antes de pagar. ✅\n\nNo blog: o que conferir em uns 10 minutos, da tela à bateria, e os sinais de que é melhor não fechar negócio.\n\nLeia o artigo completo no blog: link na bio.\n\n#blackfriday #notebookusado #notebook #dicas #tecnologia",
+      "assunto": "Guia",
+      "termos": [
+        "ThinkPad",
+        "Latitude",
+        "i5"
+      ],
+      "slug": "notebook-usado-na-black-friday-o-que-testar-antes-de-pagar",
+      "tipo": "guia",
+      "guia": "Como escolher um notebook usado sem cair em cilada",
+      "fonte": null,
+      "fontes": [],
+      "publicado_em": "2026-11-25T15:15:00.000Z",
+      "atualizado_em": "2026-11-25T15:15:00.000Z",
+      "status": "publicado",
+      "origem": "ia",
+      "editado": false,
+      "insta": null
+    },
+    {
       "titulo": "Memória cara: notebooks baratos devem voltar a ter 8 GB de RAM",
       "resumo": "Com a memória RAM custando caro, a ASUS diz que PCs de entrada e intermediários devem sair com 8 GB em vez de 16 GB. Veja por que e o que conferir antes de comprar.",
       "corpo": "A memória RAM, a peça que deixa o computador trabalhar com vários programas abertos ao mesmo tempo, ficou tão cara que está mudando a ficha dos notebooks. Em reunião com os acionistas, o co-CEO da ASUS, S.Y. Hsu, disse que as máquinas de entrada e as intermediárias, que vinham com 16 GB, podem passar a sair com a metade disso.\n\n## Por que isso está acontecendo\n\nO mercado vive uma crise de memória, e o preço disparou: hoje, 16 GB de memória DDR5 custam mais que uma placa de vídeo de entrada de gerações passadas. A ASUS conta que tentou repassar a alta ao longo do ano, mas os clientes começaram a adiar a compra. Cortar a memória para 8 GB foi a saída para segurar o preço, principalmente dos notebooks.\n\nA empresa também prevê que as vendas de computadores no mundo caiam de 10% a 15% em 2027, mais no primeiro semestre, com chance de recuperação no segundo. Já quem compra máquina de ponta tem aceitado melhor os aumentos.\n\n## 8 GB dão conta?\n\nSegundo Hsu, os 16 GB eram recomendados para garantir uma boa experiência no Windows. A Microsoft fez ajustes recentes, que diminuíram o consumo de memória e as integrações mais pesadas do Copilot, e a ASUS trabalha com ela para que 8 GB entreguem um desempenho aceitável. Para estudar, escrever e navegar, dá. Com muitas abas, planilhas e reuniões ao mesmo tempo, o aperto aparece.\n\n## O que fazer antes de comprar\n\n- Na ficha do notebook, confira quanta memória vem e se ela pode ser aumentada depois.\n- Se o seu dia a dia pede 16 GB, não aceite menos só pelo preço: aumentar depois ficou caro, porque a memória avulsa também subiu.\n- Compare com um notebook corporativo seminovo, como ThinkPad e Latitude. Muitos têm 16 GB e foram feitos para o trabalho pesado do escritório.",
@@ -88,7 +191,8 @@
       "status": "publicado",
       "origem": "ia",
       "editado": false,
-      "insta": null
+      "insta": null,
+      "guia": "Saúde da bateria do notebook: o que significa e como conferir"
     },
     {
       "titulo": "Jensen Huang volta à Nvidia: o que aconteceu e por que importa",

@@ -947,13 +947,6 @@ module.exports = async (req, res) => {
     if (q.acao === 'gerar') return json(res, 200, await gerar(req, { manual: false }));
     if (q.acao === 'fontes') {
       const itens = await buscarNoticias();
-      // TEMPORÁRIO: leitura das matérias para escrever as notícias à mão (só com a chave)
-      if (q.ler && require('crypto').createHash('sha256').update(String(q.ler)).digest('hex') === '979bfa646b37286bb8c8beb89ec1ad4cdfa3b97d0a2c83a641be62c6eb021271') {
-        const cands = escolherCandidatos(itens, []);
-        const pega = s => /^\d+$/.test(s) ? cands[+s] : cands.find(c => c.url.includes(s));
-        const sel = String(q.n || '').split(',').filter(Boolean).map(pega).filter(Boolean).slice(0, 8);
-        return json(res, 200, { ok: true, materias: await Promise.all(sel.map(async c => ({ ...c, quando: c.quando ? new Date(c.quando).toISOString() : '', texto: await textoDaMateria(c.url, 9000) }))) });
-      }
       return json(res, 200, { ok: true, lidas: itens.length, porFonte: FONTES.map(f => ({ fonte: f.nome, itens: itens.filter(i => i.fonte === f.nome).length })),
         candidatas: escolherCandidatos(itens, (await lerBlog()).usadas).map(c => ({ fonte: c.fonte, titulo: c.titulo, url: c.url, pontos: c.pontos })) });
     }
