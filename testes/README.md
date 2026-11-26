@@ -23,6 +23,7 @@ node testes/test-etiqueta.js       # etiqueta com QR: números "101-110", próxi
 node testes/test-etiqueta-pdf.js   # etiquetas em PDF: quantas cabem na A4, uma por página no rolo, o PDF lido de volta e o botão da barra de seleção
 node testes/test-search-console.js # Search Console: o arquivo de verificação do Google segue na raiz, sem redirecionamento
 node testes/test-blog.js           # blog e página de cada máquina: notícias, artigo, sitemap, foto, ficha só com campos públicos e a lista do Google Shopping
+node testes/test-google-busca.js   # Google (busca) no Insights: só sócio, passo a passo sem a chave, passe assinado pela conta de serviço, números do período e do anterior, buscas e páginas
 node testes/test-endereco.js       # loja no endereço principal: o "/" do techcampinas.com.br mostra o catálogo, o do sistema segue o sistema e fica fora do Google
 node testes/test-fechamento.js     # fechamento do mês: vendas, comparação, origem, quem vendeu, compras por sócio, estoque no fim do mês e o texto do WhatsApp
 node testes/test-compra-usados.js  # "Compramos seu usado" no catálogo: a mensagem do WhatsApp, quando a seção aparece e as opções no sistema

@@ -378,6 +378,32 @@ button{transition:transform .08s ease}
 .ch{padding:16px 20px 0}
 .ct{font-size:.84rem;font-weight:600;color:var(--tx)}
 .cs{font-size:.72rem;color:var(--li);margin-top:2px}
+/* ── GOOGLE (BUSCA) no Insights: os números do Search Console ── */
+.gs{background:var(--w);border:1px solid var(--b);border-radius:var(--rad);box-shadow:var(--sh);padding:16px 18px;margin:0 0 12px}
+.gs-hd{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.gs-t{font-size:.84rem;font-weight:600;color:var(--tx)}
+.gs-s{font-size:.72rem;color:var(--li);margin-top:2px}
+.gs-per{display:flex;gap:6px}
+.gs-k{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:12px}
+.gs-kb{border:1px solid var(--b);border-radius:12px;padding:10px 12px}
+.gs-kl{font-size:.68rem;color:var(--li);text-transform:uppercase;letter-spacing:.04em}
+.gs-kv{font-size:1.35rem;font-weight:600;color:var(--tx);line-height:1.2;margin-top:2px}
+.gs-kd{font-size:.72rem;margin-top:2px;color:var(--li)}
+.gs-kd.up{color:var(--gr)}.gs-kd.dn{color:var(--re)}
+.gs-g{height:200px;margin-bottom:14px}
+.gs-ls{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.gs-tb{width:100%;border-collapse:collapse;font-size:.78rem}
+.gs-tb th{font-size:.66rem;color:var(--li);font-weight:600;text-align:right;padding:4px 6px;border-bottom:1px solid var(--b)}
+.gs-tb th:first-child,.gs-tb td:first-child{text-align:left}
+.gs-tb td{padding:6px;border-bottom:1px solid var(--b);text-align:right;color:var(--tx);vertical-align:top}
+.gs-tb td:first-child{word-break:break-word}
+.gs-tb a{color:var(--tx);text-decoration:none}
+.gs-tag{display:inline-block;font-size:.6rem;font-weight:600;color:var(--mu);background:var(--bg);border:1px solid var(--b);border-radius:999px;padding:0 6px;margin-right:5px}
+.gs-msg{font-size:.8rem;color:var(--mu);line-height:1.55}
+.gs-msg ol{margin:8px 0 0 18px;display:grid;gap:6px}
+.gs-mail{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0;font-size:.78rem}
+.gs-mail code{background:var(--bg);border:1px solid var(--b);border-radius:8px;padding:4px 8px;word-break:break-all}
+.gs-nota{font-size:.68rem;color:var(--li);margin-top:10px}
 .cw{padding:14px 16px 18px;position:relative;height:260px}
 .cw.tall{height:310px}
 
@@ -2584,6 +2610,13 @@ div:has(> .fc2){flex-wrap:wrap;row-gap:6px}
         </div><div class="cw tall"><canvas id="cRL"></canvas></div></div>
         <div class="cc"><div class="ch"><div class="ct">Unidades vendidas por mês</div><div class="cs">Volume de notebooks</div></div><div class="cw"><canvas id="cQ"></canvas></div></div>
         <div class="cc"><div class="ch"><div class="ct">Lucro médio por marca (R$)</div><div class="cs">Qual marca rende mais por venda</div></div><div class="cw"><canvas id="cLM"></canvas></div></div>
+      </div>
+
+      <!-- GOOGLE (BUSCA): os números do Search Console, só para sócio -->
+      <div class="gs" id="gsBox">
+        <div class="gs-hd"><div><div class="gs-t">🔎 Google (busca)</div><div class="gs-s" id="gsSub">Como o site aparece nas buscas do Google</div></div>
+          <div class="gs-per" id="gsPer"><button class="fc2" data-d="7" onclick="gsCarregar(7)">7 dias</button><button class="fc2 on" data-d="28" onclick="gsCarregar(28)">28 dias</button><button class="fc2" data-d="90" onclick="gsCarregar(90)">90 dias</button></div></div>
+        <div id="gsCorpo"><div class="gs-msg">Os números do Google carregam quando esta página abre.</div></div>
       </div>
 
       <!-- GIRO POR MARCA -->
@@ -9400,7 +9433,7 @@ window.sp2=p=>{
   const ativa=document.querySelector('.nt.on');
   const fila=ativa&&ativa.parentElement;
   if(ativa&&fila&&fila.scrollWidth>fila.clientWidth+1){ const c=ativa.offsetLeft-(fila.clientWidth-ativa.offsetWidth)/2; try{ fila.scrollTo({left:Math.max(0,c),behavior:'smooth'}); }catch(e){ fila.scrollLeft=Math.max(0,c); } }
-  if(p==='insights'){rkMesPadrao();buildCharts();}
+  if(p==='insights'){rkMesPadrao();buildCharts();if(window.gsCarregar)window.gsCarregar();}
   if(p==='painel'){ try{ buildPainel(); }catch(e){ console.error('buildPainel:',e); } buildPainelCharts(); }
   if(p==='financas'){renderFinLabel();checkNotificacoes();}
   if(p==='admin'){carregarAvisos();}
@@ -16619,6 +16652,84 @@ function catUrl(){
   const h=location.hostname;
   if(/\.vercel\.app$/.test(h)) return CAT_ORIGEM_PUBLICA+'/catalogo.html';
   return location.origin+location.pathname.replace(/[^/]*$/,'')+'catalogo.html';
+}
+
+// ── GOOGLE (BUSCA) NO INSIGHTS ──
+// Os números do Search Console (cliques, aparições, taxa de clique, posição, buscas e páginas), lidos
+// pela função /api/google com a conta de serviço que fica só na Vercel. Só sócio vê. Guarda 10 minutos.
+let gsDias=28, gsGraf=null; const gsCache={};
+const gsN=v=>Math.round(Number(v)||0).toLocaleString('pt-BR');
+const gsPct=v=>((Number(v)||0)*100).toLocaleString('pt-BR',{maximumFractionDigits:1})+'%';
+const gsPos=v=>(Number(v)||0).toLocaleString('pt-BR',{maximumFractionDigits:1});
+const gsAttr=s=>esc(String(s==null?'':s)).replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+const gsDia=s=>String(s||'').split('-').reverse().slice(0,2).join('/');
+// a comparação com o período anterior (na posição, número menor é melhor)
+function gsVar(a,b,menorMelhor){
+  a=Number(a)||0; b=Number(b)||0;
+  if(menorMelhor){
+    if(!a||!b) return '<div class="gs-kd">sem comparação</div>';
+    const d=b-a;
+    if(Math.abs(d)<0.05) return '<div class="gs-kd">igual ao período anterior</div>';
+    return `<div class="gs-kd ${d>0?'up':'dn'}">${d>0?'▲ subiu':'▼ caiu'} ${gsPos(Math.abs(d))} posições</div>`;
+  }
+  if(!b) return a?'<div class="gs-kd up">novo no período</div>':'<div class="gs-kd">sem comparação</div>';
+  const p=Math.round((a-b)/b*100);
+  return `<div class="gs-kd ${p>0?'up':p<0?'dn':''}">${p>0?'▲ ':p<0?'▼ ':''}${Math.abs(p)}% vs. período anterior</div>`;
+}
+window.gsCarregar=async dias=>{
+  if(dias) gsDias=dias;
+  const corpo=document.getElementById('gsCorpo'); if(!corpo) return;
+  document.querySelectorAll('#gsPer .fc2').forEach(b=>b.classList.toggle('on',Number(b.dataset.d)===gsDias));
+  const c=gsCache[gsDias];
+  if(c&&Date.now()-c.t<600000){ gsDesenhar(c.d); return; }
+  corpo.innerHTML='<div class="gs-msg">carregando os números do Google…</div>';
+  try{
+    const u=auth.currentUser; if(!u) throw new Error('Entre no sistema primeiro.');
+    const idToken=await u.getIdToken();
+    const r=await fetch('/api/google',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({idToken,dias:gsDias})});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok||!j.ok) throw new Error(j.erro||('Erro '+r.status+' no servidor'));
+    gsCache[gsDias]={t:Date.now(),d:j};
+    gsDesenhar(j);
+  }catch(e){ corpo.innerHTML=`<div class="gs-msg">Não consegui carregar os números do Google: ${esc(e.message)}</div>`; }
+};
+function gsDesenhar(d){
+  const corpo=document.getElementById('gsCorpo'), sub=document.getElementById('gsSub'); if(!corpo) return;
+  if(gsGraf){ try{ gsGraf.destroy(); }catch(e){} gsGraf=null; }
+  if(!d.ligado){
+    sub.textContent='Ainda não está ligado ao Search Console';
+    corpo.innerHTML=`<div class="gs-msg">${d.falta==='acesso'
+      ? `Falta só dar acesso: no Search Console › Configurações › Usuários e permissões, adicione este e-mail com a permissão <b>Restrita</b>:<div class="gs-mail"><code>${esc(d.email)}</code><button class="fc2" data-copiar="${gsAttr(d.email)}">Copiar</button></div>O passo a passo completo:`
+      : 'Para ver aqui os números do Google, faça uma vez:'}<ol>${(d.passos||[]).map(p=>`<li>${esc(p)}</li>`).join('')}</ol></div>`;
+    corpo.querySelectorAll('[data-copiar]').forEach(b=>{ b.onclick=()=>{ try{ navigator.clipboard.writeText(b.dataset.copiar); b.textContent='Copiado'; }catch(e){ prompt('Copie o e-mail:',b.dataset.copiar); } }; });
+    return;
+  }
+  const t=d.total||{}, a=d.antes||{}, buscas=d.buscas||[], paginas=d.paginas||[], porDia=d.porDia||[];
+  sub.textContent=`${gsDia(d.de)} a ${gsDia(d.ate)} · comparado com os ${d.dias} dias antes`;
+  const vazio=!t.impressoes&&!buscas.length&&!paginas.length;
+  const tipo=p=>p.tipo==='maquina'?'máquina':p.tipo==='blog'?'blog':p.tipo==='loja'?'loja':'outra';
+  corpo.innerHTML=`<div class="gs-k">
+      <div class="gs-kb" title="Quantas vezes alguém clicou no site a partir da busca do Google."><div class="gs-kl">Cliques</div><div class="gs-kv">${gsN(t.cliques)}</div>${gsVar(t.cliques,a.cliques)}</div>
+      <div class="gs-kb" title="Quantas vezes o site apareceu nos resultados do Google (as impressões)."><div class="gs-kl">Aparições</div><div class="gs-kv">${gsN(t.impressoes)}</div>${gsVar(t.impressoes,a.impressoes)}</div>
+      <div class="gs-kb" title="De cada 100 vezes que o site apareceu, quantas viraram clique (o CTR)."><div class="gs-kl">Taxa de clique</div><div class="gs-kv">${gsPct(t.ctr)}</div>${gsVar(t.ctr,a.ctr)}</div>
+      <div class="gs-kb" title="Em que lugar o site aparece, em média: 1 é o primeiro resultado. Quanto menor, melhor."><div class="gs-kl">Posição média</div><div class="gs-kv">${t.posicao?gsPos(t.posicao):'—'}</div>${gsVar(t.posicao,a.posicao,true)}</div>
+    </div>
+    ${vazio?'<div class="gs-msg">O Google ainda está começando a mostrar o site. Os números aparecem aos poucos, nas próximas semanas.</div>':`<div class="gs-g"><canvas id="gsCanvas"></canvas></div>
+    <div class="gs-ls">
+      <div><div class="gs-t" style="margin-bottom:6px">O que buscaram no Google</div><table class="gs-tb"><tr><th>Busca</th><th>Cliques</th><th>Aparições</th><th>Posição</th></tr>${buscas.map(b=>`<tr><td>${esc(b.texto)}</td><td>${gsN(b.cliques)}</td><td>${gsN(b.impressoes)}</td><td>${gsPos(b.posicao)}</td></tr>`).join('')||'<tr><td colspan="4">ainda nenhuma</td></tr>'}</table></div>
+      <div><div class="gs-t" style="margin-bottom:6px">Páginas que mais aparecem</div><table class="gs-tb"><tr><th>Página</th><th>Cliques</th><th>Aparições</th></tr>${paginas.map(p=>`<tr><td><span class="gs-tag">${tipo(p)}</span><a href="${gsAttr(p.url)}" target="_blank" rel="noopener">${esc(p.nome)}</a></td><td>${gsN(p.cliques)}</td><td>${gsN(p.impressoes)}</td></tr>`).join('')||'<tr><td colspan="3">ainda nenhuma</td></tr>'}</table></div>
+    </div>`}
+    <div class="gs-nota">O Google fecha os números com uns 2 dias de atraso: os últimos dias ainda podem subir.</div>`;
+  const cv=document.getElementById('gsCanvas');
+  if(cv&&window.Chart&&porDia.length){
+    gsGraf=new Chart(cv,{type:'bar',data:{labels:porDia.map(x=>gsDia(x.dia)),datasets:[
+      {type:'bar',label:'Cliques',data:porDia.map(x=>x.cliques),backgroundColor:'#00B368',borderRadius:4,yAxisID:'y',order:2},
+      {type:'line',label:'Aparições',data:porDia.map(x=>x.impressoes),borderColor:'#2563eb',backgroundColor:'#2563eb',pointRadius:0,borderWidth:2,tension:.3,yAxisID:'y1',order:1}]},
+      options:{maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{labels:{boxWidth:10,font:{size:11}}}},
+        scales:{y:{beginAtZero:true,ticks:{precision:0,font:{size:10}},title:{display:true,text:'Cliques',font:{size:10}}},
+          y1:{beginAtZero:true,position:'right',grid:{drawOnChartArea:false},ticks:{precision:0,font:{size:10}},title:{display:true,text:'Aparições',font:{size:10}}},
+          x:{ticks:{font:{size:10},maxRotation:0,autoSkip:true}}}}});
+  }
 }
 
 // ── AVALIAÇÕES DOS CLIENTES ──
