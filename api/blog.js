@@ -14,6 +14,10 @@
 // GET  /api/blog?sitemap=1       sitemap.xml             GET /api/blog?acao=gerar  o do dia (cron)
 // GET  /api/blog?acao=fontes     as notícias candidatas de agora (sem IA; para conferir as fontes)
 // GET  /api/blog?capa=x          a imagem do link do artigo (WhatsApp, Facebook), 1200×630
+// GET  /maquina/<nome>-<id>      a página de cada máquina do catálogo (Google e Google Shopping)
+// GET  /maquina/foto/<id>        uma foto da máquina, servida como imagem (fica no cache da Vercel)
+// GET  /maquina/capa/<id>        a foto de capa da máquina (quando ela não tem as outras)
+// GET  /produtos.xml             as máquinas à venda no formato do Google Merchant Center
 // POST /api/blog {acao, idToken} só sócio: lista | artigo | salvar | ocultar | mostrar | gerar | insta
 const fs = require('fs'), path = require('path');
 const Anthropic = require('@anthropic-ai/sdk');
@@ -479,15 +483,15 @@ async function catalogo() {
   if (memoriaCatalogo && Date.now() - memoriaCatalogo.t < 300000) return memoriaCatalogo.d;
   let itens = [];
   try {
-    const r = await fetch(fsUrl('catalogo', ['nome', 'preco', 'marca', 'specs', 'estado', 'publicado_em']) + '&pageSize=300', { signal: AbortSignal.timeout(6000) });
+    const r = await fetch(fsUrl('catalogo', ['nome', 'preco', 'preco_de', 'promo_ate', 'marca', 'specs', 'estado', 'publicado_em', 'tipo', 'descricao']) + '&pageSize=300', { signal: AbortSignal.timeout(6000) });
     if (r.ok) itens = ((await r.json()).documents || []).map(x => Object.assign({ id: x.name.split('/').pop() }, N.lerCampos(x.fields || {})));
   } catch (e) { /* segue sem */ }
   memoriaCatalogo = { t: Date.now(), d: itens };
   return itens;
 }
 // Até 3 máquinas à venda que combinam com o assunto (senão, as mais novas), com a foto de capa.
-async function relacionados(termos) {
-  const itens = (await catalogo()).filter(i => i.estado !== 'reservado' && Number(i.preco) > 0);
+async function relacionados(termos, fora = []) {
+  const itens = (await catalogo()).filter(i => i.estado !== 'reservado' && Number(i.preco) > 0 && !fora.includes(i.id));
   const ts = (termos || []).map(norm).filter(t => t.length >= 2);
   const casa = i => { const t = norm([i.nome, i.marca, i.specs].join(' ')); return ts.filter(x => new RegExp('\\b' + x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b').test(t)).length; };
   const ordem = itens.map(i => ({ i, n: casa(i) })).sort((a, b) => b.n - a.n || String(b.i.publicado_em || '').localeCompare(String(a.i.publicado_em || '')));
@@ -496,6 +500,73 @@ async function relacionados(termos) {
     try { const r = await fetch(fsUrl('catalogo/' + encodeURIComponent(i.id), ['capa']), { signal: AbortSignal.timeout(5000) }); if (r.ok) i.capa = N.lerCampos((await r.json()).fields || {}).capa || ''; } catch (e) { /* sem foto */ }
   }));
   return escolha;
+}
+// ── CADA MÁQUINA (página própria, fotos e Google Shopping) ──
+// Cada máquina do catálogo publicado ganha um endereço (/maquina/<nome>-<id>) com título, preço,
+// fotos e ficha, para aparecer no Google e no Google Shopping. Só entram os campos que o catálogo
+// já mostra ao público (nunca custo, fornecedor ou anotação), o preço é o de tabela da loja (sem a
+// comissão de revendedor) e promoção vencida volta ao preço cheio, como no catálogo.
+const CAMPOS_MAQ = ['nome', 'marca', 'descricao', 'estado', 'preco', 'preco_de', 'promo_ate', 'recursos', 'resolucao', 'tipo', 'sistema', 'cor', 'specs', 'video', 'publicado_em'];
+const ID_DOC = /^[A-Za-z0-9]{1,64}$/;
+// O mesmo endereço que o catalogo.html monta (o slugMaq de lá): o nome vira texto de endereço e o id vai no fim.
+function slugMaq(i) {
+  let s = norm(i.nome || i.marca || 'maquina').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  if (s.length > 70) { const c = s.slice(0, 70); s = c.replace(/-[^-]*$/, '') || c; }
+  return `${s || 'maquina'}-${i.id}`;
+}
+const urlMaq = i => `${SITE}/maquina/${slugMaq(i)}`;
+const idDaUrl = s => { const id = String(s || '').split('-').pop(); return ID_DOC.test(id) ? id : ''; };
+function precoVivo(i, hoje = diaBR()) {
+  let preco = Number(i.preco) || 0, de = Number(i.preco_de) || 0, ate = String(i.promo_ate || '');
+  if (de > preco && ate && hoje > ate) { preco = de; de = 0; ate = ''; }
+  return de > preco && preco > 0 ? { preco, de, ate } : { preco, de: 0, ate: '' };
+}
+async function maquinaDoCatalogo(id) {
+  if (!ID_DOC.test(String(id || ''))) return null;
+  const r = await fetch(fsUrl('catalogo/' + id, CAMPOS_MAQ), { signal: AbortSignal.timeout(6000) });
+  if (r.status === 404) return null;
+  if (!r.ok) throw erro(503, 'O catálogo não respondeu. Tente de novo em instantes.');
+  const f = N.lerCampos((await r.json()).fields || {}), i = { id: String(id) };
+  for (const k of CAMPOS_MAQ) if (f[k] !== undefined) i[k] = f[k];
+  return i.nome ? i : null;
+}
+let memoriaFotos = null;
+// As fotos de todas as máquinas numa leitura só: só o número de cada foto e a ordem (a imagem
+// vem depois, uma por endereço, e fica guardada no cache da Vercel).
+async function fotosDoCatalogo() {
+  if (memoriaFotos && Date.now() - memoriaFotos.t < 300000) return memoriaFotos.d;
+  const d = {};
+  try {
+    let prox = '';
+    for (let n = 0; n < 10; n++) {
+      const r = await fetch(fsUrl('catalogo_fotos', ['produto_id', 'ordem']) + '&pageSize=300' + (prox ? '&pageToken=' + encodeURIComponent(prox) : ''), { signal: AbortSignal.timeout(6000) });
+      if (!r.ok) break;
+      const j = await r.json();
+      for (const x of j.documents || []) {
+        const f = N.lerCampos(x.fields || {}), dono = String(f.produto_id || ''), id = String(x.name || '').split('/').pop();
+        if (dono && ID_DOC.test(id)) (d[dono] = d[dono] || []).push({ id, ordem: Number(f.ordem) || 0 });
+      }
+      prox = j.nextPageToken || '';
+      if (!prox) break;
+    }
+  } catch (e) { /* segue sem as fotos: a página usa a capa */ }
+  for (const k of Object.keys(d)) d[k].sort((a, b) => a.ordem - b.ordem);
+  memoriaFotos = { t: Date.now(), d };
+  return d;
+}
+// A foto guardada no catálogo (data:image/...;base64) virando imagem de verdade.
+async function imagemDoCatalogo(caminho, campo) {
+  const r = await fetch(fsUrl(caminho, [campo]), { signal: AbortSignal.timeout(8000) });
+  if (!r.ok) return null;
+  const u = String(N.lerCampos((await r.json()).fields || {})[campo] || '');
+  const m = u.match(/^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/);
+  return m ? { tipo: m[1], bytes: Buffer.from(m[2], 'base64') } : null;
+}
+const imagensDe = (i, fotos) => { const l = (fotos[i.id] || []).slice(0, 12).map(f => `/maquina/foto/${f.id}`); return l.length ? l : [`/maquina/capa/${i.id}`]; };
+const tipoMaq = i => i.tipo === 'desktop' ? 'Desktop' : 'Notebook';
+function cartaoMaq(i) {
+  const capa = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(i.capa || '') ? `<img src="${i.capa}" alt="" loading="lazy">` : '<img alt="">';
+  return `<a class="maq" href="/maquina/${esc(slugMaq(i))}">${capa}<span>${esc(i.nome)}<b>${esc(reais(precoVivo(i).preco))}</b></span></a>`;
 }
 function mdHtml(md, fontes) {
   const inline = s => esc(s).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
@@ -613,8 +684,26 @@ a{color:inherit}
 .pt-img img{width:100%;max-width:300px;aspect-ratio:4/5;object-fit:cover;border-radius:12px;border:1px solid var(--b);background:var(--bg);-webkit-touch-callout:default}
 .rodape{padding:34px 0 46px;color:var(--li);font-size:.85rem;text-align:center}
 .rodape a{color:var(--mu)}
+.mq-preco{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 10px;margin:2px 0 10px;font-size:clamp(1.7rem,4.6vw,2.2rem);letter-spacing:-.02em;line-height:1.15}
+.mq-preco b{color:var(--g2)}
+.mq-preco s{font-size:1.05rem;color:var(--li);font-weight:400}
+.mq-pct{align-self:center;font-size:.8rem;font-weight:600;letter-spacing:0;color:#04210F;background:var(--g1);border-radius:999px;padding:3px 9px}
+.mq-aviso{background:var(--chip);border:1px solid var(--b);border-radius:14px;padding:12px 14px;margin:10px 0 0;font-size:.95rem}
+.mq-fotos{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;margin:22px -20px 6px;padding:0 20px 10px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.mq-fotos::-webkit-scrollbar{display:none}
+.mq-fotos img{flex:0 0 min(86%,480px);aspect-ratio:1/1;object-fit:contain;border-radius:18px;background:var(--chip);border:1px solid var(--b);scroll-snap-align:start}
+@media(max-width:600px){.mq-fotos{margin:18px -16px 6px;padding:0 16px 10px}}
+.mq-dica{font-size:.8rem;color:var(--li);margin:0 0 6px}
+.mq-ficha{list-style:none;padding:0;margin:0;display:grid;gap:7px;font-size:.98rem}
+.mq-sub{margin:20px 0 10px!important;font-size:1rem!important}
+.mq-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.mq-chip{font-size:.86rem;background:var(--chip);border:1px solid var(--b);border-radius:999px;padding:5px 12px}
+.mq-gar{list-style:none;padding:0;margin:0;display:grid;gap:8px;color:var(--mu);font-size:.95rem}
+.mq-gar b{color:var(--tx)}
+.mq-vid{position:relative;aspect-ratio:16/9;border-radius:16px;overflow:hidden;background:#000;margin-top:14px}
+.mq-vid iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 `;
-function pagina({ titulo, descricao, canonico, corpo, loja, tipoOg, jsonld, ativo, imagem }) {
+function pagina({ titulo, descricao, canonico, corpo, loja, tipoOg, jsonld, ativo, imagem, tamImagem = [1200, 630] }) {
   const nome = (loja && loja.nome) || 'Tech Campinas';
   return `<!doctype html>
 <html lang="pt-BR">
@@ -631,9 +720,9 @@ function pagina({ titulo, descricao, canonico, corpo, loja, tipoOg, jsonld, ativ
 <meta property="og:url" content="${esc(canonico)}">
 <meta property="og:site_name" content="${esc(nome)}">
 <meta property="og:locale" content="pt_BR">
-${imagem ? `<meta property="og:image" content="${esc(imagem)}">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
+${imagem ? `<meta property="og:image" content="${esc(imagem)}">${tamImagem ? `
+<meta property="og:image:width" content="${tamImagem[0]}">
+<meta property="og:image:height" content="${tamImagem[1]}">` : ''}
 <meta property="og:image:alt" content="${esc(titulo)}">
 <meta name="twitter:card" content="summary_large_image">` : ''}
 <link rel="alternate" type="application/rss+xml" title="Blog ${esc(nome)}" href="${SITE}/blog/feed.xml">
@@ -645,7 +734,7 @@ ${jsonld ? `<script type="application/ld+json">${JSON.stringify(jsonld).replace(
 <nav class="nav"><div class="wrap">
   <div class="mk">${MARCA}</div>
   <a class="nav-nm" href="/blog">${esc(nome)}</a>
-  <div class="nav-lk"><a href="${SITE}/">Máquinas</a><a href="/blog"${ativo === 'blog' ? ' class="on"' : ''}>Blog</a></div>
+  <div class="nav-lk"><a href="${SITE}/"${ativo === 'maq' ? ' class="on"' : ''}>Máquinas</a><a href="/blog"${ativo === 'blog' ? ' class="on"' : ''}>Blog</a></div>
 </div></nav>
 ${corpo}
 <footer class="rodape"><div class="wrap">
@@ -878,7 +967,7 @@ async function paginaArtigo(d, a, loja) {
   const juntar = l => l.length > 1 ? l.slice(0, -1).join(', ') + ' e ' + l[l.length - 1] : l.join('');
   const fonte = varias.length ? `<p class="fonte">Com informações de ${juntar(varias.map(linkFonte))}.</p>`
     : a.fonte && /^https:\/\//.test(a.fonte.url) ? `<p class="fonte">Com informações de ${linkFonte(a.fonte)}.</p>` : '';
-  const listaMaqs = maqs.map(i => `<a class="maq" href="/catalogo.html?q=${encodeURIComponent(i.nome)}">${/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(i.capa || '') ? `<img src="${i.capa}" alt="" loading="lazy">` : '<img alt="">'}<span>${esc(i.nome)}<b>${esc(reais(i.preco))}</b></span></a>`).join('');
+  const listaMaqs = maqs.map(cartaoMaq).join('');
   const botoes = `<div class="bts"><a class="bt bt-pri" href="${SITE}/">Ver todas as máquinas</a>${wa ? `<a class="bt bt-wa" href="${esc(wa)}" target="_blank" rel="noopener">Falar no WhatsApp</a>` : ''}</div>`;
   const noMeioMaqs = listaMaqs ? `<aside class="bloco no-meio" aria-label="Máquinas à venda"><h3>Máquinas à venda agora</h3><div class="maqs">${listaMaqs}</div>${botoes}</aside>` : '';
   return pagina({
@@ -903,13 +992,85 @@ ${outros.length ? `<section class="bloco"><h3>Leia também</h3><ul class="mais">
 ${SCRIPT_PARTILHA}`,
   });
 }
+const ESTADO_SCHEMA = { disponivel: 'https://schema.org/InStock', chegando: 'https://schema.org/PreOrder', reservado: 'https://schema.org/OutOfStock' };
+const linhasFicha = t => String(t || '').split(/\n+/).map(l => l.trim()).filter(Boolean).slice(0, 40);
+const listaDe = v => (Array.isArray(v) ? v : String(v || '').split(/\s*·\s*/)).map(x => String(x).trim()).filter(Boolean).slice(0, 20);
+const diaMes = iso => String(iso || '').split('-').reverse().slice(0, 2).join('/');
+const GARANTIA = ['<b>90 dias de garantia</b> a partir da entrega.', 'Testada antes da venda: memória, armazenamento e limpeza interna.', 'Entrega combinada na região e envio por Correios com rastreio.'];
+async function paginaMaquina(i, loja) {
+  const nome = (loja && loja.nome) || 'Tech Campinas';
+  const url = urlMaq(i), p = precoVivo(i), imgs = imagensDe(i, await fotosDoCatalogo());
+  const precoTxt = p.preco > 0 ? reais(p.preco) : '';
+  const ficha = linhasFicha(i.descricao), specs = listaDe(i.specs), recursos = listaDe(i.recursos);
+  const outros = await relacionados([i.marca, tipoMaq(i)], [i.id]);
+  const msg = i.estado === 'reservado' ? `Olá! Vi no site que o ${i.nome} está reservado. Me avisa se liberar? E se tiver outro parecido, pode me mostrar. ${url}`
+    : i.estado === 'chegando' ? `Olá! Vi no site que o ${i.nome} está chegando${precoTxt ? ' por ' + precoTxt : ''}. Dá pra reservar? ${url}`
+    : `Olá! Tenho interesse no ${i.nome}${precoTxt ? ' por ' + precoTxt : ''}, que vi no site. Ainda está disponível? ${url}`;
+  const wa = waLink(loja, msg);
+  const descricao = cortar(`${i.nome}${precoTxt ? ', por ' + precoTxt : ''}. Revisado, com 90 dias de garantia. ${ficha.join(' · ')}`, 200);
+  const jsonld = { '@context': 'https://schema.org', '@type': 'Product', name: i.nome, sku: i.id, image: imgs.map(u => SITE + u),
+    description: cortar(ficha.join('. ') || i.nome, 1000), ...(i.marca ? { brand: { '@type': 'Brand', name: i.marca } } : {}),
+    ...(p.preco > 0 ? { offers: { '@type': 'Offer', url, priceCurrency: 'BRL', price: String(p.preco), availability: ESTADO_SCHEMA[i.estado] || ESTADO_SCHEMA.disponivel,
+      itemCondition: 'https://schema.org/UsedCondition', seller: { '@type': 'Organization', name: nome }, ...(p.ate ? { priceValidUntil: p.ate } : {}) } } : {}) };
+  const aviso = i.estado === 'reservado' ? 'Esta máquina está reservada para outro cliente. Reserva às vezes não se confirma: chame no WhatsApp que a gente avisa se liberar, ou mostra outra parecida.'
+    : i.estado === 'chegando' ? 'Esta máquina ainda está chegando. Dá para reservar agora e garantir antes de entrar à venda.' : '';
+  const rotulo = i.estado === 'reservado' ? 'Me avisa se liberar' : i.estado === 'chegando' ? 'Quero reservar' : 'Tenho interesse';
+  const botoes = `<div class="bts">${wa ? `<a class="bt bt-wa" href="${esc(wa)}" target="_blank" rel="noopener">${rotulo}</a>` : ''}<a class="bt bt-sec" href="${SITE}/">Ver todas as máquinas</a></div>`;
+  const video = /^[A-Za-z0-9_-]{11}$/.test(String(i.video || '')) ? `<div class="mq-vid"><iframe src="https://www.youtube-nocookie.com/embed/${i.video}?rel=0&amp;modestbranding=1&amp;playsinline=1" title="Vídeo: ${esc(i.nome)}" loading="lazy" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>` : '';
+  return pagina({
+    titulo: `${cortar(i.nome, 90)}${precoTxt ? ' por ' + precoTxt : ''} | ${nome}`, descricao, canonico: url, loja, tipoOg: 'product', jsonld, ativo: 'maq', imagem: SITE + imgs[0], tamImagem: null,
+    corpo: `<main class="wrap estreito"><article class="artigo maquina">
+  <span class="chip">${esc(tipoMaq(i))}${i.marca ? ' · ' + esc(i.marca) : ''}</span>
+  <h1>${esc(i.nome)}</h1>
+  <div class="mq-preco">${p.de ? `<s>${esc(reais(p.de))}</s>` : ''}<b>${precoTxt ? esc(precoTxt) : 'Preço em breve'}</b>${p.de ? `<span class="mq-pct">-${Math.round((1 - p.preco / p.de) * 100)}%</span>` : ''}</div>
+  ${p.ate ? `<p class="meta">Preço de promoção até ${esc(diaMes(p.ate))}</p>` : ''}
+  ${aviso ? `<p class="mq-aviso">${esc(aviso)}</p>` : ''}
+  ${botoes}
+  <div class="mq-fotos">${imgs.map((u, k) => `<img src="${esc(u)}" alt="${esc(i.nome)}, foto ${k + 1}"${k ? ' loading="lazy"' : ' fetchpriority="high"'} decoding="async">`).join('')}</div>
+  ${imgs.length > 1 ? `<p class="mq-dica">Arraste para o lado para ver as ${imgs.length} fotos.</p>` : ''}
+  <section class="bloco"><h3>Ficha da máquina</h3>
+    ${ficha.length ? `<ul class="mq-ficha">${ficha.map(l => { const m = l.match(/^([^:]{2,40}):\s*(.+)$/); return `<li>${m ? `<b>${esc(m[1])}:</b> ${esc(m[2])}` : esc(l)}</li>`; }).join('')}</ul>` : ''}
+    ${specs.length ? `<div class="mq-chips">${specs.map(x => `<span class="mq-chip">${esc(x)}</span>`).join('')}</div>` : ''}
+    ${recursos.length ? `<h3 class="mq-sub">O que ela tem</h3><div class="mq-chips">${recursos.map(x => `<span class="mq-chip">${esc(x)}</span>`).join('')}</div>` : ''}
+    ${video}
+  </section>
+  <section class="bloco"><h3>Revisada e com garantia</h3><ul class="mq-gar">${GARANTIA.map(g => `<li>${g}</li>`).join('')}</ul>${botoes}</section>
+  ${outros.length ? `<section class="bloco"><h3>Outras máquinas à venda</h3><div class="maqs">${outros.map(cartaoMaq).join('')}</div></section>` : ''}
+</article></main>`,
+  });
+}
+async function paginaMaquinaVendida(loja) {
+  const maqs = await relacionados([]);
+  return pagina({ titulo: 'Essa máquina já foi vendida', descricao: 'Ela saiu do catálogo. Veja as máquinas à venda agora.', canonico: SITE + '/', loja, ativo: 'maq',
+    corpo: `<main class="wrap estreito"><div class="vazio"><h1 style="color:var(--tx)">Essa máquina já foi vendida</h1><p>Ela saiu do catálogo. Veja as que estão à venda agora.</p></div>
+${maqs.length ? `<section class="bloco"><h3>Máquinas à venda</h3><div class="maqs">${maqs.map(cartaoMaq).join('')}</div></section>` : ''}
+<div class="bts" style="justify-content:center;margin:0 0 34px"><a class="bt bt-pri" href="${SITE}/">Ver todas as máquinas</a></div></main>` });
+}
+// Google Shopping (Merchant Center): as máquinas à venda no formato que o Google lê. Só as
+// disponíveis com preço; o link é a página de cada uma e as fotos, as do catálogo.
+async function feedProdutos(loja) {
+  const nome = (loja && loja.nome) || 'Tech Campinas';
+  const [maqs, fotos] = await Promise.all([catalogo(), fotosDoCatalogo()]);
+  const valor = v => `${(Number(v) || 0).toFixed(2)} BRL`;
+  const itens = maqs.filter(i => (i.estado || 'disponivel') === 'disponivel' && precoVivo(i).preco > 0).map(i => {
+    const p = precoVivo(i), imgs = imagensDe(i, fotos).map(u => SITE + u);
+    const desc = cortar([...linhasFicha(i.descricao), 'Revisado, com 90 dias de garantia'].map(l => l.replace(/[.\s]+$/, '')).join('. ') + '.', 4900);
+    return `<item><g:id>${xmlEsc(i.id)}</g:id><g:title>${xmlEsc(cortar(i.nome, 150))}</g:title><g:description>${xmlEsc(desc)}</g:description>` +
+      `<g:link>${xmlEsc(urlMaq(i))}</g:link><g:image_link>${xmlEsc(imgs[0])}</g:image_link>${imgs.slice(1, 11).map(u => `<g:additional_image_link>${xmlEsc(u)}</g:additional_image_link>`).join('')}` +
+      `<g:availability>in_stock</g:availability>${p.de ? `<g:price>${valor(p.de)}</g:price><g:sale_price>${valor(p.preco)}</g:sale_price>` : `<g:price>${valor(p.preco)}</g:price>`}` +
+      `<g:condition>used</g:condition>${i.marca ? `<g:brand>${xmlEsc(i.marca)}</g:brand>` : ''}<g:identifier_exists>no</g:identifier_exists>` +
+      `<g:google_product_category>${i.tipo === 'desktop' ? 325 : 328}</g:google_product_category><g:product_type>${i.tipo === 'desktop' ? 'Desktops' : 'Notebooks'}</g:product_type></item>`;
+  });
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0"><channel><title>${xmlEsc(nome)}</title><link>${SITE}/</link><description>Notebooks e desktops revisados, com 90 dias de garantia</description>\n${itens.join('\n')}\n</channel></rss>\n`;
+}
 function paginaNaoAchou(loja) {
   return pagina({ titulo: 'Artigo não encontrado', descricao: 'Esse artigo não está mais no ar.', canonico: SITE + '/blog', loja, ativo: 'blog',
     corpo: '<main class="wrap"><div class="vazio"><h1 style="color:var(--tx)">Esse artigo não está mais no ar</h1><p><a href="/blog">Ver os artigos do blog</a></p></div></main>' });
 }
 const xmlEsc = s => esc(s);
-function sitemap(d) {
+function sitemap(d, maqs = []) {
   const urls = [{ loc: SITE + '/' }, { loc: SITE + '/blog', mod: d.atualizado_em }]
+    .concat(maqs.map(i => ({ loc: urlMaq(i), mod: i.publicado_em })))
     .concat(noAr(d).map(a => ({ loc: `${SITE}/blog/${a.slug}`, mod: a.atualizado_em || a.publicado_em })));
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
     urls.map(u => `<url><loc>${xmlEsc(u.loc)}</loc>${u.mod ? `<lastmod>${xmlEsc(String(u.mod).slice(0, 10))}</lastmod>` : ''}</url>`).join('\n') + '\n</urlset>\n';
@@ -950,6 +1111,19 @@ module.exports = async (req, res) => {
       return json(res, 200, { ok: true, lidas: itens.length, porFonte: FONTES.map(f => ({ fonte: f.nome, itens: itens.filter(i => i.fonte === f.nome).length })),
         candidatas: escolherCandidatos(itens, (await lerBlog()).usadas).map(c => ({ fonte: c.fonte, titulo: c.titulo, url: c.url, pontos: c.pontos })) });
     }
+    // cada máquina: a foto, a página e a lista do Google Shopping (não precisam do arquivo do blog)
+    if (q.foto !== undefined || q.capa_maq !== undefined) {
+      const foto = q.foto !== undefined, id = String(foto ? q.foto : q.capa_maq);
+      const img = ID_DOC.test(id) ? await imagemDoCatalogo((foto ? 'catalogo_fotos/' : 'catalogo/') + id, foto ? 'dataUrl' : 'capa') : null;
+      if (!img) return enviar(res, 404, 'text/plain; charset=utf-8', 'Foto não encontrada.', 'public, max-age=0, s-maxage=60');
+      return enviar(res, 200, img.tipo, img.bytes, 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400');
+    }
+    if (q.maquina !== undefined) {
+      const loja = await dadosLoja(), i = await maquinaDoCatalogo(idDaUrl(q.maquina));
+      if (!i) return enviar(res, 404, 'text/html; charset=utf-8', await paginaMaquinaVendida(loja), 'public, max-age=0, s-maxage=60');
+      return enviar(res, 200, 'text/html; charset=utf-8', await paginaMaquina(i, loja), CACHE_PAGINA);
+    }
+    if (q.produtos) return enviar(res, 200, 'application/xml; charset=utf-8', await feedProdutos(await dadosLoja()), 'public, max-age=0, s-maxage=900, stale-while-revalidate=3600');
     const [d, loja] = await Promise.all([lerBlog(), dadosLoja()]);
     if (q.capa !== undefined) {
       const a = noAr(d).find(x => x.slug === String(q.capa));
@@ -957,7 +1131,7 @@ module.exports = async (req, res) => {
         { post: q.formato === 'post', resumo: a ? a.resumo : 'As notícias de tecnologia que mexem com o seu notebook, explicadas sem complicação.' });
       return enviar(res, 200, 'image/png', png, 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=604800');
     }
-    if (q.sitemap) return enviar(res, 200, 'application/xml; charset=utf-8', sitemap(d), CACHE_PAGINA);
+    if (q.sitemap) return enviar(res, 200, 'application/xml; charset=utf-8', sitemap(d, await catalogo()), CACHE_PAGINA);
     if (q.feed) return enviar(res, 200, 'application/rss+xml; charset=utf-8', feedRss(d, loja), CACHE_PAGINA);
     if (q.slug) {
       const a = noAr(d).find(x => x.slug === String(q.slug));
@@ -971,6 +1145,6 @@ module.exports = async (req, res) => {
   }
 };
 module.exports._teste = {
-  lerFeed, semTags, textoDoHtml, capaPng, urlCapa, urlPost, legendaInsta, pontuar, escolherCandidatos, limparArtigo, mdHtml, noMeio, slidesHtml, ESQUEMA_ESCOLHA, slugDe, slugUnico, sitemap, feedRss, paginaLista, paginaArtigo, diaBR, semLinks,
-  usarIA: f => { fabricaIA = f; }, usarGravador: f => { guardar = f; }, usarSementes: l => { SEMENTES = l; }, limparMemoria: () => { memoria = null; memoriaLoja = null; memoriaCatalogo = null; }, ESQUEMA_ARTIGO, MODELO,
+  lerFeed, semTags, textoDoHtml, capaPng, urlCapa, urlPost, legendaInsta, pontuar, escolherCandidatos, limparArtigo, mdHtml, noMeio, slidesHtml, ESQUEMA_ESCOLHA, slugDe, slugUnico, sitemap, feedRss, paginaLista, paginaArtigo, diaBR, semLinks, slugMaq, urlMaq, idDaUrl, precoVivo, paginaMaquina, feedProdutos,
+  usarIA: f => { fabricaIA = f; }, usarGravador: f => { guardar = f; }, usarSementes: l => { SEMENTES = l; }, limparMemoria: () => { memoria = null; memoriaLoja = null; memoriaCatalogo = null; memoriaFotos = null; }, ESQUEMA_ARTIGO, MODELO,
 };

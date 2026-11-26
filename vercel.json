@@ -8,6 +8,10 @@
     { "source": "/blog/feed.xml", "destination": "/api/blog?feed=1" },
     { "source": "/blog/capa/:slug", "destination": "/api/blog?capa=:slug" },
     { "source": "/blog/:slug", "destination": "/api/blog?slug=:slug" },
+    { "source": "/maquina/foto/:id", "destination": "/api/blog?foto=:id" },
+    { "source": "/maquina/capa/:id", "destination": "/api/blog?capa_maq=:id" },
+    { "source": "/maquina/:slug", "destination": "/api/blog?maquina=:slug" },
+    { "source": "/produtos.xml", "destination": "/api/blog?produtos=1" },
     { "source": "/sitemap.xml", "destination": "/api/blog?sitemap=1" }
   ],
   "headers": [

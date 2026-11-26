@@ -39,10 +39,20 @@ const MATERIA = `<html><body><header><p>menu do site que não interessa</p></hea
 <p>Quem usa notebook com processador antigo pode não conseguir instalar o Windows 11 por causa dos requisitos.</p></article></body></html>`;
 let feedTecno = RSS, materiaStatus = 200;
 const CATALOGO = [
-  { id: 'p1', nome: 'Notebook Lenovo ThinkPad T14 i5 10ª', preco: 2400, marca: 'Lenovo', specs: 'i5 10ª · 16GB · SSD 256GB', estado: 'disponivel', publicado_em: '2026-11-10' },
-  { id: 'p2', nome: 'Notebook Dell Latitude 3410 i3 10ª', preco: 1600, marca: 'Dell', specs: 'i3 10ª · 8GB', estado: 'disponivel', publicado_em: '2026-11-20' },
-  { id: 'p3', nome: 'Notebook Dell Latitude 5490 i7', preco: 2900, marca: 'Dell', specs: 'i7 8ª', estado: 'reservado', publicado_em: '2026-11-21' },
+  { id: 'p1', nome: 'Notebook Lenovo ThinkPad T14 i5 10ª', preco: 2400, marca: 'Lenovo', specs: 'i5 10ª · 16GB · SSD 256GB', estado: 'disponivel', publicado_em: '2026-11-10', tipo: 'notebook', descricao: 'Marca: Lenovo\nModelo: T14 Gen 1\nProcessador: i5 de 10ª geração' },
+  { id: 'p2', nome: 'Notebook Dell Latitude 3410 i3 10ª', preco: 1600, preco_de: 1800, promo_ate: '2099-12-31', marca: 'Dell', specs: 'i3 10ª · 8GB', estado: 'disponivel', publicado_em: '2026-11-20', tipo: 'notebook', descricao: 'Marca: Dell' },
+  { id: 'p3', nome: 'Notebook Dell Latitude 5490 i7', preco: 2900, marca: 'Dell', specs: 'i7 8ª', estado: 'reservado', publicado_em: '2026-11-21', tipo: 'notebook', descricao: 'Marca: Dell' },
 ];
+// a ficha de cada máquina, como o Firestore devolveria (com campos internos que nunca podem aparecer)
+const FICHA = {
+  p1: { nome: 'Notebook Lenovo ThinkPad T14 i5 10ª', marca: 'Lenovo', preco: 2400, estado: 'disponivel', tipo: 'notebook', publicado_em: '2026-11-10',
+    descricao: 'Marca: Lenovo\nModelo: T14 Gen 1\nProcessador: i5 de 10ª geração\nAcompanha carregador original', specs: ['🧠 2/2 RAM · cheio', '🔋 Excelente'], recursos: ['Wi-Fi', 'Webcam <b>'],
+    video: 'abcdefghijk', custo: 1234, fornecedor: 'Fornecedor Secreto', anotacao: 'nota interna da loja' },
+  p2: { nome: 'Notebook Dell Latitude 3410 i3 10ª', marca: 'Dell', preco: 1600, preco_de: 1800, promo_ate: '2099-12-31', estado: 'disponivel', tipo: 'notebook', descricao: 'Marca: Dell' },
+  p3: { nome: 'Notebook Dell Latitude 5490 i7', marca: 'Dell', preco: 2900, estado: 'reservado', tipo: 'notebook', descricao: 'Marca: Dell' },
+};
+const FOTOS = [{ id: 'f2', produto_id: 'p1', ordem: 2 }, { id: 'f1', produto_id: 'p1', ordem: 1 }, { id: 'f9', produto_id: 'outra', ordem: 1 }];
+const FOTO_F1 = Buffer.from('foto-um-de-verdade');
 const N = require(path.join(__dirname, '..', 'tela', 'nucleo.js'));
 const resposta = (status, corpo, tipo) => ({ ok: status >= 200 && status < 300, status,
   json: async () => (typeof corpo === 'string' ? JSON.parse(corpo) : corpo), text: async () => (typeof corpo === 'string' ? corpo : JSON.stringify(corpo)), headers: new Map([['content-type', tipo || 'application/json']]) });
@@ -57,6 +67,12 @@ global.fetch = async (url, op = {}) => {
     if (u.pathname.endsWith('/config/blog')) return (h.Authorization === 'Bearer socio') ? resposta(404, { error: { status: 'NOT_FOUND' } }) : resposta(403, { error: { status: 'PERMISSION_DENIED' } });
     if (u.pathname.endsWith('/catalogo_cfg/loja')) return resposta(200, { fields: N.campos({ nome: 'Tech Campinas', whatsapp: '(19) 99999-0000', cidade: 'Campinas' }) });
     if (u.pathname.endsWith('/documents/catalogo')) return resposta(200, { documents: CATALOGO.map(({ id, ...x }) => ({ name: 'projects/x/databases/(default)/documents/catalogo/' + id, fields: N.campos(x) })) });
+    if (/\/documents\/catalogo\/p\d$/.test(u.pathname) && u.searchParams.getAll('mask.fieldPaths').includes('nome')) {
+      const x = FICHA[u.pathname.split('/').pop()];
+      return x ? resposta(200, { fields: N.campos(x) }) : resposta(404, { error: { status: 'NOT_FOUND' } });
+    }
+    if (u.pathname.endsWith('/documents/catalogo_fotos')) return resposta(200, { documents: FOTOS.map(({ id, ...x }) => ({ name: 'projects/x/databases/(default)/documents/catalogo_fotos/' + id, fields: N.campos(x) })) });
+    if (u.pathname.endsWith('/documents/catalogo_fotos/f1')) return resposta(200, { fields: N.campos({ dataUrl: 'data:image/jpeg;base64,' + FOTO_F1.toString('base64') }) });
     if (/\/documents\/catalogo\/p\d$/.test(u.pathname)) return resposta(200, { fields: N.campos({ capa: 'data:image/jpeg;base64,AAAA' }) });
     return resposta(404, {});
   }
@@ -168,7 +184,7 @@ const post = body => chamar({ method: 'POST', body: Object.assign({ idToken: 'so
   ok(r.body.includes('<link rel="canonical" href="https://techcampinas.com.br/blog/' + a1.slug + '">') && r.body.includes('"@type":"BlogPosting"') && r.body.includes('Com informações de <a href="https://tecnoblog.net/noticias/windows-10-suporte/" rel="nofollow noopener"'),
     'endereço oficial, dados para o Google e o crédito com link para a fonte');
   ok(r.body.includes('Lenovo ThinkPad T14 i5 10ª') && r.body.indexOf('ThinkPad T14') < r.body.indexOf('Latitude 3410') && !r.body.includes('Latitude 5490') && r.body.includes('src="data:image/jpeg;base64,AAAA"') &&
-    r.body.includes('href="/catalogo.html?q=Notebook%20Lenovo%20ThinkPad%20T14%20i5%2010%C2%AA"'), 'máquinas à venda que combinam com o assunto primeiro (a reservada não), com foto e link para o catálogo');
+    r.body.includes('href="/maquina/notebook-lenovo-thinkpad-t14-i5-10-p1"'), 'máquinas à venda que combinam com o assunto primeiro (a reservada não), com foto e link para a página de cada uma');
   ok(r.body.includes('https://wa.me/5519999990000?text='), 'botão do WhatsApp da loja');
   const iCorpo = r.body.indexOf('<div class="corpo">'), iMaq = r.body.indexOf('Máquinas à venda agora'), iCred = r.body.indexOf('Com informações de');
   const pCorpo = (r.body.slice(iCorpo, iCred).match(/<p>/g) || []).length, pAntes = (r.body.slice(iCorpo, iMaq).match(/<p>/g) || []).length;
@@ -320,6 +336,81 @@ const post = body => chamar({ method: 'POST', body: Object.assign({ idToken: 'so
     x.status === 'publicado' && /^\d{4}-\d\d-\d\dT/.test(x.publicado_em) && (x.tipo === 'guia' ? !x.fonte : x.fonte && /^https:\/\//.test(x.fonte.url)) && (x.fontes || []).every(f => /^https:\/\//.test(f.url)) && !/\[\[fonte:/.test(x.corpo)),
     'as do repositório estão no formato (um assunto, até 450 palavras, até 4 slides, data, e notícia com a fonte e o link; guia da loja sem fonte)');
   T.usarSementes([]); T.limparMemoria();
+
+  console.log('\ncada máquina');
+  T.limparMemoria();
+  ok(T.slugMaq({ id: 'p1', nome: 'Notebook Lenovo ThinkPad T14 i5 10ª' }) === 'notebook-lenovo-thinkpad-t14-i5-10-p1' && T.urlMaq({ id: 'Ab12', nome: 'Dell Latitude 7480 · i5 7ª' }) === 'https://techcampinas.com.br/maquina/dell-latitude-7480-i5-7-Ab12',
+    'o endereço é o nome em texto simples com o id no fim (sem acento, sem símbolo)');
+  const longo = T.slugMaq({ id: 'Xy9', nome: 'Lenovo Thinkpad T14 Gen 1 · i7 10ª · NVMe 256GB · 8GB DDR4 RAM · bateria excelente e carregador original' });
+  ok(longo.length <= 74 && /^lenovo-thinkpad-t14-gen-1-i7-10-nvme-256gb-8gb-ddr4-ram-bateria(-[a-z]+)*-Xy9$/.test(longo) && !/-{2}/.test(longo), 'nome comprido: corta numa palavra inteira, até 70 letras, e o id segue no fim: ' + longo);
+  // o catálogo monta o mesmo endereço que o servidor
+  const CAT = require('fs').readFileSync(path.join(__dirname, '..', 'catalogo.html'), 'utf8');
+  const fnCat = CAT.slice(CAT.indexOf('function slugMaq(i){'), CAT.indexOf('\n}\n', CAT.indexOf('function slugMaq(i){')) + 2);
+  const slugCat = new Function(fnCat + '; return slugMaq;')();
+  const nomes = ['Notebook Lenovo ThinkPad T14 i5 10ª', 'Dell Latitude 7480 · i5 7ª · 8GB · NVMe', 'Ação: Câmera & Microfone!', '', 'Lenovo Thinkpad T14 Gen 1 · i7 10ª · NVMe 256GB · 8GB DDR4 RAM · bateria excelente e carregador original'];
+  ok(nomes.every(n => slugCat({ id: 'Q1w2E3r4', nome: n }) === T.slugMaq({ id: 'Q1w2E3r4', nome: n })), 'o link do catálogo e o do servidor são o mesmo endereço');
+  ok(T.idDaUrl('notebook-lenovo-thinkpad-p1') === 'p1' && T.idDaUrl('Sznn2B5gy4Mt9qEpX3bw') === 'Sznn2B5gy4Mt9qEpX3bw' && T.idDaUrl('../../x/y') === '' && T.idDaUrl('') === '', 'o id sai do fim do endereço (e lixo não vira id)');
+  const pv = (i, h) => JSON.stringify(T.precoVivo(i, h));
+  ok(pv({ preco: 2100, preco_de: 2200, promo_ate: '2026-11-30' }, '2026-11-26') === '{"preco":2100,"de":2200,"ate":"2026-11-30"}' &&
+    pv({ preco: 2100, preco_de: 2200, promo_ate: '2026-11-30' }, '2026-12-01') === '{"preco":2200,"de":0,"ate":""}' &&
+    pv({ preco: 2100, preco_de: 2200, promo_ate: '' }, '2026-12-01') === '{"preco":2100,"de":2200,"ate":""}' && pv({ preco: 1800, preco_de: 0 }, '2026-11-26') === '{"preco":1800,"de":0,"ate":""}',
+    'promoção: preço riscado até o último dia, e no dia seguinte volta o preço cheio (como no catálogo)');
+
+  pedidos = [];
+  r = await chamar({ query: { maquina: 'notebook-lenovo-thinkpad-t14-i5-10-p1' } });
+  const urlP1 = 'https://techcampinas.com.br/maquina/notebook-lenovo-thinkpad-t14-i5-10-p1';
+  ok(r.status === 200 && /text\/html/.test(r.headers['content-type']) && /s-maxage=300/.test(r.headers['cache-control']) && r.body.includes('<h1>Notebook Lenovo ThinkPad T14 i5 10ª</h1>') &&
+    r.body.includes('<b>R$ 2.400</b>') && r.body.includes(`<link rel="canonical" href="${urlP1}">`) && r.body.includes('<title>Notebook Lenovo ThinkPad T14 i5 10ª por R$ 2.400 | Tech Campinas</title>'),
+    'página da máquina: título com o preço, o preço grande e o endereço oficial');
+  const ld = JSON.parse(r.body.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)[1]);
+  ok(ld['@type'] === 'Product' && ld.sku === 'p1' && ld.brand.name === 'Lenovo' && ld.offers.price === '2400' && ld.offers.priceCurrency === 'BRL' && ld.offers.availability === 'https://schema.org/InStock' &&
+    ld.offers.itemCondition === 'https://schema.org/UsedCondition' && ld.offers.url === urlP1 && JSON.stringify(ld.image) === JSON.stringify(['https://techcampinas.com.br/maquina/foto/f1', 'https://techcampinas.com.br/maquina/foto/f2']),
+    'dados de produto para o Google: preço em reais, usado, à venda, com as fotos');
+  ok(r.body.indexOf('src="/maquina/foto/f1"') > 0 && r.body.indexOf('src="/maquina/foto/f1"') < r.body.indexOf('src="/maquina/foto/f2"') && !r.body.includes('/maquina/foto/f9') &&
+    r.body.includes('<meta property="og:image" content="https://techcampinas.com.br/maquina/foto/f1">') && !r.body.includes('og:image:width'),
+    'as fotos dela, na ordem, e a primeira na prévia do WhatsApp (sem tamanho inventado)');
+  ok(r.body.includes('<b>Modelo:</b> T14 Gen 1') && r.body.includes('<li>Acompanha carregador original</li>') && r.body.includes('🧠 2/2 RAM · cheio') && r.body.includes('Webcam &lt;b&gt;') &&
+    r.body.includes('youtube-nocookie.com/embed/abcdefghijk') && r.body.includes('90 dias de garantia'), 'ficha, recursos, vídeo e garantia (o que vem do catálogo aparece escrito, sem virar HTML)');
+  ok(!/Fornecedor Secreto|nota interna|1234|custo|fornecedor/i.test(r.body), 'custo, fornecedor e anotação nunca aparecem, mesmo se viessem do banco');
+  const wa = decodeURIComponent((r.body.match(/https:\/\/wa\.me\/5519999990000\?text=([^"]+)/) || [])[1] || '');
+  ok(wa.includes('Notebook Lenovo ThinkPad T14 i5 10ª por R$ 2.400') && wa.includes(urlP1), 'o WhatsApp já vai com a máquina, o preço e o link dela');
+  const outras = r.body.slice(r.body.indexOf('Outras máquinas à venda'));
+  ok(outras.includes('/maquina/notebook-dell-latitude-3410-i3-10-p2') && !outras.includes('-p1"') && !outras.includes('-p3"'), 'outras máquinas à venda: sem a própria e sem a reservada');
+  ok(pedidos.some(p => p.url.includes('/documents/catalogo/p1?') && p.url.includes('mask.fieldPaths=nome') && !p.url.includes('mask.fieldPaths=custo')), 'pede ao banco só os campos públicos');
+
+  r = await chamar({ query: { maquina: 'nome-antigo-que-mudou-p1' } });
+  ok(r.status === 200 && r.body.includes(`<link rel="canonical" href="${urlP1}">`), 'nome mudou: o endereço antigo ainda abre, e aponta o oficial');
+  r = await chamar({ query: { maquina: 'notebook-dell-latitude-3410-i3-10-p2' } });
+  const ld2 = JSON.parse(r.body.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)[1]);
+  ok(r.body.includes('<s>R$ 1.800</s><b>R$ 1.600</b><span class="mq-pct">-11%</span>') && r.body.includes('Preço de promoção até 31/12') && ld2.offers.price === '1600' && ld2.offers.priceValidUntil === '2099-12-31' &&
+    r.body.includes('src="/maquina/capa/p2"'), 'promoção: o preço riscado, o desconto e até quando; sem fotos, a capa');
+  r = await chamar({ query: { maquina: 'notebook-dell-latitude-5490-i7-p3' } });
+  ok(r.body.includes('está reservada') && r.body.includes('>Me avisa se liberar<') && r.body.includes('"availability":"https://schema.org/OutOfStock"'), 'reservada: avisa, e o botão é para saber se liberar');
+  pedidos = [];
+  r = await chamar({ query: { maquina: 'notebook-vendido-p9' } });
+  const r9 = await chamar({ query: { maquina: '../../etc' } });
+  ok(r.status === 404 && r.body.includes('Essa máquina já foi vendida') && r.body.includes('/maquina/notebook-lenovo-thinkpad-t14-i5-10-p1') && /s-maxage=60/.test(r.headers['cache-control']) &&
+    r9.status === 404 && !pedidos.some(p => /\/catalogo\/\.\.|etc/.test(p.url)), 'vendida (ou endereço errado): avisa e mostra as que estão à venda, sem pedir lixo ao banco');
+
+  r = await chamar({ query: { foto: 'f1' } });
+  ok(r.status === 200 && r.headers['content-type'] === 'image/jpeg' && Buffer.isBuffer(r.raw) && r.raw.equals(FOTO_F1) && /s-maxage=604800/.test(r.headers['cache-control']), 'a foto sai como imagem de verdade e fica no cache');
+  r = await chamar({ query: { capa_maq: 'p1' } });
+  const rF = await chamar({ query: { foto: 'nao-existe' } }), rL = await chamar({ query: { foto: 'a/../b' } });
+  ok(r.status === 200 && r.headers['content-type'] === 'image/jpeg' && rF.status === 404 && rL.status === 404, 'a capa também; foto que não existe ou endereço torto: não encontrada');
+
+  r = await chamar({ query: { sitemap: '1' } });
+  ok(r.body.includes(`<url><loc>${urlP1}</loc><lastmod>2026-11-10</lastmod></url>`) && r.body.includes('<loc>https://techcampinas.com.br/maquina/notebook-dell-latitude-5490-i7-p3</loc>'), 'o sitemap tem a página de cada máquina');
+
+  r = await chamar({ query: { produtos: '1' } });
+  const it = nome => (r.body.match(new RegExp('<item><g:id>' + nome + '</g:id>[\\s\\S]*?</item>')) || [''])[0];
+  ok(r.status === 200 && /application\/xml/.test(r.headers['content-type']) && /s-maxage=900/.test(r.headers['cache-control']) && r.body.includes('xmlns:g="http://base.google.com/ns/1.0"') &&
+    it('p1').includes(`<g:link>${urlP1}</g:link>`) && it('p1').includes('<g:image_link>https://techcampinas.com.br/maquina/foto/f1</g:image_link><g:additional_image_link>https://techcampinas.com.br/maquina/foto/f2</g:additional_image_link>') &&
+    it('p1').includes('<g:price>2400.00 BRL</g:price>') && it('p1').includes('<g:condition>used</g:condition>') && it('p1').includes('<g:brand>Lenovo</g:brand>') && it('p1').includes('<g:identifier_exists>no</g:identifier_exists>') &&
+    it('p1').includes('<g:google_product_category>328</g:google_product_category>') && it('p1').includes('<g:description>Marca: Lenovo. Modelo: T14 Gen 1. Processador: i5 de 10ª geração. Revisado, com 90 dias de garantia.</g:description>'),
+    'Google Shopping: cada máquina com link, fotos, preço em reais, usada, marca e categoria de notebook');
+  ok(it('p2').includes('<g:price>1800.00 BRL</g:price><g:sale_price>1600.00 BRL</g:sale_price>') && it('p2').includes('<g:image_link>https://techcampinas.com.br/maquina/capa/p2</g:image_link>') && !it('p3'),
+    'Google Shopping: promoção como preço de oferta; a reservada fica de fora');
+  T.limparMemoria();
 
   console.log('\nfontes');
   r = await chamar({ query: { acao: 'fontes' } });

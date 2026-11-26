@@ -421,6 +421,7 @@ b,strong,th,h1,h2,h3,h4,h5,h6{font-weight:600}
   .cta{display:flex;align-items:center;justify-content:center;gap:10px;background:var(--wa);color:#04210F;text-decoration:none;
     font-weight:600;font-size:1rem;padding:16px;border-radius:16px;box-shadow:0 10px 26px rgba(37,211,102,.30);transition:transform .15s ease}
   .cta:hover{transform:translateY(-1px)}
+  .dt-pg{display:block;text-align:center;margin-top:14px;font-size:.88rem;color:var(--mu);text-decoration:underline;text-underline-offset:3px}
   .cta svg{width:20px;height:20px}
 
   /* ── estados ── */
@@ -712,6 +713,13 @@ async function carregar(){
 }
 
 function waNum(){ return String(cfg.whatsapp||'').replace(/\D/g,''); }
+// A página própria de cada máquina (o mesmo endereço que o servidor monta, em api/blog.js):
+// é o link para mandar a alguém, com a foto e o preço na prévia do WhatsApp.
+function slugMaq(i){
+  let s=String(i.nome||i.marca||'maquina').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+  if(s.length>70){ const c=s.slice(0,70); s=c.replace(/-[^-]*$/,'')||c; }
+  return `${s||'maquina'}-${i.id}`;
+}
 function waLink(msg){
   const n=waNum();
   const t=encodeURIComponent(msg||`Olá! Vi o catálogo e queria mais informações.`);
@@ -1244,6 +1252,7 @@ async function abrir(g,k){
         <div>${IC.caixa}<span>Entrega combinada na região e envio por Correios com rastreio.</span></div>
       </div>
       <a class="cta" href="${waLink(msg)}" target="_blank" rel="noopener">${IC.wa} ${res?'Me avisa se liberar':cheg?'Quero reservar':'Tenho interesse'}</a>
+      ${REV_ID?'':`<a class="dt-pg" href="/maquina/${esc(slugMaq(i))}">Abrir a página desta máquina</a>`}
     </div>`;
   if(!$('ov').classList.contains('on')){ $('ov').classList.add('on'); document.body.style.overflow='hidden'; }
   $('dt').scrollTop=0;
