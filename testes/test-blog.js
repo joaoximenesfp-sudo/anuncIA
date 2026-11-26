@@ -203,7 +203,7 @@ const post = body => chamar({ method: 'POST', body: Object.assign({ idToken: 'so
   r = await chamar({ query: { slug: 'nao-existe' } });
   ok(r.status === 404 && /não está mais no ar/.test(r.body), 'artigo que não existe: 404');
   r = await chamar({ query: { sitemap: '1' } });
-  ok(/application\/xml/.test(r.headers['content-type']) && r.body.includes('<loc>https://techcampinas.com.br/blog/' + a1.slug + '</loc>') && r.body.includes('<loc>https://techcampinas.com.br/catalogo.html</loc>'),
+  ok(/application\/xml/.test(r.headers['content-type']) && r.body.includes('<loc>https://techcampinas.com.br/blog/' + a1.slug + '</loc>') && r.body.includes('<loc>https://techcampinas.com.br/</loc>'),
     'sitemap com o catálogo, o blog e cada artigo');
   r = await chamar({ query: { feed: '1' } });
   ok(/rss/.test(r.headers['content-type']) && r.body.includes('<title>Windows 10 sem suporte'), 'feed RSS do próprio blog');

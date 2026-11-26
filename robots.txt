@@ -1,8 +1,6 @@
 User-agent: *
 Allow: /blog
 Allow: /catalogo.html
-Disallow: /$
-Disallow: /index.html
 Disallow: /api/
 Allow: /api/avaliacoes
 Disallow: /tela/

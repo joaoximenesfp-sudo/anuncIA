@@ -645,12 +645,12 @@ ${jsonld ? `<script type="application/ld+json">${JSON.stringify(jsonld).replace(
 <nav class="nav"><div class="wrap">
   <div class="mk">${MARCA}</div>
   <a class="nav-nm" href="/blog">${esc(nome)}</a>
-  <div class="nav-lk"><a href="/catalogo.html">Máquinas</a><a href="/blog"${ativo === 'blog' ? ' class="on"' : ''}>Blog</a></div>
+  <div class="nav-lk"><a href="${SITE}/">Máquinas</a><a href="/blog"${ativo === 'blog' ? ' class="on"' : ''}>Blog</a></div>
 </div></nav>
 ${corpo}
 <footer class="rodape"><div class="wrap">
   <div>${esc(nome)}${loja && loja.cidade ? ' · ' + esc(loja.cidade) : ''} · notebooks e desktops revisados, com 90 dias de garantia</div>
-  <div style="margin-top:6px"><a href="/catalogo.html">Ver as máquinas</a> · <a href="/blog">Blog</a></div>
+  <div style="margin-top:6px"><a href="${SITE}/">Ver as máquinas</a> · <a href="/blog">Blog</a></div>
 </div></footer>
 </body>
 </html>`;
@@ -879,7 +879,7 @@ async function paginaArtigo(d, a, loja) {
   const fonte = varias.length ? `<p class="fonte">Com informações de ${juntar(varias.map(linkFonte))}.</p>`
     : a.fonte && /^https:\/\//.test(a.fonte.url) ? `<p class="fonte">Com informações de ${linkFonte(a.fonte)}.</p>` : '';
   const listaMaqs = maqs.map(i => `<a class="maq" href="/catalogo.html?q=${encodeURIComponent(i.nome)}">${/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(i.capa || '') ? `<img src="${i.capa}" alt="" loading="lazy">` : '<img alt="">'}<span>${esc(i.nome)}<b>${esc(reais(i.preco))}</b></span></a>`).join('');
-  const botoes = `<div class="bts"><a class="bt bt-pri" href="/catalogo.html">Ver todas as máquinas</a>${wa ? `<a class="bt bt-wa" href="${esc(wa)}" target="_blank" rel="noopener">Falar no WhatsApp</a>` : ''}</div>`;
+  const botoes = `<div class="bts"><a class="bt bt-pri" href="${SITE}/">Ver todas as máquinas</a>${wa ? `<a class="bt bt-wa" href="${esc(wa)}" target="_blank" rel="noopener">Falar no WhatsApp</a>` : ''}</div>`;
   const noMeioMaqs = listaMaqs ? `<aside class="bloco no-meio" aria-label="Máquinas à venda"><h3>Máquinas à venda agora</h3><div class="maqs">${listaMaqs}</div>${botoes}</aside>` : '';
   return pagina({
     titulo: `${a.titulo} | Blog ${nome}`, descricao: a.resumo, canonico: url, loja, tipoOg: 'article', jsonld, ativo: 'blog', imagem: urlCapa(a),
@@ -909,7 +909,7 @@ function paginaNaoAchou(loja) {
 }
 const xmlEsc = s => esc(s);
 function sitemap(d) {
-  const urls = [{ loc: SITE + '/catalogo.html' }, { loc: SITE + '/blog', mod: d.atualizado_em }]
+  const urls = [{ loc: SITE + '/' }, { loc: SITE + '/blog', mod: d.atualizado_em }]
     .concat(noAr(d).map(a => ({ loc: `${SITE}/blog/${a.slug}`, mod: a.atualizado_em || a.publicado_em })));
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
     urls.map(u => `<url><loc>${xmlEsc(u.loc)}</loc>${u.mod ? `<lastmod>${xmlEsc(String(u.mod).slice(0, 10))}</lastmod>` : ''}</url>`).join('\n') + '\n</urlset>\n';
