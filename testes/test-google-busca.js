@@ -69,6 +69,15 @@ const post = body => chamar({ method: 'POST', body });
   process.env.GSC_SERVICE_ACCOUNT = '{"tipo":"errado"}';
   r = await post({ idToken: 'socio', dias: 28 });
   ok(r.status === 500 && /JSON da conta de serviço/.test(r.json.erro), 'chave que não é o JSON da conta de serviço: avisa o que colar');
+  ok(/tem 17 caracteres/.test(r.json.erro) && /não tem client_email/.test(r.json.erro) && /não tem a chave privada/.test(r.json.erro) && !/errado/.test(r.json.erro),
+    'e diz o que veio de errado (tamanho, começo, o que falta), sem mostrar nada do conteúdo');
+  const contaOk = JSON.stringify({ type: 'service_account', client_email: EMAIL, private_key: privateKey.replace(/\n/g, '\\n') });
+  for (const [colado, nome] of [['﻿' + contaOk + '\n\n', 'com caractere invisível no começo e linhas em branco'], ['GSC_SERVICE_ACCOUNT=' + contaOk, 'com o nome da variável na frente'],
+    [JSON.stringify(contaOk), 'entre aspas (JSON dentro de texto)'], [Buffer.from(contaOk).toString('base64'), 'em base64']]) {
+    process.env.GSC_SERVICE_ACCOUNT = colado;
+    let c = null; try { c = T.contaDeServico(); } catch (e) { c = null; }
+    ok(c && c.email === EMAIL && c.chave.includes('\n-----END PRIVATE KEY-----') || (c && c.email === EMAIL && /BEGIN PRIVATE KEY/.test(c.chave)), 'a chave colada ' + nome + ' também vale');
+  }
 
   // a chave como vem no arquivo do Google (com \n escrito dentro do texto)
   process.env.GSC_SERVICE_ACCOUNT = JSON.stringify({ type: 'service_account', client_email: EMAIL, private_key: privateKey.replace(/\n/g, '\\n') });

@@ -37,11 +37,24 @@ async function exigirSocio(idToken) {
 
 // ── A CHAVE E O PASSE DO GOOGLE ──
 function contaDeServico() {
-  const bruto = String(process.env.GSC_SERVICE_ACCOUNT || '').trim();
+  // tira espaço, quebra de linha e caractere invisível das pontas (o Bloco de Notas às vezes põe um no começo)
+  const bruto = String(process.env.GSC_SERVICE_ACCOUNT || '').replace(/^[\s﻿​]+|[\s﻿​]+$/g, '');
   if (!bruto) return null;
-  let j = null;
-  try { j = JSON.parse(bruto); } catch (e) { try { j = JSON.parse(Buffer.from(bruto, 'base64').toString('utf8')); } catch (e2) { j = null; } }
-  if (!j || !j.client_email || !j.private_key) throw erro(500, 'A chave do Google na Vercel (GSC_SERVICE_ACCOUNT) não é o JSON da conta de serviço. Cole o conteúdo inteiro do arquivo.');
+  const tentar = t => { try { const j = JSON.parse(t); return typeof j === 'string' ? JSON.parse(j) : j; } catch (e) { return null; } };
+  let j = tentar(bruto);
+  // colado com sobra em volta (ex.: GSC_SERVICE_ACCOUNT={...} ou entre aspas): vale o que está entre a primeira { e a última }
+  const ini = bruto.indexOf('{'), fim = bruto.lastIndexOf('}');
+  if (!j && ini >= 0 && fim > ini) j = tentar(bruto.slice(ini, fim + 1));
+  if (!j && /^[A-Za-z0-9+/=\s]+$/.test(bruto)) j = tentar(Buffer.from(bruto, 'base64').toString('utf8'));
+  if (!j || typeof j !== 'object' || !j.client_email || !j.private_key) {
+    // diz o que veio de errado sem mostrar nada do conteúdo
+    const pistas = [`tem ${bruto.length.toLocaleString('pt-BR')} caracteres (o certo tem uns 2.300)`,
+      bruto.startsWith('{') ? 'começa com {' : 'não começa com {',
+      /"type"\s*:\s*"service_account"/.test(bruto) ? 'diz service_account' : 'não diz service_account',
+      /client_email/.test(bruto) ? 'tem client_email' : 'não tem client_email',
+      /BEGIN PRIVATE KEY/.test(bruto) ? 'tem a chave privada' : 'não tem a chave privada'];
+    throw erro(500, `A chave do Google na Vercel (GSC_SERVICE_ACCOUNT) não é o JSON da conta de serviço (${pistas.join(', ')}). Apague a variável e crie de novo colando o arquivo inteiro, que começa com {"type": "service_account".`);
+  }
   return { email: String(j.client_email), chave: String(j.private_key).replace(/\\n/g, '\n') };
 }
 const b64url = b => Buffer.from(b).toString('base64').replace(/=+$/, '').replace(/\+/g, '-').replace(/\//g, '_');
