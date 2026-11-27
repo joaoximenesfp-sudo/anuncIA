@@ -215,6 +215,16 @@ button{transition:transform .08s ease}
 .mcl:hover{background:var(--b);color:var(--tx)}
 .mcb{padding:20px 24px 24px;display:grid;grid-template-columns:1fr 1fr;gap:12px;overflow-y:auto;flex:1 1 auto;min-height:0}
 .mcb .full{grid-column:1/-1}
+/* As janelas que usam .mh/.mt/.mx/.mb (tabela pros vendedores e recibo de venda): sem estas regras o
+   ✕ caía embaixo do título e o corpo não rolava, então o fim da janela ficava cortado e inalcançável.
+   O corpo rola por dentro e não arrasta a página de trás junto; tocar no fundo escuro não rola nada. */
+.mh{padding:16px 22px 12px;border-bottom:1px solid var(--b);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-shrink:0}
+.mt{font-family:var(--fonte);font-weight:600;letter-spacing:-.02em;font-size:1.15rem;color:var(--tx)}
+.mx{width:30px;height:30px;flex:none;border-radius:999px;border:1px solid var(--b);background:transparent;color:var(--mu);cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center}
+.mx:hover{background:var(--b);color:var(--tx)}
+.mb{padding:16px 22px 22px;overflow-y:auto;flex:1 1 auto;min-height:0;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.mcb{overscroll-behavior:contain}
+.moo{touch-action:none}
 .mca{padding:14px 24px 18px;display:flex;justify-content:flex-end;gap:8px;border-top:1px solid var(--b);flex-shrink:0;background:var(--w)}
 .bcan{padding:9px 18px;border:1px solid var(--b2);border-radius:8px;background:transparent;color:var(--mu);font-family:var(--fonte);font-size:.82rem;font-weight:600;cursor:pointer;transition:all .15s}
 .bcan:hover{border-color:var(--tx);color:var(--tx)}
@@ -3768,6 +3778,7 @@ div:has(> .fc2){flex-wrap:wrap;row-gap:6px}
   <!-- MODAL EDITAR PEÇA -->
   <!-- TABELA PRA MANDAR AOS VENDEDORES -->
   <div class="mo h" id="TVO">
+    <div class="moo" onclick="fecharTabelaVend()"></div>
     <div class="mc" style="max-width:560px">
       <div class="mh"><div class="mt">📋 Tabela pros vendedores</div><button class="mx" onclick="fecharTabelaVend()">✕</button></div>
       <div class="mb">
@@ -3829,6 +3840,7 @@ div:has(> .fc2){flex-wrap:wrap;row-gap:6px}
   </div>
 
   <div class="mo h" id="RCO">
+    <div class="moo" onclick="fecharRecibo()"></div>
     <div class="mc" style="max-width:580px">
       <div class="mh"><div class="mt">🧾 Recibo de venda</div><button class="mx" onclick="fecharRecibo()">✕</button></div>
       <div class="mb">

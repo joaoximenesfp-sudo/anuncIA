@@ -29,6 +29,7 @@ node testes/test-fechamento.js     # fechamento do mês: vendas, comparação, o
 node testes/test-compra-usados.js  # "Compramos seu usado" no catálogo: a mensagem do WhatsApp, quando a seção aparece e as opções no sistema
 node testes/test-maquina.js        # página da máquina (QR da etiqueta): só sócio grava, só campos públicos, um aparelho não desfaz o outro, o que aparece para quem escaneia
 node testes/test-pecas-qr.js       # peças com etiqueta: número P1, P2… separado das máquinas, QR #p=, sem custo na etiqueta, sem etiqueta, cadastro pelo QR e a conferência do estoque
+node testes/test-janelas.js        # janelas: toda parte do cabeçalho e do corpo tem estilo, o corpo rola por dentro (tabela pros vendedores e recibo) e o fundo fecha
 ```
 
 Rode o `checar.js` sempre antes de subir. Tag desbalanceada ou chave de CSS
