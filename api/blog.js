@@ -691,7 +691,7 @@ a{color:inherit}
 .mq-aviso{background:var(--chip);border:1px solid var(--b);border-radius:14px;padding:12px 14px;margin:10px 0 0;font-size:.95rem}
 .mq-fotos{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;margin:22px -20px 6px;padding:0 20px 10px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .mq-fotos::-webkit-scrollbar{display:none}
-.mq-fotos img{flex:0 0 min(86%,480px);aspect-ratio:1/1;object-fit:contain;border-radius:18px;background:var(--chip);border:1px solid var(--b);scroll-snap-align:start}
+.mq-fotos img{flex:none;width:min(86%,480px);min-width:0;height:auto;aspect-ratio:1/1;object-fit:contain;border-radius:18px;background:var(--chip);border:1px solid var(--b);scroll-snap-align:start}
 @media(max-width:600px){.mq-fotos{margin:18px -16px 6px;padding:0 16px 10px}}
 .mq-dica{font-size:.8rem;color:var(--li);margin:0 0 6px}
 .mq-ficha{list-style:none;padding:0;margin:0;display:grid;gap:7px;font-size:.98rem}

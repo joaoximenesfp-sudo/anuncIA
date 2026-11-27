@@ -369,6 +369,10 @@ const post = body => chamar({ method: 'POST', body: Object.assign({ idToken: 'so
   ok(r.body.indexOf('src="/maquina/foto/f1"') > 0 && r.body.indexOf('src="/maquina/foto/f1"') < r.body.indexOf('src="/maquina/foto/f2"') && !r.body.includes('/maquina/foto/f9') &&
     r.body.includes('<meta property="og:image" content="https://techcampinas.com.br/maquina/foto/f1">') && !r.body.includes('og:image:width'),
     'as fotos dela, na ordem, e a primeira na prévia do WhatsApp (sem tamanho inventado)');
+  // numa fileira que rola de lado, a foto sem largura própria fica do tamanho do arquivo (1.100 px) e o celular só mostra um pedaço
+  const cssFoto = (r.body.match(/\.mq-fotos img\{([^}]*)\}/) || [])[1] || '';
+  ok(/(^|;)width:min\(86%,480px\)/.test(cssFoto) && /(^|;)min-width:0(;|$)/.test(cssFoto) && /object-fit:contain/.test(cssFoto) && !/flex:0 0 /.test(cssFoto),
+    'cada foto da galeria tem largura própria e cabe inteira na tela (não fica do tamanho do arquivo)');
   ok(r.body.includes('<b>Modelo:</b> T14 Gen 1') && r.body.includes('<li>Acompanha carregador original</li>') && r.body.includes('🧠 2/2 RAM · cheio') && r.body.includes('Webcam &lt;b&gt;') &&
     r.body.includes('youtube-nocookie.com/embed/abcdefghijk') && r.body.includes('90 dias de garantia'), 'ficha, recursos, vídeo e garantia (o que vem do catálogo aparece escrito, sem virar HTML)');
   ok(!/Fornecedor Secreto|nota interna|1234|custo|fornecedor/i.test(r.body), 'custo, fornecedor e anotação nunca aparecem, mesmo se viessem do banco');
