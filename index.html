@@ -17579,6 +17579,26 @@ window.copiarLinkCatalogo=async()=>{
   catch(e){ el.innerHTML='Copie à mão: <code>'+esc(catUrl())+'</code>'; }
 };
 
+// ── NOVIDADE NO CATÁLOGO ──
+// A máquina que acabou de entrar no catálogo, ou que estava "chegando" e chegou, ganha a data
+// novo_em, guardada nas próximas publicações (o publicado_em muda toda vez, não serve para isso).
+// O catálogo mostra o selo "Novidade" e põe ela na frente por CAT_NOVO_DIAS dias.
+const CAT_NOVO_DIAS=7;
+function catNovoEm(ant, estado, p, agora){
+  if(estado!=='disponivel') return (ant&&ant.novo_em)||'';   // chegando ou reservada: ainda não é novidade
+  // sem saber o que havia antes (primeira vez com esta data, ou a leitura falhou): a data da compra
+  const compra=()=>{ const dc=String(p.data_compra||'').slice(0,10); return /^\d{4}-\d{2}-\d{2}$/.test(dc)?dc+'T12:00:00.000Z':''; };
+  if(ant&&ant.legado) return compra()||'';
+  if(!ant) return agora;                                    // entrou agora no catálogo
+  if(ant.estado==='chegando') return agora;                 // estava chegando e chegou
+  if(ant.novo_em) return ant.novo_em;                       // já tinha a data: mantém
+  return compra()||ant.publicado_em||'';                    // já estava no ar antes desta data existir
+}
+function catEhNovo(i, agoraMs){
+  if(!i||i.estado!=='disponivel'||!i.novo_em) return false;
+  const t=Date.parse(i.novo_em); if(isNaN(t)) return false;
+  return ((agoraMs||Date.now())-t)<CAT_NOVO_DIAS*864e5;
+}
 window.publicarCatalogo=async()=>{
   const el=document.getElementById('catRes');
   const bt=document.getElementById('catPubBt');
@@ -17610,7 +17630,11 @@ window.publicarCatalogo=async()=>{
 
   const semFoto=[], falhas=[];
   const idsVivos=new Set(), fotoIdsVivos=new Set();
-  let publicadas=0, nFotos=0;
+  let publicadas=0, nFotos=0, nNovas=0;
+  // O que já estava no catálogo: para saber o que é novidade (entrou agora, ou estava chegando e chegou)
+  const antes=new Map(), agoraCat=new Date().toISOString();
+  try{ const s=await getDocs(collection(db,'catalogo')); s.forEach(d=>{ const x=d.data()||{}; antes.set(d.id,{novo_em:x.novo_em||'', estado:x.estado||'', publicado_em:x.publicado_em||''}); }); }
+  catch(e){ /* sem a lista de antes, ninguém vira novidade por engano: vale a data da compra */ }
 
   try{
     for(let i=0;i<lista.length;i++){
@@ -17645,6 +17669,9 @@ window.publicarCatalogo=async()=>{
         n_fotos:fotos.length,
         publicado_em:new Date().toISOString()
       };
+      // novidade: desde quando (o catálogo mostra o selo "Novidade" por alguns dias)
+      doc0.novo_em=catNovoEm(antes.size?antes.get(p.id):{legado:true}, doc0.estado, p, agoraCat);
+      if(catEhNovo(doc0)) nNovas++;
       const okDoc=await gravar(setDoc(doc(db,'catalogo',p.id),doc0),'Publicar "'+(p.nome||p.id)+'" no catálogo');
       if(!okDoc){ falhas.push((p.nome||p.id)+' — não entrou no catálogo'); continue; }
       idsVivos.add(p.id); publicadas++;
@@ -17681,6 +17708,7 @@ window.publicarCatalogo=async()=>{
         + (detalhe?` — ${nDisp} disponíve${nDisp!==1?'is':'l'}, ${detalhe}`:'')
         + ` · ${nFotos} foto${nFotos!==1?'s':''}`;
     if(removidas) h+=` · ${removidas} tirada${removidas!==1?'s':''} do ar`;
+    if(nNovas) h+=`<br>🆕 ${nNovas} com o selo <b>Novidade</b> no catálogo (entraram ou chegaram nos últimos ${CAT_NOVO_DIAS} dias).`;
     if(chegandoSemPreco) h+=`<br>🚚 ${chegandoSemPreco} chegando sem preço — aparece como "preço em breve".`;
     if(semPreco.length){
       h+=`<br><span class="fora">⚠️ ${semPreco.length} anunciada${semPreco.length!==1?'s':''} ficou de fora por estar sem preço:</span> `

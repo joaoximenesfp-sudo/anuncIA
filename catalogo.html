@@ -244,6 +244,7 @@ b,strong,th,h1,h2,h3,h4,h5,h6{font-weight:600}
   .bdg{position:absolute;top:12px;left:12px;right:12px;display:flex;gap:6px;flex-wrap:wrap}
   .bd{font-size:.68rem;font-weight:600;padding:5px 10px;border-radius:999px;letter-spacing:.01em;white-space:nowrap}
   .bd-ch{background:#F59E0B;color:#3B2200}
+  .bd-nv{background:var(--g1);color:#04210F;box-shadow:0 2px 10px rgba(28,240,143,.35)}
   .bd-rs{background:var(--rx);color:#fff}
   .bd-un{background:rgba(11,18,33,.78);color:#fff;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
   .cd-nf{position:absolute;right:12px;bottom:12px;display:inline-flex;align-items:center;gap:5px;background:rgba(11,18,33,.72);color:#fff;
@@ -676,11 +677,14 @@ async function carregar(){
            instagram:'', publicado_em:rev.publicado_em||cfg.publicado_em};
     }
     // Disponivel primeiro, chegando depois, reservada por ultimo: a ordem e a
-    // de quanto o cliente consegue levar a maquina pra casa hoje.
+    // de quanto o cliente consegue levar a maquina pra casa hoje. Entre as
+    // disponíveis, as novidades (acabaram de entrar ou de chegar) vêm na frente.
     const ordem=i=>i.estado==='reservado'?2:(i.estado==='chegando'?1:0);
     itens.sort((a,b)=>{
       const oa=ordem(a), ob=ordem(b);
       if(oa!==ob) return oa-ob;
+      const na=ehNovo(a)?0:1, nb=ehNovo(b)?0:1;
+      if(na!==nb) return na-nb;
       return (Number(b.preco)||0)-(Number(a.preco)||0);
     });
   }catch(e){
@@ -723,6 +727,14 @@ async function carregar(){
 }
 
 function waNum(){ return String(cfg.whatsapp||'').replace(/\D/g,''); }
+// Novidade: a máquina que entrou no catálogo, ou que estava chegando e chegou, nos últimos dias.
+// A data (novo_em) vem do sistema e fica guardada entre as publicações.
+const NOVO_DIAS=7;
+function ehNovo(i){
+  if(!i||i.estado==='reservado'||i.estado==='chegando'||!i.novo_em) return false;
+  const t=Date.parse(i.novo_em);
+  return !isNaN(t) && (Date.now()-t)<NOVO_DIAS*864e5;
+}
 // A página própria de cada máquina (o mesmo endereço que o servidor monta, em api/blog.js):
 // é o link para mandar a alguém, com a foto e o preço na prévia do WhatsApp.
 function slugMaq(i){
@@ -763,8 +775,10 @@ function cabecalho(){
   const nRes=itens.filter(i=>i.estado==='reservado').length;
   const nDisp=itens.length-nCheg-nRes;
   const temDesk=itens.some(i=>i.tipo==='desktop');
+  const nNovo=itens.filter(ehNovo).length;
   $('lojaSub').textContent=`${nDisp} ${temDesk?'notebooks e desktops':'notebooks'} disponíve${nDisp!==1?'is':'l'} hoje`
     +(cfg.cidade?` em ${cfg.cidade}`:'')+', testados um a um antes da venda.'
+    +(nNovo?` ${nNovo} novidade${nNovo!==1?'s':''} esta semana.`:'')
     +(nCheg?` E mais ${nCheg} chegando.`:'');
   $('catSub').textContent=`${itens.length} máquina${itens.length!==1?'s':''} · fotos reais de cada uma, tiradas por nós.`;
   const bts=[];
@@ -1118,7 +1132,8 @@ function cartao(g,k){
     ? `<div class="cd-pr">${deHTML(i)}${fmt(i.preco)}${pctHTML(i)}</div>`
     : `<div class="cd-pr breve">Preço em breve</div>`;
   const conds=condicoes(i).filter(c=>c.t).slice(0,2);
-  const bds=[res?'<span class="bd bd-rs">Reservado</span>':'', cheg?'<span class="bd bd-ch">Chegando</span>':'',
+  const bds=[g.itens.some(ehNovo)?'<span class="bd bd-nv">Novidade</span>':'',
+             res?'<span class="bd bd-rs">Reservado</span>':'', cheg?'<span class="bd bd-ch">Chegando</span>':'',
              n>1?`<span class="bd bd-un">${n} unidades</span>`:''].filter(Boolean).join('');
   return `<div class="cd${cheg?' cheg':''}${res?' res':''}" data-g="${k}" style="--i:${Math.min(k,12)}" tabindex="0" role="button" aria-label="${esc(p.titulo)}">
     <div class="cd-im">${capa}
@@ -1163,7 +1178,7 @@ function destaque(){
       <div class="vit-pal">${gs.map((g,k)=>{ const i=g.itens[0], p=partesNome(i); return `
         <div class="vit-sl" aria-hidden="${k?'true':'false'}">
           <img src="${i.capa}" alt="${esc(rot(g))}" decoding="async">
-          <div class="dest-tag"><div style="min-width:0"><div class="dest-k">Destaque${p.marca?' · '+esc(p.marca):''}</div>
+          <div class="dest-tag"><div style="min-width:0"><div class="dest-k">${g.itens.some(ehNovo)?'Novidade':'Destaque'}${p.marca?' · '+esc(p.marca):''}</div>
             <div class="dest-nm">${esc(p.modelo)}</div></div><div class="dest-pr">${deHTML(i)}${fmt(i.preco)}</div></div>
         </div>`; }).join('')}
       </div>
