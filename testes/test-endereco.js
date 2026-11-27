@@ -38,5 +38,26 @@ const cat = ler('catalogo.html');
 ok(cat.includes('<link rel="canonical" href="https://techcampinas.com.br/">') && cat.includes('<meta property="og:url" content="https://techcampinas.com.br/">'), 'o endereço oficial do catálogo é a raiz');
 ok(!/name="robots"[^>]*noindex/.test(cat), 'o catálogo pode aparecer na busca');
 
+console.log('\npara subir no Google (catálogo)');
+ok(/<title>[^<]*Notebooks seminovos em Campinas[^<]*<\/title>/.test(cat) && /<meta name="description" content="[^"]*Campinas[^"]*90 dias de garantia/.test(cat), 'título e descrição falam de notebook seminovo em Campinas, com garantia');
+const onde = (cat.match(/<div class="onde" id="onde">([\s\S]*?)<\/div>/) || [])[1] || '';
+const CID = ['Campinas', 'Hortolândia', 'Sumaré', 'Valinhos', 'Vinhedo', 'Indaiatuba', 'Jaguariúna', 'Nova Odessa', 'Sorocaba'];
+ok(/<h2>Notebooks seminovos em Campinas e região<\/h2>/.test(onde) && CID.every(c => onde.includes(c)) && onde.includes('90 dias de garantia'), 'texto fixo com as cidades atendidas (o Google lê mesmo sem o catálogo carregar)');
+ok(/if\(REV_ID\)\{ const o=document\.getElementById\('onde'\); if\(o\) o\.hidden=true; \}/.test(cat), 'no catálogo de revendedor, o texto da loja some');
+ok(cat.includes('${REV_ID?`<div class="cd-nm">${esc(p.titulo)}</div>`:`<a class="cd-nm" href="/maquina/${esc(slugMaq(i))}" onclick="event.preventDefault()">${esc(p.titulo)}</a>`}'),
+  'o nome de cada máquina é link para a página dela (o toque segue abrindo a ficha; no revendedor, sem link)');
+// a loja para o Google, rodando a função do catálogo com um mundo de mentira
+const trecho = cat.slice(cat.indexOf("const CIDADES=["), cat.indexOf('function waLink(msg){'));
+const rodar = (revId, cfg, itens) => {
+  const head = []; const doc = { getElementById: id => head.find(x => x.id === id) || null, createElement: () => ({}), head: { appendChild: x => head.push(x) } };
+  const f = new Function('REV_ID', 'cfg', 'itens', 'document', 'waNum', trecho + '; return [lojaParaOGoogle(), lojaParaOGoogle()];');
+  return [...f(revId, cfg, itens, doc, () => String(cfg.whatsapp || '').replace(/\D/g, '')), head];
+};
+const [ld, de_novo, head] = rodar('', { nome: 'Tech Campinas', whatsapp: '(19) 99999-0000', instagram: '@techcampinas' }, [{ preco: 2800 }, { preco: 1100 }, { preco: 3700 }, { preco: 0 }]);
+ok(ld && ld['@type'] === 'ComputerStore' && ld.areaServed.length === 9 && ld.areaServed[0].name === 'Campinas' && ld.address.addressLocality === 'Campinas' && ld.telephone === '+5519999990000' &&
+  ld.priceRange === 'R$ 1.100 a R$ 3.700' && ld.sameAs[0] === 'https://instagram.com/techcampinas' && ld.url === 'https://techcampinas.com.br/', 'a loja para o Google: computador, cidades atendidas, WhatsApp, faixa de preço e Instagram');
+ok(de_novo === null && head.length === 1 && head[0].type === 'application/ld+json' && JSON.parse(head[0].textContent).name === 'Tech Campinas', 'entra uma vez só na página');
+ok(rodar('rev1', { nome: 'Revendedor' }, [{ preco: 1000 }])[0] === null, 'no catálogo de revendedor não entra');
+
 console.log(falhas ? `\n${falhas} FALHA(S)` : '\ntudo verde');
 process.exit(falhas ? 1 : 0);
