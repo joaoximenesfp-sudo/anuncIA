@@ -28,7 +28,7 @@ global.fetch = async (url, op = {}) => {
       valida: crypto.createVerify('RSA-SHA256').update(cab + '.' + corpo).verify(publicKey, Buffer.from(ass.replace(/-/g, '+').replace(/_/g, '/'), 'base64')) };
     return jwt.valida ? resposta(200, { access_token: 'passe-' + passes, expires_in: 3600 }) : resposta(400, { error: 'invalid_grant' });
   }
-  if (u.hostname === 'www.googleapis.com' && u.pathname.startsWith('/webmasters/v3/')) {
+  if (u.hostname === 'searchconsole.googleapis.com' && u.pathname.startsWith('/webmasters/v3/')) {
     if (h.Authorization !== 'Bearer passe-' + passes) return resposta(401, {});
     if (apiDesligada) return resposta(403, { error: { message: 'Google Search Console API has not been used in project 123 before or it is disabled.', status: 'PERMISSION_DENIED' } });
     if (u.pathname === '/webmasters/v3/sites') return resposta(200, { siteEntry: sites });

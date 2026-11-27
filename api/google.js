@@ -12,7 +12,7 @@ const N = require('../tela/nucleo.js');
 
 const ESCOPO = 'https://www.googleapis.com/auth/webmasters.readonly';
 const TOKEN_URL = 'https://oauth2.googleapis.com/token';
-const API = 'https://www.googleapis.com/webmasters/v3';
+const API = 'https://searchconsole.googleapis.com/webmasters/v3'; // o mesmo serviço que se ativa no Google Cloud (Google Search Console API)
 const DOMINIO = 'techcampinas.com.br';
 const PROJETO = N.PROJETO;
 const erro = (status, msg) => Object.assign(new Error(msg), { status });
