@@ -48,7 +48,7 @@ function novo(ini) {
   ];
   let E = novo({ pecas, ult: 10 });
   const d = E.etqDadosPeca(3);
-  ok(d.rotulo === 'P3' && d.qr === 'https://anunc-ia.vercel.app/#p=3' && d.nome === 'Dell Pino grosso 130W (RGB) · E3 pinos' && d.specs[0] === 'Carregador',
+  ok(d.rotulo === 'P3' && d.qr === 'https://anunc-ia.vercel.app/#p=3' && d.nome === 'Dell Pino grosso 130W (RGB) · E3 pinos' && d.specs[0] === 'Fonte',
     'P3, o QR da peça (#p=3), o nome sem a marca repetida e o tipo');
   ok(!/45|120|Fulano|nota interna/.test(JSON.stringify(d)), 'custo, preço, fornecedor e anotação nunca vão na etiqueta');
   ok(E.etqDadosPeca(4).specs[0] === 'Plug/Tomada · 7 unidades', 'saquinho com várias: a quantidade aparece');
@@ -98,14 +98,14 @@ function novo(ini) {
   ok(/^✓ P2 vista agora$/.test(sem.avisos().pop()), 'sem conferência, escanear ainda grava que a peça foi vista');
 
   console.log('\no quadro da conferência na aba Peças');
-  const quadro = (pecasQ, conf, ult) => {
+  const quadro = (pecasQ, conf, ult, arquivo) => {
     const els = { pecasConfBox: { innerHTML: '' }, pfFaltam: { hidden: true } };
-    const f = new Function('pecas', 'pecaConf', 'etqUltPeca', 'document', [
+    const f = new Function('pecas', 'pecaConf', 'etqUltPeca', 'pecasArquivadas', 'document', [
       'const idLocal=id=>/^l\\d+$/.test(String(id)); const esc=s=>String(s).replace(/</g,"&lt;");',
-      extrair('function etqFaixas('), extrair('function pecaQuando('), extrair('function pecasSemEtq('),
+      extrair('function etqFaixas('), extrair('function pecaQuando('), extrair('function pecasSemEtq('), extrair('function pecasAntigas('),
       linha(/const confAtiva=\(\)=>[^;]+;/), linha(/const pecaConferida=p=>[^;]+;/), extrair('function confContagem('),
       extrair('function renderPecasConf('), 'renderPecasConf();'].join('\n'));
-    f(pecasQ, conf, ult, { getElementById: id => els[id] || null });
+    f(pecasQ, conf, ult, arquivo || [], { getElementById: id => els[id] || null });
     return els;
   };
   let q = quadro([{ id: 'a', num: 1, status: 'Estoque', etq_em: 'x' }, { id: 'b', num: 4, status: 'Estoque' }, { id: 'c', status: 'Estoque' }], null, 6);
@@ -139,7 +139,10 @@ function novo(ini) {
   const abrir = extrair('window.qrPecaAbrir=n=>{');
   ok(/if\(!pecasOk\)/.test(abrir) && /pecaVista\(p\); openPecaEdit\(p\.id\)/.test(abrir) && /qrPecaCadAbrir\(n\)/.test(abrir),
     'abre a peça (e marca como vista) ou o cadastro; sem a lista do banco, não abre cadastro (evita peça repetida)');
-  ok(/if\(pecasOk && !pecas\.some\(p=>p\.tipo==='Carregador'\)\)/.test(extrair('async function loadPecas(')), 'sem internet, as fontes da planilha não entram repetidas');
+  const load = extrair('async function loadPecas(');
+  ok(!/FONTES_PRESET/.test(SRC) && !/addDoc/.test(load), 'as fontes da planilha antiga não voltam mais sozinhas (o estoque nasce da etiqueta)');
+  ok(/pecasArquivadas=todas\.filter\(p=>p\.arquivada\);\s*pecas=todas\.filter\(p=>!p\.arquivada\);/.test(load), 'as peças do arquivo ficam fora da lista e das contas do estoque');
+  ok(/pecas\.concat\(typeof pecasArquivadas!=='undefined'\?pecasArquivadas:\[\]\)/.test(SRC), 'mas entram no backup');
 
   console.log('\ncadastro pela etiqueta');
   const add = extrair('window.addPeca=async()=>{');
@@ -151,6 +154,72 @@ function novo(ini) {
   ok(/num:n,etq_em:agora/.test(ligar) && /já é da peça/.test(ligar), 'escolher a peça já cadastrada passa a etiqueta para ela (e não rouba de outra)');
   const fechar = extrair('window.qrCadFechar=()=>{');
   ok(/c\.pai\.insertBefore\(c\.card/.test(fechar) && /#qrbLigar/.test(fechar), 'fechar devolve o formulário para o mesmo lugar e tira a escolha');
+
+  console.log('\nrecomeço por camadas: tirar as peças antigas');
+  const recomeco = (lista, falha) => new Function('ini', 'falha', [
+    'let pecas=ini.slice(), pecasArquivadas=[]; const gravados=[]; const avisos=[];',
+    'const idLocal=id=>/^l\\d+$/.test(String(id)); const db={}; const doc=(d,col,id)=>({col,id});',
+    'const updateDoc=(ref,dados)=>falha.includes(ref.id)?Promise.reject(new Error("sem internet")):(gravados.push({...ref,...dados}),Promise.resolve());',
+    'const gravar=async pr=>{ try{ await pr; return true; }catch(e){ return false; } };',
+    'const renderPecas=()=>{}; const pcToast=t=>avisos.push(t); const window={}; const confirm=()=>true;',
+    extrair('function pecasAntigas('), extrair('window.pecasTirarAntigas=async()=>{'), extrair('window.pecasTrazerAntigas=async()=>{'),
+    'return { antigas: pecasAntigas, tirar: window.pecasTirarAntigas, trazer: window.pecasTrazerAntigas, lista: () => pecas, arquivo: () => pecasArquivadas, gravados: () => gravados, avisos: () => avisos };'].join('\n'))(lista, falha || []);
+  const velhas = [
+    { id: 'v1', nome: 'Dell Dell Pino grosso 130W', tipo: 'Carregador', status: 'Estoque' },
+    { id: 'v2', nome: 'Plug E3', tipo: 'Plug/Tomada', status: 'Estoque', quantidade: 7 },
+    { id: 'v3', nome: 'SSD vendido', status: 'Vendido' },
+    { id: 'v4', nome: 'RAM na #12', status: 'Usado', produto_id: 'm12' },
+    { id: 'v5', num: 1, nome: 'Fonte etiquetada', tipo: 'Carregador', status: 'Estoque' },
+  ];
+  let R = recomeco(velhas);
+  ok(R.antigas().map(p => p.id).join() === 'v1,v2', 'antigas = em estoque e sem etiqueta (vendida, a que está dentro de máquina e a já etiquetada ficam)');
+  await R.tirar();
+  ok(R.lista().map(p => p.id).join() === 'v3,v4,v5' && R.arquivo().map(p => p.id).join() === 'v1,v2', 'saem da lista e vão para o arquivo');
+  ok(R.gravados().every(g => g.col === 'pecas' && g.arquivada && Object.keys(g).length === 3), 'no banco só ganham a data do arquivo (nada é apagado)');
+  await R.trazer();
+  ok(R.lista().map(p => p.id).sort().join() === 'v1,v2,v3,v4,v5' && R.arquivo().length === 0 && R.gravados().slice(-2).every(g => g.arquivada === ''), 'e dá para trazer de volta');
+  R = recomeco(velhas.map(p => ({ ...p, arquivada: '' })), ['v2']);
+  await R.tirar();
+  ok(R.lista().some(p => p.id === 'v2') && R.arquivo().map(p => p.id).join() === 'v1' && /1 de 2 tiradas/.test(R.avisos().pop()), 'sem internet numa delas: ela fica na lista e o aviso diz quantas foram');
+  q = quadro([{ id: 'a', status: 'Estoque' }, { id: 'b', status: 'Estoque' }, { id: 'c', num: 2, status: 'Estoque', etq_em: 'x' }], null, 2);
+  ok(/onclick="pecasTirarAntigas\(\)">🧹 Tirar as 2 peças antigas</.test(q.pecasConfBox.innerHTML), 'o quadro mostra o botão com quantas são');
+
+  console.log('\ncamada de fontes');
+  const F = new Function('localStorage', 'document', [
+    'const esc=s=>String(s).replace(/</g,"&lt;");', linha(/const FONTE_OPC=\{[\s\S]*?\n\};/), linha(/const FONTE_ROT=\{[^}]+\};/),
+    'let pcFonteSel={}, pcFonteUlt=null;', extrair('function fonteNome('), extrair('function fonteCampos('), linha(/const fonteObs=s=>[^;]+;/),
+    extrair('function pcFontePintar('), "let pcFonteObsAuto='';", 'const window={};',
+    extrair('window.pcFonteToca=(k,v)=>{'), extrair('window.pcFonteIgual=()=>{'), extrair('window.pcTipoMudou=()=>{'),
+    'return { fonteNome, fonteCampos, fonteObs, toca: window.pcFonteToca, igual: window.pcFonteIgual, tipo: window.pcTipoMudou, sel: () => pcFonteSel, ult: u => { pcFonteUlt = u; } };'].join('\n'));
+  const tela = { pcNome: { value: '' }, pcObs: { value: '' }, pcFonteBox: { hidden: true, innerHTML: '' }, pcTipo: { value: 'Tela' } };
+  const FT = F({ getItem: () => null }, { getElementById: id => tela[id] || null });
+  ok(FT.fonteNome({ marca: 'Dell', potencia: '65W', conector: 'Pino fino', linha: 'Original', cabo: 'Cabo 3 pinos' }) === 'Dell 65W · pino fino', 'o nome: marca, potência e ponta (original e cabo de 3 pinos não precisam aparecer)');
+  ok(FT.fonteNome({ marca: 'Lenovo', potencia: '45W', conector: 'Retangular (tipo USB)', linha: 'Paralela', cabo: 'Sem cabo' }) === 'Lenovo 45W · retangular · paralela · sem cabo', 'paralela e sem cabo aparecem no nome');
+  ok(FT.fonteNome({ marca: 'Outra', potencia: 'Outra' }) === 'Fonte' && FT.fonteNome({}) === 'Fonte', 'sem marca nem potência: "Fonte"');
+  ok(JSON.stringify(FT.fonteCampos({ marca: 'Dell', potencia: '90W', conector: 'Pino grosso', linha: 'Original', cabo: 'Cabo 3 pinos', situacao: 'Funcionando' }))
+    === '{"marca":"Dell","potencia":90,"conector":"Pino grosso","linha":"Original","cabo":"Cabo 3 pinos","aterramento":"E3","situacao":"Funcionando","funcionando":true}',
+    'o que grava: marca, potência em número, ponta, linha, cabo (E3 como a lista já mostra) e se funciona');
+  ok(FT.fonteCampos({ marca: 'Outra', situacao: 'Testar', cabo: 'Sem cabo' }).marca === 'Variado' && FT.fonteCampos({ situacao: 'Testar' }).funcionando === null &&
+    FT.fonteCampos({ situacao: 'Não funciona' }).funcionando === false && FT.fonteCampos({ cabo: 'Sem cabo' }).aterramento === '', 'marca "Outra" vai para o grupo Variado; testar fica sem sim/não');
+  ok(FT.fonteObs({ situacao: 'Não funciona' }) === 'Não funciona' && FT.fonteObs({ situacao: 'Testar' }) === 'Testar' && FT.fonteObs({ situacao: 'Funcionando' }) === '', 'a situação vira o selo que a lista já mostra (✕ não funciona, ⚠ testar)');
+  tela.pcTipo.value = 'Carregador'; FT.tipo();
+  ok(!tela.pcFonteBox.hidden && /Marca/.test(tela.pcFonteBox.innerHTML) && /pcFonteToca\('potencia','65W'\)/.test(tela.pcFonteBox.innerHTML), 'tipo Fonte: aparecem os botões');
+  FT.toca('marca', 'HP'); FT.toca('potencia', '65W'); FT.toca('conector', 'Pino fino'); FT.toca('situacao', 'Testar');
+  ok(tela.pcNome.value === 'HP 65W · pino fino' && tela.pcObs.value === 'Testar' && /pcf-chip av on/.test(tela.pcFonteBox.innerHTML), 'tocar monta o nome e a observação, e o botão fica marcado');
+  FT.toca('situacao', 'Testar');
+  ok(tela.pcObs.value === '' && !FT.sel().situacao, 'tocar de novo desmarca');
+  tela.pcObs.value = 'cabo emendado'; FT.toca('situacao', 'Não funciona');
+  ok(tela.pcObs.value === 'cabo emendado', 'a observação escrita à mão não é apagada pelos botões');
+  FT.ult({ marca: 'Dell', potencia: '90W', conector: 'Pino grosso' }); tela.pcObs.value = '';
+  FT.igual();
+  ok(tela.pcNome.value === 'Dell 90W · pino grosso' && FT.sel().potencia === '90W', '"igual à anterior" repete a última fonte (lote de fontes iguais)');
+  tela.pcTipo.value = 'Tela'; FT.tipo();
+  ok(tela.pcFonteBox.hidden, 'outro tipo: os botões somem');
+  const addF = extrair('window.addPeca=async()=>{');
+  ok(/\.\.\.\(tipo==='Carregador'\?fonteCampos\(pcFonteSel\):\{\}\)/.test(addF) && /localStorage\.setItem\('pcTipoUlt',tipo\)/.test(addF) && /pcFonteLimpar\(\)/.test(addF),
+    'o cadastro grava os campos da fonte, lembra o tipo e limpa os botões');
+  ok(/localStorage\.getItem\('pcTipoUlt'\)[\s\S]*pcTipoMudou\(\)/.test(extrair('function qrPecaCadAbrir(')), 'a próxima etiqueta escaneada já abre como fonte');
+  ok(novo({ pecas: [{ id: 'f', num: 7, nome: 'Dell 65W · pino fino', tipo: 'Carregador' }] }).etqDadosPeca(7).specs[0] === 'Fonte', 'na etiqueta, o tipo aparece como "Fonte"');
 
   console.log('\na tela de etiquetas no modo peça');
   ok(/etqLerNums\(peca\?inp\.value\.replace\(\/p\(\?=\\s\*\\d\)\/gi,''\):inp\.value\)/.test(SRC), '"P1-P10" vale o mesmo que "1-10"');

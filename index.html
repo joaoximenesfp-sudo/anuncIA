@@ -1354,6 +1354,19 @@ body.arrastando-foto{user-select:none;-webkit-user-select:none;cursor:grabbing}
 .pe-conf-soltas{font-size:.72rem;color:#a16207;margin-top:7px}
 .bvis{border:1px solid #bbf7d0;background:#f0fdf4;color:#15803d;border-radius:6px;min-width:26px;height:26px;font-size:.8rem;font-weight:700;cursor:pointer;margin-right:3px}
 .pc-toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:9999;background:#0f172a;color:#fff;font-size:.85rem;font-weight:600;padding:10px 16px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.25);max-width:calc(100vw - 32px);text-align:center}
+/* camada de fontes: o carregador é cadastrado tocando nos botões, e o nome se monta sozinho */
+.pc-fonte{grid-column:1/-1;background:var(--bg);border:1px solid var(--b2);border-radius:10px;padding:10px 12px}
+.pcf-top{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;font-size:.8rem;font-weight:600;color:var(--tx)}
+.pcf-lin{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 8px}
+.pcf-rot{font-size:.66rem;font-weight:600;color:var(--mu);text-transform:uppercase;letter-spacing:.04em;width:100%}
+.pcf-chip{border:1px solid var(--b2);background:var(--w);color:var(--tx);border-radius:999px;padding:7px 12px;font:inherit;font-size:.8rem;cursor:pointer;line-height:1.1}
+.pcf-chip.on{background:var(--tx);border-color:var(--tx);color:var(--w)}
+.pcf-chip.ok.on{background:#16a34a;border-color:#16a34a;color:#fff}
+.pcf-chip.av.on{background:#d97706;border-color:#d97706;color:#fff}
+.pcf-chip.nok.on{background:#dc2626;border-color:#dc2626;color:#fff}
+/* no celular (onde a etiqueta é escaneada), tipo, custo, venda, status e investidor em duas colunas */
+@media(max-width:600px){ .pc-grade{grid-template-columns:1fr 1fr !important} }
+.pcf-igual{border:1px dashed var(--b2);background:transparent;color:var(--tx);border-radius:8px;padding:5px 10px;font:inherit;font-size:.74rem;font-weight:600;cursor:pointer}
 .qrb-ligar{background:var(--bg);border:1px solid var(--b2);border-radius:10px;padding:10px 12px;margin:0 0 12px;font-size:.8rem;color:var(--tx)}
 .qrb-ligar select{margin:8px 0}
 .qrb-ligar small{display:block;color:var(--mu);margin-top:6px}
@@ -2515,17 +2528,19 @@ div:has(> .fc2){flex-wrap:wrap;row-gap:6px}
         <div class="cd" id="pecasAddCard">
           <div class="cdh"><span class="cdht">Adicionar peça</span></div>
           <div class="cdb">
-            <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr auto;gap:8px;align-items:end">
+            <div class="pc-grade" style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr auto;gap:8px;align-items:end">
               <div class="fc" style="grid-column:1/-1"><input class="inp" type="text" id="pcNome" placeholder="Ex: Tela Dell 15.6 · Full HD · 30 pinos"></div>
+              <!-- camada de fontes: aparece com o tipo "Fonte"; os botões montam o nome -->
+              <div class="pc-fonte" id="pcFonteBox" hidden></div>
               <div class="fc"><span class="fla">Tipo</span>
-                <select class="inp" id="pcTipo">
+                <select class="inp" id="pcTipo" onchange="pcTipoMudou()">
                   <option value="Tela">🖥️ Tela</option>
                   <option value="Bateria">🔋 Bateria</option>
                   <option value="Teclado">⌨️ Teclado</option>
                   <option value="HD/SSD">💾 HD/SSD</option>
                   <option value="RAM">🧠 RAM</option>
                   <option value="Placa-mãe">🔌 Placa-mãe</option>
-                  <option value="Carregador">⚡ Carregador</option>
+                  <option value="Carregador">⚡ Fonte (carregador)</option>
                   <option value="Plug/Tomada">🔌 Plug/Tomada</option>
                   <option value="Carcaça">📦 Carcaça</option>
                   <option value="Outro">🔧 Outro</option>
@@ -2586,7 +2601,7 @@ div:has(> .fc2){flex-wrap:wrap;row-gap:6px}
               <button class="fc2" onclick="setPF('Estoque',this)">Em estoque</button>
               <button class="fc2" onclick="setPF('Vendido',this)">Vendidos</button>
               <button class="fc2" onclick="setPF('Usado',this)">Usados</button>
-              <button class="fc2" onclick="setPF('Carregador',this)">⚡ Carregadores</button>
+              <button class="fc2" onclick="setPF('Carregador',this)">⚡ Fontes</button>
               <button class="fc2" onclick="setPF('Plug',this)">🔌 Plugs</button>
               <button class="fc2" onclick="setPF('SemEtq',this)">🏷️ Sem etiqueta</button>
               <button class="fc2" id="pfFaltam" onclick="setPF('Faltam',this)" hidden>📋 Faltam conferir</button>
@@ -11063,7 +11078,7 @@ function renderFinancas(){
 // ════════════════════════════════════
 let pecas=[],filtPecas='todos',tabAtual='notebooks';
 let pecasOk=false, pecaConf=null;   // a lista veio do banco? / a conferência do estoque (config/pecas_conferencia)
-const FONTES_PRESET=[{"nome":"Dell Dell Pino grosso 130W (RGB) · E3 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"","aterramento":"E3","marca":"Dell","funcionando":true},{"nome":"Dell Dell pino grosso 90W · E3 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"","aterramento":"E3","marca":"Dell","funcionando":true},{"nome":"Dell Dell tipo C 65W (Testar) · E3 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"Testar — Funcionar","aterramento":"E3","marca":"Dell","funcionando":true},{"nome":"Dell Dell Pino Grosso 65W (RGB) · E3 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"","aterramento":"E3","marca":"Dell","funcionando":true},{"nome":"Dell Dell Pino Grosso 65W (RGB) · E3 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"","aterramento":"E3","marca":"Dell","funcionando":true},{"nome":"Dell Dell Pino Grosso 65W (RGB) · E3 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"","aterramento":"E3","marca":"Dell","funcionando":true},{"nome":"Dell Dell Pino fino 65W · E3 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"","aterramento":"E3","marca":"Dell","funcionando":true},{"nome":"Dell Dell Pino Grosso 65W (RGB) · E3 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"","aterramento":"E3","marca":"Dell","funcionando":true},{"nome":"Dell Dell Pino fino 65W · E3 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"","aterramento":"E3","marca":"Dell","funcionando":true},{"nome":"Acer Acer Paralela 65W · E2 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"","aterramento":"E2","marca":"Acer","funcionando":true},{"nome":"Acer Acer Liteon Pino fino NOVO (Testar) · E3 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"Testar — Funcionar","aterramento":"E3","marca":"Acer","funcionando":true},{"nome":"Acer Acer paralela 65W · E2 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"","aterramento":"E2","marca":"Acer","funcionando":true},{"nome":"Acer Acer Paralela Pino fino Antigo 65W · E3 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"","aterramento":"E3","marca":"Acer","funcionando":true},{"nome":"Acer Acer Sem cabo 30W","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"","aterramento":"","marca":"Acer","funcionando":true},{"nome":"Lenovo Lenovo pino fino 65W (Completa)","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"","aterramento":"","marca":"Lenovo","funcionando":true},{"nome":"Samsung Samsung pino menor 40W · E3 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"","aterramento":"E3","marca":"Samsung","funcionando":true},{"nome":"Samsung Samsung pino menor 60W · E3 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"","aterramento":"E3","marca":"Samsung","funcionando":true},{"nome":"Samsung Samsung pino fino menor 40W · E3 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"","aterramento":"E3","marca":"Samsung","funcionando":true},{"nome":"Asus Asus 60W Pino grosso · E3 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"","aterramento":"E3","marca":"Asus","funcionando":true},{"nome":"Positivo Fonte paralela Positivo 65W · E2 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"","aterramento":"E2","marca":"Positivo","funcionando":true},{"nome":"Sony Sony Pino grosso 90W · E3 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"","aterramento":"E3","marca":"Sony","funcionando":true},{"nome":"Dell Pino Grosso 65W (RGB) · E3 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"Não funciona (testado 19V)","aterramento":"E3","marca":"Variado","funcionando":false},{"nome":"Dell Pino Grosso 65W (RGB) · E3 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"Não funciona (testado 19V)","aterramento":"E3","marca":"Variado","funcionando":false},{"nome":"Positivo 65W · E3 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"Não funciona (testado 19V)","aterramento":"E3","marca":"Variado","funcionando":false},{"nome":"Dell Pino fino 65W · E3 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"Não funciona (testado 19V)","aterramento":"E3","marca":"Variado","funcionando":false},{"nome":"Samung Pino fino 60W · E3 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"Não funciona (testado 19V)","aterramento":"E3","marca":"Variado","funcionando":false},{"nome":"HP Pino fino antigo 65W · E3 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"Não funciona (testado 19V)","aterramento":"E3","marca":"Variado","funcionando":false},{"nome":"HP Pino fino antigo 65W · E3 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"Não funciona (testado 19V)","aterramento":"E3","marca":"Variado","funcionando":false},{"nome":"Lenovo tipo USB · E3 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"Não funciona (testado 19V)","aterramento":"E3","marca":"Variado","funcionando":false},{"nome":"Lenovo 65W sem entrada (Testar) · E3 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"Não funciona (testado 19V)","aterramento":"E3","marca":"Variado","funcionando":false},{"nome":"Samsung pino menor ?W 15V Saída","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"Não funciona (testado 19V)","aterramento":"","marca":"Variado","funcionando":false},{"nome":"Lenovo tipo USB · E2 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"Não funciona (testado 19V)","aterramento":"E2","marca":"Variado","funcionando":false},{"nome":"Positivo Pino menor · E2 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"Não funciona (testado 19V)","aterramento":"E2","marca":"Variado","funcionando":false},{"nome":"Plug de tomada E3 (3 pinos)","tipo":"Plug/Tomada","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"","aterramento":"E3","marca":"Geral","funcionando":true,"quantidade":7},{"nome":"Plug de tomada E2 (2 pinos)","tipo":"Plug/Tomada","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"","aterramento":"E2","marca":"Geral","funcionando":true,"quantidade":3}];
+let pecasArquivadas=[];             // as antigas tiradas da lista no recomeço com etiqueta (guardadas, não apagadas)
 
 window.swTab=(tab,btn)=>{
   tabAtual=tab;
@@ -11091,24 +11106,16 @@ async function loadPecas(){
     // Peças compartilhadas entre todos os sócios
     const q=query(collection(db,'pecas'),where('userId','==','shared_ijx'));
     const snap=await getDocs(q);
-    pecas=snap.docs.map(d=>({id:d.id,...d.data()}));
+    const todas=snap.docs.map(d=>({id:d.id,...d.data()}));
+    // as antigas tiradas da lista (recomeço com etiqueta) ficam guardadas à parte, fora da aba e das contas do estoque
+    pecasArquivadas=todas.filter(p=>p.arquivada);
+    pecas=todas.filter(p=>!p.arquivada);
     pecasOk=true;
   }catch(e){pecas=[];}
   // a conferência em andamento (a mesma para os dois sócios) e a numeração das etiquetas
   try{ const s=await getDoc(doc(db,'config','pecas_conferencia')); pecaConf=s.exists()?s.data():null; }catch(e){}
   try{ await etqCarregar(); }catch(e){}
-  // Pré-carregar fontes da planilha se ainda não existirem no banco
-  // (só com a lista lida do banco: sem internet, ela vem vazia e as fontes entrariam repetidas)
-  if(pecasOk && !pecas.some(p=>p.tipo==='Carregador')){
-    const presetIds=FONTES_PRESET.map((_,i)=>'preset_fonte_'+i);
-    for(let i=0;i<FONTES_PRESET.length;i++){
-      const f=FONTES_PRESET[i];
-      const obj={...f,userId:user.uid,id:'preset_fonte_'+i,criadoEm:'planilha'};
-      pecas.push(obj);
-      // Salvar no Firestore em background (silencioso)
-      try{await addDoc(collection(db,'pecas'),{...f,userId:'shared_ijx',criadoEm:'planilha'});}catch(e){}
-    }
-  }
+  // (as fontes da planilha antiga não são mais pré-carregadas: o estoque de peças agora nasce da etiqueta)
   renderPecas();
 }
 
@@ -11134,13 +11141,21 @@ window.addPeca=async()=>{
   }
   const obj={userId:'shared_ijx',addedBy:user.uid,nome,tipo,custo,venda,lucro:(status==='Vendido'&&venda>0)?(venda-custo):0,status,obs,quantidade:qtd,investidor:(document.getElementById('pcInv')?.value||''),fornecedor_id:pcFid,fornecedor_nome:pcFnome,fotos_n:fotosPend.peca.length,criadoEm:new Date().toISOString(),
     // com etiqueta: já entra com o número, com a etiqueta impressa e vista agora (está na mão de quem cadastra)
-    ...(numEtq?{num:numEtq,etq_em:agoraEtq,visto_em:agoraEtq,visto_por:NOME_SOCIO()}:{})};
+    ...(numEtq?{num:numEtq,etq_em:agoraEtq,visto_em:agoraEtq,visto_por:NOME_SOCIO()}:{}),
+    // fonte: marca, potência, ponta, linha, cabo e situação tocados nos botões
+    ...(tipo==='Carregador'?fonteCampos(pcFonteSel):{})};
+  // a próxima etiqueta escaneada já abre neste tipo; a fonte vira a "igual à anterior"
+  try{ localStorage.setItem('pcTipoUlt',tipo); }catch(e){}
+  if(tipo==='Carregador' && Object.values(pcFonteSel).some(Boolean)){
+    pcFonteUlt={...pcFonteSel}; try{ localStorage.setItem('pcFonteUlt',JSON.stringify(pcFonteUlt)); }catch(e){}
+  }
   let pecaId='l'+Date.now();
   try{const r=await addDoc(collection(db,'pecas'),obj);pecaId=r.id;pecas.push({...obj,id:r.id});}
   catch(e){ await gravar(Promise.reject(e), 'Cadastrar peça "'+nome+'"'); pecas.push({...obj,id:pecaId}); }
   await fpGravar('peca', pecaId, nome);
   document.getElementById('pcNome').value='';document.getElementById('pcCusto').value='';document.getElementById('pcVenda').value='';document.getElementById('pcObs').value='';document.getElementById('pcQtd').value='1';const _pf=document.getElementById('pcForn');if(_pf)_pf.value='';const _pfi=document.getElementById('pcFornId');if(_pfi)_pfi.value='';const _pft=document.getElementById('pcFornTel');if(_pft)_pft.value='';const _pne=document.getElementById('pcNumEtq');if(_pne)_pne.value='';
   criarAviso('peca_adicionada', nome);
+  pcFonteLimpar();
   renderPecas();
   if(numEtq){
     etqReservarPeca(numEtq);
@@ -11364,7 +11379,7 @@ function etqDadosPeca(n){
   const d={num:n, rotulo:'P'+n, qr:qrUrlPeca(n)};
   const p=pecaPorNum(n); if(!p) return d;
   const nome=String(p.nome||'').trim().replace(/^(\S+)\s+\1(?=\s|$)/i,'$1');   // "Dell Dell pino…" → "Dell pino…"
-  const linha=[p.tipo, (+p.quantidade>1)?p.quantidade+' unidades':''].filter(Boolean).join(' · ');
+  const linha=[p.tipo==='Carregador'?'Fonte':p.tipo, (+p.quantidade>1)?p.quantidade+' unidades':''].filter(Boolean).join(' · ');
   return {...d, nome, specs:linha?[linha]:[]};
 }
 // Sem etiqueta: em estoque e com a etiqueta ainda não impressa (a impressa ganha etq_em).
@@ -11453,6 +11468,10 @@ function qrPecaCadAbrir(n){
   qrCadFechar();
   try{ closeModal(); }catch(e){} try{ closePecaEdit(); }catch(e){}
   const ne=document.getElementById('pcNumEtq'); if(ne) ne.value='P'+n;
+  // camada por camada: a etiqueta nova abre no mesmo tipo da última peça cadastrada (ex.: fonte)
+  try{ const t=localStorage.getItem('pcTipoUlt'), sel=document.getElementById('pcTipo');
+    if(t && sel && [...sel.options].some(o=>o.value===t)) sel.value=t; }catch(e){}
+  pcTipoMudou();
   const sem=pecas.filter(p=>!(+p.num>0) && !idLocal(p.id) && p.status!=='Vendido')
     .sort((a,b)=>String(a.tipo||'').localeCompare(String(b.tipo||''))||String(a.nome||'').localeCompare(String(b.nome||'')));
   if(sem.length){
@@ -11538,11 +11557,115 @@ function renderPecasConf(){
     return;
   }
   const ult=pecaConf&&pecaConf.fim?'<div class="pe-conf-sub">Última conferência: '+esc(pecaQuando(pecaConf.inicio))+' · '+(+pecaConf.vistas||0)+' de '+(+pecaConf.total||0)+' conferidas.</div>':'';
+  const antigas=pecasAntigas().length, arq=pecasArquivadas.length;
+  const btAntigas=antigas?'<button type="button" class="pe-conf-bt" onclick="pecasTirarAntigas()">🧹 Tirar as '+antigas+' peças antigas</button>':'';
+  const arqTxt=arq?'<div class="pe-conf-sub">🗄️ '+arq+(arq!==1?' peças antigas guardadas no arquivo':' peça antiga guardada no arquivo')
+    +' · <a href="#" onclick="event.preventDefault();pecasTrazerAntigas()">trazer de volta</a></div>':'';
   box.innerHTML='<div class="pe-conf"><div class="pe-conf-tit">📋 Conferência do estoque de peças</div>'
     +'<div class="pe-conf-sub">Com a etiqueta colada, escaneie o QR de cada peça: ela fica marcada como vista, e a lista mostra o que falta.'
     +(semEtq?' '+semEtq+(semEtq!==1?' peças em estoque ainda sem etiqueta.':' peça em estoque ainda sem etiqueta.'):'')+'</div>'+ult
-    +'<div class="pe-conf-bts"><button type="button" class="pe-conf-bt pri" onclick="pecaConfComecar()">Começar conferência</button>'+btEtq+'</div>'+soltasTxt+'</div>';
+    +'<div class="pe-conf-bts"><button type="button" class="pe-conf-bt pri" onclick="pecaConfComecar()">Começar conferência</button>'+btEtq+btAntigas+'</div>'+soltasTxt+arqTxt+'</div>';
 }
+// ── camada de fontes ──
+// No celular, com a etiqueta escaneada, a fonte é cadastrada tocando nos botões: marca, potência,
+// ponta, original ou paralela, cabo e se funciona. O nome se monta sozinho ("Dell 65W · pino fino"),
+// a lista agrupa por marca e a situação vira o selo da lista (✕ não funciona, ⚠ testar).
+// "Igual à anterior" repete a última fonte cadastrada (lote de fontes iguais).
+const FONTE_OPC={
+  marca:['Dell','Lenovo','HP','Acer','Samsung','Asus','Positivo','Sony','Apple','Outra'],
+  potencia:['45W','65W','90W','120W','130W','135W','180W','Outra'],
+  conector:['Pino grosso','Pino fino','Tipo C','Retangular (tipo USB)','Outra'],
+  linha:['Original','Paralela'],
+  cabo:['Cabo 3 pinos','Cabo 2 pinos','Sem cabo'],
+  situacao:['Funcionando','Testar','Não funciona'],
+};
+const FONTE_ROT={marca:'Marca',potencia:'Potência',conector:'Ponta',linha:'Linha',cabo:'Cabo de força',situacao:'Situação'};
+let pcFonteSel={}, pcFonteUlt=null;
+try{ pcFonteUlt=JSON.parse(localStorage.getItem('pcFonteUlt')||'null'); }catch(e){}
+// o nome que vai na lista e na etiqueta: "Dell 65W · pino fino · paralela"
+function fonteNome(s){
+  const ok=v=>v&&v!=='Outra';
+  const cabeca=[ok(s.marca)?s.marca:'', ok(s.potencia)?s.potencia:''].filter(Boolean).join(' ');
+  return [cabeca||'Fonte', ok(s.conector)?s.conector.replace(/\s*\(.*\)$/,'').toLowerCase():'', s.linha==='Paralela'?'paralela':'', s.cabo==='Sem cabo'?'sem cabo':'']
+    .filter(Boolean).join(' · ');
+}
+// os campos que a fonte grava (o que não foi tocado fica de fora)
+function fonteCampos(s){
+  const c={};
+  if(s.marca) c.marca=s.marca==='Outra'?'Variado':s.marca;
+  if(s.potencia&&s.potencia!=='Outra') c.potencia=parseInt(s.potencia,10);
+  if(s.conector&&s.conector!=='Outra') c.conector=s.conector;
+  if(s.linha) c.linha=s.linha;
+  if(s.cabo){ c.cabo=s.cabo; c.aterramento=s.cabo==='Cabo 3 pinos'?'E3':s.cabo==='Cabo 2 pinos'?'E2':''; }
+  if(s.situacao){ c.situacao=s.situacao; c.funcionando=s.situacao==='Funcionando'?true:s.situacao==='Não funciona'?false:null; }
+  return c;
+}
+// a situação vira a observação que a lista já entende (✕ Não funciona, ⚠ Testar)
+const fonteObs=s=>s.situacao==='Não funciona'?'Não funciona':s.situacao==='Testar'?'Testar':'';
+function pcFontePintar(){
+  const box=document.getElementById('pcFonteBox'); if(!box) return;
+  const cls={'Funcionando':' ok','Testar':' av','Não funciona':' nok'};
+  box.innerHTML='<div class="pcf-top"><span>⚡ Fonte: toque no que ela é</span>'
+    +(pcFonteUlt?'<button type="button" class="pcf-igual" onclick="pcFonteIgual()">↺ Igual à anterior ('+esc(fonteNome(pcFonteUlt))+')</button>':'')+'</div>'
+    +Object.keys(FONTE_OPC).map(k=>'<div class="pcf-lin"><span class="pcf-rot">'+FONTE_ROT[k]+'</span>'
+      +FONTE_OPC[k].map(v=>'<button type="button" class="pcf-chip'+(cls[v]||'')+(pcFonteSel[k]===v?' on':'')+'" aria-pressed="'+(pcFonteSel[k]===v)+'" onclick="pcFonteToca(\''+k+'\',\''+v+'\')">'+esc(v)+'</button>').join('')+'</div>').join('');
+}
+// tocou num botão: marca (ou desmarca) e refaz o nome e a observação
+let pcFonteObsAuto='';
+window.pcFonteToca=(k,v)=>{
+  pcFonteSel[k]=pcFonteSel[k]===v?'':v;
+  const nm=document.getElementById('pcNome'); if(nm) nm.value=fonteNome(pcFonteSel);
+  const ob=document.getElementById('pcObs');
+  if(ob && (!ob.value || ob.value===pcFonteObsAuto)){ ob.value=fonteObs(pcFonteSel); pcFonteObsAuto=ob.value; }
+  pcFontePintar();
+};
+window.pcFonteIgual=()=>{
+  if(!pcFonteUlt) return;
+  pcFonteSel={...pcFonteUlt};
+  const nm=document.getElementById('pcNome'); if(nm) nm.value=fonteNome(pcFonteSel);
+  const ob=document.getElementById('pcObs'); if(ob){ ob.value=fonteObs(pcFonteSel); pcFonteObsAuto=ob.value; }
+  pcFontePintar();
+};
+// trocou o tipo: com "Fonte", aparecem os botões
+window.pcTipoMudou=()=>{
+  const t=document.getElementById('pcTipo'), box=document.getElementById('pcFonteBox'); if(!t||!box) return;
+  const fonte=t.value==='Carregador';
+  box.hidden=!fonte;
+  if(fonte) pcFontePintar();
+};
+function pcFonteLimpar(){ pcFonteSel={}; pcFonteObsAuto=''; pcFontePintar(); }
+
+// ── recomeço por camadas: tirar da lista as peças antigas ──
+// O estoque de peças passa a nascer da etiqueta, camada por camada (primeiro as fontes, depois o que
+// sobra de cada notebook). As antigas, em estoque e sem etiqueta, saem da lista. Não são apagadas:
+// ficam no arquivo (arquivada) e dá para trazer de volta. As vendidas e as que estão dentro de
+// máquinas continuam como estão: são custo e venda que já aconteceram.
+function pecasAntigas(){ return pecas.filter(p=>p.status==='Estoque' && !(+p.num>0) && !idLocal(p.id)); }
+window.pecasTirarAntigas=async()=>{
+  const lista=pecasAntigas(); if(!lista.length) return;
+  if(!confirm('Tirar as '+lista.length+' peças antigas da lista?\n\nSão as que estão em estoque sem etiqueta. Elas não são apagadas: ficam guardadas no arquivo e dá para trazer de volta. As vendidas e as que estão dentro de máquinas continuam como estão.')) return;
+  const agora=new Date().toISOString();
+  await Promise.all(lista.map(async p=>{
+    if(await gravar(updateDoc(doc(db,'pecas',p.id),{arquivada:agora}), 'Tirar a peça "'+(p.nome||p.id)+'" da lista')) p.arquivada=agora;
+  }));
+  const foram=lista.filter(p=>p.arquivada);
+  pecasArquivadas=[...pecasArquivadas, ...foram];
+  pecas=pecas.filter(p=>!p.arquivada);
+  renderPecas();
+  pcToast(foram.length===lista.length?'✓ '+foram.length+' peças antigas tiradas da lista':'⚠️ '+foram.length+' de '+lista.length+' tiradas. Confira a internet e toque de novo.');
+};
+window.pecasTrazerAntigas=async()=>{
+  const lista=pecasArquivadas.slice(); if(!lista.length) return;
+  if(!confirm('Trazer de volta para a lista as '+lista.length+' peças antigas?')) return;
+  await Promise.all(lista.map(async p=>{
+    if(await gravar(updateDoc(doc(db,'pecas',p.id),{arquivada:''}), 'Trazer de volta a peça "'+(p.nome||p.id)+'"')) p.arquivada='';
+  }));
+  const voltaram=lista.filter(p=>!p.arquivada);
+  pecasArquivadas=pecasArquivadas.filter(p=>p.arquivada);
+  pecas=[...pecas, ...voltaram];
+  renderPecas();
+  pcToast('✓ '+voltaram.length+' peças antigas de volta na lista');
+};
 // O botão "🏷️ Etiqueta" da edição: a peça sem número ganha um, e abre a tela das etiquetas com ela.
 window.pecaEtqDaEdicao=async()=>{
   const id=document.getElementById('pkId').value, p=pecas.find(x=>x.id===id); if(!p) return;
@@ -18009,7 +18132,7 @@ window.baixarBackup = () => {
     gerado_em: new Date().toISOString(),
     origem: 'anuncIA · backup manual',
     produtos:     arr(typeof prods!=='undefined' && prods),
-    pecas:        arr(typeof pecas!=='undefined' && pecas),
+    pecas:        arr(typeof pecas!=='undefined' && pecas.concat(typeof pecasArquivadas!=='undefined'?pecasArquivadas:[])),   // as do arquivo também
     clientes:     arr(typeof clientes!=='undefined' && clientes),
     fornecedores: arr(typeof fornecedores!=='undefined' && fornecedores),
     financas_fixas: arr(typeof fixas!=='undefined' && fixas),
