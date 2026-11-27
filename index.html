@@ -1364,6 +1364,9 @@ body.arrastando-foto{user-select:none;-webkit-user-select:none;cursor:grabbing}
 .pcf-chip.ok.on{background:#16a34a;border-color:#16a34a;color:#fff}
 .pcf-chip.av.on{background:#d97706;border-color:#d97706;color:#fff}
 .pcf-chip.nok.on{background:#dc2626;border-color:#dc2626;color:#fff}
+.etq-fonte-op{display:flex;align-items:center;gap:8px;font-size:.8rem;color:var(--tx);margin:8px 0 0;cursor:pointer}
+.etq-fonte-op[hidden]{display:none}
+.etq-fonte-op input{width:18px;height:18px;flex:none}
 /* no celular (onde a etiqueta é escaneada), tipo, custo, venda, status e investidor em duas colunas */
 @media(max-width:600px){ .pc-grade{grid-template-columns:1fr 1fr !important} }
 .pcf-igual{border:1px dashed var(--b2);background:transparent;color:var(--tx);border-radius:8px;padding:5px 10px;font:inherit;font-size:.74rem;font-weight:600;cursor:pointer}
@@ -2410,6 +2413,8 @@ div:has(> .fc2){flex-wrap:wrap;row-gap:6px}
               <span class="fla">📱 WhatsApp do fornecedor <span style="font-size:.62rem;color:var(--li)">fornecedor novo já nasce com o contato; existente tem o número atualizado</span></span>
               <input class="inp" type="text" id="pFornWpp" placeholder="Ex: 19991730377" autocomplete="off">
             </div>
+            <!-- fonte que acompanha a máquina: com ela, a etiqueta sai em dobro (notebook e fonte, mesmo número) -->
+            <div class="fc" style="grid-column:1/-1"><div class="pc-fonte" id="pFonteBox"></div></div>
             <div class="fc" style="grid-column:1/-1">
               <div class="pecaprod-box">
                 <div class="pecaprod-head">
@@ -4006,6 +4011,7 @@ div:has(> .fc2){flex-wrap:wrap;row-gap:6px}
         <button type="button" class="etq-chip" onclick="etqNovas(20)">+20 novas</button>
         <button type="button" class="etq-chip" id="etqNaMaoBt" onclick="etqNaMao()">As que estão na mão</button>
       </div>
+      <label class="etq-fonte-op" id="etqFonteOp"><input type="checkbox" id="etqFonteJunto" checked onchange="etqTrocouFonte()"> 🔌 Junto, a etiqueta da fonte de cada máquina que tem fonte (o mesmo número)</label>
       <div class="etq-aviso" id="etqAvisoNum" hidden></div>
       <div class="etq-info" id="etqInfo"></div>
       <div class="etq-prev" id="etqPrev"></div>
@@ -4141,6 +4147,7 @@ div:has(> .fc2){flex-wrap:wrap;row-gap:6px}
           placeholder="Ex: Máquina de linha corporativa, teclado excelente, roda Office e várias abas sem travar. Acompanha carregador original. Bateria segura cerca de 4h fora da tomada."></textarea>
         <div class="desc-conta" id="eDescConta"></div>
       </div>
+      <div class="fc full"><div class="pc-fonte" id="eFonteBox"></div></div>
       <div class="fc full" id="eFaltaWrap">
         <label class="fl">📝 O que falta comprar/fazer <span style="font-size:.67rem;color:var(--li);font-weight:400">pra deixar essa máquina pronta pra vender</span></label>
         <input class="inp" type="text" id="eFalta" placeholder="Ex: comprar SSD 256GB · bateria nova · carregador · limpar carcaça" oninput="eFaltaFeitoHint()">
@@ -5545,6 +5552,7 @@ window.addProd=async()=>{
   // pendência resolvida, então aqui não existe o check de 'já foi feito'.
   const falta=(document.getElementById('pFalta')?.value||'').trim();
   const obj={userId:'shared_ijx',addedBy:user.uid,addedByName:user.displayName||user.email.split('@')[0],nome,ficha:fichaDoCadastro(nome),custo:custoTotal,custo_base:custo,custo_pecas:custoPecas,custo_gasolina:custoGas,gas_pagante:gasPag,venda,lucro:venda-custoTotal,status,investidor,data_compra:dc,data_compra_mes:dcMes,data_venda:'',data:dcMes,canal_compra:canal,...hwCampos('p'),falta_comprar:falta,falta_feito:false,falta_feito_em:'',aporte_joao:(parseFloat(document.getElementById('pApJoao')?.value)||0),aporte_igor:(parseFloat(document.getElementById('pApIgor')?.value)||0),fornecedor_id:fornId,fornecedor_nome:fornNome,num,fotos_n:fotosPend.prod.length,descricao,...herdado,copiado_de:(molde?molde.id:''),createdAt:new Date().toISOString()};
+  Object.assign(obj, mfDados('p'));   // a fonte que acompanha (ou "sem fonte")
   let prodId='l'+Date.now();
   // Os ids do que acabou de nascer, pra conseguir levar ele até as máquinas
   // depois — inclusive as do lote, que não têm nada na tela apontando pra elas.
@@ -5609,6 +5617,7 @@ window.addProd=async()=>{
   const paj=document.getElementById('pApJoao'); if(paj) paj.value='';
   const pai=document.getElementById('pApIgor'); if(pai) pai.value='';
   const pfa=document.getElementById('pFalta'); if(pfa) pfa.value='';
+  mfLembrar('p'); mfLimpar('p');
   hwLimpar('p');
   pAporteHint();
   try{ resetSpecBuilder(); }catch(e){}
@@ -6917,6 +6926,7 @@ function renderClientes(){
 window.openEdit=id=>{
   const p=prods.find(p=>p.id===id);if(!p)return;
   editId=id;
+  try{ mfCarregar('e', p); }catch(e){}   // a fonte que acompanha esta máquina
   // o número é o mesmo da etiqueta colada atrás do notebook
   const moTit=document.getElementById('moTit'); if(moTit) moTit.textContent='Editar produto'+(p.num?' #'+p.num:'');
   document.getElementById('eN').value=p.nome||'';
@@ -7234,6 +7244,7 @@ window.saveEdit=async()=>{
   const totalPecas=somaJa+somaNovas;
 
   const upd={nome,...(document.getElementById('eFichaMarca')?{ficha:fichaCampos('e')}:{}),custo:custoFinal,custo_base:baseMaquina,custo_pecas:totalPecas,venda,lucro:venda-custoFinal,status,investidor,plataforma:(status==='Vendido'?(document.getElementById('ePlat')?.value||''):''),vendedor:(status==='Vendido'?(document.getElementById('eVendedor')?.value||''):''),repasse_socio:(status==='Vendido'?(parseFloat(document.getElementById('eRepasse')?.value)||0):0),falta_comprar:(status!=='Vendido'?(document.getElementById('eFalta')?.value.trim()||''):''),falta_feito:(status!=='Vendido'&&!!document.getElementById('eFaltaFeito')?.checked),falta_feito_em:((status!=='Vendido'&&document.getElementById('eFaltaFeito')?.checked)?((_pAtual&&_pAtual.falta_feito&&_pAtual.falta_feito_em)||new Date().toISOString().slice(0,10)):''),...hwCampos('e'),revisado:!!document.getElementById('eRevisado')?.checked,revisado_em:(document.getElementById('eRevisado')?.checked?((_pAtual&&_pAtual.revisado&&_pAtual.revisado_em)||new Date().toISOString().slice(0,10)):''),revisao_obs:(document.getElementById('eRevObs')?.value.trim()||''),descricao:(document.getElementById('eDescricao')?.value.trim()||''),tipo_catalogo:(document.getElementById('eTipoCat')?.value||''),num_planilha:(document.getElementById('eNumPlan')?.value.trim()||''),fornecedor_id:fornId,fornecedor_nome:fornNome,data_compra:dc,data_compra_mes:dcMes,data_venda:dv,data:(dv?dv.slice(0,7):dcMes),gas_pagante:(document.getElementById('eGasPag')?.value||'ambos'),aporte_joao:(parseFloat(document.getElementById('eApJoao')?.value)||0),aporte_igor:(parseFloat(document.getElementById('eApIgor')?.value)||0),cliente_id:cliId,cliente_nome:cliNome,preco_cheio:(status==='Vendido'?(parseFloat(document.getElementById('ePrecoCheio')?.value)||0):0),nota_venda:(status==='Vendido'?(document.getElementById('eNotaVenda')?.value.trim()||''):'')};
+  Object.assign(upd, mfDados('e'));   // a fonte que acompanha (não informado = não mexe)
   await vincularTroca(editId, upd);
   if(!idLocal(editId)) await gravar(updateDoc(doc(db,'products',editId),upd), 'Editar "'+nome+'"');
   // Grava as peças novas na aba Peças, vinculadas a esta máquina
@@ -7243,6 +7254,7 @@ window.saveEdit=async()=>{
     catch(e){pecas.push({...pobj,id:'lp'+Date.now()+Math.random()});}
   }
   const p=prods.find(p=>p.id===editId);if(p)Object.assign(p,upd);
+  mfLembrar('e');
   // Limpa as peças novas da tela — já foram gravadas, não devem regravar num novo save
   const peL=document.getElementById('peLista'); if(peL) peL.innerHTML='';
   peRenderExistentes(editId);
@@ -11634,6 +11646,67 @@ window.pcTipoMudou=()=>{
   if(fonte) pcFontePintar();
 };
 function pcFonteLimpar(){ pcFonteSel={}; pcFonteObsAuto=''; pcFontePintar(); }
+
+// ── FONTE DA MÁQUINA ──
+// No cadastro e na edição da máquina: acompanha fonte ou não, e qual (os mesmos botões da camada
+// de fontes). Com fonte, a tela de etiquetas imprime duas, a do notebook e a da fonte, com o mesmo
+// número (#105): a fonte nunca troca de máquina. O QR da etiqueta da fonte abre a máquina dona dela.
+// on: true = acompanha, false = sem fonte, null = não informado (a edição não mexe).
+const MF={p:{on:null,sel:{}}, e:{on:null,sel:{}}};
+// o que está gravado (campos da fonte) de volta para os botões
+function fonteSelDeCampos(c){
+  c=c||{}; const s={};
+  if(c.marca) s.marca=FONTE_OPC.marca.includes(c.marca)?c.marca:'Outra';
+  if(+c.potencia>0){ const w=(+c.potencia)+'W'; s.potencia=FONTE_OPC.potencia.includes(w)?w:'Outra'; }
+  ['conector','linha','cabo','situacao'].forEach(k=>{ if(c[k]&&FONTE_OPC[k].includes(c[k])) s[k]=c[k]; });
+  return s;
+}
+function mfPintar(k){
+  const box=document.getElementById(k==='e'?'eFonteBox':'pFonteBox'); if(!box) return;
+  const m=MF[k], cls={'Funcionando':' ok','Testar':' av','Não funciona':' nok'};
+  let h='<div class="pcf-top"><span>🔌 Fonte</span><span class="pcf-lin" style="margin:0">'
+    +'<button type="button" class="pcf-chip ok'+(m.on===true?' on':'')+'" aria-pressed="'+(m.on===true)+'" onclick="mfLiga(\''+k+'\',true)">Acompanha fonte</button>'
+    +'<button type="button" class="pcf-chip'+(m.on===false?' on':'')+'" aria-pressed="'+(m.on===false)+'" onclick="mfLiga(\''+k+'\',false)">Sem fonte</button></span></div>';
+  if(m.on===true){
+    h+=(pcFonteUlt?'<div class="pcf-lin"><button type="button" class="pcf-igual" onclick="mfIgual(\''+k+'\')">↺ Igual à última fonte ('+esc(fonteNome(pcFonteUlt))+')</button></div>':'')
+      +Object.keys(FONTE_OPC).map(c=>'<div class="pcf-lin"><span class="pcf-rot">'+FONTE_ROT[c]+'</span>'
+        +FONTE_OPC[c].map(v=>'<button type="button" class="pcf-chip'+(cls[v]||'')+(m.sel[c]===v?' on':'')+'" aria-pressed="'+(m.sel[c]===v)+'" onclick="mfToca(\''+k+'\',\''+c+'\',\''+v+'\')">'+esc(v)+'</button>').join('')+'</div>').join('')
+      +'<div class="pe-conf-sub">🏷️ Na etiqueta sai também a da fonte, com o mesmo número da máquina: <b>'+esc(fonteNome(m.sel))+'</b></div>';
+  }
+  box.innerHTML=h;
+}
+window.mfLiga=(k,on)=>{ MF[k].on=MF[k].on===on?null:on; if(MF[k].on!==true) MF[k].sel={}; mfPintar(k); };
+window.mfToca=(k,c,v)=>{ const s=MF[k].sel; s[c]=s[c]===v?'':v; mfPintar(k); };
+window.mfIgual=k=>{ if(pcFonteUlt){ MF[k].sel={...pcFonteUlt}; mfPintar(k); } };
+// o que vai gravado na máquina ({} = não informado: não mexe no que já estava)
+function mfDados(k){
+  const m=MF[k];
+  if(m.on===true) return {fonte:{acompanha:true,...fonteCampos(m.sel)}, fonte_nome:fonteNome(m.sel)};
+  if(m.on===false) return {fonte:{acompanha:false}, fonte_nome:''};
+  return {};
+}
+function mfCarregar(k, prod){
+  const f=prod&&prod.fonte;
+  MF[k]={on:f?f.acompanha!==false:null, sel:(f&&f.acompanha!==false)?fonteSelDeCampos(f):{}};
+  mfPintar(k);
+}
+// depois de gravar: a fonte escolhida vira a "igual à última" (lote de máquinas com a mesma fonte)
+function mfLembrar(k){
+  const m=MF[k];
+  if(m.on===true && Object.values(m.sel).some(Boolean)){ pcFonteUlt={...m.sel}; try{ localStorage.setItem('pcFonteUlt',JSON.stringify(pcFonteUlt)); }catch(e){} }
+}
+function mfLimpar(k){ MF[k]={on:null,sel:{}}; mfPintar(k); }
+// A etiqueta da fonte: o mesmo número da máquina, a palavra FONTE com o modelo, e qual é a fonte.
+function etqDadosFonte(n){
+  const p=prodPorNum(n); if(!p||!p.fonte||p.fonte.acompanha===false) return null;
+  const f=fichaDe(p)||{};
+  const maq=([f.marca,f.modelo].filter(Boolean).join(' ')||String(p.nome||'').split(/·|\|/)[0]).trim();
+  const qual=p.fonte_nome||fonteNome(fonteSelDeCampos(p.fonte));
+  return {num:n, nome:'FONTE · '+(maq||'máquina #'+n), specs:qual&&qual!=='Fonte'?[qual]:[], arq:n+'-fonte', fonte:true};
+}
+function etqFonteJunto(){ const c=document.getElementById('etqFonteJunto'); return !c || c.checked; }
+window.etqTrocouFonte=()=>{ try{ localStorage.setItem('etqFonteJunto',etqFonteJunto()?'1':'0'); }catch(e){} etqMontar(); };
+try{ mfPintar('p'); }catch(e){}
 
 // ── recomeço por camadas: tirar da lista as peças antigas ──
 // O estoque de peças passa a nascer da etiqueta, camada por camada (primeiro as fontes, depois o que
@@ -16347,7 +16420,7 @@ async function etqMontarFolha(){
   if(prev){
     prev.querySelectorAll('.folha,.folha-cap').forEach(el=>el.remove());
     if(folha==='a4'){
-      const g=etqGrade(e.tam), fls=Math.ceil(e.nums.length/g.porFolha);
+      const g=etqGrade(e.tam), fls=Math.ceil(e.cvs.length/g.porFolha);   // as das fontes contam
       prev.insertAdjacentHTML('afterbegin','<img class="folha" src="'+etqFolhaPrevia(e.cvs,e.tam)+'" alt="Folha A4 com as etiquetas">'
         +'<div class="folha-cap">'+g.porFolha+' por folha · '+fls+' folha'+(fls!==1?'s':'')+(fls>1?' (aqui, a primeira)':'')+'</div>');
     }
@@ -16390,19 +16463,23 @@ async function etqMontar(){
   info.textContent='Gerando…';
   try{ await etqPreparar(); }catch(e){ info.textContent='⚠️ '+e.message; return; }
   if(minha!==etqGeracao) return;
-  const cvs=nums.map(n=>etqDesenhar(peca?etqDadosPeca(n):etqDados(n),tam));
+  // máquina com fonte: logo depois da etiqueta dela, a da fonte (o mesmo número)
+  const comFonte=!peca && etqFonteJunto();
+  const itens=nums.flatMap(n=>{ const d=peca?etqDadosPeca(n):etqDados(n), f=comFonte?etqDadosFonte(n):null; return f?[d,f]:[d]; });
+  const cvs=itens.map(d=>etqDesenhar(d,tam));
   const urls=cvs.map(c=>c.toDataURL('image/png'));
-  const arqs=await Promise.all(cvs.map((c,i)=>new Promise(r=>c.toBlob(b=>r(new File([b],'etiqueta-'+(peca?'P':'')+nums[i]+'.png',{type:'image/png'})),'image/png'))));
+  const arqs=await Promise.all(cvs.map((c,i)=>new Promise(r=>c.toBlob(b=>r(new File([b],'etiqueta-'+(peca?'P':'')+(itens[i].arq||itens[i].num)+'.png',{type:'image/png'})),'image/png'))));
   if(minha!==etqGeracao) return;   // mudaram os números no meio
   etqCache={nums,tam,urls,arqs,cvs,pdf:null,modo};
   if(!peca) try{ maqAgendar(4000); }catch(e){}   // a página do QR com a ficha em dia antes de colar a etiqueta
   const existe=peca?(n=>!!pecaPorNum(n)):(n=>!!prodPorNum(n));
-  const novas=nums.filter(n=>!existe(n)).length, ja=nums.length-novas;
-  info.innerHTML='<b>'+nums.length+' etiqueta'+(nums.length!==1?'s':'')+'</b>: '+esc(etqFaixas(nums).replace(/(\d+)/g,pre+'$1'))
+  const novas=nums.filter(n=>!existe(n)).length, ja=nums.length-novas, fontes=itens.length-nums.length;
+  info.innerHTML='<b>'+itens.length+' etiqueta'+(itens.length!==1?'s':'')+'</b>: '+esc(etqFaixas(nums).replace(/(\d+)/g,pre+'$1'))
+    +(fontes?' + '+fontes+' da fonte'+(fontes!==1?'s':'')+' (mesmo número da máquina)':'')
     +'<br><small>'+[novas?novas+' nova'+(novas!==1?'s':'')+(peca?' (o QR abre o cadastro da peça com o número)':' (o QR abre o cadastro com o número)'):'',
                     ja?ja+' já cadastrada'+(ja!==1?'s':'')+(peca?' (o QR abre a peça e marca como vista)':' (o QR abre a edição)'):''].filter(Boolean).join(' · ')+'</small>';
   const MOSTRA=12;
-  prev.innerHTML=urls.slice(0,MOSTRA).map((u,i)=>'<img src="'+u+'" alt="Etiqueta '+pre+nums[i]+'">').join('')
+  prev.innerHTML=urls.slice(0,MOSTRA).map((u,i)=>'<img src="'+u+'" alt="Etiqueta '+(itens[i].fonte?'da fonte ':'')+pre+itens[i].num+'">').join('')
     +(urls.length>MOSTRA?'<div class="mais">+'+(urls.length-MOSTRA)+' etiquetas</div>':'');
   etqBotoes(true);
   etqMontarFolha();   // o PDF (e a miniatura da folha A4) sai logo em seguida
@@ -16415,6 +16492,10 @@ window.etqAbrir=async(nums, modo)=>{
   const av=document.getElementById('etqAvisoNum'); if(av) av.hidden=true;
   const tit=document.getElementById('etqTit'); if(tit) tit.textContent=peca?'🏷️ Etiquetas das peças':'🏷️ Etiquetas com QR';
   const dm=document.getElementById('etqDicaMaq'), dp=document.getElementById('etqDicaPeca'); if(dm) dm.hidden=peca; if(dp) dp.hidden=!peca;
+  // a etiqueta da fonte junto (só nas máquinas; lembra a escolha)
+  const fo=document.getElementById('etqFonteOp'), fj=document.getElementById('etqFonteJunto');
+  if(fo) fo.hidden=peca;
+  if(fj){ let v='1'; try{ v=localStorage.getItem('etqFonteJunto')||'1'; }catch(e){} fj.checked=v!=='0'; }
   const bt=document.getElementById('etqNaMaoBt');
   if(bt) bt.textContent=peca?'Peças sem etiqueta ('+pecasSemEtq().length+')':'As que estão na mão ('+etqNaMaoLista().length+')';
   const sel=document.getElementById('etqTam');

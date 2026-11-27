@@ -221,6 +221,52 @@ function novo(ini) {
   ok(/localStorage\.getItem\('pcTipoUlt'\)[\s\S]*pcTipoMudou\(\)/.test(extrair('function qrPecaCadAbrir(')), 'a próxima etiqueta escaneada já abre como fonte');
   ok(novo({ pecas: [{ id: 'f', num: 7, nome: 'Dell 65W · pino fino', tipo: 'Carregador' }] }).etqDadosPeca(7).specs[0] === 'Fonte', 'na etiqueta, o tipo aparece como "Fonte"');
 
+  console.log('\nfonte da máquina e a etiqueta dupla');
+  const M = new Function('prods', 'localStorage', 'document', [
+    'const esc=s=>String(s).replace(/</g,"&lt;");', linha(/const FONTE_OPC=\{[\s\S]*?\n\};/), linha(/const FONTE_ROT=\{[^}]+\};/),
+    'let pcFonteSel={}, pcFonteUlt=null;', extrair('function fonteNome('), extrair('function fonteCampos('),
+    'const numProv=new Set();', extrair('function prodPorNum('), 'const fichaDe=p=>p.ficha||{};',
+    linha(/const MF=\{p:\{on:null,sel:\{\}\}, e:\{on:null,sel:\{\}\}\};/), extrair('function fonteSelDeCampos('), extrair('function mfPintar('),
+    'const window={};', extrair('window.mfLiga=(k,on)=>{'), extrair('window.mfToca=(k,c,v)=>{'), extrair('window.mfIgual=k=>{'),
+    extrair('function mfDados('), extrair('function mfCarregar('), extrair('function mfLembrar('), extrair('function mfLimpar('), extrair('function etqDadosFonte('),
+    'return { liga: window.mfLiga, toca: window.mfToca, igual: window.mfIgual, dados: mfDados, carregar: mfCarregar, lembrar: mfLembrar, limpar: mfLimpar, fonteSelDeCampos, etqDadosFonte, ult: () => pcFonteUlt, MF };'].join('\n'));
+  const caixa = { pFonteBox: { innerHTML: '' }, eFonteBox: { innerHTML: '' } }, guardou = {};
+  const maqs = [
+    { id: 'a', num: 105, nome: 'Dell Latitude 7480 · i5 7ª', ficha: { marca: 'Dell', modelo: 'Latitude 7480' }, fonte: { acompanha: true, marca: 'Dell', potencia: 65, conector: 'Pino fino', linha: 'Original' }, fonte_nome: 'Dell 65W · pino fino' },
+    { id: 'b', num: 106, nome: 'ThinkPad T480', ficha: {}, fonte: { acompanha: false } },
+    { id: 'c', num: 107, nome: 'HP ProBook 440 G5', ficha: {} },
+    { id: 'd', num: 108, nome: 'Mini OptiPlex 3000', ficha: { marca: 'Dell', modelo: 'OptiPlex 3000' }, fonte: { acompanha: true }, fonte_nome: 'Fonte' },
+  ];
+  const MQ = M(maqs, { getItem: () => null, setItem: (k, v) => { guardou[k] = v; } }, { getElementById: id => caixa[id] || null });
+  MQ.limpar('p');
+  ok(/Acompanha fonte/.test(caixa.pFonteBox.innerHTML) && /Sem fonte/.test(caixa.pFonteBox.innerHTML) && !/Potência/.test(caixa.pFonteBox.innerHTML) && JSON.stringify(MQ.dados('p')) === '{}',
+    'no cadastro: "Acompanha fonte" ou "Sem fonte"; sem tocar, nada é gravado');
+  MQ.liga('p', true); MQ.toca('p', 'marca', 'Lenovo'); MQ.toca('p', 'potencia', '45W'); MQ.toca('p', 'conector', 'Tipo C');
+  let dd = MQ.dados('p');
+  ok(dd.fonte.acompanha === true && dd.fonte.marca === 'Lenovo' && dd.fonte.potencia === 45 && dd.fonte_nome === 'Lenovo 45W · tipo c' && /Potência/.test(caixa.pFonteBox.innerHTML) && /Lenovo 45W · tipo c/.test(caixa.pFonteBox.innerHTML),
+    'acompanha fonte: os botões aparecem e gravam qual é (Lenovo 45W tipo C)');
+  MQ.lembrar('p');
+  ok(MQ.ult().potencia === '45W' && JSON.parse(guardou.pcFonteUlt || '{}').marca === 'Lenovo', 'a fonte escolhida vira a "igual à última" (lote de máquinas iguais)');
+  MQ.liga('p', false);
+  ok(JSON.stringify(MQ.dados('p')) === '{"fonte":{"acompanha":false},"fonte_nome":""}', '"Sem fonte" também fica gravado (não é esquecimento)');
+  MQ.carregar('e', maqs[0]);
+  ok(MQ.MF.e.on === true && MQ.MF.e.sel.potencia === '65W' && MQ.MF.e.sel.conector === 'Pino fino' && /aria-pressed="true" onclick="mfToca\('e','marca','Dell'\)"/.test(caixa.eFonteBox.innerHTML),
+    'na edição, a fonte gravada volta marcada nos botões');
+  MQ.carregar('e', maqs[2]);
+  ok(MQ.MF.e.on === null && JSON.stringify(MQ.dados('e')) === '{}', 'máquina antiga sem informação: abrir e salvar não muda nada');
+  ok(JSON.stringify(MQ.fonteSelDeCampos({ marca: 'Variado', potencia: 100, conector: 'Pino grosso' })) === '{"marca":"Outra","potencia":"Outra","conector":"Pino grosso"}', 'marca e potência fora da lista voltam como "Outra"');
+  const ef = MQ.etqDadosFonte(105);
+  ok(ef.num === 105 && ef.nome === 'FONTE · Dell Latitude 7480' && ef.specs[0] === 'Dell 65W · pino fino' && ef.arq === '105-fonte' && !ef.qr && !ef.rotulo,
+    'etiqueta da fonte: o mesmo número (#105), FONTE com o modelo e qual fonte; o QR é o da máquina');
+  ok(MQ.etqDadosFonte(106) === null && MQ.etqDadosFonte(107) === null && MQ.etqDadosFonte(999) === null, 'sem fonte, sem informação ou número sem máquina: só a etiqueta do notebook');
+  ok(MQ.etqDadosFonte(108).nome === 'FONTE · Dell OptiPlex 3000' && MQ.etqDadosFonte(108).specs.length === 0, 'fonte sem detalhes: sai só "FONTE" com o modelo');
+  const montar = extrair('async function etqMontar(');
+  ok(/const comFonte=!peca && etqFonteJunto\(\);/.test(montar) && /nums\.flatMap\(n=>\{[^}]*etqDadosFonte\(n\)[^}]*return f\?\[d,f\]:\[d\]; \}\)/.test(montar) && /const cvs=itens\.map\(d=>etqDesenhar\(d,tam\)\)/.test(montar),
+    'a tela de etiquetas põe a da fonte logo depois da do notebook (dá para desligar)');
+  ok(/fls=Math\.ceil\(e\.cvs\.length\/g\.porFolha\)/.test(SRC), 'na folha A4, as etiquetas das fontes entram na conta das folhas');
+  ok(/Object\.assign\(obj, mfDados\('p'\)\);/.test(extrair('window.addProd=async()=>{')) && /Object\.assign\(upd, mfDados\('e'\)\);/.test(extrair('window.saveEdit=async()=>{')) && /mfCarregar\('e', p\)/.test(extrair('window.openEdit=id=>{')),
+    'cadastro, edição e abrir a máquina usam a fonte');
+
   console.log('\na tela de etiquetas no modo peça');
   ok(/etqLerNums\(peca\?inp\.value\.replace\(\/p\(\?=\\s\*\\d\)\/gi,''\):inp\.value\)/.test(SRC), '"P1-P10" vale o mesmo que "1-10"');
   const nomeArq = new Function(extrair('function etqFaixas(') + extrair('function etqNomeArq(') + 'return etqNomeArq;')();
