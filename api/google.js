@@ -36,13 +36,27 @@ async function exigirSocio(idToken) {
 }
 
 // ── A CHAVE E O PASSE DO GOOGLE ──
+// O primeiro objeto {...} completo do texto (respeitando o que está entre aspas), para quando sobra coisa depois.
+function primeiroObjeto(t) {
+  const ini = t.indexOf('{'); if (ini < 0) return null;
+  let nivel = 0, emTexto = false, escape = false;
+  for (let k = ini; k < t.length; k++) {
+    const c = t[k];
+    if (emTexto) { if (escape) escape = false; else if (c === '\\') escape = true; else if (c === '"') emTexto = false; continue; }
+    if (c === '"') emTexto = true;
+    else if (c === '{') nivel++;
+    else if (c === '}' && --nivel === 0) return t.slice(ini, k + 1);
+  }
+  return null;
+}
 function contaDeServico() {
   // tira espaço, quebra de linha e caractere invisível das pontas (o Bloco de Notas às vezes põe um no começo)
   const bruto = String(process.env.GSC_SERVICE_ACCOUNT || '').replace(/^[\s﻿​]+|[\s﻿​]+$/g, '');
   if (!bruto) return null;
   const tentar = t => { try { const j = JSON.parse(t); return typeof j === 'string' ? JSON.parse(j) : j; } catch (e) { return null; } };
   let j = tentar(bruto);
-  // colado com sobra em volta (ex.: GSC_SERVICE_ACCOUNT={...} ou entre aspas): vale o que está entre a primeira { e a última }
+  // colado com sobra em volta (ex.: GSC_SERVICE_ACCOUNT={...}) ou colado duas vezes: vale o primeiro {...} inteiro
+  if (!j) { const o = primeiroObjeto(bruto); if (o) j = tentar(o); }
   const ini = bruto.indexOf('{'), fim = bruto.lastIndexOf('}');
   if (!j && ini >= 0 && fim > ini) j = tentar(bruto.slice(ini, fim + 1));
   if (!j && /^[A-Za-z0-9+/=\s]+$/.test(bruto)) j = tentar(Buffer.from(bruto, 'base64').toString('utf8'));
