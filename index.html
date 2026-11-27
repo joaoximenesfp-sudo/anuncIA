@@ -256,10 +256,21 @@ button{transition:transform .08s ease}
 .maq-est{display:inline-flex;align-items:center;font-size:.78rem;font-weight:600;padding:5px 11px;border-radius:999px;background:var(--gbg);color:var(--gr);border:1px solid var(--gbd)}
 .maq-est.vendida{background:#f1f5f9;color:var(--mu);border-color:var(--b)}
 .maq-est.reservada,.maq-est.chegando{background:var(--abg);color:var(--am);border-color:var(--abd)}
-.maq-fotos{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;margin:16px 0 0;scrollbar-width:none}
-.maq-fotos[hidden]{display:none}
+/* fotos da página do QR: com várias, a próxima aparece no canto, o contador diz quantas são e, no
+   computador, há setas (sem isso parecia que a máquina só tinha uma foto) */
+.maq-gal{position:relative;margin:16px 0 0}
+.maq-gal[hidden],.maq-dica[hidden]{display:none}
+.maq-fotos{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
 .maq-fotos::-webkit-scrollbar{display:none}
-.maq-fotos img{flex:none;width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:16px;background:#e9edf2;scroll-snap-align:start}
+.maq-fotos img{flex:none;width:100%;aspect-ratio:4/3;object-fit:contain;border-radius:16px;background:#e9edf2;scroll-snap-align:start;-webkit-user-drag:none}
+.maq-fotos.varias img{width:86%}
+.maq-cont{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);padding:3px 10px;border-radius:999px;background:rgba(5,8,15,.62);color:#fff;font-size:.75rem;font-weight:600;letter-spacing:.02em;pointer-events:none}
+.maq-cont[hidden],.maq-seta[hidden]{display:none}
+.maq-seta{position:absolute;top:calc(50% - 22px);width:44px;height:44px;border-radius:50%;border:1px solid var(--b);background:var(--w);color:var(--tx);box-shadow:var(--sh);font-size:1.6rem;line-height:1;padding:0 0 3px;display:grid;place-items:center;cursor:pointer;z-index:2;font-family:inherit}
+.maq-seta.ant{left:8px}.maq-seta.prox{right:8px}
+.maq-seta:disabled{opacity:0;pointer-events:none}
+@media (hover:none){.maq-seta{display:none}}
+.maq-dica{font-size:.78rem;color:var(--mu);margin:6px 2px 0}
 .maq-card{background:var(--w);border:1px solid var(--b);border-radius:18px;padding:16px;margin-top:14px;box-shadow:var(--sh)}
 .maq-card h3{font-size:.72rem;font-weight:600;color:var(--mu);text-transform:uppercase;letter-spacing:.09em;margin-bottom:10px}
 .maq-ft{display:grid;grid-template-columns:auto 1fr;gap:8px 14px;font-size:.92rem;margin:0}
@@ -10130,7 +10141,9 @@ function maqPublicaHTML(n, m, loja, erroTxt){
     ['Armazenamento',f.armaz],['Tela',[f.tela,m.resolucao].filter(Boolean).join(' · ')],['Sistema',m.sistema],['Cor',m.cor]].filter(l=>l[1]);
   const fichas=a=>'<div class="maq-li">'+a.map(x=>'<span>'+esc(String(x))+'</span>').join('')+'</div>';
   let h='<div class="maq-k">Etiqueta #'+n+'</div><div class="maq-t">'+esc(nome)+'</div><span class="maq-est '+estCls+'">'+estTxt+'</span>'
-    +'<div class="maq-fotos" id="maqFotos" hidden></div>';
+    +'<div class="maq-gal" id="maqGal" hidden><div class="maq-fotos" id="maqFotos"></div>'
+    +'<button type="button" class="maq-seta ant" aria-label="Foto anterior">‹</button><button type="button" class="maq-seta prox" aria-label="Próxima foto">›</button>'
+    +'<span class="maq-cont" aria-hidden="true"></span></div><p class="maq-dica" id="maqDica" hidden></p>';
   if(linhas.length) h+='<div class="maq-card"><h3>Ficha</h3><dl class="maq-ft">'+linhas.map(([k,v])=>'<dt>'+k+'</dt><dd>'+esc(String(v))+'</dd>').join('')+'</dl></div>';
   if(m.specs&&m.specs.length) h+='<div class="maq-card"><h3>Estado e detalhes</h3>'+fichas(m.specs)+'</div>';
   if(m.recursos&&m.recursos.length) h+='<div class="maq-card"><h3>Recursos</h3>'+fichas(m.recursos)+'</div>';
@@ -10145,11 +10158,35 @@ async function maqPublicaFotos(id){
     const snap=await getDocs(query(collection(db,'catalogo_fotos'),where('produto_id','==',id)));
     const ok=u=>/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(String(u||''));
     const fotos=snap.docs.map(d=>d.data()).filter(f=>f&&!f.insta&&ok(f.dataUrl)).sort((a,b)=>(a.ordem||0)-(b.ordem||0)).slice(0,8);
-    const box=document.getElementById('maqFotos');
-    if(!box||!fotos.length) return;
+    const gal=document.getElementById('maqGal'), box=document.getElementById('maqFotos');
+    if(!gal||!box||!fotos.length) return;
     box.innerHTML=fotos.map((f,i)=>'<img src="'+f.dataUrl+'" alt="Foto '+(i+1)+'" loading="lazy">').join('');
-    box.hidden=false;
+    box.classList.toggle('varias', fotos.length>1);
+    gal.hidden=false;
+    maqGaleria(gal, box, fotos.length, document.getElementById('maqDica'));
   }catch(e){}
+}
+// Com várias fotos: a próxima aparece no canto, o contador mostra "1 / 5", as setas passam no
+// computador e a dica diz quantas são. No celular, o dedo arrasta.
+function maqGaleria(gal, box, n, dica){
+  const cont=gal.querySelector('.maq-cont'), ant=gal.querySelector('.maq-seta.ant'), prox=gal.querySelector('.maq-seta.prox');
+  if(!(n>1)){ [cont,ant,prox].forEach(e=>{ if(e) e.hidden=true; }); if(dica) dica.hidden=true; return; }
+  const passo=()=>{ const im=box.querySelector('img'); return im?im.getBoundingClientRect().width+10:box.clientWidth; };
+  const fim=()=>box.scrollLeft+box.clientWidth>=box.scrollWidth-2;
+  const mostrar=()=>{
+    if(cont) cont.textContent=(fim()?n:Math.min(n,Math.round(box.scrollLeft/passo())+1))+' / '+n;
+    if(ant) ant.disabled=box.scrollLeft<=2;
+    if(prox) prox.disabled=fim();
+  };
+  if(ant) ant.onclick=()=>box.scrollBy({left:-passo(),behavior:'smooth'});
+  if(prox) prox.onclick=()=>box.scrollBy({left:passo(),behavior:'smooth'});
+  box.addEventListener('scroll',mostrar,{passive:true});
+  if(dica){
+    const mouse=!!(window.matchMedia&&matchMedia('(hover: hover)').matches);
+    dica.textContent=(mouse?'Use as setas para ver as ':'Arraste para o lado para ver as ')+n+' fotos.';
+    dica.hidden=false;
+  }
+  mostrar();
 }
 async function maqPublicaAbrir(n){
   const box=document.getElementById('MAQ'), corpo=document.getElementById('maqCorpo');
