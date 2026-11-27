@@ -1338,6 +1338,26 @@ body.arrastando-foto{user-select:none;-webkit-user-select:none;cursor:grabbing}
 .pe-chip{display:inline-flex;align-items:center;gap:5px;background:var(--w);border:1px solid var(--b2);border-radius:8px;padding:4px 9px;font-size:.73rem;color:var(--tx)}
 .pe-chip-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
 
+/* ── PEÇAS: ETIQUETA (P12) E CONFERÊNCIA DO ESTOQUE ── */
+.peca-num,.peca-visto{white-space:nowrap}
+.peca-num{display:inline-block;font-size:.66rem;font-weight:700;letter-spacing:.02em;color:var(--tx);background:var(--bg);border:1px solid var(--b2);border-radius:5px;padding:0 5px;margin-right:5px;vertical-align:1px}
+.peca-visto{display:inline-block;font-size:.65rem;font-weight:600;color:#15803d;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:1px 7px;margin-right:4px}
+.pe-conf{background:var(--w);border:1px solid var(--b2);border-radius:10px;padding:11px 14px;margin:0 0 12px}
+.pe-conf.ativa{border-color:#86efac;background:#f0fdf4}
+.pe-conf-tit{font-size:.82rem;font-weight:600;color:var(--tx)}
+.pe-conf-sub{font-size:.72rem;color:var(--mu);margin-top:3px}
+.pe-conf-bar{height:8px;border-radius:8px;background:var(--w);border:1px solid #bbf7d0;overflow:hidden;margin:9px 0 6px}
+.pe-conf-bar i{display:block;height:100%;background:#16a34a;border-radius:8px;transition:width .3s}
+.pe-conf-bts{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.pe-conf-bt{border:1px solid var(--b2);background:var(--w);color:var(--tx);border-radius:8px;padding:6px 11px;font:inherit;font-size:.75rem;font-weight:600;cursor:pointer}
+.pe-conf-bt.pri{background:#16a34a;border-color:#16a34a;color:#fff}
+.pe-conf-soltas{font-size:.72rem;color:#a16207;margin-top:7px}
+.bvis{border:1px solid #bbf7d0;background:#f0fdf4;color:#15803d;border-radius:6px;min-width:26px;height:26px;font-size:.8rem;font-weight:700;cursor:pointer;margin-right:3px}
+.pc-toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:9999;background:#0f172a;color:#fff;font-size:.85rem;font-weight:600;padding:10px 16px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.25);max-width:calc(100vw - 32px);text-align:center}
+.qrb-ligar{background:var(--bg);border:1px solid var(--b2);border-radius:10px;padding:10px 12px;margin:0 0 12px;font-size:.8rem;color:var(--tx)}
+.qrb-ligar select{margin:8px 0}
+.qrb-ligar small{display:block;color:var(--mu);margin-top:6px}
+
 /* ── GIRO POR MARCA ── */
 .giro-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin-bottom:12px}
 .giro-card{background:var(--w);border:1px solid var(--b);border-radius:var(--rad);padding:12px 14px;box-shadow:var(--sh)}
@@ -2490,7 +2510,9 @@ div:has(> .fc2){flex-wrap:wrap;row-gap:6px}
           <div class="sb"><div class="sbl">Valor total</div><div class="sbv g" id="psVal">—</div><div class="sbs">em estoque</div></div>
           <div class="sb"><div class="sbl">Vendidas</div><div class="sbv" id="psVend">—</div><div class="sbs" id="psVendS">—</div></div>
         </div>
-        <div class="cd">
+        <!-- conferência do estoque: o QR escaneado marca a peça como vista -->
+        <div id="pecasConfBox"></div>
+        <div class="cd" id="pecasAddCard">
           <div class="cdh"><span class="cdht">Adicionar peça</span></div>
           <div class="cdb">
             <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr auto;gap:8px;align-items:end">
@@ -2525,9 +2547,10 @@ div:has(> .fc2){flex-wrap:wrap;row-gap:6px}
                   <option value="Igor">👤 Igor</option>
                 </select>
               </div>
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;grid-column:1/-1">
+              <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;grid-column:1/-1">
               <div class="fc"><span class="fla">Observação</span><input class="inp" type="text" id="pcObs" placeholder="Ex: Não funciona, Testar..."></div>
               <div class="fc"><span class="fla">Quantidade</span><input class="inp" type="number" id="pcQtd" placeholder="1" min="1" value="1"></div>
+              <div class="fc"><span class="fla">🏷️ Etiqueta</span><input class="inp" type="text" id="pcNumEtq" placeholder="P12" autocomplete="off" title="Número da etiqueta colada na peça (opcional)"></div>
             </div>
               <div class="fc" style="grid-column:1/-1"><span class="fla">🔧 Fornecedor <span style="font-size:.62rem;color:var(--li);font-weight:400;text-transform:none">de quem comprou (opcional) — vai pra aba Fornecedores</span></span>
                 <div style="display:grid;grid-template-columns:1fr 150px;gap:8px">
@@ -2565,6 +2588,8 @@ div:has(> .fc2){flex-wrap:wrap;row-gap:6px}
               <button class="fc2" onclick="setPF('Usado',this)">Usados</button>
               <button class="fc2" onclick="setPF('Carregador',this)">⚡ Carregadores</button>
               <button class="fc2" onclick="setPF('Plug',this)">🔌 Plugs</button>
+              <button class="fc2" onclick="setPF('SemEtq',this)">🏷️ Sem etiqueta</button>
+              <button class="fc2" id="pfFaltam" onclick="setPF('Faltam',this)" hidden>📋 Faltam conferir</button>
             </div>
           </div>
           <!-- CONTADOR DE ESTOQUE POR TIPO -->
@@ -3821,11 +3846,12 @@ div:has(> .fc2){flex-wrap:wrap;row-gap:6px}
     <div class="moo" onclick="closePecaEdit()"></div>
     <div class="mc" style="max-width:460px">
       <div class="mch">
-        <span class="mct">✎ Editar peça</span>
+        <span class="mct" id="pkTit">✎ Editar peça</span>
         <button class="mcl" onclick="closePecaEdit()">✕</button>
       </div>
       <div class="mcb">
         <input type="hidden" id="pkId">
+        <div class="fc full" id="pkEtqInfo" style="font-size:.74rem;color:var(--mu)"></div>
         <div class="fc full"><label class="fl">Nome / descrição</label>
           <input class="inp" type="text" id="pkNome" placeholder="Ex: SSD SATA 240GB"></div>
         <div class="fc"><label class="fl">Tipo</label>
@@ -3868,6 +3894,7 @@ div:has(> .fc2){flex-wrap:wrap;row-gap:6px}
         </div>
       </div>
       <div class="mca">
+        <button class="bcan" onclick="pecaEtqDaEdicao()" title="Imprimir a etiqueta com QR desta peça">🏷️ Etiqueta</button>
         <button class="bcan" onclick="closePecaEdit()">Cancelar</button>
         <button class="bsav" onclick="savePecaEdit()">Salvar alterações</button>
       </div>
@@ -3927,17 +3954,20 @@ div:has(> .fc2){flex-wrap:wrap;row-gap:6px}
     <div class="qrb-corpo" id="qrbCorpo"></div>
   </div>
 </div>
+<!-- aviso rápido das peças ("✓ P12 vista · 23 de 40 conferidas") -->
+<div class="pc-toast" id="pcToast" role="status" hidden></div>
 
 <!-- ETIQUETAS COM QR (impressora térmica) -->
 <div class="mo h etq" id="ETQ">
   <div class="moo" onclick="etqFechar()"></div>
   <div class="mc">
     <div class="mch">
-      <span class="mct">🏷️ Etiquetas com QR</span>
+      <span class="mct" id="etqTit">🏷️ Etiquetas com QR</span>
       <button class="mcl" onclick="etqFechar()" aria-label="Fechar">✕</button>
     </div>
     <div class="etq-corpo">
-      <div class="etq-dica">Cole atrás do notebook e aponte a câmera do celular para o QR: se a máquina ainda não está no sistema, abre o cadastro já com o número; se já está, abre a edição dela, com as fotos.</div>
+      <div class="etq-dica" id="etqDicaMaq">Cole atrás do notebook e aponte a câmera do celular para o QR: se a máquina ainda não está no sistema, abre o cadastro já com o número; se já está, abre a edição dela, com as fotos.</div>
+      <div class="etq-dica" id="etqDicaPeca" hidden>Cole na peça (ou no saquinho dela) e aponte a câmera do celular para o QR: se a peça ainda não está no sistema, abre o cadastro já com o número; se já está, abre a ficha dela e ela fica marcada como vista, para a conferência do estoque.</div>
       <div class="etq-linha">
         <div class="fc"><span class="fla">Números</span>
           <input class="inp" type="text" id="etqNums" placeholder="ex: 101-110, 115" autocomplete="off" oninput="etqPrevia()"></div>
@@ -4578,6 +4608,7 @@ const CMarca={labels:['Dell','Lenovo','Acer','Samsung','HP','Asus','Outros'],val
 
 let user=null,prods=[],filt='todos',editId=null,chartsOk=false,sellId=null,clientes=[],fornecedores=[];
 let prodsProntos=null; // a carga das máquinas depois do login (quem precisa da lista completa espera por ela)
+let pecasProntas=null; // idem para as peças (a etiqueta de peça escaneada espera por ela)
 // Máquina antiga sem número gravado ganha, ao carregar, um número provisório pela posição na lista.
 // Ele muda de uma carga para outra e pode repetir o de outra máquina: não serve para etiqueta.
 let numProv=new Set();
@@ -4617,7 +4648,7 @@ onAuthStateChanged(auth,u=>{
     // Mostrar botão admin só para o dono
     const btnAdm = document.getElementById('btnAdmin');
     if(btnAdm) btnAdm.style.display = perfilAtual==='joao' ? '' : 'none';
-    prodsProntos=loadProds();loadFinancas();loadPecas();loadClientes();loadFornecedores();loadMetas3();loadMilhao();loadSolo();loadFinInicio();loadReciboCfg();try{montarHw();}catch(e){}
+    prodsProntos=loadProds();loadFinancas();pecasProntas=loadPecas();loadClientes();loadFornecedores();loadMetas3();loadMilhao();loadSolo();loadFinInicio();loadReciboCfg();try{montarHw();}catch(e){}
     try{ initSpecBuilder(); loadCpuOutros(); }catch(e){}
     try{ grMontar(); }catch(e){}
     try{ instaVoltaDoLogin(); }catch(e){}
@@ -11031,6 +11062,7 @@ function renderFinancas(){
 // PEÇAS
 // ════════════════════════════════════
 let pecas=[],filtPecas='todos',tabAtual='notebooks';
+let pecasOk=false, pecaConf=null;   // a lista veio do banco? / a conferência do estoque (config/pecas_conferencia)
 const FONTES_PRESET=[{"nome":"Dell Dell Pino grosso 130W (RGB) · E3 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"","aterramento":"E3","marca":"Dell","funcionando":true},{"nome":"Dell Dell pino grosso 90W · E3 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"","aterramento":"E3","marca":"Dell","funcionando":true},{"nome":"Dell Dell tipo C 65W (Testar) · E3 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"Testar — Funcionar","aterramento":"E3","marca":"Dell","funcionando":true},{"nome":"Dell Dell Pino Grosso 65W (RGB) · E3 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"","aterramento":"E3","marca":"Dell","funcionando":true},{"nome":"Dell Dell Pino Grosso 65W (RGB) · E3 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"","aterramento":"E3","marca":"Dell","funcionando":true},{"nome":"Dell Dell Pino Grosso 65W (RGB) · E3 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"","aterramento":"E3","marca":"Dell","funcionando":true},{"nome":"Dell Dell Pino fino 65W · E3 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"","aterramento":"E3","marca":"Dell","funcionando":true},{"nome":"Dell Dell Pino Grosso 65W (RGB) · E3 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"","aterramento":"E3","marca":"Dell","funcionando":true},{"nome":"Dell Dell Pino fino 65W · E3 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"","aterramento":"E3","marca":"Dell","funcionando":true},{"nome":"Acer Acer Paralela 65W · E2 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"","aterramento":"E2","marca":"Acer","funcionando":true},{"nome":"Acer Acer Liteon Pino fino NOVO (Testar) · E3 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"Testar — Funcionar","aterramento":"E3","marca":"Acer","funcionando":true},{"nome":"Acer Acer paralela 65W · E2 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"","aterramento":"E2","marca":"Acer","funcionando":true},{"nome":"Acer Acer Paralela Pino fino Antigo 65W · E3 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"","aterramento":"E3","marca":"Acer","funcionando":true},{"nome":"Acer Acer Sem cabo 30W","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"","aterramento":"","marca":"Acer","funcionando":true},{"nome":"Lenovo Lenovo pino fino 65W (Completa)","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"","aterramento":"","marca":"Lenovo","funcionando":true},{"nome":"Samsung Samsung pino menor 40W · E3 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"","aterramento":"E3","marca":"Samsung","funcionando":true},{"nome":"Samsung Samsung pino menor 60W · E3 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"","aterramento":"E3","marca":"Samsung","funcionando":true},{"nome":"Samsung Samsung pino fino menor 40W · E3 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"","aterramento":"E3","marca":"Samsung","funcionando":true},{"nome":"Asus Asus 60W Pino grosso · E3 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"","aterramento":"E3","marca":"Asus","funcionando":true},{"nome":"Positivo Fonte paralela Positivo 65W · E2 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"","aterramento":"E2","marca":"Positivo","funcionando":true},{"nome":"Sony Sony Pino grosso 90W · E3 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"","aterramento":"E3","marca":"Sony","funcionando":true},{"nome":"Dell Pino Grosso 65W (RGB) · E3 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"Não funciona (testado 19V)","aterramento":"E3","marca":"Variado","funcionando":false},{"nome":"Dell Pino Grosso 65W (RGB) · E3 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"Não funciona (testado 19V)","aterramento":"E3","marca":"Variado","funcionando":false},{"nome":"Positivo 65W · E3 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"Não funciona (testado 19V)","aterramento":"E3","marca":"Variado","funcionando":false},{"nome":"Dell Pino fino 65W · E3 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"Não funciona (testado 19V)","aterramento":"E3","marca":"Variado","funcionando":false},{"nome":"Samung Pino fino 60W · E3 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"Não funciona (testado 19V)","aterramento":"E3","marca":"Variado","funcionando":false},{"nome":"HP Pino fino antigo 65W · E3 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"Não funciona (testado 19V)","aterramento":"E3","marca":"Variado","funcionando":false},{"nome":"HP Pino fino antigo 65W · E3 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"Não funciona (testado 19V)","aterramento":"E3","marca":"Variado","funcionando":false},{"nome":"Lenovo tipo USB · E3 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"Não funciona (testado 19V)","aterramento":"E3","marca":"Variado","funcionando":false},{"nome":"Lenovo 65W sem entrada (Testar) · E3 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"Não funciona (testado 19V)","aterramento":"E3","marca":"Variado","funcionando":false},{"nome":"Samsung pino menor ?W 15V Saída","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"Não funciona (testado 19V)","aterramento":"","marca":"Variado","funcionando":false},{"nome":"Lenovo tipo USB · E2 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"Não funciona (testado 19V)","aterramento":"E2","marca":"Variado","funcionando":false},{"nome":"Positivo Pino menor · E2 pinos","tipo":"Carregador","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"Não funciona (testado 19V)","aterramento":"E2","marca":"Variado","funcionando":false},{"nome":"Plug de tomada E3 (3 pinos)","tipo":"Plug/Tomada","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"","aterramento":"E3","marca":"Geral","funcionando":true,"quantidade":7},{"nome":"Plug de tomada E2 (2 pinos)","tipo":"Plug/Tomada","custo":0,"venda":0,"lucro":0,"status":"Estoque","obs":"","aterramento":"E2","marca":"Geral","funcionando":true,"quantidade":3}];
 
 window.swTab=(tab,btn)=>{
@@ -11054,14 +11086,20 @@ const TIPO_CORES={'Tela':'#2563eb','Bateria':'#16a34a','Teclado':'#7c3aed','HD/S
 
 async function loadPecas(){
   if(!user)return;
+  pecasOk=false;
   try{
     // Peças compartilhadas entre todos os sócios
     const q=query(collection(db,'pecas'),where('userId','==','shared_ijx'));
     const snap=await getDocs(q);
     pecas=snap.docs.map(d=>({id:d.id,...d.data()}));
+    pecasOk=true;
   }catch(e){pecas=[];}
+  // a conferência em andamento (a mesma para os dois sócios) e a numeração das etiquetas
+  try{ const s=await getDoc(doc(db,'config','pecas_conferencia')); pecaConf=s.exists()?s.data():null; }catch(e){}
+  try{ await etqCarregar(); }catch(e){}
   // Pré-carregar fontes da planilha se ainda não existirem no banco
-  if(!pecas.some(p=>p.tipo==='Carregador')){
+  // (só com a lista lida do banco: sem internet, ela vem vazia e as fontes entrariam repetidas)
+  if(pecasOk && !pecas.some(p=>p.tipo==='Carregador')){
     const presetIds=FONTES_PRESET.map((_,i)=>'preset_fonte_'+i);
     for(let i=0;i<FONTES_PRESET.length;i++){
       const f=FONTES_PRESET[i];
@@ -11083,6 +11121,10 @@ window.addPeca=async()=>{
   const obs=document.getElementById('pcObs').value.trim();
   const qtd=parseInt(document.getElementById('pcQtd').value)||1;
   if(!nome){alert('Digite o nome da peça!');return;}
+  // etiqueta colada (veio do QR escaneado ou digitada): "P12" ou "12"
+  const numEtq=parseInt(String(document.getElementById('pcNumEtq')?.value||'').replace(/\D/g,''),10)||0;
+  if(numEtq){ const outra=pecaPorNum(numEtq); if(outra){ alert('A etiqueta P'+numEtq+' já é da peça "'+(outra.nome||'')+'". Confira o número.'); return; } }
+  const agoraEtq=new Date().toISOString();
   // Fornecedor (opcional) — cria se for novo
   let pcFid=document.getElementById('pcFornId')?.value||'';
   const pcFnome=(document.getElementById('pcForn')?.value||'').trim();
@@ -11090,14 +11132,23 @@ window.addPeca=async()=>{
   if(pcFnome){
     try{ pcFid=await salvarFornecedor({nome:pcFnome,whatsapp:pcFtel,costuma:'Peças'}); }catch(e){ pcFid=pcFid||''; }
   }
-  const obj={userId:'shared_ijx',addedBy:user.uid,nome,tipo,custo,venda,lucro:(status==='Vendido'&&venda>0)?(venda-custo):0,status,obs,quantidade:qtd,investidor:(document.getElementById('pcInv')?.value||''),fornecedor_id:pcFid,fornecedor_nome:pcFnome,fotos_n:fotosPend.peca.length,criadoEm:new Date().toISOString()};
+  const obj={userId:'shared_ijx',addedBy:user.uid,nome,tipo,custo,venda,lucro:(status==='Vendido'&&venda>0)?(venda-custo):0,status,obs,quantidade:qtd,investidor:(document.getElementById('pcInv')?.value||''),fornecedor_id:pcFid,fornecedor_nome:pcFnome,fotos_n:fotosPend.peca.length,criadoEm:new Date().toISOString(),
+    // com etiqueta: já entra com o número, com a etiqueta impressa e vista agora (está na mão de quem cadastra)
+    ...(numEtq?{num:numEtq,etq_em:agoraEtq,visto_em:agoraEtq,visto_por:NOME_SOCIO()}:{})};
   let pecaId='l'+Date.now();
   try{const r=await addDoc(collection(db,'pecas'),obj);pecaId=r.id;pecas.push({...obj,id:r.id});}
   catch(e){ await gravar(Promise.reject(e), 'Cadastrar peça "'+nome+'"'); pecas.push({...obj,id:pecaId}); }
   await fpGravar('peca', pecaId, nome);
-  document.getElementById('pcNome').value='';document.getElementById('pcCusto').value='';document.getElementById('pcVenda').value='';document.getElementById('pcObs').value='';document.getElementById('pcQtd').value='1';const _pf=document.getElementById('pcForn');if(_pf)_pf.value='';const _pfi=document.getElementById('pcFornId');if(_pfi)_pfi.value='';const _pft=document.getElementById('pcFornTel');if(_pft)_pft.value='';
+  document.getElementById('pcNome').value='';document.getElementById('pcCusto').value='';document.getElementById('pcVenda').value='';document.getElementById('pcObs').value='';document.getElementById('pcQtd').value='1';const _pf=document.getElementById('pcForn');if(_pf)_pf.value='';const _pfi=document.getElementById('pcFornId');if(_pfi)_pfi.value='';const _pft=document.getElementById('pcFornTel');if(_pft)_pft.value='';const _pne=document.getElementById('pcNumEtq');if(_pne)_pne.value='';
   criarAviso('peca_adicionada', nome);
   renderPecas();
+  if(numEtq){
+    etqReservarPeca(numEtq);
+    // veio do QR escaneado: fecha a caixa e volta para a aba, com o aviso
+    if(qrCadAberto && qrCadCasa && qrCadCasa.card && qrCadCasa.card.id==='pecasAddCard'){ qrCadFechar(); pecasAbrirAba(); }
+    const c=confContagem();
+    pcToast('✓ Peça P'+numEtq+' cadastrada'+(c?' · '+c.vistas+' de '+c.total+' conferidas':''));
+  }
 };
 
 window.delPeca=async(id)=>{
@@ -11188,6 +11239,11 @@ window.pkVincToggle=()=>{
 window.openPecaEdit=(id)=>{
   const p=pecas.find(x=>x.id===id); if(!p)return;
   document.getElementById('pkId').value=id;
+  // a etiqueta e a última vez que a peça foi vista (QR escaneado ou ✓ da conferência)
+  const tit=document.getElementById('pkTit'); if(tit) tit.textContent='✎ Editar peça'+(+p.num>0?' P'+(+p.num):'');
+  const inf=document.getElementById('pkEtqInfo');
+  if(inf) inf.innerHTML=(+p.num>0?'🏷️ Etiqueta <b>P'+(+p.num)+'</b>'+(p.etq_em?'':' (ainda não impressa)'):'🏷️ Sem etiqueta: toque em <b>🏷️ Etiqueta</b>, embaixo, para imprimir a desta peça.')
+    +(p.visto_em?' · vista em '+esc(pecaQuando(p.visto_em))+(p.visto_por?' por '+esc(p.visto_por):''):'');
   document.getElementById('pkNome').value=p.nome||'';
   const sel=document.getElementById('pkTipo');
   const tipos=[...new Set([...PK_TIPOS, p.tipo].filter(Boolean))];
@@ -11288,8 +11344,220 @@ function renderPecasEstoque(){
     </div>`;
 }
 
+// ── ETIQUETA (P12) E CONFERÊNCIA DAS PEÇAS ──
+// Cada peça (ou saquinho de peças iguais) ganha uma etiqueta com QR e número próprio: P1, P2…
+// Escanear abre a peça no celular e grava que ela foi vista agora. Etiqueta que ainda não tem
+// peça abre o cadastro já com o número, ou deixa escolher a peça que já estava no sistema sem
+// etiqueta. A conferência é o período em que vocês passam escaneando o estoque: o que foi visto
+// desde o começo dela está conferido, e o resto do estoque é o que falta. Assim não se perde
+// mais o que já foi contado. A etiqueta nunca leva custo, preço ou fornecedor.
+const NOME_SOCIO=()=>perfilAtual==='igor'?'Igor':'João';
+function pecaPorNum(n){ return pecas.find(p=>+p.num===n)||null; }
+function proxNumLivrePeca(){ return Math.max(0, etqUltPeca, ...pecas.map(p=>+p.num||0))+1; }
+function pecaRotulo(p){ return +p.num>0?'P'+(+p.num):''; }
+function pecaQuando(iso){
+  const d=new Date(iso); if(isNaN(d)) return '';
+  return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+}
+// O que vai escrito na etiqueta da peça: o número e, se ela já existe, o nome e o tipo.
+function etqDadosPeca(n){
+  const d={num:n, rotulo:'P'+n, qr:qrUrlPeca(n)};
+  const p=pecaPorNum(n); if(!p) return d;
+  const nome=String(p.nome||'').trim().replace(/^(\S+)\s+\1(?=\s|$)/i,'$1');   // "Dell Dell pino…" → "Dell pino…"
+  const linha=[p.tipo, (+p.quantidade>1)?p.quantidade+' unidades':''].filter(Boolean).join(' · ');
+  return {...d, nome, specs:linha?[linha]:[]};
+}
+// Sem etiqueta: em estoque e com a etiqueta ainda não impressa (a impressa ganha etq_em).
+function pecasSemEtq(){ return pecas.filter(p=>p.status==='Estoque' && !p.etq_em && !idLocal(p.id)); }
+// Antes de imprimir, a peça sem número ganha o próximo livre, gravado no banco.
+async function pecaFixarNumeros(lista){
+  const sem=lista.filter(p=>!(+p.num>0) && !idLocal(p.id))
+    .sort((a,b)=>String(a.criadoEm||'').localeCompare(String(b.criadoEm||'')));
+  if(!sem.length) return [];
+  await etqCarregar();
+  let n=Math.max(0, etqUltPeca, ...pecas.map(p=>+p.num||0));
+  const feitas=[];
+  for(const p of sem){
+    const novo=n+1;
+    const ok=await gravar(updateDoc(doc(db,'pecas',p.id),{num:novo}), 'Número da peça "'+(p.nome||p.id)+'"');
+    if(!ok) continue;
+    n=novo; p.num=novo; feitas.push(novo);
+  }
+  if(feitas.length){ etqReservarPeca(Math.max(...feitas)); try{ renderPecas(); }catch(e){} }
+  return feitas;
+}
+// Etiqueta impressa (imprimir, PDF ou imagens): a peça que já existe passa a ter etiqueta.
+function pecaMarcarImpressas(nums){
+  const agora=new Date().toISOString(); let mudou=false;
+  nums.forEach(n=>{
+    const p=pecaPorNum(n); if(!p||p.etq_em) return;
+    p.etq_em=agora; mudou=true;
+    if(!idLocal(p.id)) gravar(updateDoc(doc(db,'pecas',p.id),{etq_em:agora}), 'Etiqueta impressa da peça P'+n);
+  });
+  if(mudou) try{ renderPecas(); }catch(e){}
+}
+function etqAvisoPecas(html){ const av=document.getElementById('etqAvisoNum'); if(!av) return; av.hidden=!html; av.innerHTML=html||''; }
+// O botão "Peças sem etiqueta" da tela de etiquetas: as em estoque que ainda não têm etiqueta
+// impressa, com o nome de cada uma (para colar na peça certa).
+async function etqPecasSemEtq(){
+  const lista=pecasSemEtq();
+  if(!lista.length){ etqAvisoPecas('✅ Todas as peças em estoque já têm etiqueta impressa.'); return; }
+  const bt=document.getElementById('etqNaMaoBt');
+  if(bt){ bt.disabled=true; bt.textContent='Preparando…'; }
+  let feitas=[];
+  try{ feitas=await pecaFixarNumeros(lista); }
+  finally{ if(bt){ bt.disabled=false; bt.textContent='Peças sem etiqueta ('+pecasSemEtq().length+')'; } }
+  const ns=[...new Set(lista.map(p=>+p.num).filter(n=>n>0))].sort((a,b)=>a-b);
+  const fora=lista.length-ns.length, demais=Math.max(0,ns.length-ETQ_MAX);
+  etqAvisoPecas([
+    feitas.length?'🔢 <b>'+feitas.length+(feitas.length!==1?' peças ganharam número agora':' peça ganhou número agora')+': '+esc(etqFaixas(feitas).replace(/(\d+)/g,'P$1'))+'.</b> Cada etiqueta sai com o nome da peça: cole na peça certa.':'',
+    fora?'⚠️ '+fora+(fora!==1?' peças ficaram de fora: sem internet agora.':' peça ficou de fora: sem internet agora.'):'',
+    demais?'⚠️ São '+ETQ_MAX+' etiquetas por vez: '+demais+' ficaram para a próxima.':''].filter(Boolean).join('<br>'));
+  if(!ns.length) return;
+  document.getElementById('etqNums').value=etqFaixas(ns.slice(0,ETQ_MAX)).replace(/(\d+)/g,'P$1');
+  etqMontar();
+}
+function pecasAbrirAba(){
+  const b=[...document.querySelectorAll('.tab-btn')].find(x=>(x.getAttribute('onclick')||'').includes("'pecas'"));
+  if(b && tabAtual!=='pecas') swTab('pecas',b);
+}
+let pcToastT=0;
+function pcToast(txt){
+  const el=document.getElementById('pcToast'); if(!el) return;
+  el.textContent=txt; el.hidden=false;
+  clearTimeout(pcToastT); pcToastT=setTimeout(()=>{ el.hidden=true; },3500);
+}
+// Vista agora (QR escaneado ou ✓ na conferência): grava quando e quem, e mostra como está a conferência.
+function pecaVista(p){
+  const agora=new Date().toISOString(), por=NOME_SOCIO();
+  p.visto_em=agora; p.visto_por=por;
+  if(!idLocal(p.id)) gravar(updateDoc(doc(db,'pecas',p.id),{visto_em:agora,visto_por:por}), 'Peça '+(pecaRotulo(p)||p.nome||'')+' vista');
+  try{ renderPecas(); }catch(e){}
+  const c=confContagem();
+  pcToast('✓ '+(pecaRotulo(p)||String(p.nome||'Peça').slice(0,30))+' vista agora'+(c?' · '+c.vistas+' de '+c.total+' conferidas':''));
+}
+window.pecaVistaManual=id=>{ const p=pecas.find(x=>x.id===id); if(p) pecaVista(p); };
+// O QR de peça escaneado (#p=12), com o sócio já dentro.
+window.qrPecaAbrir=n=>{
+  if(!pecasOk){ alert('🏷️ Etiqueta P'+n+': não consegui ler as peças agora. Confira a internet e escaneie de novo.'); return; }
+  try{ sp2('vendas'); pecasAbrirAba(); }catch(e){}
+  const p=pecaPorNum(n);
+  if(p){ qrCadFechar(); try{ closeModal(); }catch(e){} pecaVista(p); openPecaEdit(p.id); return; }
+  qrPecaCadAbrir(n);
+};
+// Etiqueta que ainda não tem peça: o "Adicionar peça" da aba, dentro da caixa, já com o número.
+// Em cima, a escolha da peça que já estava no sistema sem etiqueta (ela fica com este número).
+function qrPecaCadAbrir(n){
+  const card=document.getElementById('pecasAddCard'), corpo=document.getElementById('qrbCorpo');
+  if(!card||!corpo) return;
+  qrCadFechar();
+  try{ closeModal(); }catch(e){} try{ closePecaEdit(); }catch(e){}
+  const ne=document.getElementById('pcNumEtq'); if(ne) ne.value='P'+n;
+  const sem=pecas.filter(p=>!(+p.num>0) && !idLocal(p.id) && p.status!=='Vendido')
+    .sort((a,b)=>String(a.tipo||'').localeCompare(String(b.tipo||''))||String(a.nome||'').localeCompare(String(b.nome||'')));
+  if(sem.length){
+    const grupos={};
+    sem.forEach(p=>{ const t=p.tipo||'Outro'; (grupos[t]=grupos[t]||[]).push(p); });
+    const opts=Object.entries(grupos).map(([t,ps])=>'<optgroup label="'+esc(t)+'">'+ps.map(p=>'<option value="'+esc(p.id)+'">'
+      +esc(p.nome||'—')+((+p.quantidade>1)?' ('+p.quantidade+' un.)':'')+(p.status==='Usado'?' · usada':'')+'</option>').join('')+'</optgroup>').join('');
+    corpo.insertAdjacentHTML('afterbegin','<div class="qrb-ligar" id="qrbLigar"><b>Essa peça já está no sistema, sem etiqueta?</b> Escolha ela: a etiqueta P'+n+' passa a ser dela.'
+      +'<select class="inp" id="qrbLigarSel"><option value="">— Escolha a peça —</option>'+opts+'</select>'
+      +'<button type="button" class="pe-conf-bt pri" onclick="qrPecaLigar('+n+')">Usar a etiqueta P'+n+' nesta peça</button>'
+      +'<small>Se é uma peça nova, preencha embaixo e toque em <b>+ Add</b>.</small></div>');
+  }
+  qrCadMover(card);
+  qrCadAberto=true;
+  document.getElementById('qrbTit').textContent='🏷️ Nova peça P'+n;
+  document.getElementById('qrbAviso').innerHTML='A etiqueta <b>P'+n+'</b> ainda não tem peça no sistema. Preencha e toque em <b>+ Add</b>: ela entra com este número, já marcada como vista.';
+  document.getElementById('QRB').classList.remove('h');
+  corpo.scrollTop=0;
+}
+window.qrPecaLigar=async n=>{
+  const sel=document.querySelector('#qrbLigarSel'), p=pecas.find(x=>x.id===(sel&&sel.value));
+  if(!p){ alert('Escolha a peça na lista.'); return; }
+  const outra=pecaPorNum(n);
+  if(outra && outra.id!==p.id){ alert('A etiqueta P'+n+' já é da peça "'+(outra.nome||'')+'".'); return; }
+  const agora=new Date().toISOString();
+  const ok=await gravar(updateDoc(doc(db,'pecas',p.id),{num:n,etq_em:agora}), 'Etiqueta P'+n+' na peça "'+(p.nome||p.id)+'"');
+  if(!ok){ alert('Não consegui gravar agora. Confira a internet e tente de novo.'); return; }
+  p.num=n; p.etq_em=agora; etqReservarPeca(n);
+  qrCadFechar();
+  pecaVista(p);
+  openPecaEdit(p.id);
+};
+// ── a conferência ──
+const confAtiva=()=>!!(pecaConf&&pecaConf.inicio&&!pecaConf.fim);
+const pecaConferida=p=>confAtiva() && !!p.visto_em && String(p.visto_em)>=String(pecaConf.inicio);
+function confContagem(){
+  if(!confAtiva()) return null;
+  const est=pecas.filter(p=>p.status==='Estoque'), vistas=est.filter(pecaConferida).length;
+  return {total:est.length, vistas, faltam:est.length-vistas};
+}
+function confFaltam(){ return confAtiva()?pecas.filter(p=>p.status==='Estoque'&&!pecaConferida(p)):[]; }
+async function pecaConfGravar(dados){
+  pecaConf={...(pecaConf||{}),...dados};
+  await gravar(setDoc(doc(db,'config','pecas_conferencia'),{userId:'shared_ijx',tipo:'pecas_conferencia',...pecaConf},{merge:true}),'Conferência das peças');
+}
+function pecaFiltroTodos(){ const b=document.querySelector('#tab-pecas .fc2'); if(b) setPF('todos',b); }
+window.pecaConfComecar=async()=>{
+  if(!confirm('Começar a conferência das peças?\n\nEscaneie o QR de cada peça (ou toque no ✓ da lista): ela fica marcada como conferida, e a lista mostra o que falta. Vale para os dois sócios ao mesmo tempo.')) return;
+  await pecaConfGravar({inicio:new Date().toISOString(), por:NOME_SOCIO(), fim:'', vistas:0, total:0});
+  renderPecas();
+};
+window.pecaConfEncerrar=async()=>{
+  const c=confContagem(); if(!c) return;
+  const faltam=confFaltam(), lista=faltam.slice(0,8).map(p=>'• '+(pecaRotulo(p)?pecaRotulo(p)+' ':'')+(p.nome||'')).join('\n');
+  if(!confirm('Encerrar a conferência?\n\n'+c.vistas+' de '+c.total+' peças conferidas.'
+    +(c.faltam?'\n\nNão foram vistas ('+c.faltam+'):\n'+lista+(c.faltam>8?'\n…':'')+'\n\nConfira se foram vendidas ou usadas em alguma máquina.':''))) return;
+  await pecaConfGravar({fim:new Date().toISOString(), vistas:c.vistas, total:c.total});
+  if(filtPecas==='Faltam') pecaFiltroTodos(); else renderPecas();
+};
+window.pecaConfFaltam=()=>{
+  const b=document.getElementById('pfFaltam'); if(b) setPF('Faltam',b);
+  const l=document.getElementById('pecasList'); if(l) l.scrollIntoView({behavior:'smooth',block:'start'});
+};
+function renderPecasConf(){
+  const box=document.getElementById('pecasConfBox'); if(!box) return;
+  const bF=document.getElementById('pfFaltam'); if(bF) bF.hidden=!confAtiva();
+  const semEtq=pecasSemEtq().length;
+  // etiquetas impressas que ainda não estão em nenhuma peça (coladas e não cadastradas, ou guardadas)
+  const usadas=new Set(pecas.map(p=>+p.num).filter(n=>n>0)), soltas=[];
+  for(let n=1;n<=etqUltPeca&&soltas.length<1000;n++) if(!usadas.has(n)) soltas.push(n);
+  const soltasTxt=soltas.length?'<div class="pe-conf-soltas">🏷️ '+soltas.length+(soltas.length!==1?' etiquetas impressas ainda sem peça: ':' etiqueta impressa ainda sem peça: ')
+    +esc(etqFaixas(soltas).replace(/(\d+)/g,'P$1'))+'</div>':'';
+  const btEtq='<button type="button" class="pe-conf-bt" onclick="etqAbrir(null,\'peca\')">🏷️ Etiquetas das peças</button>';
+  const c=confContagem();
+  if(c){
+    const pct=c.total?Math.round(c.vistas/c.total*100):0;
+    box.innerHTML='<div class="pe-conf ativa"><div class="pe-conf-tit">📋 Conferência em andamento</div>'
+      +'<div class="pe-conf-sub">Desde '+esc(pecaQuando(pecaConf.inicio))+(pecaConf.por?' ('+esc(pecaConf.por)+')':'')+'. Escaneie o QR de cada peça ou toque no ✓ da lista.</div>'
+      +'<div class="pe-conf-bar" role="progressbar" aria-label="Peças conferidas" aria-valuemin="0" aria-valuemax="'+c.total+'" aria-valuenow="'+c.vistas+'"><i style="width:'+pct+'%"></i></div>'
+      +'<div class="pe-conf-sub"><b>'+c.vistas+' de '+c.total+'</b> peças em estoque conferidas · faltam <b>'+c.faltam+'</b></div>'
+      +'<div class="pe-conf-bts">'+(c.faltam?'<button type="button" class="pe-conf-bt pri" onclick="pecaConfFaltam()">Ver as que faltam</button>':'')+btEtq
+      +'<button type="button" class="pe-conf-bt" onclick="pecaConfEncerrar()">Encerrar</button></div>'+soltasTxt+'</div>';
+    return;
+  }
+  const ult=pecaConf&&pecaConf.fim?'<div class="pe-conf-sub">Última conferência: '+esc(pecaQuando(pecaConf.inicio))+' · '+(+pecaConf.vistas||0)+' de '+(+pecaConf.total||0)+' conferidas.</div>':'';
+  box.innerHTML='<div class="pe-conf"><div class="pe-conf-tit">📋 Conferência do estoque de peças</div>'
+    +'<div class="pe-conf-sub">Com a etiqueta colada, escaneie o QR de cada peça: ela fica marcada como vista, e a lista mostra o que falta.'
+    +(semEtq?' '+semEtq+(semEtq!==1?' peças em estoque ainda sem etiqueta.':' peça em estoque ainda sem etiqueta.'):'')+'</div>'+ult
+    +'<div class="pe-conf-bts"><button type="button" class="pe-conf-bt pri" onclick="pecaConfComecar()">Começar conferência</button>'+btEtq+'</div>'+soltasTxt+'</div>';
+}
+// O botão "🏷️ Etiqueta" da edição: a peça sem número ganha um, e abre a tela das etiquetas com ela.
+window.pecaEtqDaEdicao=async()=>{
+  const id=document.getElementById('pkId').value, p=pecas.find(x=>x.id===id); if(!p) return;
+  if(!(+p.num>0)){
+    if(idLocal(p.id)){ alert('Esta peça ainda não subiu para o banco (sem internet na hora do cadastro). Tente de novo com internet.'); return; }
+    await pecaFixarNumeros([p]);
+    if(!(+p.num>0)){ alert('Não consegui dar um número a esta peça agora. Confira a internet e tente de novo.'); return; }
+  }
+  closePecaEdit();
+  etqAbrir('P'+p.num,'peca');
+};
+
 function renderPecas(){
   renderPecasEstoque();
+  renderPecasConf();
   const total=pecas.length;
   const emEstoque=pecas.filter(p=>p.status==='Estoque');
   const vendidas=pecas.filter(p=>p.status==='Vendido');
@@ -11303,8 +11571,9 @@ function renderPecas(){
   if(sVend){sVend.textContent=qtdVendidas;sVendS.textContent=fmt(lucroVend)+' lucro';}
   const list=document.getElementById('pecasList');
   if(!list)return;
-  const filtered=filtPecas==='todos'?pecas:filtPecas==='Carregador'?pecas.filter(p=>p.tipo==='Carregador'):filtPecas==='Plug'?pecas.filter(p=>p.tipo==='Plug/Tomada'):pecas.filter(p=>p.status===filtPecas);
-  if(!filtered.length){list.innerHTML='<div style="text-align:center;padding:48px;color:var(--li)">📦 Nenhuma peça encontrada</div>';return;}
+  const filtered=filtPecas==='todos'?pecas:filtPecas==='Carregador'?pecas.filter(p=>p.tipo==='Carregador'):filtPecas==='Plug'?pecas.filter(p=>p.tipo==='Plug/Tomada')
+    :filtPecas==='SemEtq'?pecasSemEtq():filtPecas==='Faltam'?confFaltam():pecas.filter(p=>p.status===filtPecas);
+  if(!filtered.length){list.innerHTML='<div style="text-align:center;padding:48px;color:var(--li)">'+(filtPecas==='Faltam'?'✅ Todas as peças em estoque já foram conferidas':filtPecas==='SemEtq'?'✅ Todas as peças em estoque já têm etiqueta':'📦 Nenhuma peça encontrada')+'</div>';return;}
 
   // Para carregadores: agrupar por MARCA. Para outros tipos: agrupar por TIPO (comportamento original)
   const isCarregadores=filtered.every(p=>['Carregador','Plug/Tomada'].includes(p.tipo))||filtPecas==='Carregador'||filtPecas==='Plug';
@@ -11317,7 +11586,7 @@ function renderPecas(){
       const nomeExibido=p.tipo==='Carregador'?esc(p.nome).replace(/^(Dell|Acer|Lenovo|HP|Samsung|Asus|Positivo|Sony|Variado)\s/i,''):esc(p.nome);
       const qtdBadge=p.quantidade&&p.quantidade>1?`<span style="display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;border-radius:5px;background:var(--bbg);border:1px solid var(--bbd);font-size:.72rem;font-weight:600;color:var(--bl);padding:0 4px">${p.quantidade}</span>`:'<span style="font-size:.72rem;color:var(--li)">1</span>';
       return`<tr>
-        <td><div class="pn">${nomeExibido}${atBadge}</div><div style="margin-top:2px">${obsBadge}${(p.status==='Usado'&&p.produto_nome)?`<span class="peca-maq" title="Aplicada nesta máquina">🔗 ${esc(p.produto_nome)}</span>`:(p.status==='Usado')?`<span class="peca-maq alerta" title="Sem máquina definida">⚠ máquina não definida</span>`:''}${p.fornecedor_nome?`<span class="peca-forn" title="Fornecedor">🔧 ${esc(p.fornecedor_nome)}</span>`:''}</div></td>
+        <td><div class="pn">${+p.num>0?`<span class="peca-num" title="Etiqueta da peça">P${+p.num}</span>`:''}${nomeExibido}${atBadge}</div><div style="margin-top:2px">${pecaConferida(p)?'<span class="peca-visto">✓ conferida</span>':''}${obsBadge}${(p.status==='Usado'&&p.produto_nome)?`<span class="peca-maq" title="Aplicada nesta máquina">🔗 ${esc(p.produto_nome)}</span>`:(p.status==='Usado')?`<span class="peca-maq alerta" title="Sem máquina definida">⚠ máquina não definida</span>`:''}${p.fornecedor_nome?`<span class="peca-forn" title="Fornecedor">🔧 ${esc(p.fornecedor_nome)}</span>`:''}</div></td>
         <td style="text-align:center">${qtdBadge}</td>
         <td style="color:var(--mu)">${fmt(p.custo)}${(p.custo_pecas>0)?`<div class="custo-brk"><span title="Pago na máquina">📦 ${fmt(p.custo_base!==undefined?p.custo_base:(p.custo-p.custo_pecas))}</span> <span class="cb-pc" title="Pago em peças">🔧 ${fmt(p.custo_pecas)}</span></div>`:''}</td>
         <td class="ps">${fmt(p.venda)}</td>
@@ -11327,7 +11596,7 @@ function renderPecas(){
           <option ${p.status==='Vendido'?'selected':''} value="Vendido">Vendido</option>
           <option ${p.status==='Usado'?'selected':''} value="Usado">Usado</option>
         </select></td>
-        <td style="white-space:nowrap"><button class="bed" onclick="openPecaEdit('${p.id}')" title="Editar peça">✎</button><button class="bdl" onclick="delPeca('${p.id}')">✕</button></td>
+        <td style="white-space:nowrap">${(confAtiva()&&p.status==='Estoque'&&!pecaConferida(p))?`<button class="bvis" onclick="pecaVistaManual('${p.id}')" title="Vi a peça: marcar como conferida">✓</button>`:''}<button class="bed" onclick="openPecaEdit('${p.id}')" title="Editar peça">✎</button><button class="bdl" onclick="delPeca('${p.id}')">✕</button></td>
       </tr>`;
     }).join('');
     const valorTotal=fmt(itens.reduce((s,p)=>s+(p.venda||0),0));
@@ -15701,21 +15970,40 @@ const ETQ_PONTOS=8;   // impressora térmica de 203 dpi: 8 pontos por milímetro
 const ETQ_MAX=200;    // por vez
 const ETQ_FONTE='"Inter Variable", "Helvetica Neue", Arial, sans-serif';
 let etqUlt=0, qrPend=0, qrCadAberto=false, etqCache=null, etqTimer=0, etqGeracao=0, etqFolha='rolo', etqGerFolha=0;
+// Peças têm a numeração delas (P1, P2…), reservada à parte, e o QR com #p= no lugar do #n=.
+let etqModo='maq', etqUltPeca=0, qrPendPeca=0, qrCadCasa=null;
 const qrUrl=n=>QR_ORIGEM+'/#n='+n;
+const qrUrlPeca=n=>QR_ORIGEM+'/#p='+n;
 
 async function etqCarregar(){
-  try{ const s=await getDoc(doc(db,'config','etiquetas')); const u=s.exists()?(+s.data().ult||0):0; if(u>etqUlt) etqUlt=u; }catch(e){}
+  try{
+    const s=await getDoc(doc(db,'config','etiquetas')), d=s.exists()?s.data():{};
+    const u=+d.ult||0, up=+d.ult_peca||0;
+    if(u>etqUlt) etqUlt=u;
+    if(up>etqUltPeca) etqUltPeca=up;
+  }catch(e){}
   return etqUlt;
 }
 function proxNumLivre(){ return Math.max(0, etqUlt, ...prods.map(p=>+p.num||0))+1; }
 // A máquina de um número: só vale número gravado (o provisório pode ser de outra).
 function prodPorNum(n){ return prods.find(p=>+p.num===n && !numProv.has(p.id))||null; }
-async function etqReservar(nums){
+async function etqReservar(nums, modo){
   const m=Math.max(0,...nums);
+  if(modo==='peca'){
+    pecaMarcarImpressas(nums);   // impressa: a peça que já existe sai da lista "sem etiqueta"
+    return etqReservarPeca(m);
+  }
   if(m<=etqUlt) return;
   etqUlt=m;
   await gravar(setDoc(doc(db,'config','etiquetas'),{userId:'shared_ijx',tipo:'etiquetas',ult:m,em:new Date().toISOString()},{merge:true}),
                'Reservar os números das etiquetas');
+}
+// A numeração das peças (P1, P2…) é separada da das máquinas e reservada no mesmo documento.
+async function etqReservarPeca(m){
+  if(!(m>etqUltPeca)) return;
+  etqUltPeca=m;
+  await gravar(setDoc(doc(db,'config','etiquetas'),{userId:'shared_ijx',tipo:'etiquetas',ult_peca:m,em:new Date().toISOString()},{merge:true}),
+               'Reservar os números das etiquetas das peças');
 }
 // "101-110, 115" → [101…110, 115]. Aceita também "101 a 110" e "#101".
 function etqLerNums(txt){
@@ -15764,7 +16052,7 @@ function etqDesenhar(d, tam){
   x.fillStyle='#fff'; x.fillRect(0,0,W,H); x.fillStyle='#000';
   const m=Math.round(1.5*K);   // a térmica não imprime colado na borda
   // QR com módulo de pontos inteiros, e com folga em volta para a câmera achar
-  const q=qrcode(0,'M'); q.addData(qrUrl(d.num)); q.make();
+  const q=qrcode(0,'M'); q.addData(d.qr||qrUrl(d.num)); q.make();
   const nm=q.getModuleCount(), lado=Math.min(H-2*m, Math.round(W*0.5));
   let px=Math.max(2,Math.floor(lado/nm));
   while(px>4 && m+(lado-nm*px)/2<2*px) px--;
@@ -15778,7 +16066,7 @@ function etqDesenhar(d, tam){
   const linhas=[];   // {txt, peso, s, depois}
   const sLoja=caber('TECH CAMPINAS',700,Math.round(H*0.085),9);
   linhas.push({txt:'TECH CAMPINAS',peso:700,s:sLoja,depois:Math.round(H*0.045)});
-  const numTxt='#'+d.num;
+  const numTxt=d.rotulo||('#'+d.num);
   linhas.push({txt:numTxt,peso:800,s:caber(numTxt,800,Math.round(H*(d.nome?((d.specs||[]).length>1?0.29:0.33):0.42)),12),depois:Math.round(H*0.055)});
   if(d.nome){
     // o modelo em até duas linhas, diminuindo a letra antes de cortar
@@ -15899,8 +16187,9 @@ async function etqPdf(cvs, tam, folha){
   }
   return pdfMontar(etqPaginas(cvs.length,tam,folha), imagens);
 }
-function etqNomeArq(nums, ext){
+function etqNomeArq(nums, ext, modo){
   const f=etqFaixas(nums).replace(/,\s*/g,'_');
+  if(modo==='peca') return 'etiquetas-pecas-'+(f.length<=40?f.replace(/(\d+)/g,'P$1'):nums.length+'-pecas')+'.'+ext;
   return 'etiquetas-'+(f.length<=40?f:nums.length+'-maquinas')+'.'+ext;
 }
 // A primeira folha A4 em miniatura, para ver como vai sair antes de imprimir.
@@ -15944,7 +16233,7 @@ async function etqMontarFolha(){
   try{ u8=await etqPdf(e.cvs,e.tam,folha); }
   catch(err){ console.warn('PDF das etiquetas', err); if(minha===etqGerFolha&&pdfBt) pdfBt.disabled=true; return; }
   if(minha!==etqGerFolha || etqCache!==e) return;   // trocaram a folha ou os números no meio
-  e.pdf={folha, arq:new File([u8], etqNomeArq(e.nums,'pdf'), {type:'application/pdf'})};
+  e.pdf={folha, arq:new File([u8], etqNomeArq(e.nums,'pdf',e.modo), {type:'application/pdf'})};
   if(pdfBt) pdfBt.disabled=false;
 }
 // Celular: manda o PDF direto para o app da impressora (ou salva). Computador: baixa.
@@ -15954,11 +16243,11 @@ window.etqPdfBaixar=async()=>{
   if(matchMedia('(pointer: coarse)').matches && navigator.share && navigator.canShare){
     let pode=false; try{ pode=navigator.canShare({files:[arq]}); }catch(_){}
     if(pode){
-      try{ await navigator.share({files:[arq], title:'Etiquetas'}); etqReservar(e.nums); return; }
+      try{ await navigator.share({files:[arq], title:'Etiquetas'}); etqReservar(e.nums,e.modo); return; }
       catch(err){ if(err&&err.name==='AbortError') return; }
     }
   }
-  etqReservar(e.nums);
+  etqReservar(e.nums,e.modo);
   const a=document.createElement('a'), u=URL.createObjectURL(arq);
   a.href=u; a.download=arq.name; document.body.appendChild(a); a.click(); a.remove();
   setTimeout(()=>URL.revokeObjectURL(u),60000);
@@ -15970,44 +16259,58 @@ async function etqMontar(){
   const minha=++etqGeracao;
   const inp=document.getElementById('etqNums'), tam=document.getElementById('etqTam').value;
   const info=document.getElementById('etqInfo'), prev=document.getElementById('etqPrev');
-  const nums=etqLerNums(inp.value);
+  const modo=etqModo, peca=modo==='peca', pre=peca?'P':'#';
+  // na peça, "P1-P10" vale o mesmo que "1-10"
+  const nums=etqLerNums(peca?inp.value.replace(/p(?=\s*\d)/gi,''):inp.value);
   etqCache=null; etqBotoes(false);
-  if(!nums.length){ info.textContent='Digite os números das etiquetas (ex: 101-110).'; prev.innerHTML=''; return; }
+  if(!nums.length){ info.textContent=peca?'Digite os números das etiquetas (ex: P1-P10).':'Digite os números das etiquetas (ex: 101-110).'; prev.innerHTML=''; return; }
   info.textContent='Gerando…';
   try{ await etqPreparar(); }catch(e){ info.textContent='⚠️ '+e.message; return; }
   if(minha!==etqGeracao) return;
-  const cvs=nums.map(n=>etqDesenhar(etqDados(n),tam));
+  const cvs=nums.map(n=>etqDesenhar(peca?etqDadosPeca(n):etqDados(n),tam));
   const urls=cvs.map(c=>c.toDataURL('image/png'));
-  const arqs=await Promise.all(cvs.map((c,i)=>new Promise(r=>c.toBlob(b=>r(new File([b],'etiqueta-'+nums[i]+'.png',{type:'image/png'})),'image/png'))));
+  const arqs=await Promise.all(cvs.map((c,i)=>new Promise(r=>c.toBlob(b=>r(new File([b],'etiqueta-'+(peca?'P':'')+nums[i]+'.png',{type:'image/png'})),'image/png'))));
   if(minha!==etqGeracao) return;   // mudaram os números no meio
-  etqCache={nums,tam,urls,arqs,cvs,pdf:null};
-  try{ maqAgendar(4000); }catch(e){}   // a página do QR com a ficha em dia antes de colar a etiqueta
-  const novas=nums.filter(n=>!prodPorNum(n)).length, ja=nums.length-novas;
-  info.innerHTML='<b>'+nums.length+' etiqueta'+(nums.length!==1?'s':'')+'</b>: '+esc(etqFaixas(nums).replace(/(\d+)/g,'#$1'))
-    +'<br><small>'+[novas?novas+' nova'+(novas!==1?'s':'')+' (o QR abre o cadastro com o número)':'',
-                    ja?ja+' já cadastrada'+(ja!==1?'s':'')+' (o QR abre a edição)':''].filter(Boolean).join(' · ')+'</small>';
+  etqCache={nums,tam,urls,arqs,cvs,pdf:null,modo};
+  if(!peca) try{ maqAgendar(4000); }catch(e){}   // a página do QR com a ficha em dia antes de colar a etiqueta
+  const existe=peca?(n=>!!pecaPorNum(n)):(n=>!!prodPorNum(n));
+  const novas=nums.filter(n=>!existe(n)).length, ja=nums.length-novas;
+  info.innerHTML='<b>'+nums.length+' etiqueta'+(nums.length!==1?'s':'')+'</b>: '+esc(etqFaixas(nums).replace(/(\d+)/g,pre+'$1'))
+    +'<br><small>'+[novas?novas+' nova'+(novas!==1?'s':'')+(peca?' (o QR abre o cadastro da peça com o número)':' (o QR abre o cadastro com o número)'):'',
+                    ja?ja+' já cadastrada'+(ja!==1?'s':'')+(peca?' (o QR abre a peça e marca como vista)':' (o QR abre a edição)'):''].filter(Boolean).join(' · ')+'</small>';
   const MOSTRA=12;
-  prev.innerHTML=urls.slice(0,MOSTRA).map((u,i)=>'<img src="'+u+'" alt="Etiqueta #'+nums[i]+'">').join('')
+  prev.innerHTML=urls.slice(0,MOSTRA).map((u,i)=>'<img src="'+u+'" alt="Etiqueta '+pre+nums[i]+'">').join('')
     +(urls.length>MOSTRA?'<div class="mais">+'+(urls.length-MOSTRA)+' etiquetas</div>':'');
   etqBotoes(true);
   etqMontarFolha();   // o PDF (e a miniatura da folha A4) sai logo em seguida
 }
-window.etqAbrir=async(nums)=>{
+// modo 'peca': as etiquetas das peças (P1, P2…), com a numeração e a reserva delas
+window.etqAbrir=async(nums, modo)=>{
+  etqModo=modo==='peca'?'peca':'maq';
+  const peca=etqModo==='peca';
   document.getElementById('ETQ').classList.remove('h');
   const av=document.getElementById('etqAvisoNum'); if(av) av.hidden=true;
-  const bt=document.getElementById('etqNaMaoBt'); if(bt) bt.textContent='As que estão na mão ('+etqNaMaoLista().length+')';
+  const tit=document.getElementById('etqTit'); if(tit) tit.textContent=peca?'🏷️ Etiquetas das peças':'🏷️ Etiquetas com QR';
+  const dm=document.getElementById('etqDicaMaq'), dp=document.getElementById('etqDicaPeca'); if(dm) dm.hidden=peca; if(dp) dp.hidden=!peca;
+  const bt=document.getElementById('etqNaMaoBt');
+  if(bt) bt.textContent=peca?'Peças sem etiqueta ('+pecasSemEtq().length+')':'As que estão na mão ('+etqNaMaoLista().length+')';
   const sel=document.getElementById('etqTam');
   try{ const t=localStorage.getItem('etqTam'); if(t&&ETQ_TAM[t]) sel.value=t; }catch(e){}
   try{ const f=localStorage.getItem('etqFolha'); if(f==='a4'||f==='rolo') etqFolha=f; }catch(e){}
   etqPintarFolha();
   const inp=document.getElementById('etqNums');
+  inp.placeholder=peca?'ex: P1-P20':'ex: 101-110, 115';
   if(nums) inp.value=String(nums);
+  else if(peca){ inp.value=''; await etqCarregar(); const a=proxNumLivrePeca(); inp.value='P'+a+'-P'+(a+9); }
   else { inp.value=''; await etqCarregar(); const a=proxNumLivre(); inp.value=a+'-'+(a+9); }
   etqMontar();
 };
 window.etqFechar=()=>{ document.getElementById('ETQ').classList.add('h'); };
 window.etqTrocouTam=()=>{ try{ localStorage.setItem('etqTam',document.getElementById('etqTam').value); }catch(e){} etqPintarFolha(); etqPrevia(); };
-window.etqNovas=k=>{ const a=proxNumLivre(); document.getElementById('etqNums').value=a+'-'+(a+k-1); etqMontar(); };
+window.etqNovas=k=>{
+  const peca=etqModo==='peca', a=peca?proxNumLivrePeca():proxNumLivre();
+  document.getElementById('etqNums').value=peca?'P'+a+'-P'+(a+k-1):a+'-'+(a+k-1); etqMontar();
+};
 // as que estão fisicamente com vocês: nem vendidas nem a caminho
 // Antes de imprimir, a máquina sem número gravado ganha o próximo número livre, gravado no
 // banco. Assim a etiqueta e a lista mostram o mesmo número para sempre, e o QR abre a máquina certa.
@@ -16040,6 +16343,7 @@ function etqAvisoNumeros(feitas, fora){
   av.innerHTML=partes.join('<br>');
 }
 window.etqNaMao=async()=>{
+  if(etqModo==='peca') return etqPecasSemEtq();   // peças: as em estoque que ainda não têm etiqueta impressa
   const naMao=etqNaMaoLista();
   const feitas=await etqFixarNumeros(naMao);
   etqAvisoNumeros(feitas,'');
@@ -16095,7 +16399,7 @@ function etqHtmlImpressao(urls, tam, folha){
 }
 window.etqImprimir=async()=>{
   const e=etqCache; if(!e) return;
-  etqReservar(e.nums);   // sem esperar: a impressão não depende do banco
+  etqReservar(e.nums,e.modo);   // sem esperar: a impressão não depende do banco
   const fr=document.createElement('iframe');
   fr.setAttribute('aria-hidden','true'); fr.className='etq-impressao';
   fr.style.cssText='position:fixed;right:0;bottom:0;width:0;height:0;border:0';
@@ -16117,11 +16421,11 @@ window.etqBaixar=async()=>{
   if(matchMedia('(pointer: coarse)').matches && navigator.share && navigator.canShare){
     let pode=false; try{ pode=navigator.canShare({files:e.arqs}); }catch(_){}
     if(pode){
-      try{ await navigator.share({files:e.arqs}); etqReservar(e.nums); return; }
+      try{ await navigator.share({files:e.arqs}); etqReservar(e.nums,e.modo); return; }
       catch(err){ if(err&&err.name==='AbortError') return; }
     }
   }
-  etqReservar(e.nums);
+  etqReservar(e.nums,e.modo);
   for(let i=0;i<e.arqs.length;i++){
     const f=e.arqs[i], a=document.createElement('a'), u=URL.createObjectURL(f);
     a.href=u; a.download=f.name; document.body.appendChild(a); a.click(); a.remove();
@@ -16136,6 +16440,15 @@ window.etqBaixar=async()=>{
 function qrLerHash(){
   let n=0;
   try{
+    // etiqueta de peça (#p=12): não tem página pública, só abre para quem entra
+    const p=parseInt(new URLSearchParams(location.hash.slice(1)).get('p'),10)||0;
+    if(p>0){
+      history.replaceState(null,'',location.pathname+location.search);
+      qrPendPeca=p; try{ sessionStorage.setItem('qrPeca',String(p)); }catch(_){}
+      const av=document.getElementById('qrEntrar');
+      if(av){ av.textContent='🏷️ Etiqueta P'+p+': entre para abrir esta peça.'; av.hidden=false; }
+      return 0;
+    }
     n=parseInt(new URLSearchParams(location.hash.slice(1)).get('n'),10)||0;
     if(n>0){
       history.replaceState(null,'',location.pathname+location.search);
@@ -16148,8 +16461,16 @@ function qrLerHash(){
 }
 async function qrVoltaDoLogin(){
   let n=qrPend; qrPend=0;
+  let np=qrPendPeca; qrPendPeca=0;
   try{ n=n||parseInt(sessionStorage.getItem('qrNum')||'',10)||0; sessionStorage.removeItem('qrNum'); }catch(e){}
+  try{ np=np||parseInt(sessionStorage.getItem('qrPeca')||'',10)||0; sessionStorage.removeItem('qrPeca'); }catch(e){}
   const av=document.getElementById('qrEntrar'); if(av) av.hidden=true;
+  if(np>0){
+    try{ await pecasProntas; }catch(e){}
+    await etqCarregar();
+    qrPecaAbrir(np);
+    return;
+  }
   if(!(n>0)) return;
   try{ await prodsProntos; }catch(e){}
   await etqCarregar();
@@ -16167,11 +16488,12 @@ window.qrAbrir=n=>{
 // Máquina que ainda não existe: o mesmo "Adicionar produto" da página, dentro
 // de uma caixa, já com o número da etiqueta. Fechar devolve o formulário.
 function qrCadAbrir(n){
+  if(qrCadAberto) qrCadFechar();   // a caixa de uma etiqueta de peça aberta antes volta para o lugar dela
   const card=document.querySelector('#vendas-addprod > .cd'), corpo=document.getElementById('qrbCorpo');
   if(!card||!corpo) return;
   try{ closeModal(); }catch(e){}
   const ne=document.getElementById('pNumEtq'); if(ne){ ne.value=String(n); etqCampo(); }
-  corpo.appendChild(card);
+  qrCadMover(card);
   qrCadAberto=true;
   document.getElementById('qrbTit').textContent='🏷️ Nova máquina #'+n;
   document.getElementById('qrbAviso').innerHTML='A etiqueta <b>#'+n+'</b> ainda não tem máquina no sistema. Preencha e toque em <b>+ Adicionar</b>: ela entra com este número, e as fotos tiradas aqui vão junto.';
@@ -16179,10 +16501,20 @@ function qrCadAbrir(n){
   document.getElementById('QRB').classList.remove('h');
   corpo.scrollTop=0;
 }
+// O formulário vai para a caixa e, ao fechar, volta exatamente para onde estava na página
+// (o "Adicionar produto" das máquinas ou o "Adicionar peça" da aba Peças).
+function qrCadMover(card){
+  qrCadCasa={card, pai:card.parentNode, depois:card.nextSibling};
+  document.getElementById('qrbCorpo').appendChild(card);
+}
 window.qrCadFechar=()=>{
   if(!qrCadAberto) return;
-  const card=document.querySelector('#qrbCorpo > .cd'), casa=document.getElementById('vendas-addprod');
-  if(card&&casa) casa.appendChild(card);
+  const c=qrCadCasa;
+  if(c&&c.pai) c.pai.insertBefore(c.card, c.depois&&c.depois.parentNode===c.pai?c.depois:null);
+  else { const card=document.querySelector('#qrbCorpo > .cd'), casa=document.getElementById('vendas-addprod'); if(card&&casa) casa.appendChild(card); }
+  qrCadCasa=null;
+  const lig=document.querySelector('#qrbLigar'); if(lig) lig.remove();   // a escolha de peça já cadastrada (só na etiqueta de peça)
+  const ne=document.getElementById('pcNumEtq'); if(ne&&c&&c.card&&c.card.id==='pecasAddCard') ne.value='';
   document.getElementById('QRB').classList.add('h');
   qrCadAberto=false;
 };
@@ -16199,7 +16531,11 @@ window.etqCampo=()=>{
   try{ copiaHint(); }catch(e){}
 };
 function etqNumDoCampo(){ const v=parseInt(document.getElementById('pNumEtq')?.value,10); return v>0?v:0; }
-window.addEventListener('hashchange',()=>{ const n=qrLerHash(); if(!n) return; if(user) qrVoltaDoLogin(); else maqPublicaAbrir(n); });
+window.addEventListener('hashchange',()=>{
+  const n=qrLerHash();
+  if(qrPendPeca){ if(user) qrVoltaDoLogin(); return; }   // peça: só com o sócio dentro
+  if(!n) return; if(user) qrVoltaDoLogin(); else maqPublicaAbrir(n);
+});
 qrLerHash();
 
 function piscarLinha(id){
