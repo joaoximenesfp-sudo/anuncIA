@@ -373,6 +373,11 @@ const post = body => chamar({ method: 'POST', body: Object.assign({ idToken: 'so
   const cssFoto = (r.body.match(/\.mq-fotos img\{([^}]*)\}/) || [])[1] || '';
   ok(/(^|;)width:min\(86%,480px\)/.test(cssFoto) && /(^|;)min-width:0(;|$)/.test(cssFoto) && /object-fit:contain/.test(cssFoto) && !/flex:0 0 /.test(cssFoto),
     'cada foto da galeria tem largura própria e cabe inteira na tela (não fica do tamanho do arquivo)');
+  // no computador não há dedo: setas, arrastar com o mouse e o contador de fotos
+  ok(r.body.includes('<div class="mq-gal"><div class="mq-fotos" tabindex="0" aria-label="2 fotos da máquina">') && r.body.includes('<button type="button" class="sl-seta sl-ant" aria-label="Foto anterior" disabled>‹</button>') &&
+    r.body.includes('<button type="button" class="sl-seta sl-prox" aria-label="Próxima foto">›</button>') && r.body.includes('<span class="mq-cont" aria-hidden="true">1 / 2</span>') &&
+    /<script>\s*\(function \(\) \{\s*var g = document\.querySelector\('\.mq-gal'\)/.test(r.body) && /pointerType !== 'mouse'/.test(r.body),
+    'galeria: setas no computador, arrastar com o mouse e o contador "1 / 2"');
   ok(r.body.includes('<b>Modelo:</b> T14 Gen 1') && r.body.includes('<li>Acompanha carregador original</li>') && r.body.includes('🧠 2/2 RAM · cheio') && r.body.includes('Webcam &lt;b&gt;') &&
     r.body.includes('youtube-nocookie.com/embed/abcdefghijk') && r.body.includes('90 dias de garantia'), 'ficha, recursos, vídeo e garantia (o que vem do catálogo aparece escrito, sem virar HTML)');
   ok(!/Fornecedor Secreto|nota interna|1234|custo|fornecedor/i.test(r.body), 'custo, fornecedor e anotação nunca aparecem, mesmo se viessem do banco');

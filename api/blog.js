@@ -689,10 +689,15 @@ a{color:inherit}
 .mq-preco s{font-size:1.05rem;color:var(--li);font-weight:400}
 .mq-pct{align-self:center;font-size:.8rem;font-weight:600;letter-spacing:0;color:#04210F;background:var(--g1);border-radius:999px;padding:3px 9px}
 .mq-aviso{background:var(--chip);border:1px solid var(--b);border-radius:14px;padding:12px 14px;margin:10px 0 0;font-size:.95rem}
-.mq-fotos{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;margin:22px -20px 6px;padding:0 20px 10px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.mq-gal{position:relative;margin:22px -20px 6px}
+.mq-fotos{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding:0 20px;padding:0 20px 10px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .mq-fotos::-webkit-scrollbar{display:none}
-.mq-fotos img{flex:none;width:min(86%,480px);min-width:0;height:auto;aspect-ratio:1/1;object-fit:contain;border-radius:18px;background:var(--chip);border:1px solid var(--b);scroll-snap-align:start}
-@media(max-width:600px){.mq-fotos{margin:18px -16px 6px;padding:0 16px 10px}}
+.mq-fotos img{flex:none;width:min(86%,480px);min-width:0;height:auto;aspect-ratio:1/1;object-fit:contain;border-radius:18px;background:var(--chip);border:1px solid var(--b);scroll-snap-align:start;-webkit-user-drag:none}
+@media (hover:hover){.mq-fotos{cursor:grab}}
+.mq-fotos.arrastando{cursor:grabbing;scroll-snap-type:none;user-select:none;-webkit-user-select:none}
+.mq-gal .sl-seta{top:calc(50% - 27px)}.mq-gal .sl-ant{left:8px}.mq-gal .sl-prox{right:8px}
+.mq-cont{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);padding:3px 10px;border-radius:999px;background:rgba(5,8,15,.62);color:#fff;font-size:.75rem;font-weight:600;letter-spacing:.02em;pointer-events:none}
+@media(max-width:600px){.mq-gal{margin:18px -16px 6px}.mq-fotos{padding:0 16px 10px;scroll-padding:0 16px}.mq-gal .sl-ant{left:4px}.mq-gal .sl-prox{right:4px}}
 .mq-dica{font-size:.8rem;color:var(--li);margin:0 0 6px}
 .mq-ficha{list-style:none;padding:0;margin:0;display:grid;gap:7px;font-size:.98rem}
 .mq-sub{margin:20px 0 10px!important;font-size:1rem!important}
@@ -997,6 +1002,39 @@ const linhasFicha = t => String(t || '').split(/\n+/).map(l => l.trim()).filter(
 const listaDe = v => (Array.isArray(v) ? v : String(v || '').split(/\s*·\s*/)).map(x => String(x).trim()).filter(Boolean).slice(0, 20);
 const diaMes = iso => String(iso || '').split('-').reverse().slice(0, 2).join('/');
 const GARANTIA = ['<b>90 dias de garantia</b> a partir da entrega.', 'Testada antes da venda: memória, armazenamento e limpeza interna.', 'Entrega combinada na região e envio por Correios com rastreio.'];
+// As fotos da máquina: no celular o dedo arrasta; no computador, as setas, o arrastar com o mouse
+// e as setas do teclado. O contador mostra em qual foto está (na última, mesmo sem encostar à esquerda).
+const SCRIPT_GALERIA = `<script>
+(function () {
+  var g = document.querySelector('.mq-gal'); if (!g) return;
+  var t = g.querySelector('.mq-fotos'), ant = g.querySelector('.sl-ant'), prox = g.querySelector('.sl-prox'), cont = g.querySelector('.mq-cont'), dica = document.querySelector('.mq-dica');
+  var fotos = t.querySelectorAll('img'), n = fotos.length;
+  if (!ant || !prox || n < 2) return;
+  if (window.matchMedia && matchMedia('(hover: hover)').matches && dica) dica.textContent = 'Use as setas ou arraste com o mouse para ver as ' + n + ' fotos.';
+  function passo() { return fotos[0].getBoundingClientRect().width + 12; }
+  function fim() { return t.scrollLeft + t.clientWidth >= t.scrollWidth - 2; }
+  function mostrar() {
+    ant.disabled = t.scrollLeft <= 2; prox.disabled = fim();
+    if (cont) cont.textContent = (fim() ? n : Math.min(n, Math.round(t.scrollLeft / passo()) + 1)) + ' / ' + n;
+  }
+  ant.addEventListener('click', function () { t.scrollBy({ left: -passo(), behavior: 'smooth' }); });
+  prox.addEventListener('click', function () { t.scrollBy({ left: passo(), behavior: 'smooth' }); });
+  t.addEventListener('scroll', mostrar, { passive: true }); window.addEventListener('resize', mostrar); mostrar();
+  var x0 = 0, s0 = 0, segurando = false;
+  t.addEventListener('pointerdown', function (e) {
+    if (e.pointerType !== 'mouse' || e.button !== 0) return;
+    segurando = true; x0 = e.clientX; s0 = t.scrollLeft; t.classList.add('arrastando');
+    try { t.setPointerCapture(e.pointerId); } catch (er) {}
+  });
+  t.addEventListener('pointermove', function (e) { if (segurando) { t.scrollLeft = s0 - (e.clientX - x0); e.preventDefault(); } });
+  function soltar() {
+    if (!segurando) return; segurando = false; t.classList.remove('arrastando');
+    var w = passo(); t.scrollTo({ left: Math.round(t.scrollLeft / w) * w, behavior: 'smooth' }); // para na foto mais perto
+  }
+  t.addEventListener('pointerup', soltar); t.addEventListener('pointercancel', soltar); t.addEventListener('lostpointercapture', soltar);
+  t.addEventListener('dragstart', function (e) { e.preventDefault(); });
+})();
+</script>`;
 async function paginaMaquina(i, loja) {
   const nome = (loja && loja.nome) || 'Tech Campinas';
   const url = urlMaq(i), p = precoVivo(i), imgs = imagensDe(i, await fotosDoCatalogo());
@@ -1026,8 +1064,9 @@ async function paginaMaquina(i, loja) {
   ${p.ate ? `<p class="meta">Preço de promoção até ${esc(diaMes(p.ate))}</p>` : ''}
   ${aviso ? `<p class="mq-aviso">${esc(aviso)}</p>` : ''}
   ${botoes}
-  <div class="mq-fotos">${imgs.map((u, k) => `<img src="${esc(u)}" alt="${esc(i.nome)}, foto ${k + 1}"${k ? ' loading="lazy"' : ' fetchpriority="high"'} decoding="async">`).join('')}</div>
-  ${imgs.length > 1 ? `<p class="mq-dica">Arraste para o lado para ver as ${imgs.length} fotos.</p>` : ''}
+  <div class="mq-gal"><div class="mq-fotos"${imgs.length > 1 ? ` tabindex="0" aria-label="${imgs.length} fotos da máquina"` : ''}>${imgs.map((u, k) => `<img src="${esc(u)}" alt="${esc(i.nome)}, foto ${k + 1}"${k ? ' loading="lazy"' : ' fetchpriority="high"'} decoding="async">`).join('')}</div>${imgs.length > 1 ?
+    `<button type="button" class="sl-seta sl-ant" aria-label="Foto anterior" disabled>‹</button><button type="button" class="sl-seta sl-prox" aria-label="Próxima foto">›</button><span class="mq-cont" aria-hidden="true">1 / ${imgs.length}</span>` : ''}</div>
+  ${imgs.length > 1 ? `<p class="mq-dica">Arraste para o lado para ver as ${imgs.length} fotos.</p>${SCRIPT_GALERIA}` : ''}
   <section class="bloco"><h3>Ficha da máquina</h3>
     ${ficha.length ? `<ul class="mq-ficha">${ficha.map(l => { const m = l.match(/^([^:]{2,40}):\s*(.+)$/); return `<li>${m ? `<b>${esc(m[1])}:</b> ${esc(m[2])}` : esc(l)}</li>`; }).join('')}</ul>` : ''}
     ${specs.length ? `<div class="mq-chips">${specs.map(x => `<span class="mq-chip">${esc(x)}</span>`).join('')}</div>` : ''}
