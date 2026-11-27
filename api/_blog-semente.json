@@ -1,6 +1,125 @@
 {
   "artigos": [
     {
+      "titulo": "Black Friday: notebook novo de entrada ou corporativo seminovo? Compare antes de pagar",
+      "resumo": "Pelo preço de um notebook novo de entrada, dá para levar um corporativo seminovo com processador, memória e SSD melhores. Veja o que comparar na ficha.",
+      "corpo": "Hoje é Black Friday, e muita gente vai escolher entre dois caminhos com o mesmo dinheiro: um notebook novo de entrada ou um notebook corporativo seminovo. Os dois podem ser uma boa compra, mas a ficha técnica costuma mudar bastante de um para o outro.\n\n## O que comparar na ficha\n\n- **Processador:** veja a linha (i3, i5 ou i7) e também a geração. Um i5 ou i7 corporativo de 8ª geração em diante costuma render mais no dia a dia do que um processador de entrada.\n- **Memória:** com a memória cara este ano, muitos notebooks novos de entrada voltaram a sair com 8 GB, às vezes soldados na placa. Confira quanto vem e se dá para aumentar depois.\n- **Armazenamento:** SSD é indispensável hoje. Veja o tamanho: 256 GB é o mínimo confortável.\n- **Tela:** Full HD (1920 × 1080) faz diferença em planilhas e para ler por muito tempo.\n- **Construção:** linhas como ThinkPad e Latitude foram feitas para o uso pesado das empresas, com teclado melhor, carcaça mais resistente e peças fáceis de achar.\n\n## O que o novo tem a favor\n\nO novo vem com a garantia de fábrica e a bateria zerada. Por isso, no seminovo, pergunte quanto tempo de garantia vem, como está a saúde da bateria e se a máquina foi revisada antes da venda.\n\n## A conta que vale fazer\n\nColoque as duas opções lado a lado, pelo mesmo preço, e compare item por item: processador, memória, SSD e tela. Muitas vezes o seminovo corporativo entrega mais por esse valor. Se o novo tiver uma ficha parecida e couber no bolso, ele também é uma boa escolha.\n\nNa Tech Campinas, todas as máquinas são revisadas uma a uma e saem com 90 dias de garantia. Se quiser, mande a ficha da oferta que você está olhando e a gente compara com uma das nossas.",
+      "pontos": [
+        "Pelo mesmo preço, um corporativo seminovo costuma ter processador, memória e SSD melhores.",
+        "Compare item por item: processador e geração, memória, SSD e tela.",
+        "Com a memória cara, muito notebook novo de entrada voltou a sair com 8 GB.",
+        "No seminovo, pergunte pela garantia, pela bateria e se a máquina foi revisada."
+      ],
+      "legenda": "É hoje! Notebook novo de entrada ou corporativo seminovo pelo mesmo preço? 💻\n\nNa Black Friday, compare a ficha item por item antes de pagar. No blog: o que olhar no processador, na memória, no SSD e na tela, e o que perguntar no seminovo.\n\nLeia o artigo completo no blog: link na bio.\n\n#blackfriday #notebook #thinkpad #seminovo #dicas",
+      "assunto": "Guia",
+      "termos": [
+        "ThinkPad",
+        "Latitude",
+        "i5",
+        "i7"
+      ],
+      "slug": "black-friday-notebook-novo-de-entrada-ou-corporativo-seminovo-compare-antes-de",
+      "tipo": "guia",
+      "fonte": null,
+      "fontes": [],
+      "guia": "Por que um notebook corporativo usado costuma valer mais que um novo barato",
+      "publicado_em": "2026-11-27T15:03:00.000Z",
+      "atualizado_em": "2026-11-27T15:03:00.000Z",
+      "status": "publicado",
+      "origem": "ia",
+      "editado": false,
+      "insta": null
+    },
+    {
+      "titulo": "Windows 11 vai usar quase 900 MB a menos de memória: o que muda no notebook de 8 GB",
+      "resumo": "A Microsoft otimizou os próprios apps e serviços e liberou mais de 860 MB de RAM no Windows 11. Em testes com 8 GB, o sistema ficou até 20% mais ágil.",
+      "corpo": "Boa notícia para quem tem notebook com 8 GB de memória. A Microsoft contou que conseguiu liberar mais de 860 MB de RAM no Windows 11 só otimizando os próprios aplicativos e os serviços que rodam em segundo plano.\n\n## O que a Microsoft mudou\n\nO anúncio foi feito na conferência Ignite 2026. Segundo a empresa, o sistema passou a usar a memória de forma mais eficiente: deixou de carregar partes que não estavam sendo usadas e fez programas parecidos dividirem os mesmos recursos, em vez de cada um ocupar o seu espaço.\n\nOs números divulgados:\n\n- Serviços que ficam ligados o tempo todo, como o Microsoft Defender e o OneDrive, passaram a usar mais de 500 MB a menos, somados.\n- O Microsoft 365, sozinho, ficou cerca de 360 MB mais leve.\n- Em testes com 8 GB, o Windows respondeu até 20% mais rápido, algumas tarefas com vários programas abertos ficaram até 40% mais rápidas, e o Office ficou até 10% mais rápido, em comparação com as versões do começo do ano.\n\nA própria Microsoft reconheceu o motivo da pressa: o preço da memória disparou e encareceu os computadores. O foco do trabalho foram as máquinas de 8 GB e 16 GB, mas as mais potentes também ganham folga.\n\n## O que fazer no seu notebook\n\nAs melhorias chegam pelas atualizações do Windows 11. Então, o mais importante é manter o sistema em dia pelo Windows Update.\n\nPara quem usa navegador, Office, reuniões e estudo, 8 GB continuam dando conta, agora com mais sobra. Se você trabalha com muitas abas, planilhas grandes e vários programas ao mesmo tempo, 16 GB seguem sendo a escolha mais confortável.\n\nNa Tech Campinas, as máquinas saem com o Windows atualizado. Na dúvida entre 8 GB e 16 GB, é só perguntar qual combina com o seu uso.",
+      "pontos": [
+        "A Microsoft liberou mais de 860 MB de RAM no Windows 11 otimizando os próprios apps.",
+        "Defender e OneDrive usam mais de 500 MB a menos; o Microsoft 365, cerca de 360 MB.",
+        "Em testes com 8 GB, o Windows ficou até 20% mais ágil e o Office até 10% mais rápido.",
+        "As melhorias chegam pelas atualizações: mantenha o Windows em dia."
+      ],
+      "legenda": "Boa notícia para quem tem notebook de 8 GB. 🧠\n\nA Microsoft fez o Windows 11 usar quase 900 MB a menos de memória. No blog: o que mudou, os números dos testes e como receber as melhorias.\n\nLeia o artigo completo no blog: link na bio.\n\n#windows11 #windows #notebook #memoriaram #tecnologia",
+      "assunto": "Windows",
+      "termos": [
+        "Windows 11",
+        "8GB",
+        "ThinkPad",
+        "Latitude"
+      ],
+      "slug": "windows-11-vai-usar-quase-900-mb-a-menos-de-memoria-o-que-muda-no-notebook-de-8",
+      "tipo": "noticia",
+      "fonte": {
+        "nome": "Canaltech",
+        "titulo": "Microsoft libera quase 900 MB de RAM no Windows 11 após otimizar apps nativos",
+        "url": "https://canaltech.com.br/software/microsoft-libera-quase-900-mb-de-ram-no-windows-11-apos-otimizar-apps-nativos/"
+      },
+      "fontes": [],
+      "publicado_em": "2026-11-27T15:02:00.000Z",
+      "atualizado_em": "2026-11-27T15:02:00.000Z",
+      "status": "publicado",
+      "origem": "ia",
+      "editado": false,
+      "insta": null
+    },
+    {
+      "titulo": "Pix enviado por engano: Banco Central prepara um jeito mais fácil de recuperar o dinheiro",
+      "resumo": "Entre as novidades previstas para 2027, o Pix deve ganhar um caminho para quem errou a transferência recuperar o dinheiro e um filtro contra mensagens ofensivas.",
+      "corpo": "Quem já mandou um Pix para a pessoa errada sabe o trabalho que dá para ter o dinheiro de volta. O Banco Central anunciou que prepara um mecanismo para facilitar isso, junto com outras mudanças previstas para 2027.\n\n## O dinheiro enviado por engano\n\nHoje, a devolução depende de você falar com o seu banco ou de quem recebeu o dinheiro aceitar devolver. A ideia do Banco Central é criar um caminho para que a própria pessoa que errou consiga recuperar o valor. Ainda não foi explicado como isso vai funcionar.\n\nEsse recurso é diferente do Mecanismo Especial de Devolução, o MED, que já existe e serve para casos de golpe e fraude.\n\n## Filtro nas mensagens\n\nO Pix permite mandar um texto curto junto com a transferência, para explicar o pagamento. O Banco Central percebeu que esse espaço vem sendo usado para ofensas, ameaças e intimidação. Por isso, prepara campanhas educativas e uma ferramenta que identifica e esconde as mensagens inapropriadas.\n\n## Mais segurança contra golpes\n\nOutra novidade é um cálculo do risco de fraude de cada transação, feito na hora. Essa informação vai ser compartilhada com os bancos, que poderão autorizar ou barrar uma transferência suspeita. O pacote também prevê incentivos ao Pix Automático e estudos para ligar o Pix ao sistema de pagamentos instantâneos da Europa.\n\nO Banco Central ainda não deu datas: as mudanças estão previstas para algum momento de 2027.\n\n## O que fazer até lá\n\nAntes de confirmar um Pix, confira o nome de quem vai receber, principalmente quando a chave for digitada à mão. Se errar, fale logo com o seu banco e tente contato com quem recebeu. E, se for golpe, peça a devolução pelo MED no seu banco o quanto antes.",
+      "pontos": [
+        "O Banco Central prepara para 2027 um jeito de recuperar Pix enviado por engano.",
+        "Hoje, a devolução depende do seu banco ou de quem recebeu o dinheiro.",
+        "As mensagens do Pix vão ganhar um filtro que esconde ofensas e ameaças.",
+        "Até lá: confira o nome de quem vai receber antes de confirmar."
+      ],
+      "legenda": "Mandou um Pix para a pessoa errada? Isso deve ficar mais fácil de resolver. 💸\n\nO Banco Central prepara para 2027 um jeito de recuperar o dinheiro e um filtro contra mensagens ofensivas. No blog: o que muda e o que fazer até lá.\n\nLeia o artigo completo no blog: link na bio.\n\n#pix #bancocentral #seguranca #dinheiro #noticias",
+      "assunto": "Notícia",
+      "termos": [],
+      "slug": "pix-enviado-por-engano-banco-central-prepara-um-jeito-mais-facil-de-recuperar-o",
+      "tipo": "noticia",
+      "fonte": {
+        "nome": "Tecnoblog",
+        "titulo": "Pix vai filtrar ofensas e facilitar retorno de dinheiro enviado por engano",
+        "url": "https://tecnoblog.net/noticias/pix-vai-filtrar-ofensas-e-facilitar-retorno-de-dinheiro-enviado-por-engano/"
+      },
+      "fontes": [],
+      "publicado_em": "2026-11-27T15:01:00.000Z",
+      "atualizado_em": "2026-11-27T15:01:00.000Z",
+      "status": "publicado",
+      "origem": "ia",
+      "editado": false,
+      "insta": null
+    },
+    {
+      "titulo": "Extensão falsa do Planilhas Google rouba e-mails do Gmail: veja como conferir a sua",
+      "resumo": "Instalada por um vírus, a extensão se passa pelo Google Sheets no Chrome e lê os e-mails, até códigos de verificação. Veja como achar e o que fazer.",
+      "corpo": "Quem usa o Gmail no Chrome precisa ficar atento. Pesquisadores da empresa de segurança Gen Threat Labs encontraram uma extensão falsa do Planilhas Google que lê os e-mails da vítima e manda tudo para os criminosos.\n\n## Como o golpe funciona\n\nA extensão é instalada sem a pessoa perceber por um vírus para Windows chamado Remus Stealer. Depois de entrar no computador, ele muda as configurações do Chrome, instala a extensão e liga o modo de desenvolvedor do navegador.\n\nA extensão aparece com o nome \"Google Sheets\", na versão 0.5.4, e copia a descrição de uma extensão verdadeira do Google. A cada minuto, ela procura e-mails novos nas contas do Gmail abertas no navegador e manda para os criminosos o remetente, o assunto e o texto inteiro. Ela consegue vigiar até dez contas ao mesmo tempo.\n\nO perigo maior: entre esses e-mails estão códigos de verificação e links para trocar senha de outros serviços. E, como a extensão continua instalada, ela volta a ler as mensagens assim que você entra de novo na conta naquele computador, mesmo depois de trocar a senha. O Google afirmou que não existe falha no Gmail: o problema é o vírus no computador.\n\n## Como conferir no seu Chrome\n\n1. Digite chrome://extensions na barra de endereço e aperte Enter.\n2. Procure uma extensão chamada \"Google Sheets\", na versão 0.5.4.\n3. Se encontrar, clique em Remover.\n\nOutro sinal de alerta é o modo de desenvolvedor ligado sem você ter ligado.\n\n## Se ela estiver lá\n\nSó remover a extensão não basta. Passe um antivírus completo no computador para tirar o vírus que a instalou. Depois, usando outro aparelho seguro, troque as senhas, encerre as sessões abertas e confira se não há encaminhamento automático de e-mails nas configurações do Gmail.\n\nPara se prevenir, instale extensões só pela loja oficial do Chrome e revise a lista de vez em quando.",
+      "pontos": [
+        "Uma extensão falsa chamada Google Sheets, versão 0.5.4, lê os e-mails do Gmail no Chrome.",
+        "Ela é instalada por um vírus e volta a ler os e-mails mesmo depois de trocar a senha.",
+        "Para conferir, digite chrome://extensions na barra de endereço e procure por ela.",
+        "Achou? Remova, passe o antivírus e troque as senhas usando outro aparelho."
+      ],
+      "legenda": "Atenção, quem usa o Gmail no Chrome. ⚠️\n\nUma extensão falsa do Planilhas Google está roubando e-mails, até códigos de verificação. No blog: como conferir se ela está no seu navegador e o que fazer se estiver.\n\nLeia o artigo completo no blog: link na bio.\n\n#seguranca #gmail #chrome #golpe #dicas",
+      "assunto": "Dica",
+      "termos": [],
+      "slug": "extensao-falsa-do-planilhas-google-rouba-e-mails-do-gmail-veja-como-conferir-a",
+      "tipo": "noticia",
+      "fonte": {
+        "nome": "Canaltech",
+        "titulo": "Extensão falsa do Planilhas Google é usada para espionar e roubar e-mails do Gmail",
+        "url": "https://canaltech.com.br/seguranca/extensao-falsa-do-planilhas-google-e-usada-para-espionar-e-roubar-e-mails-do-gmail/"
+      },
+      "fontes": [],
+      "publicado_em": "2026-11-27T15:00:00.000Z",
+      "atualizado_em": "2026-11-27T15:00:00.000Z",
+      "status": "publicado",
+      "origem": "ia",
+      "editado": false,
+      "insta": null
+    },
+    {
       "titulo": "WhatsApp agora deixa agendar mensagens: veja como usar",
       "resumo": "Dá para programar textos, fotos e vídeos com até 14 dias de antecedência, e o envio acontece mesmo com o celular desligado. A liberação é aos poucos.",
       "corpo": "O WhatsApp oficializou o agendamento de mensagens, que estava em teste. Agora dá para escrever uma mensagem para um contato ou grupo e escolher o dia e a hora em que ela vai ser enviada. Até lá, ela fica numa fila de espera.\n\n## Como funciona\n\nO envio pode ser marcado para daqui a pelo menos 10 minutos e no máximo 14 dias. Vale para texto, fotos e vídeos, com a mesma criptografia de ponta a ponta das outras conversas. Quem recebe vê uma mensagem comum, sem nenhum aviso de que ela foi agendada.\n\nComo quem envia são os servidores do WhatsApp, a mensagem sai mesmo que o seu celular esteja desligado ou sem internet na hora marcada. E, até o envio, dá para editar ou apagar.\n\n## Passo a passo\n\n- Abra a conversa com o contato ou o grupo e escreva a mensagem.\n- **Segure o botão de enviar** por alguns instantes.\n- No calendário que aparece, escolha a data e a hora.\n\n## Quando chega para você\n\nA novidade está sendo liberada aos poucos no Android e no iPhone, no mundo todo, e pode levar algumas semanas para aparecer na sua conta. Se segurar o botão de enviar ainda não abre o calendário, é porque a função não chegou: mantenha o aplicativo atualizado na loja. Para o computador ainda não há data oficial, mas a função já está em teste no WhatsApp Web, a versão que funciona no navegador.\n\nPara quem atende clientes, a função ajuda bastante: dá para deixar pronto um lembrete de pagamento, um aviso de retirada ou um parabéns de aniversário, sem depender de lembrar na hora.",
